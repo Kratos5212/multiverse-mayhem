@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0f1e">
+<title>Multiverse Mayhem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<style>
+/* Layout: one full-screen WebGL canvas; the menu, HUD, touch controls and dialogs are HTML layers on top.
+   The game is always dark (space between dimensions), so there is a single colour scheme. */
+:root {
+  --bg: #0b0f1e; --panel: #151b33; --panel2: #1e2647; --ink: #f4f7ff; --muted: #9fb0d9; --line: #000;
+  --portal: #39ff6a; --gold: #ffd84d; --pink: #ff6fd0; --red: #ff5a5a; --cyan: #5ff8ff;
+  --font: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+  color-scheme: dark;
+}
+:root[data-theme="light"] { color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 500 15px/1.35 var(--font); overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+canvas#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+[hidden] { display: none !important; }
+button { font: inherit; color: inherit; cursor: pointer; }
+input, select { font: inherit; }
+
+/* Cartoon buttons: thick black outline and a hard drop shadow. */
+.btn { background: var(--panel2); border: 3px solid var(--line); border-radius: 14px; padding: 8px 14px; box-shadow: 0 4px 0 var(--line); font-weight: 700; transition: transform .05s; }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--line); }
+.btn.go { background: var(--portal); color: #062b10; }
+.btn.gold { background: var(--gold); color: #3a2a00; }
+.btn.pink { background: var(--pink); color: #3a0030; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn:focus-visible, .chip:focus-visible, .arch:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+
+/* ---------- Menu / character creator ---------- */
+#menu { position: fixed; inset: 0; display: grid; grid-template-rows: auto 1fr auto; padding: max(12px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom)); gap: 10px; pointer-events: none; }
+#menu > * { pointer-events: auto; }
+.brand { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.brand h1 { margin: 0; font: 700 clamp(28px, 4.6vw, 52px)/1 var(--font); color: var(--portal); -webkit-text-stroke: 2px #000; text-shadow: 0 4px 0 #000, 0 0 28px rgba(57,255,106,.45); letter-spacing: .5px; transform: rotate(-1.5deg); }
+.brand p { margin: 0; color: var(--muted); }
+.creator { display: grid; grid-template-columns: minmax(250px, 320px) 1fr minmax(290px, 360px); gap: 12px; min-height: 0; pointer-events: none; }
+.creator > .panel { pointer-events: auto; }
+.panel { background: rgba(21,27,51,.92); border: 3px solid var(--line); border-radius: 18px; box-shadow: 0 5px 0 var(--line); padding: 12px; overflow: auto; min-height: 0; }
+.panel h2 { margin: 0 0 8px; font-size: 17px; color: var(--gold); }
+#stage { position: relative; min-height: 200px; pointer-events: auto; cursor: grab; }
+#stage .stage-tools { position: absolute; left: 0; right: 0; bottom: 6px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+#stage .hint { position: absolute; top: 4px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 13px; text-shadow: 0 2px 0 #000; }
+.arch-list { display: grid; gap: 8px; }
+.arch { display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: center; text-align: left; background: var(--panel2); border: 3px solid var(--line); border-radius: 14px; padding: 8px; box-shadow: 0 3px 0 var(--line); }
+.arch .ico { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #000; display: grid; place-items: center; font-weight: 700; font-size: 18px; color: #000; }
+.arch b { display: block; font-size: 15px; }
+.arch span { color: var(--muted); font-size: 12px; }
+.arch[aria-pressed="true"] { background: #2b3a7a; outline: 3px solid var(--portal); outline-offset: -1px; }
+#archInfo { margin-top: 10px; font-size: 13px; color: #d7e0ff; }
+#archInfo .stats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+#archInfo .stat { background: #0e1328; border: 2px solid #000; border-radius: 10px; padding: 2px 8px; font-size: 12px; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.tabs button { background: transparent; border: 3px solid #000; border-radius: 12px; padding: 4px 10px; font-weight: 700; }
+.tabs button[aria-selected="true"] { background: var(--gold); color: #3a2a00; }
+.opt { margin-bottom: 10px; }
+.opt label, .opt .lbl { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .06em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { background: #0e1328; border: 2px solid #000; border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 600; }
+.chip[aria-pressed="true"] { background: var(--portal); color: #062b10; }
+.swatches { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.sw { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #000; padding: 0; }
+.sw[aria-pressed="true"] { outline: 3px solid #fff; outline-offset: 1px; }
+input[type=color] { width: 34px; height: 30px; border: 2px solid #000; border-radius: 8px; padding: 0; background: none; }
+input[type=range] { width: 100%; accent-color: var(--portal); }
+.field { background: #0e1328; color: var(--ink); border: 3px solid #000; border-radius: 12px; padding: 8px 10px; min-width: 0; -webkit-user-select: text; user-select: text; }
+.playbar { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; justify-content: center; }
+.playbar .grp { display: flex; flex-direction: column; gap: 3px; }
+.playbar .grp span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.playbar .btn { padding: 12px 20px; font-size: 18px; }
+.note { color: var(--muted); font-size: 12px; text-align: center; margin: 0; }
+
+/* Small or short screens: one scrolling column (preview, play buttons, then the creator). */
+@media (max-width: 900px), (max-height: 560px) {
+  #menu { display: flex; flex-direction: column; overflow-y: auto; pointer-events: auto; touch-action: pan-y; gap: 12px; }
+  #menu > *, #archPanel, #lookPanelWrap, #stage { flex: none; }
+  .creator { display: contents; }
+  .brand { order: 0; }
+  .brand h1 { font-size: 30px; }
+  .brand p { font-size: 13px; }
+  #stage { order: 1; height: 52vh; min-height: 200px; touch-action: none; }
+  #menu > footer { order: 2; }
+  #archPanel { order: 3; }
+  #lookPanelWrap { order: 4; }
+  .panel { overflow: visible; }
+  .playbar .btn { padding: 10px 14px; font-size: 16px; }
+}
+
+/* ---------- HUD ---------- */
+#hud { position: fixed; inset: 0; pointer-events: none; padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+#hud .pe { pointer-events: auto; }
+.badge { background: rgba(11,15,30,.82); border: 3px solid #000; border-radius: 14px; padding: 6px 10px; box-shadow: 0 3px 0 #000; }
+#dimBadge { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 12px; max-width: 46vw; }
+#dimBadge b { color: var(--portal); font-size: 17px; display: block; }
+#dimBadge small { color: var(--muted); }
+#topRight { position: absolute; top: max(10px, env(safe-area-inset-top)); right: 12px; display: flex; gap: 6px; align-items: start; }
+#score b { color: var(--gold); }
+.ibtn { width: 42px; height: 42px; display: grid; place-items: center; background: rgba(11,15,30,.82); border: 3px solid #000; border-radius: 12px; box-shadow: 0 3px 0 #000; font-weight: 700; padding: 0; }
+.ibtn svg { width: 22px; height: 22px; }
+#feed { position: absolute; top: 70px; right: 12px; display: flex; flex-direction: column; gap: 4px; align-items: end; font-size: 13px; max-width: 46vw; }
+#feed div { background: rgba(0,0,0,.55); border-radius: 8px; padding: 2px 8px; }
+#feed .me { background: rgba(57,255,106,.25); }
+#toasts { position: absolute; top: 74px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; align-items: center; }
+#toasts div { background: var(--gold); color: #3a2a00; border: 3px solid #000; border-radius: 12px; padding: 4px 12px; font-weight: 700; box-shadow: 0 3px 0 #000; animation: pop .25s ease-out; }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+#cross { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); }
+#cross::before, #cross::after { content: ""; position: absolute; background: #fff; box-shadow: 0 0 0 2px #000; border-radius: 2px; }
+#cross::before { left: 10px; top: 2px; width: 2px; height: 18px; }
+#cross::after { top: 10px; left: 2px; height: 2px; width: 18px; }
+#cross.hit::before, #cross.hit::after { background: var(--red); }
+#status { position: absolute; left: 12px; bottom: max(10px, env(safe-area-inset-bottom)); width: min(300px, 44vw); display: flex; flex-direction: column; gap: 6px; }
+.bar { height: 20px; background: #000; border: 3px solid #000; border-radius: 10px; overflow: hidden; position: relative; }
+.bar i { position: absolute; inset: 0; transform-origin: left; background: var(--portal); transition: transform .15s; }
+.bar span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; font-weight: 700; text-shadow: 0 1px 0 #000, 0 -1px 0 #000, 1px 0 0 #000, -1px 0 0 #000; }
+#res { display: flex; gap: 8px; font-weight: 700; flex-wrap: wrap; }
+#res span { background: rgba(11,15,30,.82); border: 2px solid #000; border-radius: 10px; padding: 1px 8px; }
+#hotbar { position: absolute; bottom: max(10px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+.slot { position: relative; width: 58px; height: 58px; border: 3px solid #000; border-radius: 14px; background: rgba(11,15,30,.85); box-shadow: 0 3px 0 #000; display: grid; place-items: center; font-weight: 700; font-size: 11px; text-align: center; line-height: 1.05; padding: 2px; }
+.slot .k { position: absolute; top: 1px; left: 4px; color: var(--muted); font-size: 10px; }
+.slot .n { position: absolute; bottom: 1px; right: 5px; color: var(--gold); font-size: 13px; }
+.slot .cd { position: absolute; inset: 0; background: rgba(0,0,0,.6); border-radius: 10px; transform-origin: bottom; }
+.slot.off { opacity: .4; }
+#chat { position: absolute; left: 12px; bottom: 130px; width: min(380px, 60vw); display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+#chatLog div { background: rgba(0,0,0,.5); border-radius: 6px; padding: 1px 7px; overflow-wrap: anywhere; width: fit-content; max-width: 100%; transition: opacity 1s; }
+#chatLog div.old { opacity: 0; }
+#chatLog b { color: var(--gold); }
+#chatLog .d { color: var(--muted); font-size: 11px; }
+#chatLog .sys { color: var(--cyan); }
+#chatInput { margin-top: 4px; width: 100%; }
+#prompt { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); }
+#prompt b { color: var(--gold); }
+#dead { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(transparent, rgba(80,0,0,.55)); pointer-events: auto; }
+#dead .box { text-align: center; }
+#dead h2 { margin: 0; font-size: 42px; color: var(--red); -webkit-text-stroke: 2px #000; text-shadow: 0 4px 0 #000; }
+#dmgNums { position: absolute; inset: 0; overflow: hidden; }
+#dmgNums div { position: absolute; font-weight: 700; color: #fff; -webkit-text-stroke: 1px #000; text-shadow: 0 2px 0 #000; transform: translate(-50%, -50%); white-space: nowrap; }
+#flash { position: absolute; inset: 0; background: radial-gradient(transparent 55%, rgba(255,0,0,.45)); opacity: 0; transition: opacity .3s; }
+#netWarn { position: absolute; top: 64px; left: 12px; color: var(--red); font-weight: 700; }
+
+/* ---------- Touch controls ---------- */
+#touch { position: fixed; inset: 0; pointer-events: none; }
+#stick { position: absolute; left: max(18px, env(safe-area-inset-left)); bottom: max(96px, calc(env(safe-area-inset-bottom) + 86px)); width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,.08); border: 3px solid rgba(0,0,0,.6); pointer-events: auto; }
+#stick i { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px; border-radius: 50%; background: rgba(255,255,255,.35); border: 3px solid #000; }
+#tbtns { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(96px, calc(env(safe-area-inset-bottom) + 86px)); width: 200px; height: 200px; pointer-events: none; }
+#tbtns button { position: absolute; pointer-events: auto; border-radius: 50%; border: 3px solid #000; background: rgba(30,38,71,.85); box-shadow: 0 3px 0 #000; font-weight: 700; font-size: 12px; padding: 0; }
+#tFire { right: 0; bottom: 0; width: 88px; height: 88px; background: rgba(255,90,90,.85) !important; font-size: 15px !important; }
+#tJump { right: 98px; bottom: 0; width: 64px; height: 64px; }
+#tAb { right: 0; bottom: 98px; width: 64px; height: 64px; }
+#tPortal { right: 76px; bottom: 76px; width: 56px; height: 56px; background: rgba(57,255,106,.75) !important; color: #062b10; }
+#tGadget { right: 138px; bottom: 74px; width: 50px; height: 50px; }
+@media (pointer: coarse) { #hotbar { bottom: auto; top: max(62px, calc(env(safe-area-inset-top) + 52px)); transform: translateX(-50%) scale(.72); transform-origin: top; } #toasts { top: 120px; } #chat { bottom: 240px; width: 50vw; } #status { bottom: max(10px, env(safe-area-inset-bottom)); } }
+@media (max-width: 700px) { #hotbar .slot { width: 46px; height: 46px; font-size: 9px; } #dimBadge b { font-size: 14px; } }
+
+/* ---------- Dialogs ---------- */
+#modal { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.45); padding: 16px; }
+#modal .panel { width: min(560px, 100%); max-height: 86vh; }
+#modal h2 { display: flex; justify-content: space-between; align-items: center; }
+.list { display: grid; gap: 8px; }
+.row { display: flex; gap: 10px; align-items: center; justify-content: space-between; background: var(--panel2); border: 3px solid #000; border-radius: 12px; padding: 8px 10px; }
+.row .t { min-width: 0; }
+.row .t b { display: block; }
+.row .t small { color: var(--muted); }
+.row.dim b { color: var(--portal); }
+table.lb { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.lb td, table.lb th { padding: 4px 6px; text-align: left; border-bottom: 2px solid #0e1328; }
+table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
+.keys kbd { background: #0e1328; border: 2px solid #000; border-radius: 6px; padding: 0 6px; font: 700 13px var(--font); }
+#loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 22px; color: var(--portal); background: var(--bg); }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="loading">Opening a portal…</div>
+
+<section id="menu" hidden>
+  <header class="brand">
+    <h1>Multiverse Mayhem</h1>
+    <p>Infinite dimensions. Infinite versions of you. Zero consequences (probably).</p>
+  </header>
+  <div class="creator">
+    <div class="panel" id="archPanel">
+      <h2>Who are you in this universe?</h2>
+      <div class="arch-list" id="archList"></div>
+      <div id="archInfo"></div>
+    </div>
+    <div id="stage">
+      <div class="hint">Drag to spin your variant</div>
+      <div class="stage-tools">
+        <button class="btn" id="randomize">Randomize</button>
+        <button class="btn" id="presetBtn">Presets</button>
+      </div>
+    </div>
+    <div class="panel" id="lookPanelWrap">
+      <div class="tabs" role="tablist" id="lookTabs"></div>
+      <div id="lookPanel"></div>
+    </div>
+  </div>
+  <footer>
+    <div class="playbar">
+      <label class="grp"><span>Name</span><input class="field" id="name" maxlength="16" size="12" autocomplete="off" spellcheck="false"></label>
+      <label class="grp"><span>Home dimension</span><input class="field" id="home" maxlength="7" size="6" autocomplete="off" spellcheck="false"></label>
+      <label class="grp"><span>Start in</span><select class="field" id="startDim"></select></label>
+      <button class="btn go" id="playOffline">Play offline with bots</button>
+      <label class="grp"><span>Server</span><input class="field" id="server" placeholder="your-server.onrender.com" size="18" autocomplete="off" spellcheck="false"></label>
+      <button class="btn gold" id="playOnline">Play online</button>
+      <button class="btn" id="helpBtn" aria-label="How to play">?</button>
+    </div>
+    <p class="note" id="menuNote">A fan-made parody-style game with original characters. Not affiliated with any TV show or studio.</p>
+  </footer>
+</section>
+
+<section id="hud" hidden>
+  <div id="dimBadge" class="badge"><b id="dimName"></b><small id="dimInfo"></small></div>
+  <div id="netWarn" hidden></div>
+  <div id="topRight">
+    <div id="score" class="badge">Chaos <b id="chaos">0</b> · KOs <b id="kos">0</b></div>
+    <button class="ibtn pe" id="bBoard" aria-label="Players and leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
+    <button class="ibtn pe" id="bChat" aria-label="Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
+    <button class="ibtn pe" id="bMenu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+  <div id="feed"></div>
+  <div id="toasts"></div>
+  <div id="cross"></div>
+  <div id="dmgNums"></div>
+  <div id="flash"></div>
+  <div id="chat"><div id="chatLog"></div><input class="field pe" id="chatInput" maxlength="140" placeholder="Say something to the multiverse…" hidden autocomplete="off"></div>
+  <div id="status">
+    <div class="bar" id="hpBar"><i id="hpFill"></i><span id="hpText"></span></div>
+    <div class="bar" id="flyBar" hidden><i id="flyFill" style="background: var(--cyan)"></i><span>Wings</span></div>
+    <div id="res"><span>⚙ <b id="scrap">0</b></span><span>◆ <b id="crys">0</b></span><span id="charges"></span></div>
+  </div>
+  <div id="hotbar"></div>
+  <div id="prompt" class="badge" hidden></div>
+  <div id="dead" hidden><div class="box"><h2>WRECKED</h2><p id="deadBy"></p><button class="btn go" id="respawn">Respawn</button></div></div>
+</section>
+
+<div id="touch" hidden>
+  <div id="stick"><i></i></div>
+  <div id="tbtns">
+    <button id="tFire">FIRE</button>
+    <button id="tJump">JUMP</button>
+    <button id="tAb">SKILL</button>
+    <button id="tPortal">PORTAL</button>
+    <button id="tGadget">GADGET</button>
+  </div>
+</div>
+
+<div id="modal" hidden><div class="panel" id="modalBox" role="dialog" aria-modal="true"></div></div>
+
+<script src="vendor/three.min.js"></script>
+<script src="shared/rules.js"></script>
+<script src="shared/world.js"></script>
+<script src="shared/protocol.js"></script>
+<script src="sim/host.js"></script>
+<script src="sim/bot.js"></script>
+<script src="js/toon.js"></script>
+<script src="js/avatar.js"></script>
+<script src="js/dims.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/net.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
