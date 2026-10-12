@@ -388,7 +388,45 @@
     av.shoulderY = shoulderY;
     av.headY = neckY + headR * 2.2 + (L.acc === 'tophat' || L.hair === 'afro' ? headR * 0.9 : 0);
     if (bean) av.headY = neckY + headR * 2;
+    // Where the eyes are, for the first-person camera.
+    av.eyeY = bean ? neckY + headR * 0.4 : neckY + headR * 1.1;
     return av;
+  };
+
+  // ---------- First-person arm ----------
+  // Your right arm as you see it in first person: the forearm points forward (+z) from the
+  // shoulder at the origin, with the gun's barrel lined up along it.
+  C.buildViewArm = function (look, arch) {
+    const L = MM.sanitizeLook(look);
+    const A = MM.ARCHETYPES[arch] || MM.ARCHETYPES.genius;
+    const species = L.species, h = L.height, w = L.width, top = L.top;
+    const bean = species === 'beanling' || species === 'pickle', blob = species === 'blob';
+    const skin = L.skin;
+    const armR = (bean ? 0.05 : blob ? 0.12 : 0.065) * w;
+    const len = 0.58 * h * (blob ? 1.1 : 1);
+    const sleeveC = top === 'none' ? skin : top === 'vest' ? L.shirtColor : L.topColor;
+    const sleeveLen = (top === 'tshirt' || top === 'polo' || top === 'vest') ? 0.35 : (top === 'none' || top === 'tank' || bean) ? 0 : 1;
+    const s = new C.Shape();
+    const fwd = [Math.PI / 2, 0, 0];   // capsules grow along +y; this lays them along +z
+    C.capsuleAt(s, skin, armR, len, [0, 0, 0], fwd);
+    if (sleeveLen > 0) {
+      C.capsuleAt(s, sleeveC, armR * 1.35, len * sleeveLen * 0.92, [0, 0, 0], fwd);
+      if (top === 'labcoat') s.add(P.cyl, '#ffffff', [0, 0, len * 0.9], fwd, [armR * 1.45, 0.05, armR * 1.45]);   // cuff
+    }
+    s.add(P.sphere, species === 'robot' ? shade(skin, 0.8) : skin, [0, 0, len], null, [armR * 1.6, armR * 1.5, armR * 1.7]);
+    const melee = MM.WEAPONS[A.weapon].melee;
+    if (!melee) {
+      const col = A.weapon === 'plasma' ? L.portalColor : WEAPON_COLORS[A.weapon] || '#ffd84d';
+      const z = len + 0.02;
+      s.add(P.box, '#9aa3ab', [0, -0.03, z], [-0.35, 0, 0], [0.07, 0.16, 0.08]);   // grip in the fist
+      s.add(P.box, '#d8dde2', [0, 0.08, z + 0.08], null, [0.1, 0.12, 0.3]);
+      s.add(P.cyl, col, [0, 0.1, z + 0.26], fwd, [0.05, 0.22, 0.05], true);
+      s.add(P.sphereLo, col, [0, 0.1, z + 0.39], null, [0.055, 0.055, 0.055], true);
+      s.add(P.box, '#59606e', [0, 0.155, z + 0.0], null, [0.04, 0.03, 0.12]);
+    } else if (species === 'birdfolk') {
+      for (let i = -1; i <= 1; i++) s.add(P.cone, '#e8e2d0', [i * 0.04, 0.02, len + 0.1], [Math.PI / 2, 0, 0], [0.025, 0.14, 0.025]);
+    }
+    return C.meshOf(s.build(), 0.03);
   };
 
   // ---------- Animation ----------

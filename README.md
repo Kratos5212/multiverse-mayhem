@@ -48,12 +48,15 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | F | TALK / USE | Talk to locals, daily tasks at buildings, the kiosk |
 | J | Journal button | Your life, your path, errands |
 | B | SHIP | Board or leave your ship (Space up, Shift down) |
-| 1 2 3 | GADGET | Grenade, turret, shrink ray |
+| 1 2 3 4 | GADGET | Grenade, turret, shrink ray, Meeseeks Box |
 | C | Build slot | Workbench |
 | Enter | Chat button | Chat with the whole multiverse |
 | Tab | Chart button | Leaderboard, players here, mute |
-| V |  | Wave |
+| V or mouse wheel | Eye button | Switch between first and third person |
+| G |  | Wave |
 | Esc | Menu button | Settings and leave |
+
+**First person:** press **V**, scroll all the way in, tap the eye button, or pick it in the menu's settings. You see through your character's eyes, with your own arm, sleeve and gun (or fist) in front of you. In a ship you look out over the saucer's rim. When you die, the camera pulls back so you can see what happened. The choice is remembered.
 
 ## Who you are: characters, lives and lore limits
 

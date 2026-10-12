@@ -9,7 +9,7 @@
   const r2 = v => Math.round(v * 100) / 100;
 
   // ---------- Profile and settings ----------
-  const settings = UI.load('settings', { sens: 1, invert: false, volume: 0.6, quality: isTouch ? 'low' : 'high', botChat: true });
+  const settings = UI.load('settings', { sens: 1, invert: false, volume: 0.6, quality: isTouch ? 'low' : 'high', botChat: true, view: 'third' });
   const profile = UI.load('profile', { name: '', home: '', arch: 'genius', look: null, server: '', startDim: 'suburbia' });
   if (!MM.ARCHETYPES[profile.arch]) profile.arch = 'genius';
   profile.look = profile.look ? MM.sanitizeLook(profile.look) : MM.canonLook(profile.arch);
@@ -24,12 +24,21 @@
   applyQuality();
   renderer.setClearColor('#0b0f1e');
   const camera = new T.PerspectiveCamera(62, 1, 0.1, 1500);
+  // First person: your own arm and gun live in a tiny scene drawn on top of the world,
+  // so they never poke through walls.
+  const vmScene = new T.Scene();
+  vmScene.add(new T.HemisphereLight('#ffffff', '#8890a0', 0.65));
+  const vmSun = new T.DirectionalLight('#ffffff', 0.5); vmSun.position.set(1, 3, 2); vmScene.add(vmSun);
+  const vmCam = new T.PerspectiveCamera(62, 1, 0.02, 10);
+  const vm = { root: null, arm: null, src: null, bob: 0, swayX: 0, swayY: 0, pose: { x: 0.3, y: -0.3, z: 0.1, pitch: -0.22, yaw: 0.28, roll: 0, size: 0.92 },
+    fistPose: { x: 0.3, y: -0.32, z: 0.1, pitch: -0.5, yaw: 0.4, roll: 0, size: 0.8 } };
   const scene = new T.Scene();
   const fx = new C.FX(scene);
   function resize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h; camera.updateProjectionMatrix();
+    vmCam.aspect = w / h; vmCam.updateProjectionMatrix();
     fx.setScale(h * Math.min(window.devicePixelRatio || 1, 2));
   }
   window.addEventListener('resize', resize);
@@ -119,7 +128,7 @@
     mode: 'menu', net: null, myId: 0, ep: 0, dimId: null, inst: 0, world: null, you: null,
     me: { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, grounded: true, fly: 6, kbT: 0, aimT: 0, emoteT: 0, flying: false },
     meAv: null, players: new Map(), npcs: new Map(), pickups: new Map(), portals: new Map(), turrets: new Map(), alive: [],
-    camYaw: 0, camPitch: 0.25, camDist: 6, shake: 0,
+    vm, camYaw: 0, camPitch: 0.25, camDist: 6, shake: 0,
     offset: null, lastSnap: 0, stT: 0, fireT: 0, pingT: 0, ping: 0, pop: null, top: [],
     muted: new Set(), deadBy: '', modal: null, entered: false,
     promptT: 0, promptKey: '', camPropT: 0, camProps: [],
@@ -972,6 +981,7 @@
       box.append(
         row('Look sensitivity', el('input', { type: 'range', min: 0.3, max: 2.5, step: 0.05, value: settings.sens, oninput: e => { settings.sens = Number(e.target.value); UI.save('settings', settings); } })),
         row('Volume', el('input', { type: 'range', min: 0, max: 1, step: 0.05, value: settings.volume, oninput: e => { settings.volume = Number(e.target.value); C.setVolume(settings.volume); UI.save('settings', settings); } })),
+        row('View', el('div', { class: 'chips' }, ...[['third', 'Third person'], ['first', 'First person']].map(([v, t]) => el('button', { class: 'chip', 'aria-pressed': String(settings.view === v), onclick: () => { setView(v); openMenu(); } }, t)))),
         row('Graphics', el('div', { class: 'chips' }, ...['high', 'low'].map(q => el('button', { class: 'chip', 'aria-pressed': String(settings.quality === q), onclick: () => { settings.quality = q; applyQuality(); resize(); UI.save('settings', settings); openMenu(); } }, q)))),
         row('Options', el('div', { class: 'chips' },
           el('button', { class: 'chip', 'aria-pressed': String(settings.invert), onclick: () => { settings.invert = !settings.invert; UI.save('settings', settings); openMenu(); } }, 'Invert look'),
@@ -1025,7 +1035,8 @@
       case 'Digit2': useGadget('turret'); break;
       case 'Digit3': useGadget('shrink'); break;
       case 'Digit4': useGadget('meeseeks'); break;
-      case 'KeyV': emote(); break;
+      case 'KeyV': toggleView(); break;
+      case 'KeyG': emote(); break;
       case 'Space': e.preventDefault(); if (G.you && G.you.dead && now() >= G.rsAt) send({ t: 'rs' }); break;
     }
   });
@@ -1047,12 +1058,20 @@
     if (!locked && e.target !== canvas) return;
     look(e.movementX, e.movementY);
   });
-  canvas.addEventListener('wheel', e => { G.camDist = Math.max(3, Math.min(14, G.camDist + Math.sign(e.deltaY) * 0.8)); }, { passive: true });
+  canvas.addEventListener('wheel', e => {
+    // Scroll all the way in for first person, and back out for third.
+    if (firstPerson()) { if (e.deltaY > 0) { setView('third'); G.camDist = 3; } return; }
+    if (e.deltaY < 0 && G.camDist <= 3) { setView('first'); return; }
+    G.camDist = Math.max(3, Math.min(14, G.camDist + Math.sign(e.deltaY) * 0.8));
+  }, { passive: true });
   canvas.addEventListener('contextmenu', e => e.preventDefault());
   function look(dx, dy) {
     const s = 0.0026 * settings.sens;
     G.camYaw -= dx * s;
-    G.camPitch = Math.max(-0.6, Math.min(1.25, G.camPitch + dy * s * (settings.invert ? -1 : 1)));
+    const lo = firstPerson() ? -1.45 : -0.6, hi = firstPerson() ? 1.45 : 1.25;
+    G.camPitch = Math.max(lo, Math.min(hi, G.camPitch + dy * s * (settings.invert ? -1 : 1)));
+    vm.swayX = Math.max(-0.04, Math.min(0.04, vm.swayX - dx * 0.00025));
+    vm.swayY = Math.max(-0.04, Math.min(0.04, vm.swayY + dy * 0.00025 * (settings.invert ? -1 : 1)));
   }
 
   // Touch: left stick, drag anywhere else to look, round buttons.
@@ -1102,6 +1121,7 @@
   $('respawn').onclick = () => { if (G.you && G.you.dead && now() >= G.rsAt) send({ t: 'rs' }); };
   $('bBoard').onclick = () => openBoard();
   $('bChat').onclick = () => (chatOpen() ? closeChat(false) : openChat());
+  $('bView').onclick = () => toggleView();
   $('bMenu').onclick = () => openMenu();
 
   // ---------- Local movement ----------
@@ -1193,13 +1213,15 @@
     me.aimT = Math.max(0, me.aimT - dt);
     me.emoteT = Math.max(0, me.emoteT - dt);
     const hs = Math.hypot(me.vx, me.vz);
-    if (me.aimT > 0 || mouseDown || touch.fire) me.yaw = G.camYaw;
+    if (firstPerson() || me.aimT > 0 || mouseDown || touch.fire) me.yaw = G.camYaw;
     else if (hs > 0.5) me.yaw += wrap(Math.atan2(me.vx, me.vz) - me.yaw) * Math.min(1, dt * 12);
     me.anim = dead ? MM.ANIM.dead : inShip ? MM.ANIM.idle : me.flying ? MM.ANIM.fly : !me.grounded ? MM.ANIM.air : me.emoteT > 0 ? MM.ANIM.emote : hs > 0.6 ? MM.ANIM.run : MM.ANIM.idle;
     if (G.meAv) {
       G.meAv.root.position.set(me.x, me.y, me.z);
       G.meAv.root.rotation.y = me.yaw;
       G.meAv.animate(dt, { speed: me.grounded ? hs : 0, anim: me.anim, fx: fxb });
+      G.meAv.body.visible = !firstPerson() || dead;
+      vm.bob += (me.grounded && !inShip ? hs : 0) * dt * 1.6; vm.speed = me.grounded && !inShip ? Math.min(1, hs / 5) : 0;
     }
     if (st.fly) $('flyFill').style.transform = 'scaleX(' + me.fly / (st.flyTime || 6) + ')';
     // Hold to fire.
@@ -1319,9 +1341,57 @@
   }
 
   // ---------- Camera ----------
+  function firstPerson() { return settings.view === 'first'; }
+  function setView(v) {
+    settings.view = v; UI.save('settings', settings);
+    if (v === 'third') G.camPitch = Math.max(-0.6, Math.min(1.25, G.camPitch));
+    UI.toast((v === 'first' ? 'First person' : 'Third person') + (isTouch ? '' : ' (V to switch)'), 1500);
+  }
+  function toggleView() { setView(firstPerson() ? 'third' : 'first'); }
+  // Your right arm, with the same sleeve, skin and gun as your character.
+  function buildViewModel() {
+    if (vm.root) vmScene.remove(vm.root);
+    vm.root = vm.arm = null; vm.src = G.meAv;
+    if (!G.meAv) return;
+    const holder = new T.Group();
+    vm.holder = holder;
+    const arm = new T.Group();
+    arm.add(C.buildViewArm(profile.look, profile.arch));
+    holder.add(arm);
+    vm.root = new T.Group(); vm.root.add(holder);
+    vm.arm = arm;
+    vmScene.add(vm.root);
+  }
+  function updateViewModel(dt) {
+    if (vm.src !== G.meAv) buildViewModel();
+    if (!vm.root) return false;
+    const y = G.you, show = firstPerson() && y && !y.dead && !y.ship && G.me.emoteT <= 0;
+    vm.root.visible = !!show;
+    if (!show) return false;
+    const k = vm.speed || 0, melee = MM.WEAPONS[weaponId()].melee;
+    const at = Math.max(0, G.meAv.attackT || 0);
+    const punch = melee ? Math.sin(Math.min(1, 1 - at / 0.3) * Math.PI) * (at > 0 ? 1 : 0) : 0, kick = melee ? 0 : at / 0.2;
+    vm.swayX *= Math.max(0, 1 - dt * 8); vm.swayY *= Math.max(0, 1 - dt * 8);
+    const P0 = melee ? vm.fistPose : vm.pose;
+    vm.holder.rotation.set(0, Math.PI + P0.yaw, P0.roll);   // the character faces +z; the camera looks down -z
+    vm.holder.scale.setScalar(P0.size / Math.max(0.5, G.meAv.look.height));
+    vm.root.position.set(P0.x + Math.sin(vm.bob) * 0.01 * k + vm.swayX, P0.y - Math.abs(Math.cos(vm.bob)) * 0.012 * k + vm.swayY, P0.z + kick * 0.04 - punch * 0.15);
+    vm.arm.rotation.x = P0.pitch - kick * 0.15 - punch * 0.15;
+    return true;
+  }
+
   function updateCamera(dt) {
     const me = G.me;
     const sc = G.meAv ? G.meAv.root.scale.x : 1;
+    if (firstPerson() && !(G.you && G.you.dead)) {
+      const cp = Math.cos(G.camPitch);
+      let cx = me.x, cy = me.y + (G.meAv ? G.meAv.eyeY : 1.6) * sc, cz = me.z;
+      if (G.you && G.you.ship) cy = me.y + 1.9;
+      if (G.shake > 0) { cx += (Math.random() - 0.5) * G.shake; cy += (Math.random() - 0.5) * G.shake; cz += (Math.random() - 0.5) * G.shake; G.shake = Math.max(0, G.shake - dt * 1.5); }
+      camera.position.set(cx, cy, cz);
+      camera.lookAt(cx + Math.sin(G.camYaw) * cp, cy - Math.sin(G.camPitch), cz + Math.cos(G.camYaw) * cp);
+      return;
+    }
     const tx = me.x, ty = me.y + 1.7 * sc + 0.2, tz = me.z;
     const cp = Math.cos(G.camPitch), sp = Math.sin(G.camPitch);
     const fx_ = Math.sin(G.camYaw) * cp, fy = -sp, fz = Math.cos(G.camYaw) * cp;
@@ -1394,6 +1464,7 @@
       if (stale) $('netWarn').textContent = 'Connection unstable…';
     }
     renderer.render(scene, camera);
+    if (updateViewModel(dt)) { renderer.autoClear = false; renderer.clearDepth(); renderer.render(vmScene, vmCam); renderer.autoClear = true; }
   }
   frame();
 })();
