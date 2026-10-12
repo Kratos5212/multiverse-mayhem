@@ -386,9 +386,10 @@
       if (top !== 'none') ts.add(P.cyl, L.topColor, [0, legLen + torsoLen * 0.25, 0], null, [torsoR * 0.95, torsoLen * 0.25, torsoR * 0.8]);
       shoulderY = legLen + torsoLen * 0.8; neckY = legLen + torsoLen * 0.95; headR = 0.24 * hs;
     } else {
-      ts.add(P.sphere, pants, [0, legLen + 0.02, 0], null, [torsoR * 1.02, 0.16, torsoR * 0.8]);
+      const bare = top === 'none' && pants === skin;   // fur all over (Squanchy): no waistband
+      if (!bare) ts.add(P.sphere, pants, [0, legLen + 0.02, 0], null, [torsoR * 1.02, 0.16, torsoR * 0.8]);
       C.capsuleAt(ts, topC, torsoR, torsoLen + 0.1, [0, legLen - 0.05, 0], null);
-      ts.add(P.cyl, pants, [0, legLen + 0.05, 0], null, [torsoR * 1.03, 0.1, torsoR * 1.03]);
+      if (!bare) ts.add(P.cyl, pants, [0, legLen + 0.05, 0], null, [torsoR * 1.03, 0.1, torsoR * 1.03]);
       if (top === 'labcoat') {
         // Coat: over the shoulders, open at the front, tails down to the knees.
         const coat = L.topColor;
@@ -424,6 +425,11 @@
       shoulderY = legLen + torsoLen - 0.06; neckY = legLen + torsoLen + neckLen;
     }
     if (species === 'robot' && !bean) ts.add(P.cyl, '#22e6ff', [0, legLen + torsoLen * 0.6, torsoR * 0.95], [Math.PI / 2, 0, 0], [0.07, 0.03, 0.07], true);
+    if (species === 'insect') for (const sx of [-1, 1]) {
+      // Gromflomite wings: long, pale and veined, folded down the back.
+      ts.add(P.sphere, '#cfe4ee', [sx * torsoR * 0.45, legLen + torsoLen * 0.55, -torsoR * 1.05], [0.15, sx * 0.25, sx * 0.18], [torsoR * 0.42, torsoLen * 0.62, 0.025]);
+      ts.add(P.box, '#8fa8b8', [sx * torsoR * 0.45, legLen + torsoLen * 0.55, -torsoR * 1.08], [0.15, sx * 0.25, sx * 0.18], [0.02, torsoLen * 1.0, 0.02]);
+    }
     parts.torso = mk(ts, body);
 
     // Arms: sleeves follow the top.
@@ -635,9 +641,12 @@
     set(p.armL, 'z', aLz); set(p.armR, 'z', aRz);
     set(p.torso, 'y', twist);
     if (p.wingL) {
-      const flap = fly ? Math.sin(av.t * 14) * 0.8 : air ? Math.sin(av.t * 8) * 0.4 : Math.sin(av.t * 1.5) * 0.08;
-      p.wingL.rotation.z = -0.2 + flap; p.wingR.rotation.z = 0.2 - flap;
-      p.wingL.rotation.y = fly ? 0 : 0.6; p.wingR.rotation.y = fly ? 0 : -0.6;
+      // Folded down behind the back at rest (like Birdperson), half open in a jump, spread to fly.
+      const open = fly ? 1 : air ? 0.55 : 0;
+      av.wingOpen = lerp(av.wingOpen || 0, open, Math.min(1, dt * 6));
+      const o = av.wingOpen, flap = fly ? Math.sin(av.t * 14) * 0.8 : air ? Math.sin(av.t * 8) * 0.4 : Math.sin(av.t * 1.5) * 0.05;
+      p.wingL.rotation.z = lerp(1.2, -0.2, o) + flap; p.wingR.rotation.z = lerp(-1.2, 0.2, o) - flap;
+      p.wingL.rotation.y = lerp(-1.0, 0, o); p.wingR.rotation.y = lerp(1.0, 0, o);
     }
     p.head.rotation.y = lerp(p.head.rotation.y, headY - twist * 0.6, f);
     if (av.jet) { av.jet.flame.visible = fly; av.jet.flame.scale.y = 0.8 + Math.random() * 0.4; }
