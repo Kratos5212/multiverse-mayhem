@@ -103,6 +103,11 @@
     $('home').oninput = () => { profile.home = $('home').value.toUpperCase(); UI.save('profile', profile); };
     $('startDim').onchange = () => { profile.startDim = $('startDim').value; UI.save('profile', profile); };
     $('server').oninput = () => { profile.server = $('server').value.trim(); UI.save('profile', profile); };
+    // Pages that can't reach a game server (like a hosted preview) offer offline play only.
+    if (window.MM_NO_ONLINE) {
+      $('playOnline').hidden = true; $('server').closest('.grp').hidden = true;
+      $('menuNote').textContent = 'Offline preview with bots. For online play with friends, run the server from the repository. Original characters; not affiliated with any TV show or studio.';
+    }
     $('playOffline').onclick = () => start('offline');
     $('playOnline').onclick = () => start('online');
     $('helpBtn').onclick = () => UI.help();
