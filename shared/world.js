@@ -320,7 +320,7 @@
   MM.DIM_BY_ID = {};
   for (const d of MM.DIMS) MM.DIM_BY_ID[d.id] = d;
   // Alternate Earths share the home street plan (same seed, same streets) with their own twist.
-  for (const d of MM.DIMS) if (d.variantOf) {
+  function fillVariant(d) {
     const B = MM.DIM_BY_ID[d.variantOf];
     for (const k of ['seed', 'gravity', 'amp', 'scale', 'streets', 'spawn', 'flat']) if (d[k] === undefined) d[k] = B[k];
     d.props = (B.props || []).concat(d.extra || []);
@@ -331,6 +331,8 @@
       MM.LANDMARKS.push(c); MM.LANDMARK_BY_ID[c.id] = c;
     }
   }
+  for (const d of MM.DIMS) if (d.variantOf) fillVariant(d);
+  MM.fillVariant = fillVariant;
   MM.DIM_IDS = MM.DIMS.map(d => d.id);
   // Dimensions you can portal or kiosk to (the garage and its rooms are reached through doors).
   MM.WORLD_IDS = MM.DIMS.filter(d => !d.hidden).map(d => d.id);
@@ -626,6 +628,22 @@
       talk: ['Hangar 4? Weather balloon. All of them are weather balloons.', 'We reverse-engineered a toaster from Gazorpazorp. It judges you.', 'Do you know a Rick? Asking for the government.'],
       moods: { line: 50, gift: 14, trade: 12, errand: 12, buff: 6 } },
     // ----- Alternate Earths -----
+    catfolk: { name: 'Cat Person', hp: 35, speed: 3, hostile: false, dmg: 0, drop: { f: 1, s: 1 }, r: 0.6, h: 1.8,
+      human: { species: ['cat'], top: ['polo', 'sweater', 'tshirt', 'vest'], acc: ['none', 'none', 'cap'], look: { hair: 'bald' } }, names: ['Mittens', 'Gary Whiskers', 'Purrla', 'Doug Felix'],
+      talk: ['Everyone here is a cat. Yes, even the mailman.', 'Your face is so smooth. It is upsetting.', 'Nap first, apocalypse later.'],
+      moods: { line: 50, gift: 12, trade: 10, errand: 12, buff: 8, angry: 4, dance: 3 } },
+    robotfolk: { name: 'Robot Neighbor', hp: 60, speed: 2.6, hostile: false, dmg: 0, drop: { c: 2, s: 1 }, r: 0.6, h: 1.9,
+      human: { species: ['robot'], top: ['none', 'vest'], acc: ['none', 'antennae'] }, names: ['Unit 7', 'Gary-Bot', 'BRENDA-9', 'Toaster Todd'],
+      talk: ['GREETINGS, ORGANIC. YOUR LAWN IS NON-COMPLIANT.', 'I was programmed to love my family. I do. Mostly.', 'BEEP. That was a joke. Laugh now.'],
+      moods: { line: 55, gift: 10, trade: 12, errand: 12, buff: 6, angry: 5 } },
+    alienfolk: { name: 'Alien Neighbor', hp: 40, speed: 2.8, hostile: false, dmg: 0, drop: { p: 1, s: 1 }, r: 0.6, h: 1.9,
+      human: { species: ['alien'], top: ['polo', 'sweater', 'tshirt'], acc: ['antennae', 'none', 'goggles'] }, names: ['Zorb', 'Glip Glop', 'Krevin', 'Shleebie'],
+      talk: ['On this Earth the aliens won. We are very nice about it.', 'Do you also have two hearts? No? Huh.', 'The humans here live in a zoo. A nice zoo.'],
+      moods: { line: 50, gift: 12, trade: 12, errand: 12, buff: 8 } },
+    blobfolk: { name: 'Blob Neighbor', hp: 45, speed: 2.2, hostile: false, dmg: 0, drop: { g: 2 }, r: 0.7, h: 1.6,
+      human: { species: ['blob'], top: ['none', 'tshirt'], acc: ['none', 'tophat'] }, names: ['Gloop', 'Blorp Smith', 'Sloosh', 'Goo Gary'],
+      talk: ['We all melted a while ago. It is fine. It is warm.', 'Please do not step on my feet. Any of them.', 'Glorp.'],
+      moods: { line: 55, gift: 12, trade: 8, errand: 12, buff: 8 } },
     fascistsoldier: { name: 'Fascist Trooper', hp: 60, speed: 4.2, hostile: true, dmg: 10, drop: { p: 2, s: 2 }, r: 0.6, h: 1.9,
       human: { species: ['human'], top: ['armor'], acc: ['cap'], colors: { topColor: '#3a3a40', shirtColor: '#3a3a40', pantsColor: '#2a2a30', accColor: '#b5243c' } } },
     shrimpfolk: { name: 'Shrimp Person', hp: 35, speed: 2.8, hostile: false, dmg: 0, drop: { g: 2, s: 1 }, r: 0.6, h: 1.8,
@@ -967,6 +985,71 @@
     }
     return [x, z];
   };
+
+  // ---------- Personal home dimensions ----------
+  // Every character comes from a dimension, like Rick C-137. Your home code (Y-231, J-19...)
+  // is a real place: an alternate Earth made from the code, the same for everyone, with its
+  // own twist. C-137 is the show's Earth (suburbia). Earth folk start in theirs.
+  MM.EARTH_ARCHS = ['genius', 'sidekick', 'teen', 'surgeon', 'joe', 'evilmorty'];
+  MM.homeDimId = code => {
+    const c = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return c === 'C137' || !c ? 'suburbia' : 'h_' + c;
+  };
+  MM.HOME_RE = /^h_[A-Z]{1,2}[0-9]{1,4}$/;
+  const pretty = c => c.replace(/^([A-Z]+)([0-9]+)$/, '$1-$2');
+  const shift = (hex, h, sat, light) => { const c = parseInt(hex.slice(1), 16); const r = (c >> 16) / 255, g = (c >> 8 & 255) / 255, b = (c & 255) / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn; let hh = 0, ss = d ? d / (1 - Math.abs(2 * l - 1)) : 0;
+    if (d) hh = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    hh = ((hh * 60 + h) % 360 + 360) % 360; ss = Math.max(0, Math.min(1, ss * sat)); const L = Math.max(0, Math.min(1, l * light));
+    const C2 = (1 - Math.abs(2 * L - 1)) * ss, X = C2 * (1 - Math.abs((hh / 60) % 2 - 1)), m = L - C2 / 2;
+    const [a, b2, c2] = hh < 60 ? [C2, X, 0] : hh < 120 ? [X, C2, 0] : hh < 180 ? [0, C2, X] : hh < 240 ? [0, X, C2] : hh < 300 ? [X, 0, C2] : [C2, 0, X];
+    return '#' + [a, b2, c2].map(v => Math.round((v + m) * 255).toString(16).padStart(2, '0')).join(''); };
+  // The ways an Earth can have gone, all from the show.
+  const TWISTS = [
+    { k: 'plain', blurb: 'Another Earth where the Smiths live. It is almost exactly like the others. Almost.', npc: [['neighbor', 10], ['schoolkid', 4]] },
+    { k: 'plain', blurb: 'An Earth one tiny decision away from C-137. Nobody here can tell which decision.', npc: [['neighbor', 10], ['cop', 2]] },
+    { k: 'cronen', blurb: 'The love potion happened here too. The neighbours are Cronenbergs now.', sky: ['#3d0a1c', '#c4485f'], ground: ['#c9576b', '#e07a85', '#9c3a4e'], npc: [['meatblob', 6], ['fleshmonk', 3]], extra: [['fleshpillar', 18], ['eyestalk', 14], ['pustule', 14]] },
+    { k: 'fascist', blurb: 'A fascist Earth: grey skies, banners, and a Rick in a robe somewhere in charge.', sky: ['#6a6e78', '#b8b0a8'], ground: ['#5a6a4a', '#647454', '#506040'], npc: [['fascistsoldier', 7], ['neighbor', 4]], extra: [['banner', 24], ['watchtower', 5]] },
+    { k: 'shrimp', blurb: 'An Earth where everyone evolved from shrimp.', sky: ['#ff9f86', '#ffe2d4'], npc: [['shrimpfolk', 12]], extra: [['shrimpstatue', 5]] },
+    { k: 'teddy', blurb: 'An Earth of teddy bear people.', npc: [['teddyfolk', 12]], extra: [['teddystatue', 5], ['honeypot', 12]] },
+    { k: 'cats', blurb: 'An Earth where everybody is a cat. The Smiths too.', npc: [['catfolk', 12]], extra: [['tennisball', 10]] },
+    { k: 'robots', blurb: 'An Earth run by robots who very much want you to have a nice day.', sky: ['#7a9ab8', '#d8e8f4'], ground: ['#8a9a9a', '#96a6a6', '#7a8a8a'], npc: [['robotfolk', 12], ['butterbot', 2]], extra: [['antenna', 12], ['biggear', 4]] },
+    { k: 'aliens', blurb: 'An Earth where the aliens won, and the humans are kept as pets.', sky: ['#5ff8c8', '#e8fff0'], npc: [['alienfolk', 10], ['doghuman', 4]], extra: [['mushroom', 16], ['crystal', 10]] },
+    { k: 'blobs', blurb: 'An Earth where everyone is a friendly puddle.', npc: [['blobfolk', 12]], extra: [['pustule', 10]] },
+    { k: 'candy', blurb: 'A sugar-coated Earth. The lawns are candyfloss. Do not lick the mailbox.', sky: ['#ffb0e0', '#fff0fa'], ground: ['#ffb6dc', '#ffd0ec', '#f4a0d0'], npc: [['neighbor', 8], ['froopy', 4]], extra: [['lollipop', 16], ['cottontree', 14], ['candyrock', 8]] },
+    { k: 'jungle', blurb: 'An Earth the jungle took back. The houses are still there, somewhere under the leaves.', ground: ['#3e8a2e', '#4a9a36', '#367a28'], npc: [['neighbor', 6], ['seedbeast', 3]], extra: [['seedtree', 22], ['fungus', 16], ['thornbush', 10]] },
+    { k: 'night', blurb: 'An Earth where the sun went out. Everyone just got used to it.', sky: ['#0b0f1e', '#1e2440'], fog: '#1a2034', ground: ['#2e4a2e', '#365436', '#283e28'], npc: [['neighbor', 8], ['cop', 3]], extra: [['lamp', 20]] },
+    { k: 'pizza', blurb: 'An Earth where the furniture and the pizza are people, and the people are the furniture.', npc: [['pizzaperson', 5], ['chairperson', 4], ['phoneperson', 3]], extra: [['giantchair', 6], ['pizzabox', 8]] },
+    { k: 'wasteland', blurb: 'An Earth after the bombs. Raiders, scrap towers and a lot of sand.', sky: ['#e8a860', '#f8e0b0'], ground: ['#c8a46a', '#d8b47a', '#b8945a'], npc: [['raider', 6], ['neighbor', 3]], extra: [['wreck', 12], ['cactus', 12], ['scraptower', 6]] },
+    { k: 'dogs', blurb: 'An Earth where the dogs took over, like Snowball wanted.', npc: [['dogcitizen', 8], ['doghuman', 4]], extra: [['doghouse', 10], ['bigbone', 6]] },
+  ];
+  const hashStr = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  let homes = 0;
+  MM.ensureHomeDim = function (id) {
+    if (byId[id]) return byId[id];
+    if (!MM.HOME_RE.test(id) || homes >= 5000) return undefined;
+    homes++;
+    const code = id.slice(2), r = MM.rng(hashStr(code)), B = byId.suburbia;
+    const tw = TWISTS[Math.floor(r() * TWISTS.length)], hue = Math.round((r() - 0.5) * 70);
+    const d = {
+      id, variantOf: 'suburbia', home: true, name: 'Earth ' + pretty(code), code: pretty(code), seed: 1000 + (hashStr(code) % 90000),
+      blurb: tw.blurb, twist: tw.k,
+      sky: tw.sky || B.sky.map(c => shift(c, hue, 1, 1)), fog: tw.fog || shift(B.fog, hue, 1, 1), fogFar: B.fogFar, sun: B.sun, ambient: shift(B.ambient, hue, 1, 1),
+      ground: tw.ground || B.ground.map(c => shift(c, hue * 0.6, 0.8 + r() * 0.4, 0.9 + r() * 0.2)), accent: B.accent,
+      extra: tw.extra || [], npc: tw.npc, pickups: { s: 16, c: 2, k: 2 }, mat: 's', space: id,
+    };
+    MM.DIMS.push(d); byId[id] = d; MM.DIM_IDS.push(id);
+    fillVariant(d);
+    return d;
+  };
+  // Looking up a home dimension by id makes it (deterministically) the first time.
+  const byId = MM.DIM_BY_ID;
+  const make = k => { if (typeof k === 'string' && !(k in byId) && MM.HOME_RE.test(k)) MM.ensureHomeDim(k); };
+  MM.DIM_BY_ID = new Proxy(byId, {
+    get(t, k) { make(k); return t[k]; },
+    has(t, k) { make(k); return k in t; },
+    getOwnPropertyDescriptor(t, k) { make(k); return Object.getOwnPropertyDescriptor(t, k); },
+  });
 
   if (typeof module !== 'undefined' && module.exports) module.exports = MM;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

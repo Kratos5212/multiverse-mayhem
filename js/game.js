@@ -107,7 +107,7 @@
   function menuChanged() { previewDirty = true; previewT = 0.05; UI.save('profile', profile); fillStarts(); }
   // You can only start where your character lives.
   function fillStarts() {
-    const sel = $('startDim'), starts = MM.startWorlds(profile.arch);
+    const sel = $('startDim'), starts = MM.startWorlds(profile.arch, profile.home);
     sel.textContent = '';
     for (const id of starts) sel.append(el('option', { value: id, text: MM.DIM_BY_ID[id].name }));
     if (!starts.includes(profile.startDim)) profile.startDim = starts[0];
@@ -124,7 +124,7 @@
     $('server').value = profile.server || (httpHosted ? location.host : '');
     UI.initMenu(profile, menuChanged);
     $('name').oninput = () => { profile.name = $('name').value; UI.save('profile', profile); };
-    $('home').oninput = () => { profile.home = $('home').value.toUpperCase(); UI.save('profile', profile); };
+    $('home').oninput = () => { profile.home = $('home').value.toUpperCase(); UI.save('profile', profile); fillStarts(); };
     $('startDim').onchange = () => { profile.startDim = $('startDim').value; UI.save('profile', profile); };
     $('server').oninput = () => { profile.server = $('server').value.trim(); UI.save('profile', profile); };
     // Pages that can't reach a game server (like a hosted preview) offer offline play only.
@@ -470,7 +470,7 @@
 
   function onMessage(m) {
     switch (m.t) {
-      case 'hi': G.myId = m.id; profile.name = m.you.name; profile.home = m.you.home; keepToken(m.tok); break;
+      case 'hi': G.myId = m.id; profile.name = m.you.name; profile.home = m.you.home; $('home').value = profile.home; UI.save('profile', profile); keepToken(m.tok); break;
       case 'pg': onProgress(m); break;
       case 'w': enterDimension(m); break;
       case 's': onSnap(m); break;
@@ -1027,8 +1027,11 @@
         box.append(tabs);
       }
       box.append(curveMap(go));
-      for (const outside of [false, true]) {
-        const ids = MM.WORLD_IDS.filter(id => !!MM.DIM_BY_ID[id].outsideCurve === outside && id !== G.dimId && !MM.DIM_BY_ID[id].pocket);
+      // Home dimensions: yours, and those of everyone online (their Earth, their twist).
+      const homes = [MM.homeDimId(profile.home)].concat(G.pop ? Object.keys(G.pop.d).filter(id => MM.HOME_RE.test(id) && G.pop.d[id] > 0) : [])
+        .filter((id, i, a) => id !== 'suburbia' && id !== G.dimId && a.indexOf(id) === i);
+      for (const outside of ['home', false, true]) {
+        const ids = outside === 'home' ? homes : MM.WORLD_IDS.filter(id => !!MM.DIM_BY_ID[id].outsideCurve === outside && id !== G.dimId && !MM.DIM_BY_ID[id].pocket);
         if (!ids.length) continue;
         const list = el('div', { class: 'list' });
         for (const id of ids) {
@@ -1037,7 +1040,7 @@
             el('div', { class: 't' }, el('b', { text: d.name + '  ' + d.code }), el('small', { text: w || d.blurb + ' · ' + n + ' here' })),
             el('button', { class: 'btn go', disabled: w ? 'disabled' : null, onclick: () => go(id) }, mode === 'gun' ? 'Open' : mode === 'ship' ? 'Fly' : 'Go')));
         }
-        box.append(el('h3', { text: outside ? 'Outside the Central Finite Curve' : 'Inside the Central Finite Curve' }), list);
+        box.append(el('h3', { text: outside === 'home' ? 'Home dimensions' : outside ? 'Outside the Central Finite Curve' : 'Inside the Central Finite Curve' }), list);
       }
       const fee = S && !S.free.includes(profile.arch) ? Object.keys(S.fee).map(k => S.fee[k] + ' ' + MM.MATERIALS[k].name).join(', ') : '';
       box.append(el('p', { class: 'note', text: mode === 'station' ? 'Step through the station portal' + (fee ? ' for ' + fee : ' (free for you)') + '.'

@@ -17,7 +17,7 @@ function fakeConn() {
 function join(host, arch, extra) {
   const c = fakeConn();
   host.connect(c, {});
-  host.message(c, JSON.stringify(Object.assign({ t: 'hello', v: MM.VERSION, name: 'Tester', look: MM.defaultLook(), arch }, extra)));
+  host.message(c, JSON.stringify(Object.assign({ t: 'hello', v: MM.VERSION, name: 'Tester', home: 'C-137', look: MM.defaultLook(), arch }, extra)));
   host.update(MM.TICK);
   const hi = c.sent.find(m => m.t === 'hi');
   const p = host.players.get(hi.id);
@@ -115,8 +115,8 @@ test('walking into a portal takes you to its dimension', () => {
 
 test('instances hold at most the cap and overflow opens a new one', () => {
   const host = new MM.Host({ cap: 4 });
-  for (let i = 0; i < 9; i++) join(host, 'joe');
-  const sizes = [...host.instances.values()].filter(i => i.dimId === 'suburbia').map(i => i.players.size);
+  for (let i = 0; i < 9; i++) join(host, 'trooper');
+  const sizes = [...host.instances.values()].filter(i => i.dimId === 'federation').map(i => i.players.size);
   assert.deepStrictEqual(sizes, [4, 4, 1]);
 });
 
@@ -487,4 +487,27 @@ test('Smith house: in through the front door, watch TV on the couch, out again; 
   host.message(c, '{"t":"door","l":"smithexit"}');
   assert.strictEqual(p.inst.dimId, 'suburbia');
   assert.ok(MM.LANDMARK_BY_ID.shrimpearth_home, 'alternate Earths keep their Smith house');
+});
+
+test('home dimensions: your code is a real Earth you start in, and there is only one of each variant', () => {
+  const host = new MM.Host();
+  const a = join(host, 'genius', { home: 'Y-231' });
+  assert.strictEqual(a.p.inst.dimId, 'h_Y231');
+  assert.strictEqual(MM.DIM_BY_ID.h_Y231.name, 'Earth Y-231');
+  assert.ok(MM.genProps('h_Y231').length > 100 && MM.LANDMARK_BY_ID.h_Y231_home, 'a whole Earth with its own Smith house');
+  const twin = MM.DIM_BY_ID.h_Y231;
+  assert.strictEqual(MM.ensureHomeDim('h_Y231'), twin, 'the same code is always the same place');
+  const b = join(host, 'genius', { home: 'Y-231' });
+  assert.notStrictEqual(b.p.home, 'Y-231', 'only one Rick Y-231');
+  assert.ok(/^Y-\d+$/.test(b.p.home));
+  const m = join(host, 'sidekick', { home: 'Y-231' });
+  assert.strictEqual(m.p.home, 'Y-231', 'Morty Y-231 is a different variant');
+  const c137 = join(host, 'genius', { home: 'C-137' });
+  assert.strictEqual(c137.p.inst.dimId, 'suburbia', 'Rick C-137 lives on the show\'s Earth');
+  const bird = join(host, 'birdfolk', { home: 'Y-231' });
+  assert.strictEqual(bird.p.inst.dimId, 'featherhold', 'bird people still start at home in Featherhold');
+  // Anyone can open a portal there.
+  a.p.inst.dimId; host.message(c137.c, '{"t":"po","d":"h_Y231"}');
+  assert.ok([...c137.p.inst.portals.values()].some(po => po.destDim === 'h_Y231'));
+  assert.strictEqual(MM.DIM_BY_ID.h_bad, undefined);
 });

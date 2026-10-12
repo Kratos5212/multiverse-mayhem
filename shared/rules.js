@@ -7,7 +7,17 @@
   MM.VERSION = 4;
   // Monsters notice you within AGGRO_RANGE metres and stop chasing beyond LEASH of their home.
   // Where a character can start: their home world (and, for some, another place they live).
-  MM.startWorlds = arch => { const A = MM.ARCHETYPES[arch]; return (A.homes || [A.home]).filter(d => MM.DIM_BY_ID ? MM.DIM_BY_ID[d] : true); };
+  // Where a character can start: their home dimension's Earth first (for Earth folk with a
+  // home code), then the other places they live. Only C-137 folk start on the show's Earth.
+  MM.startWorlds = (arch, home) => {
+    const A = MM.ARCHETYPES[arch];
+    let list = (A.homes || [A.home]).filter(d => MM.DIM_BY_ID ? MM.DIM_BY_ID[d] : true);
+    if (home && MM.homeDimId && MM.EARTH_ARCHS.includes(arch)) {
+      const h = MM.homeDimId(home);
+      list = [h].concat(list.filter(d => d !== h && d !== 'suburbia'));
+    }
+    return list;
+  };
   MM.TEAM_MAX = 8; MM.TEAM_REACH = 14;
   MM.AGGRO_RANGE = 9;
   MM.LEASH = 26;               // protocol version; client and server must match

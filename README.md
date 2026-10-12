@@ -181,6 +181,10 @@ Every world is laid out like a real place (`shared/layouts.js`): roads and squar
 
 Every prop except the landmarks can be destroyed. Wrecking things and beating other players earns **chaos points** for the multiverse-wide leaderboard.
 
+### Your home dimension
+
+The **home dimension** you type on the character screen (Y-231, J-19...) is a real place. Every code is its own alternate Earth with the Smith street plan and its own twist from the show: a Cronenberg Earth, a fascist one, shrimp or teddy or cat people, robots, aliens keeping humans as pets, candy, jungle, an Earth where the sun went out, the pizza-and-furniture one, a wasteland, or a dog-ruled one. The same code is always the same place, for everyone. Ricks, Mortys, Summers, Beths, Jerrys and Evil Mortys start in their own Earth; **C-137** is the show's Earth. There is only one of each variant online at a time: if another Rick C-137 is already playing, you join as a different Rick from the same letter. Home dimensions show up in the portal list ("Home dimensions"): yours, and those of everyone online.
+
 ### Teams
 
 Open the **Multiverse** board and press **Invite** next to anyone in your dimension (up to 8 per team). Teammates show a green ★ in their name tags and can't hurt each other. When one of you takes a door, a portal station or a ship, every teammate standing within about 14 m comes along (ship passengers ride with the pilot). Anyone can follow through an open portal anyway.
