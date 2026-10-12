@@ -37,7 +37,7 @@
 
   // ---------- Menu preview ----------
   const menuScene = new T.Scene();
-  menuScene.add(new T.HemisphereLight('#bcd6ff', '#40304a', 0.6));
+  menuScene.add(new T.HemisphereLight('#f2f6ff', '#d8d0e0', 0.6));
   const mSun = new T.DirectionalLight('#ffffff', 0.55); mSun.position.set(3, 6, 5); menuScene.add(mSun);
   const pedestal = (() => {
     const s = new C.Shape();
@@ -361,7 +361,7 @@
       case 'pv': for (const e of m.l) onPrivate(e); break;
       case 'y': onYou(m); break;
       case 'c': onChat(m); break;
-      case 'pop': G.pop = m; G.top = m.top || []; updateDimInfo(); if (G.modal === 'board') openBoard(); if (G.modal === 'dims') openDims(G.modalMode); break;
+      case 'pop': G.pop = m; G.top = m.top || []; updateDimInfo(); if (G.modal === 'board') openBoard(); break;
       case 'pong': G.ping = Math.round((now() * 1000 - m.c)); updateDimInfo(); break;
       case 'err': leave(m.msg); break;
     }
@@ -725,7 +725,7 @@
     send({ t: 'ab' });
     C.sfx('ability');
   }
-  function nearKiosk() { return G.dimId && !MM.DIM_BY_ID[G.dimId].interior && Math.hypot(G.me.x - MM.KIOSK.x, G.me.z - MM.KIOSK.z) < MM.KIOSK_RADIUS; }
+  function nearKiosk() { return G.dimId && MM.hasKiosk(G.dimId) && Math.hypot(G.me.x - MM.kioskOf(G.dimId).x, G.me.z - MM.kioskOf(G.dimId).z) < MM.KIOSK_RADIUS; }
   function portalAction() {
     if (!canAct()) return;
     if (G.you.ship && G.st.ship && G.st.ship.drive) return openDims('drive');
@@ -793,23 +793,85 @@
     G.modal = kind;
     UI.modal(title, build, () => { G.modal = null; });
   }
+  // The Central Finite Curve: every reality where Rick is the smartest being, walled off
+  // from the rest. Worlds sit inside the dome; the few outside it float beyond the wall.
+  function curveMap(onPick) {
+    const W = 520, H = 230, cx = W / 2, cy = H * 1.6, rx = W * 0.62, ry = H * 1.35;
+    const wrap = el('div', { class: 'curve' });
+    const cv = el('canvas', { width: W * 2, height: H * 2, 'aria-label': 'Map of the Central Finite Curve' });
+    const cap = el('div', { class: 'curvecap' });
+    wrap.append(cv, cap);
+    const g = cv.getContext('2d');
+    g.scale(2, 2);
+    const ids = MM.WORLD_IDS.filter(id => !MM.DIM_BY_ID[id].outsideCurve);
+    const out = MM.WORLD_IDS.filter(id => MM.DIM_BY_ID[id].outsideCurve);
+    const spots = [];
+    const rings = [[0.88, 0.85, 7], [0.74, 0.7, 6], [0.6, 0.5, 6]];
+    let k = 0;
+    for (const [f, span, n] of rings) for (let i = 0; i < n && k < ids.length; i++, k++) {
+      const t = n === 1 ? 0 : -span + (2 * span * i) / (n - 1);
+      spots.push({ id: ids[k], x: cx + rx * f * Math.sin(t), y: cy - ry * f * Math.cos(t) });
+    }
+    out.forEach((id, i) => spots.push({ id, x: 40 + i * 70, y: 26, out: true }));
+    let sel = null;
+    function draw() {
+      g.fillStyle = '#0b0f1e'; g.fillRect(0, 0, W, H);
+      for (let i = 0; i < 90; i++) { g.fillStyle = 'rgba(255,255,255,' + (0.2 + (i * 37 % 10) / 20) + ')'; g.fillRect((i * 173) % W, (i * 97) % H, 1.2, 1.2); }
+      // Inside the curve is a little warmer.
+      g.save(); g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); g.fillStyle = 'rgba(95,248,255,0.07)'; g.fill(); g.restore();
+      for (const [w, a] of [[14, 0.12], [7, 0.3], [2.5, 0.95]]) { g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, Math.PI, Math.PI * 2); g.strokeStyle = 'rgba(95,248,255,' + a + ')'; g.lineWidth = w; g.stroke(); }
+      g.fillStyle = '#5ff8ff'; g.font = '700 10px system-ui, sans-serif'; g.textAlign = 'center';
+      g.fillText('THE CENTRAL FINITE CURVE', cx, cy - ry - 10);
+      if (out.length) { g.fillStyle = '#9aa6c8'; g.font = '9px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('outside the curve', 12, 52); }
+      for (const s of spots) {
+        const d = MM.DIM_BY_ID[s.id], n = G.pop ? G.pop.d[s.id] || 0 : 0, here = s.id === G.dimId;
+        const r = 6 + Math.min(5, n);
+        g.beginPath(); g.arc(s.x, s.y, r, 0, Math.PI * 2); g.fillStyle = d.accent || '#fff'; g.fill();
+        g.lineWidth = 2; g.strokeStyle = '#1d1813'; g.stroke();
+        if (here || sel === s) { g.beginPath(); g.arc(s.x, s.y, r + 4, 0, Math.PI * 2); g.strokeStyle = here ? '#39ff6a' : '#ffffff'; g.lineWidth = 2; g.stroke(); }
+        g.fillStyle = here ? '#39ff6a' : '#dfe6ff'; g.font = (here ? '700 ' : '') + '9px system-ui, sans-serif'; g.textAlign = 'center';
+        g.fillText(here ? 'YOU' : d.code, s.x, s.y + r + 11);
+      }
+    }
+    function caption() {
+      cap.textContent = '';
+      if (!sel) { cap.append(el('small', { text: 'Tap a world on the map, or pick one below.' })); return; }
+      const d = MM.DIM_BY_ID[sel.id];
+      cap.append(el('div', { class: 't' }, el('b', { text: d.name + '  ' + d.code + (d.outsideCurve ? '  (outside the curve)' : '') }), el('small', { text: d.blurb })));
+      if (sel.id !== G.dimId) cap.append(el('button', { class: 'btn go', onclick: () => onPick(d.id) }, 'Go'));
+    }
+    cv.addEventListener('click', e => {
+      const b = cv.getBoundingClientRect(), x = (e.clientX - b.left) * W / b.width, y = (e.clientY - b.top) * H / b.height;
+      let best = null, bd = 22;
+      for (const s of spots) { const dd = Math.hypot(s.x - x, s.y - y); if (dd < bd) { bd = dd; best = s; } }
+      sel = best; draw(); caption();
+    });
+    draw(); caption();
+    return wrap;
+  }
   function openDims(mode) {
     G.modalMode = mode;
+    const go = id => {
+      if (mode === 'kiosk') send({ t: 'ki', d: id });
+      else if (mode === 'drive') send({ t: 'drive', d: id });
+      else { send({ t: 'po', d: id }); UI.toast('Portal open. Walk through it!'); }
+      UI.closeModal();
+    };
     openModal('dims', mode === 'kiosk' ? 'Portal Kiosk' : mode === 'drive' ? 'Dimension Drive' : 'Portal gun', box => {
-      const list = el('div', { class: 'list' });
-      for (const d of MM.DIMS) {
-        if (d.id === G.dimId || d.hidden) continue;
-        const n = G.pop ? G.pop.d[d.id] : 0;
-        list.append(el('div', { class: 'row dim' },
-          el('div', { class: 't' }, el('b', { text: d.name + '  ' + d.code }), el('small', { text: d.blurb + ' · ' + n + ' here' })),
-          el('button', { class: 'btn go', onclick: () => {
-            if (mode === 'kiosk') send({ t: 'ki', d: d.id });
-            else if (mode === 'drive') send({ t: 'drive', d: d.id });
-            else { send({ t: 'po', d: d.id }); UI.toast('Portal open. Walk through it!'); }
-            UI.closeModal();
-          } }, mode === 'gun' ? 'Open' : 'Go')));
+      box.append(curveMap(go));
+      for (const outside of [false, true]) {
+        const ids = MM.WORLD_IDS.filter(id => !!MM.DIM_BY_ID[id].outsideCurve === outside && id !== G.dimId);
+        if (!ids.length) continue;
+        const list = el('div', { class: 'list' });
+        for (const id of ids) {
+          const d = MM.DIM_BY_ID[id], n = G.pop ? G.pop.d[id] || 0 : 0;
+          list.append(el('div', { class: 'row dim' },
+            el('div', { class: 't' }, el('b', { text: d.name + '  ' + d.code }), el('small', { text: d.blurb + ' · ' + n + ' here' })),
+            el('button', { class: 'btn go', onclick: () => go(id) }, mode === 'gun' ? 'Open' : 'Go')));
+        }
+        box.append(el('h3', { text: outside ? 'Outside the Central Finite Curve' : 'Inside the Central Finite Curve' }), list);
       }
-      box.append(el('p', { class: 'note', text: mode === 'kiosk' ? 'The kiosk sends you straight there.' : mode === 'drive' ? 'Your ship jumps straight there (15 s cooldown).' : 'Opens a portal in front of you for ' + MM.PORTAL_TTL + ' s. Anyone can walk through it, including your enemies.' }), list);
+      box.append(el('p', { class: 'note', text: mode === 'kiosk' ? 'The kiosk sends you straight there.' : mode === 'drive' ? 'Your ship jumps straight there (15 s cooldown).' : 'Opens a portal in front of you for ' + MM.PORTAL_TTL + ' s. Anyone can walk through it, including your enemies.' }));
     });
   }
   // The workbench: everything you could ever build, and exactly why you can or can't yet.

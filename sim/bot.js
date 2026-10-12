@@ -146,7 +146,7 @@
         this.travelT = this.t + 50 + Math.random() * 100;
         const others = MM.WORLD_IDS.filter(d => d !== this.dim);
         if (you.chMax > 0 && you.ch > 0) { this.send({ t: 'po', d: pick(others) }); this.goal = { x: this.x + Math.sin(this.yaw) * 4, z: this.z + Math.cos(this.yaw) * 4, portal: true }; }
-        else this.goal = { x: MM.KIOSK.x, z: MM.KIOSK.z, kiosk: pick(others) };
+        else { const K = MM.kioskOf(this.dim); this.goal = { x: K.x, z: K.z, kiosk: pick(others) }; }
       }
       for (const po of this.portals.values()) {
         if (Math.random() < 0.02 && (po.x - this.x) ** 2 + (po.z - this.z) ** 2 < 400) this.goal = { x: po.x, z: po.z, portal: true };

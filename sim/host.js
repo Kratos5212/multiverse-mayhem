@@ -971,11 +971,13 @@
 
     onKiosk(p, d) {
       const now = this.time;
-      if (p.dead || d === p.inst.dimId || now < p.cdKiosk || p.inst.dim.interior || MM.DIM_BY_ID[d].hidden) return;
-      if (dist2(p.x, p.z, MM.KIOSK.x, MM.KIOSK.z) > MM.KIOSK_RADIUS * MM.KIOSK_RADIUS) return;
+      if (p.dead || d === p.inst.dimId || now < p.cdKiosk || !MM.hasKiosk(p.inst.dimId) || MM.DIM_BY_ID[d].hidden) return;
+      const K = MM.kioskOf(p.inst.dimId);
+      if (dist2(p.x, p.z, K.x, K.z) > MM.KIOSK_RADIUS * MM.KIOSK_RADIUS) return;
       p.cdKiosk = now + 3;
       p.inst.ev({ k: 'kiosk', id: p.id });
-      this.travel(p, d, { x: MM.KIOSK.x + (Math.random() - 0.5) * 6, z: MM.KIOSK.z + 5 + Math.random() * 3 });
+      const K2 = MM.kioskOf(d);
+      this.travel(p, d, { x: K2.x + (Math.random() - 0.5) * 6, z: K2.z + 5 + Math.random() * 3 });
     }
 
     // ----- Ship -----

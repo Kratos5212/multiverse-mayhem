@@ -6,9 +6,9 @@
   const T = THREE;
   const C = window.MMC || (window.MMC = {});
 
-  // Three hard tones, like a hand-painted cartoon.
-  const grad = new Uint8Array([120, 120, 120, 255, 200, 200, 200, 255, 255, 255, 255, 255]);
-  const gradientMap = new T.DataTexture(grad, 3, 1, T.RGBAFormat);
+  // Two flat tones, like the show: full colour in the light, one soft shadow tone.
+  const grad = new Uint8Array([140, 140, 140, 255, 255, 255, 255, 255]);
+  const gradientMap = new T.DataTexture(grad, 2, 1, T.RGBAFormat);
   gradientMap.minFilter = gradientMap.magFilter = T.NearestFilter;
   gradientMap.needsUpdate = true;
   C.gradientMap = gradientMap;
@@ -19,9 +19,9 @@
   // Outline: the back faces of the mesh, pushed out along smoothed normals and drawn black.
   const outlineCache = {};
   C.outlineMat = function (thick, color) {
-    const key = thick + ':' + (color || '#111');
+    const key = thick + ':' + (color || '#1d1813');
     if (outlineCache[key]) return outlineCache[key];
-    const m = new T.MeshBasicMaterial({ color: color || '#111111', side: T.BackSide, fog: true });
+    const m = new T.MeshBasicMaterial({ color: color || '#1d1813', side: T.BackSide, fog: true });
     m.onBeforeCompile = sh => {
       sh.uniforms.uThick = { value: thick };
       sh.vertexShader = sh.vertexShader
@@ -121,7 +121,21 @@
     octa: new T.OctahedronGeometry(1, 0),
     dodeca: new T.DodecahedronGeometry(1, 0),
     hemi: closedHemi(),
+    prism: gablePrism(),
   };
+  // A gable roof: 1 wide (x), 1 deep (z), 1 tall, ridge along x, base at y = 0.
+  function gablePrism() {
+    const v = [
+      [-0.5, 0, -0.5], [0.5, 0, -0.5], [0.5, 0, 0.5], [-0.5, 0, 0.5], [-0.5, 1, 0], [0.5, 1, 0],
+    ];
+    const tris = [[3, 2, 5], [3, 5, 4], [1, 0, 4], [1, 4, 5], [0, 3, 4], [2, 1, 5], [0, 1, 2], [0, 2, 3]];
+    const pos = [];
+    for (const t of tris) for (const i of t) pos.push(...v[i]);
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+    g.computeVertexNormals();
+    return g;
+  }
   // A dome with a flat bottom, so you never look into its (black) inside.
   function closedHemi() {
     const dome = new T.SphereGeometry(1, 14, 7, 0, Math.PI * 2, 0, Math.PI / 2).toNonIndexed();

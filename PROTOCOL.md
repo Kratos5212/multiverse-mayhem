@@ -43,7 +43,7 @@ Every message is a JSON object with a `t` (type) field. Anything that is not on 
 | `f` | `dx`, `dy`, `dz` | Fire my weapon along this unit vector |
 | `ab` | | Use my archetype ability |
 | `po` | `d` | Open a portal to dimension `d` (portal-gun owners only) |
-| `ki` | `d` | Use the public kiosk to go to `d` (must be standing at it) |
+| `ki` | `d` | Use the public kiosk to go to `d` (must be standing at it; indoor rooms have none, except Blips and Chitz) |
 | `cr` | `g` | Craft gadget `g` |
 | `g` | `g`, `dx`, `dy`, `dz` | Use gadget `g` (grenade, turret, shrink ray) |
 | `c` | `text` | Chat (sent to everyone on the server) |
@@ -122,5 +122,5 @@ Projectiles are sent once as a `shot` (start point, velocity, gravity, lifetime)
 
 ## Measured
 
-* `npm test`: 16 tests. They cover the protocol, sanitizers, speed-hack rejection, rate limits, lore limits, portals and instance overflow, plus 64 bots fighting for a simulated minute (about 3.5 s of CPU) with no false kicks. They also cover station-only crafting, a teen's full path to Space Teen, an Average Joe locked out of ships, ship speed and the dimension drive, locals and cross-dimension errands, saved progress (including a tampered save) and world events.
+* `npm test`: 18 tests. They cover the protocol, sanitizers, speed-hack rejection, rate limits, lore limits, portals and instance overflow, plus 64 bots fighting for a simulated minute (about 3.5 s of CPU) with no false kicks. They also cover station-only crafting, a teen's full path to Space Teen, an Average Joe locked out of ships, ship speed and the dimension drive, locals and cross-dimension errands, saved progress (including a tampered save), world events, the garage doors, the Meeseeks Box, and that every world generates its props.
 * `scripts/loadtest.js` over real WebSockets: 64 players in one dimension used about 0.7 of one CPU core and 100 MB of memory. 130 players split themselves into copies of 64, 64 and 2, and nobody was kicked.

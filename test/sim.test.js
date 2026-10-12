@@ -220,7 +220,7 @@ test('ship: boarding lifts the speed limit, and the dimension drive travels', ()
   assert.ok(p.ship);
   assert.ok(Math.abs(p.x - (x0 + 12)) < 1.5, 'fast in the ship');
   host.message(c, '{"t":"drive","d":"moon"}');
-  assert.strictEqual(p.inst.dimId, 'bazaar', 'no drive yet');
+  assert.strictEqual(p.inst.dimId, MM.ARCHETYPES.trooper.home, 'no drive yet');
   p.prog.up.engine = 1; p.prog.up.drive = 1; host.restat(p);
   host.message(c, '{"t":"drive","d":"moon"}');
   assert.strictEqual(p.inst.dimId, 'moon');

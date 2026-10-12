@@ -122,6 +122,7 @@ Every few minutes a **world event** hits a dimension:
 | Bazaar | Flash Sale, Jelly Bloom |
 | Moon | Meteor Shower, Crab Migration |
 | Bird World | Molting Season, Serpent Hunt |
+| Every other world | Jackpot, The Purge, Harvest Day, Squanch Party, Federation Patrol, Brute Stampede, Sugar Rush, Outbreak, Rush Hour, Raider Convoy, Power Surge, Unity Parade, Lockdown, The Big Grind |
 
 ## Dimensions
 
@@ -133,11 +134,26 @@ Every few minutes a **world event** hits a dimension:
 | Lowgrav Moon | Craters, crystals, rovers, very low gravity | Miners, moon crabs (hostile) | Moon Crystal | Crystal Refinery |
 | Bird World | Golden cliffs, giant nests, totems, floating islands | Bird citizens, sky serpents (hostile) | Sky Feather | Aerie Temple |
 
-Every prop except the landmarks can be destroyed. Wrecking things and beating other players earns **chaos points** for the multiverse-wide leaderboard.
-
 | Citadel of Ricks | A space city of infinite Ricks and Mortys | Ricks, Mortys, Citadel guards | Schmeckles | Council of Ricks, Morty Daycare |
 | Snowball's Dog World | Dogs in mech suits rule; humans are pets | Talking dogs, pet humans, mech dogs (hostile) | Neon Plasma, scrap | Snowball's Palace |
 | Mega Seed World | A dangerous jungle where Mega Seeds grow | Seed beasts (hostile) | **Mega Seeds** (rare) | Mega Seed Tree |
+| Blips and Chitz | The galaxy's best arcade (indoors) | Gamers | Schmeckles | Roy: A Life Well Lived |
+| Purge Planet | A calm farming world with barns and wheat | Farmers, purgers (hostile, during the Purge) | Scrap | |
+| Planet Squanch | A purple party planet of huts and lights | Squanchians | Neon Plasma | |
+| Gazorpazorp | Red mesas, bones, angry brutes | Gazorpians (hostile) | Meat Goo | |
+| Froopyland | Cotton-candy trees, lollipops, solid rainbows | Froopies | Sky Feather | |
+| Anatomy Park | A theme park inside a man: blood cells, bones, arteries | Diseases (hostile) | Meat Goo | Pirates of the Pancreas |
+| Pizza-Phone-Chair Dimension | Giant chairs, phones and pizza boxes; *outside the Central Finite Curve* | Pizza, phone and chair people | Scrap | |
+| Post-Apocalyptic Earth | Desert wrecks, scrap towers, cacti | Raiders (hostile) | Scrap | |
+| The Microverse | A tiny, hopeful civilisation inside Rick's car battery | Microversians | Moon Crystal | Gooble Box Power Plant |
+| Unity's Planet | Tidy towers, everyone one mind | Unity | Moon Crystal | |
+| Galactic Federation HQ | White towers, ships and a prison block | Federation guards (hostile), clerks | Schmeckles | |
+| Planet Gear | Giant gears, pipes and brass houses | Gearpeople | Scrap | |
+
+Every prop except the landmarks can be destroyed. Wrecking things and beating other players earns **chaos points** for the multiverse-wide leaderboard.
+
+The **portal gun, kiosk and Dimension Drive** open a map of the **Central Finite Curve**: every world inside the curve, the odd one outside it, and how many players are in each. Tap a world to see it and go.
+
 
 ### Rick's garage (and what's under it)
 

@@ -43,7 +43,7 @@
       blurb: 'The Smith family suburb. Lawns, a garage full of science, and a high school nobody wants to go to.',
       sky: ['#5fb4ff', '#d9f3ff'], fog: '#cdeaff', fogFar: 230, sun: '#fff4dc', ambient: '#9fc6ff',
       ground: ['#5fae3e', '#78c24b', '#4c9636'], accent: '#ffffff',
-      props: [['house', 0], ['tree', 70], ['car', 22], ['mailbox', 18], ['hedge', 30]],
+      props: [['tree', 40], ['hedge', 20]], streets: { grid: 44, extent: 150 }, spawn: { x: 2, z: -3, spread: 5 }, kiosk: { x: 15, z: -15 },
       npc: [['neighbor', 9], ['schoolkid', 4]], pickups: { s: 18, c: 2 }, mat: 's',
     },
     {
@@ -102,6 +102,92 @@
       props: [['seedtree', 34], ['fungus', 40], ['thornbush', 34]],
       npc: [['seedbeast', 12]], pickups: { s: 6, m: 3, g: 4 }, mat: 'm',
     },
+    // ----- More dimensions from the show -----
+    {
+      id: 'blips', name: 'Blips and Chitz', code: 'B&C', seed: 5150, gravity: 24, interior: true, bound: 32, kiosk: { x: 0, z: 22 },
+      blurb: 'The best arcade in the galaxy. Live a whole life as Roy, then go again.',
+      sky: ['#120a24', '#120a24'], fog: '#120a24', fogFar: 400, sun: '#ffe0ff', ambient: '#c0a8ff',
+      ground: ['#2a1a4a', '#3a2a5a', '#22143e'], accent: '#ff6fd0', spawn: { x: 0, z: 14, spread: 3 },
+      room: { w: 68, d: 68, h: 11, wall: '#2e1c52', trim: '#ff6fd0' },
+      props: [['arcade', 44], ['skeeball', 10], ['claw', 8]], npc: [['arcadegoer', 12]], pickups: { k: 8, p: 6, s: 4 }, mat: 'k',
+    },
+    {
+      id: 'purge', name: 'Purge Planet', code: 'PG-12', seed: 6006, gravity: 24, amp: 3, scale: 0.012,
+      blurb: 'A peaceful farming world. Except one night a year, when everyone is allowed to do anything.',
+      sky: ['#ff9a5a', '#ffe0a8'], fog: '#f0c090', fogFar: 220, sun: '#fff0d0', ambient: '#e8b080',
+      ground: ['#b8a84a', '#9aaa48', '#7e8e3a'], accent: '#ff5a3a',
+      props: [['farmhouse', 14], ['barn', 6], ['wheat', 60], ['lantern', 22]], npc: [['purger', 12]], pickups: { s: 14, g: 4 }, mat: 's',
+    },
+    {
+      id: 'squanch', name: 'Planet Squanch', code: 'SQ-1', seed: 7117, gravity: 22, amp: 5, scale: 0.014,
+      blurb: 'Squanchy\'s home world. Every night is a party. Every party gets squanched.',
+      sky: ['#1a0a3a', '#ff6fd0'], fog: '#4a2a6a', fogFar: 220, sun: '#ffd0f0', ambient: '#c090ff',
+      ground: ['#5a3aa8', '#6a4ab8', '#3e2a80'], accent: '#ffd84d',
+      props: [['squanchhut', 20], ['partylight', 26], ['speaker', 14]], npc: [['squanchcat', 12]], pickups: { p: 10, s: 6 }, mat: 'p',
+    },
+    {
+      id: 'gazorp', name: 'Gazorpazorp', code: 'GZ-9', seed: 8228, gravity: 26, amp: 10, scale: 0.015,
+      blurb: 'A red desert planet of huge, angry brutes. The ones in charge live somewhere much nicer.',
+      sky: ['#8a1a1a', '#ffb070'], fog: '#c06040', fogFar: 210, sun: '#ffe0c0', ambient: '#e08060',
+      ground: ['#b8503a', '#c86a4a', '#8a3a2a'], accent: '#ffb070',
+      props: [['redmesa', 20], ['bonepile', 16], ['spikeplant', 30]], npc: [['gazorpian', 10]], pickups: { g: 8, s: 6 }, mat: 'g',
+    },
+    {
+      id: 'froopy', name: 'Froopyland', code: 'FR-00', seed: 9339, gravity: 18, amp: 6, scale: 0.013,
+      blurb: 'A soft, safe world built for children. Nothing here can hurt you. Probably.',
+      sky: ['#9ad8ff', '#ffd6f0'], fog: '#f0e0ff', fogFar: 230, sun: '#ffffff', ambient: '#ffd8f0',
+      ground: ['#8ae0a8', '#a8f0c0', '#f0c8e8'], accent: '#ff8fd0',
+      props: [['cottontree', 30], ['lollipop', 30], ['rainbow', 6], ['candyrock', 20]], npc: [['froopy', 14]], pickups: { f: 6, p: 6, s: 4 }, mat: 'f',
+    },
+    {
+      id: 'anatomy', name: 'Anatomy Park', code: 'AP-1', seed: 1441, gravity: 24, amp: 6, scale: 0.02,
+      blurb: 'A theme park inside a man. Rides, attractions, and a disease problem.',
+      sky: ['#5a0a1a', '#c84a5a'], fog: '#7a2a3a', fogFar: 180, sun: '#ffd0d0', ambient: '#d06070',
+      ground: ['#c84a5a', '#d85a6a', '#a83a4a'], accent: '#ffe066',
+      props: [['bloodcell', 40], ['bonepillar', 16], ['artery', 14]], npc: [['bacteria', 12]], pickups: { g: 12, s: 4 }, mat: 'g',
+    },
+    {
+      id: 'pizzaworld', name: 'Pizza-Phone-Chair Dimension', code: 'PZ-35', seed: 3553, gravity: 24, amp: 3, scale: 0.012, outsideCurve: true,
+      blurb: 'People are pizza. Pizza is phones. Phones are people. Chairs sit on people. It makes sense here.',
+      sky: ['#7ec0ff', '#e8f4ff'], fog: '#d8ecff', fogFar: 230, sun: '#fff4dc', ambient: '#a8c4ff',
+      ground: ['#6fb84a', '#86c95a', '#5a9a3c'], accent: '#e2483d',
+      props: [['giantchair', 16], ['giantphone', 14], ['pizzabox', 20], ['couch', 10]], npc: [['pizzaperson', 8], ['phoneperson', 6], ['chairperson', 6]], pickups: { s: 10, p: 4 }, mat: 's',
+    },
+    {
+      id: 'wasteland', name: 'Post-Apocalyptic Earth', code: 'C-5?', seed: 4664, gravity: 24, amp: 6, scale: 0.012,
+      blurb: 'A burned-out Earth of sand, spikes and raiders in modified cars. Bring your own water.',
+      sky: ['#c88a4a', '#f0d8a0'], fog: '#e0b880', fogFar: 220, sun: '#fff0d0', ambient: '#e0b080',
+      ground: ['#d8b878', '#c8a868', '#b89858'], accent: '#ff5a3a',
+      props: [['wreck', 26], ['scraptower', 10], ['cactus', 30]], npc: [['raider', 10]], pickups: { s: 18, c: 2 }, mat: 's',
+    },
+    {
+      id: 'microverse', name: 'The Microverse', code: 'MV-1', seed: 5775, gravity: 22, amp: 3, scale: 0.014,
+      blurb: 'A tiny universe inside Rick\'s car battery. The locals stomp on gooble boxes to make power. They think it\'s their idea.',
+      sky: ['#3aa0ff', '#c8f0ff'], fog: '#c0e8ff', fogFar: 230, sun: '#ffffff', ambient: '#a8d8ff',
+      ground: ['#7ac8a0', '#8ad8b0', '#5aa880'], accent: '#ffd84d',
+      props: [['microtower', 20], ['microdome', 16], ['tree', 24], ['streetlamp', 16]], npc: [['microperson', 14]], pickups: { c: 10, s: 6 }, mat: 'c',
+    },
+    {
+      id: 'unityworld', name: 'Unity\'s Planet', code: 'UN-1', seed: 6886, gravity: 24, amp: 1, scale: 0.012,
+      blurb: 'A whole planet assimilated by Unity. Very clean, very polite, very much one mind.',
+      sky: ['#7ab8ff', '#e0f0ff'], fog: '#d8e8ff', fogFar: 230, sun: '#ffffff', ambient: '#c0d8ff',
+      ground: ['#9aa8b8', '#aab8c8', '#8a98a8'], accent: '#5fd6b0', tiles: true,
+      props: [['cityblock', 30], ['unitystatue', 3], ['streetlamp', 30]], npc: [['unitydrone', 16]], pickups: { c: 8, k: 4 }, mat: 'c',
+    },
+    {
+      id: 'federation', name: 'Galactic Federation HQ', code: 'GF-1', seed: 7997, gravity: 24, amp: 0.5, scale: 0.02,
+      blurb: 'White towers, a prison block and a lot of bug-headed bureaucrats. Do not lose your forms.',
+      sky: ['#0a1030', '#3a4a8a'], fog: '#2a3460', fogFar: 230, sun: '#ffffff', ambient: '#a0b0e0',
+      ground: ['#d8dde4', '#c8ced6', '#b8bec6'], accent: '#e2483d', tiles: true,
+      props: [['fedtower', 14], ['fedship', 12], ['prisonblock', 8], ['streetlamp', 24]], npc: [['fedguard', 10], ['fedclerk', 6]], pickups: { k: 8, c: 6 }, mat: 'k',
+    },
+    {
+      id: 'gearworld', name: 'Planet Gear', code: 'GR-8', seed: 8118, gravity: 24, amp: 5, scale: 0.016,
+      blurb: 'Home of the gear people. Everything turns, everything clanks, everyone has a gear on their head.',
+      sky: ['#6a5a3a', '#d8c098'], fog: '#b8a078', fogFar: 220, sun: '#fff0d0', ambient: '#d8c0a0',
+      ground: ['#8a7a5a', '#9a8a6a', '#6a5a4a'], accent: '#ffd84d',
+      props: [['biggear', 24], ['pipe', 20], ['gearhouse', 14]], npc: [['gearperson', 12]], pickups: { s: 16 }, mat: 's',
+    },
     // ----- Rick's garage and what's under it: small indoor dimensions -----
     {
       id: 'rickgarage', name: "Rick's Garage", code: 'C-137', seed: 137, gravity: 24, interior: true, hidden: true, bound: 12.4,
@@ -137,10 +223,15 @@
   // Dimensions you can portal or kiosk to (the garage and its rooms are reached through doors).
   MM.WORLD_IDS = MM.DIMS.filter(d => !d.hidden).map(d => d.id);
   MM.boundOf = dimId => MM.DIM_BY_ID[dimId].bound || MM.WORLD_HALF;
+  // Outdoor worlds have a public kiosk; indoor ones only if they declare one (Blips and Chitz does).
+  MM.hasKiosk = dimId => { const d = MM.DIM_BY_ID[dimId]; return !d.interior || !!d.kiosk; };
 
   // Prop types: r = collision radius, h = height, hp, scrap dropped when destroyed.
   MM.PROPS = {
-    house:       { r: 6.5, h: 9,  hp: 260, drop: { s: 6 } },
+    house:       { r: 6.3, h: 10, hp: 260, drop: { s: 6 } },
+    house2:      { r: 7.0, h: 6.5, hp: 220, drop: { s: 5 } },
+    streetlamp:  { r: 0.3, h: 5.5, hp: 25, drop: { s: 1 } },
+    fence:       { r: 2.2, h: 1.2, hp: 15, drop: { s: 1 }, arch: true },
     tree:        { r: 0.9, h: 8,  hp: 60,  drop: { s: 1 } },
     car:         { r: 2.3, h: 1.9, hp: 90, drop: { s: 4 } },
     mailbox:     { r: 0.4, h: 1.4, hp: 15, drop: { s: 1 } },
@@ -176,6 +267,43 @@
     seedtree:    { r: 1.8, h: 14, hp: 160, drop: { g: 2, s: 1 } },
     fungus:      { r: 1.0, h: 3.0, hp: 30, drop: { g: 1 } },
     thornbush:   { r: 1.4, h: 2.0, hp: 30, drop: { s: 1 } },
+    arcade:      { r: 0.9, h: 2.4, hp: 60, drop: { k: 2 } },
+    skeeball:    { r: 1.3, h: 1.8, hp: 50, drop: { k: 1 } },
+    claw:        { r: 1.0, h: 2.6, hp: 60, drop: { k: 2, p: 1 } },
+    farmhouse:   { r: 4.0, h: 6, hp: 160, drop: { s: 4 } },
+    barn:        { r: 5.0, h: 8, hp: 220, drop: { s: 6 } },
+    wheat:       { r: 1.6, h: 1.4, hp: 10, drop: { s: 1 }, arch: true },
+    lantern:     { r: 0.3, h: 3.2, hp: 15, drop: { s: 1 } },
+    squanchhut:  { r: 2.6, h: 4.2, hp: 90, drop: { p: 2 } },
+    partylight:  { r: 0.4, h: 6, hp: 25, drop: { p: 1 } },
+    speaker:     { r: 1.1, h: 2.6, hp: 40, drop: { s: 2 } },
+    redmesa:     { r: 4.5, h: 9, hp: 400, drop: { g: 2, s: 2 } },
+    bonepile:    { r: 1.6, h: 1.4, hp: 30, drop: { s: 1 } },
+    spikeplant:  { r: 0.8, h: 2.2, hp: 20, drop: { g: 1 } },
+    cottontree:  { r: 1.0, h: 6, hp: 30, drop: { f: 1 } },
+    lollipop:    { r: 0.5, h: 4, hp: 20, drop: { p: 1 } },
+    rainbow:     { r: 1.0, h: 10, hp: 1e9, drop: {}, arch: true, fixed: true },
+    candyrock:   { r: 1.4, h: 1.8, hp: 40, drop: { f: 1, s: 1 } },
+    bloodcell:   { r: 1.6, h: 1.2, hp: 25, drop: { g: 1 } },
+    bonepillar:  { r: 1.4, h: 9, hp: 200, drop: { s: 3 } },
+    artery:      { r: 1.2, h: 8, hp: 90, drop: { g: 2 }, arch: true },
+    giantchair:  { r: 2.2, h: 6, hp: 120, drop: { s: 3 } },
+    giantphone:  { r: 1.4, h: 5, hp: 80, drop: { s: 2, c: 1 } },
+    pizzabox:    { r: 1.8, h: 0.9, hp: 30, drop: { s: 1 } },
+    couch:       { r: 2.4, h: 2.2, hp: 70, drop: { s: 2 } },
+    wreck:       { r: 2.2, h: 1.8, hp: 90, drop: { s: 4 } },
+    scraptower:  { r: 2.0, h: 9, hp: 160, drop: { s: 5 } },
+    cactus:      { r: 0.6, h: 3.4, hp: 25, drop: { g: 1 } },
+    microtower:  { r: 2.0, h: 14, hp: 200, drop: { c: 2, s: 2 } },
+    microdome:   { r: 3.0, h: 4, hp: 120, drop: { c: 2 } },
+    cityblock:   { r: 4.5, h: 16, hp: 400, drop: { s: 4, c: 1 } },
+    unitystatue: { r: 2.0, h: 9, hp: 300, drop: { k: 3 } },
+    fedtower:    { r: 3.0, h: 22, hp: 400, drop: { k: 3, s: 3 } },
+    fedship:     { r: 3.0, h: 2.6, hp: 140, drop: { s: 4, c: 2 } },
+    prisonblock: { r: 4.0, h: 6, hp: 300, drop: { k: 2, s: 3 } },
+    biggear:     { r: 2.6, h: 6, hp: 160, drop: { s: 4 } },
+    pipe:        { r: 0.8, h: 5, hp: 60, drop: { s: 2 } },
+    gearhouse:   { r: 3.2, h: 5, hp: 140, drop: { s: 4 } },
     // Garage and lab furniture: solid, unbreakable (Rick would be furious).
     spacecruiser:{ r: 3.0, h: 2.6, hp: 1e9, drop: {}, fixed: true },
     shelf:       { r: 1.4, h: 3.2, hp: 1e9, drop: {}, fixed: true },
@@ -277,6 +405,55 @@
     butterbot: { name: 'Butter Robot', hp: 20, speed: 1.2, hostile: false, dmg: 0, drop: { s: 1 }, r: 0.4, h: 0.6,
       names: ['Butter Robot'], talk: ['What is my purpose?', 'I pass butter?', 'Oh my god.', 'Yeah, welcome to the club, pal.', 'I am still processing that.'],
       moods: { line: 80, follow: 10, gift: 10 } },
+    arcadegoer: { name: 'Gamer', hp: 30, speed: 2.6, hostile: false, dmg: 0, drop: { k: 2 }, r: 0.6, h: 1.8,
+      human: { species: ['alien', 'human', 'blob', 'robot'], top: ['tshirt', 'vest', 'sweater'], acc: ['cap', 'goggles', 'none'] }, names: ['Bix', 'Gorp', 'Lil Zap', 'Troy-adjacent', 'Kelvin', 'Zorbo'],
+      talk: ['I just lived 55 years as Roy. I need a minute.', 'This machine ate my Schmeckles.', 'Want to play Trunk People? It is so real.', 'High score or nothing.', 'Do NOT touch the claw machine. It is rigged by a sentient claw.'],
+      moods: { line: 45, gift: 12, trade: 12, errand: 10, buff: 8, angry: 5, follow: 5, dance: 3 } },
+    purger: { name: 'Farmer', hp: 40, speed: 2.4, hostile: false, dmg: 8, drop: { s: 2 }, r: 0.6, h: 1.8,
+      human: { species: ['human'], top: ['vest', 'polo', 'sweater'], acc: ['cap', 'none', 'tophat'] }, names: ['Farmer Jeb', 'Aunt Mabel', 'Elder Holt', 'Little Pip', 'Old Man Crane'],
+      talk: ['Lovely day. Lovely, peaceful day.', 'The Festival is coming. You should stay for it.', 'We grow wheat and we are very calm.', 'Lock your doors tonight. Or do not. Your choice.', 'Have you tried our pie? It is so peaceful.'],
+      moods: { line: 50, gift: 14, trade: 8, errand: 12, buff: 4, angry: 8, follow: 2, prank: 2 } },
+    purgekiller: { name: 'Purger', hp: 55, speed: 4.8, hostile: true, dmg: 10, drop: { s: 3, g: 1 }, r: 0.6, h: 1.8,
+      human: { species: ['human'], top: ['armor', 'vest'], acc: ['eyepatch', 'goggles', 'headband'] } },
+    squanchcat: { name: 'Squanchian', hp: 50, speed: 3, hostile: false, dmg: 6, drop: { p: 2 }, r: 0.6, h: 1.6,
+      human: { variant: 'squanchy' }, names: ['Squanchelo', 'Squanchelle', 'Big Squanch', 'Lil Squanchy', 'Squanch Doe'],
+      talk: ['Hey, you squanching for the party tonight?', 'I squanched my squanch, if you know what I squanch.', 'Squanchy is a hero around here.', 'Do not squanch the Federation. They squanched us bad.', 'Squaaanch!'],
+      moods: { line: 45, gift: 12, trade: 10, errand: 10, buff: 8, angry: 4, follow: 6, dance: 5 } },
+    gazorpian: { name: 'Gazorpian', hp: 90, speed: 4.2, hostile: true, dmg: 14, drop: { g: 3, s: 2 }, r: 1.2, h: 2.6 },
+    froopy: { name: 'Froopy', hp: 30, speed: 2.8, hostile: false, dmg: 0, drop: { f: 2 }, r: 0.7, h: 1.4,
+      names: ['Fluffle', 'Snoob', 'Mister Wobbs', 'Bloop', 'Gentle Toot'],
+      talk: ['Welcome to Froopyland! Nothing here can hurt you.', 'Do you want to play forever? FOREVER?', 'We do not talk about the lake.', 'Hug? Hug. Hug!', 'Tommy used to live here. Tommy is fine.'],
+      moods: { line: 45, gift: 15, trade: 6, errand: 10, buff: 12, follow: 8, prank: 2, dance: 2 } },
+    bacteria: { name: 'Disease', hp: 45, speed: 4.4, hostile: true, dmg: 9, drop: { g: 2 }, r: 0.8, h: 1.2 },
+    pizzaperson: { name: 'Pizza Person', hp: 35, speed: 2.6, hostile: false, dmg: 0, drop: { s: 1, p: 1 }, r: 0.6, h: 1.9,
+      names: ['Pepperoni Paul', 'Margherita', 'Deep Dish Dan', 'Hawaiian Hank'], talk: ['Hello, I would like to order a phone.', 'Do not sit on me. I am not a chair.', 'Eat me? Rude.', 'I am delivering myself.'],
+      moods: { line: 55, gift: 12, trade: 10, errand: 10, buff: 6, angry: 4, dance: 3 } },
+    phoneperson: { name: 'Phone Person', hp: 35, speed: 2.6, hostile: false, dmg: 0, drop: { c: 1, s: 1 }, r: 0.6, h: 1.9,
+      names: ['Rotary Rita', 'Cordless Carl', 'Flip'], talk: ['Ring ring. That is me talking.', 'I am expecting a call from a pizza.', 'Please hold.'],
+      moods: { line: 55, gift: 12, trade: 10, errand: 10, buff: 6, angry: 4, dance: 3 } },
+    chairperson: { name: 'Chair Person', hp: 45, speed: 2.2, hostile: false, dmg: 0, drop: { s: 2 }, r: 0.7, h: 1.9,
+      names: ['Recliner Ray', 'Stool', 'Lady Ottoman'], talk: ['Mind if I sit on you?', 'My back is killing me. I am mostly back.', 'I have legs. Four of them.'],
+      moods: { line: 55, gift: 10, trade: 10, errand: 10, buff: 6, angry: 6, dance: 3 } },
+    raider: { name: 'Raider', hp: 60, speed: 4.6, hostile: true, dmg: 11, drop: { s: 3 }, r: 0.6, h: 1.9,
+      human: { species: ['human'], top: ['armor', 'vest', 'none'], acc: ['goggles', 'eyepatch', 'headband', 'none'] } },
+    microperson: { name: 'Microversian', hp: 30, speed: 3, hostile: false, dmg: 0, drop: { c: 2 }, r: 0.6, h: 1.8,
+      human: { species: ['alien'], top: ['vest', 'labcoat', 'sweater'], acc: ['antennae', 'none', 'goggles'] }, names: ['Zeep-ish', 'Kyle', 'Flurbo', 'Gooble Jane'],
+      talk: ['We stomp the gooble boxes and the power just flows. Nobody knows why.', 'A scientist once came from the sky. He was rude.', 'Our universe is the biggest one there is. Obviously.', 'Have you seen the Miniverse? Me neither.'],
+      moods: { line: 45, gift: 15, trade: 10, errand: 12, buff: 8, angry: 4, follow: 4 } },
+    unitydrone: { name: 'Unity', hp: 35, speed: 2.6, hostile: false, dmg: 0, drop: { c: 1, k: 1 }, r: 0.6, h: 1.8,
+      human: { variant: 'hive' }, names: ['Unity', 'Unity', 'Unity'],
+      talk: ['We are Unity.', 'We are so happy you came. We are always happy.', 'We missed Rick. We are fine.', 'Would you like to join us? It is very relaxing.'],
+      moods: { line: 55, gift: 12, trade: 8, errand: 8, buff: 10, follow: 6, dance: 1 } },
+    fedguard: { name: 'Federation Guard', hp: 70, speed: 4.4, hostile: true, dmg: 10, drop: { k: 3, s: 2 }, r: 0.6, h: 2.0,
+      human: { species: ['insect'], top: ['armor'], acc: ['none'] } },
+    fedclerk: { name: 'Federation Clerk', hp: 40, speed: 2.4, hostile: false, dmg: 0, drop: { k: 2 }, r: 0.6, h: 2.0,
+      human: { species: ['insect'], top: ['polo', 'sweater'], acc: ['none'] }, names: ['Clerk 7', 'Clerk 12', 'Supervisor Zz'],
+      talk: ['Form 7-G, in triplicate.', 'Your request has been received and will be ignored.', 'Rick Sanchez is the most wanted man in the galaxy.', 'Please take a number.'],
+      moods: { line: 50, gift: 8, trade: 14, errand: 14, buff: 4, angry: 6, prank: 2 } },
+    gearperson: { name: 'Gearperson', hp: 50, speed: 2.6, hostile: false, dmg: 6, drop: { s: 3 }, r: 0.6, h: 1.9,
+      human: { species: ['robot'], top: ['armor', 'vest'], acc: ['goggles', 'crown', 'none'] }, names: ['Gearhead', 'Cogsworth', 'Revolio', 'Sprocket'],
+      talk: ['Everything here turns. It is very satisfying.', 'You are not a gear person. That is fine.', 'Do NOT tell me about the gear wars.', 'Grind on, friend.'],
+      moods: { line: 50, gift: 12, trade: 12, errand: 10, buff: 6, angry: 6, follow: 4 } },
     invader: { name: 'Invader', hp: 45, speed: 4.5, hostile: true, dmg: 9, drop: { p: 2, s: 2 }, r: 0.6, h: 1.8,
       human: { species: ['alien'], top: ['armor'], acc: ['antennae', 'goggles'], eyes: ['cyclops', 'visor'] } },
   };
@@ -313,6 +490,24 @@
       { id: 'seedfall', name: 'Seed Drop', text: 'The great trees are dropping Mega Seeds. Grab them!', loot: ['m', 5], dur: 40 },
       { id: 'pack', name: 'Feeding Time', text: 'A pack of Seed Beasts is hunting.', spawn: [['seedbeast', 7]], dur: 80 },
     ],
+    blips: [{ id: 'jackpot', name: 'Jackpot!', text: 'Every machine is paying out. Grab the tickets!', loot: ['k', 14], dur: 40 }],
+    purge: [
+      { id: 'purgenight', name: 'The Purge', text: 'The Festival has begun. The peaceful farmers are not peaceful anymore.', spawn: [['purgekiller', 10]], dur: 90 },
+      { id: 'harvest', name: 'Harvest Day', text: 'The farmers are sharing the harvest.', loot: ['s', 14], talkBoost: 1, dur: 50 },
+    ],
+    squanch: [
+      { id: 'squanchparty', name: 'Squanch Party', text: 'Everyone is squanching. Free plasma for everyone.', loot: ['p', 12], talkBoost: 1, dur: 60 },
+      { id: 'occupation', name: 'Federation Patrol', text: 'The Federation is cracking down on Planet Squanch.', spawn: [['fedguard', 7]], dur: 90 },
+    ],
+    gazorp: [{ id: 'brutes', name: 'Brute Stampede', text: 'A pack of Gazorpians is on the rampage.', spawn: [['gazorpian', 6]], dur: 80 }],
+    froopy: [{ id: 'sugar', name: 'Sugar Rush', text: 'It is raining candy. And feathers. Do not ask.', loot: ['f', 12], talkBoost: 1, dur: 50 }],
+    anatomy: [{ id: 'outbreak', name: 'Outbreak', text: 'The diseases have escaped containment. Again.', spawn: [['bacteria', 9]], dur: 90 }],
+    pizzaworld: [{ id: 'delivery', name: 'Rush Hour', text: 'Everyone is delivering everyone. Grab a slice.', loot: ['s', 12], talkBoost: 1, dur: 50 }],
+    wasteland: [{ id: 'convoy', name: 'Raider Convoy', text: 'Raiders are coming over the dunes.', spawn: [['raider', 8]], dur: 90 }],
+    microverse: [{ id: 'surge', name: 'Power Surge', text: 'The gooble boxes are overflowing with power.', loot: ['c', 12], dur: 45 }],
+    unityworld: [{ id: 'parade', name: 'Unity Parade', text: 'All of Unity is celebrating. They are very generous.', talkBoost: 1, loot: ['k', 8], dur: 60 }],
+    federation: [{ id: 'lockdown', name: 'Lockdown', text: 'Alarm! The Federation is hunting intruders.', spawn: [['fedguard', 8]], dur: 90 }],
+    gearworld: [{ id: 'grind', name: 'The Big Grind', text: 'The great gears turn and spill scrap everywhere.', loot: ['s', 16], dur: 45 }],
     featherhold: [
       { id: 'molting', name: 'Molting Season', text: 'Feathers are falling from the sky. Very majestic, slightly gross.', loot: ['f', 16], dur: 45 },
       { id: 'serpents', name: 'Serpent Hunt', text: 'Sky serpents are circling the cliffs. The elders want them gone.', spawn: [['skyserpent', 6]], dur: 90 },
@@ -360,6 +555,7 @@
       }
     }
     if (dimId === 'meatlands') h += Math.sin(x * 0.08) * Math.cos(z * 0.07) * 1.5 * smooth(14, 40, r);
+    if (dimId === 'suburbia') h *= smooth(138, 160, Math.max(Math.abs(x), Math.abs(z)));
     if (dimId === 'featherhold') h += Math.pow(MM.fbm(x * 0.02 + 5, z * 0.02, dim.seed + 7, 2), 3) * 30 * smooth(30, 60, r);
     h += smooth(MM.WORLD_HALF - 30, MM.WORLD_HALF + 10, Math.max(Math.abs(x), Math.abs(z))) * 28;
     return h;
@@ -376,6 +572,8 @@
 
   // Where the public portal kiosk stands in every dimension.
   MM.KIOSK = { x: 0, z: -14 };
+  // Each dimension can put its kiosk somewhere else (on Earth it stands on a lawn, not in the road).
+  MM.kioskOf = dimId => MM.DIM_BY_ID[dimId].kiosk || MM.KIOSK;
 
   // ---------- Props ----------
   const propCache = {};
@@ -385,9 +583,13 @@
     const r = MM.rng(dim.seed);
     const out = [];
     const free = (x, z, rad) => {
-      if (dim.interior) return true;
-      if (Math.hypot(x, z) < 22 + rad) return false;
-      if (Math.hypot(x - MM.KIOSK.x, z - MM.KIOSK.z) < 8 + rad) return false;
+      if (!dim.interior) {
+        if (Math.hypot(x, z) < 22 + rad) return false;
+        const K = MM.kioskOf(dimId);
+        if (Math.hypot(x - K.x, z - K.z) < 8 + rad) return false;
+      } else if (dim.fixed) return true;
+      else if (dim.spawn && Math.hypot(x - dim.spawn.x, z - dim.spawn.z) < 6 + rad) return false;
+      else if (dim.kiosk && Math.hypot(x - dim.kiosk.x, z - dim.kiosk.z) < 6 + rad) return false;
       for (const p of out) if (Math.hypot(p.x - x, p.z - z) < p.r + rad + 1.5) return false;
       return true;
     };
@@ -395,26 +597,45 @@
       const t = MM.PROPS[type];
       out.push({ id: out.length, type, x, z, rot, s: scale, r: t.r * scale, h: t.h * scale, hp: Math.round(t.hp * scale) });
     };
-    for (const l of MM.LANDMARKS) if (l.dim === dimId) add(l.model, l.x, l.z, dim.interior ? (l.z < -3 ? 0 : l.z > 3 ? Math.PI : l.x < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.atan2(-l.x, -l.z), 1);
+    for (const l of MM.LANDMARKS) if (l.dim === dimId) add(l.model, l.x, l.z, l.rot !== undefined ? l.rot : dim.interior ? (l.z < -3 ? 0 : l.z > 3 ? Math.PI : l.x < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.atan2(-l.x, -l.z), 1);
     for (const [type, x, z, rot] of dim.fixed || []) add(type, x, z, rot, 1);
-    if (dimId === 'suburbia') {
-      // Houses on lots along a grid of streets (streets run along x and z multiples of 44).
-      for (let gx = -3; gx <= 3; gx++) for (let gz = -3; gz <= 3; gz++) {
-        if (Math.abs(gx) <= 0 && Math.abs(gz) <= 0) continue;
-        for (const side of [-1, 1]) {
-          const x = gx * 44 + side * 12, z = gz * 44 + 12;
-          if (Math.abs(x) > 140 || Math.abs(z) > 140) continue;
-          if (r() < 0.2 || !free(x, z, 6.5)) continue;
-          add('house', x, z, side < 0 ? Math.PI / 2 : -Math.PI / 2, 1);
+    const onRoad = v => { const m = ((v % 44) + 44) % 44; return Math.min(m, 44 - m) < 7.5; };
+    if (dim.streets) {
+      // Blocks between streets every 44 m. Each block has two rows of houses back to back,
+      // each facing its street, with a driveway, maybe a car, a mailbox and a backyard fence.
+      const G = 44;
+      for (let gx = -4; gx <= 3; gx++) for (let gz = -4; gz <= 3; gz++) {
+        for (const f of [-1, 1]) {                       // -1: faces the street on the left (-x)
+          const roadX = f < 0 ? gx * G : (gx + 1) * G;
+          const hx = roadX - f * 14;
+          for (const zo of [12, 32]) {
+            const hz = gz * G + zo;
+            if (Math.abs(hx) > 140 || Math.abs(hz) > 140 || r() < 0.1) continue;
+            const type = r() < 0.6 ? 'house' : 'house2';
+            if (!free(hx, hz, 6.6)) continue;
+            add(type, hx, hz, f > 0 ? Math.PI / 2 : -Math.PI / 2, 1);
+            const dz = hz + f * (type === 'house2' ? 6.6 : 4.4) * (f > 0 ? 1 : 1);
+            if (r() < 0.6 && free(hx + f * 8.2, dz, 2.0)) add('car', hx + f * 8.2, dz, Math.PI / 2 + (r() < 0.5 ? Math.PI : 0), 1);
+            add('mailbox', roadX - f * 6.2, hz + 2.4, f > 0 ? Math.PI / 2 : -Math.PI / 2, 1);
+            add('fence', hx - f * 8, hz - 2.25, Math.PI / 2, 1);
+            add('fence', hx - f * 8, hz + 2.25, Math.PI / 2, 1);
+          }
         }
+      }
+      // Street lamps along every street, between the intersections.
+      for (let k = -3; k <= 3; k++) for (let m = -3; m <= 3; m++) {
+        const a = k * G, b = m * G + 22;
+        if (Math.abs(b) < 140 && free(a + 6.3, b, 0.4)) add('streetlamp', a + 6.3, b, -Math.PI / 2, 1);
+        if (Math.abs(b) < 140 && free(b, a - 6.3, 0.4)) add('streetlamp', b, a - 6.3, 0, 1);
       }
     }
     for (const [type, count] of dim.props) {
       const t = MM.PROPS[type];
       for (let i = 0, tries = 0; i < count && tries < count * 40; tries++) {
-        const x = (r() * 2 - 1) * 145, z = (r() * 2 - 1) * 145;
+        const span = Math.min(145, MM.boundOf(dimId) - 3);
+        const x = (r() * 2 - 1) * span, z = (r() * 2 - 1) * span;
         const s = 0.8 + r() * 0.5;
-        if (dimId === 'suburbia' && type !== 'tree' && (Math.abs(x % 44) < 4 || Math.abs(z % 44) < 4) && type !== 'car') continue;
+        if (dim.streets && (onRoad(x) || onRoad(z))) continue;
         if (!free(x, z, t.r * s)) continue;
         add(type, x, z, r() * Math.PI * 2, s);
         i++;
@@ -428,7 +649,7 @@
   MM.spawnPoint = function (dimId, rand) {
     const rr = rand || Math.random;
     const dim = MM.DIM_BY_ID[dimId];
-    if (dim.spawn) { const x = dim.spawn.x + (rr() - 0.5) * 2, z = dim.spawn.z + (rr() - 0.5) * 2; return { x, y: 0, z }; }
+    if (dim.spawn) { const sp = dim.spawn.spread || 1, x = dim.spawn.x + (rr() - 0.5) * 2 * sp, z = dim.spawn.z + (rr() - 0.5) * 2 * sp; return { x, y: MM.heightAt(dimId, x, z), z }; }
     const a = rr() * Math.PI * 2, d = 4 + rr() * 9;
     const x = Math.cos(a) * d, z = Math.sin(a) * d + 4;
     return { x, y: MM.heightAt(dimId, x, z), z };

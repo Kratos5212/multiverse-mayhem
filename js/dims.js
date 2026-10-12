@@ -8,38 +8,119 @@
   const P = C.prim;
   const shade = C.shade;
 
+  // ---------- Suburban building kit ----------
+  // Facades face +z. Windows: white frame, pale glass, a cross of muntins, optional shutters.
+  function win(s, x, y, z, w, h, shutter, side) {
+    const rot = side ? [0, side * Math.PI / 2, 0] : null;
+    const at = (dx, dy, dz) => side ? [x + dz * side, y + dy, z - dx * side] : [x + dx, y + dy, z + dz];
+    s.add(P.box, '#fbfaf6', at(0, 0, 0.02), rot, [w + 0.24, h + 0.24, 0.12]);
+    s.add(P.box, '#bfdcec', at(0, 0, 0.07), rot, [w, h, 0.06]);
+    s.add(P.box, '#fbfaf6', at(0, 0, 0.11), rot, [0.07, h, 0.04]);
+    s.add(P.box, '#fbfaf6', at(0, 0, 0.11), rot, [w, 0.07, 0.04]);
+    s.add(P.box, '#e9e4d8', at(0, -h / 2 - 0.14, 0.12), rot, [w + 0.4, 0.1, 0.22]);
+    if (shutter) for (const sx of [-1, 1]) s.add(P.box, shutter, at(sx * (w / 2 + 0.32), 0, 0.03), rot, [0.36, h + 0.1, 0.06]);
+  }
+  // Horizontal siding lines on a wall of width w (along x) at depth z (front, +z).
+  function siding(s, w, h, z, color, side) {
+    for (let y = 0.45; y < h - 0.1; y += 0.45) {
+      if (side) s.add(P.box, color, [z * side, y, 0], null, [0.03, 0.035, w]);
+      else s.add(P.box, color, [0, y, z], null, [w, 0.035, 0.03]);
+    }
+  }
+  function gable(s, w, d, y, h, color, trim) {
+    s.add(P.prism, color, [0, y, 0], null, [w + 0.8, h, d + 1.0]);
+    s.add(P.box, trim, [0, y + 0.02, 0], null, [w + 0.9, 0.14, d + 1.1]);   // fascia under the eaves
+  }
+  // A two-storey suburban house: siding, gable roof, porch, chimney, shutters.
+  function suburbanHouse(s, o) {
+    const w = o.w, d = o.d, h = o.h;
+    s.add(P.box, '#4a443c', [0, 0.25, 0], null, [w + 0.2, 0.5, d + 0.2]);        // foundation
+    s.add(P.box, o.wall, [0, 0.5 + h / 2, 0], null, [w, h, d]);
+    const sc = shade(o.wall, 0.9);
+    siding(s, w, h, d / 2 + 0.01, sc);
+    siding(s, w, h, -d / 2 - 0.01, sc);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) s.add(P.box, o.trim, [sx * w / 2, 0.5 + h / 2, sz * d / 2], null, [0.22, h, 0.22]);   // corner boards
+    gable(s, w, d, 0.5 + h, o.roofH || 3.2, o.roof, o.trim);
+    if (o.stories > 1) s.add(P.box, o.trim, [0, 0.5 + h / 2, d / 2 + 0.03], null, [w, 0.14, 0.06]);   // floor line
+    // Windows: two up, two down (or one big one on the garage side).
+    const up = 0.5 + h * 0.72, down = 0.5 + h * 0.28;
+    for (const x of o.winX || [-w * 0.3, w * 0.3]) {
+      if (o.stories > 1) win(s, x, up, d / 2, 1.3, 1.25, o.shutter);
+      win(s, x, o.stories > 1 ? down : 0.5 + h * 0.45, d / 2, 1.4, 1.35, o.shutter);
+    }
+    for (const sx of [-1, 1]) win(s, sx * (w / 2), o.stories > 1 ? up : 0.5 + h * 0.45, 0, 1.2, 1.2, null, sx);
+    // Front door with a little porch roof, step and light.
+    const dx = o.doorX || 0;
+    s.add(P.box, o.trim, [dx, 1.6, d / 2 + 0.03], null, [1.5, 2.5, 0.08]);
+    s.add(P.box, o.door, [dx, 1.55, d / 2 + 0.07], null, [1.1, 2.2, 0.06]);
+    s.add(P.sphereLo, '#e8c050', [dx + 0.38, 1.5, d / 2 + 0.13], null, [0.06, 0.06, 0.05]);
+    s.add(P.box, '#b8b0a2', [dx, 0.3, d / 2 + 0.7], null, [2.2, 0.3, 1.3]);
+    if (o.porch) {
+      s.add(P.box, o.roof, [dx, 3.2, d / 2 + 1.0], [-0.25, 0, 0], [3.0, 0.15, 2.2]);
+      for (const sx of [-1, 1]) s.add(P.cyl, o.trim, [dx + sx * 1.3, 1.85, d / 2 + 1.9], null, [0.1, 2.7, 0.1]);
+    }
+    s.add(P.box, '#fff4c0', [dx + 1.0, 2.4, d / 2 + 0.1], null, [0.15, 0.25, 0.08], true);
+    if (o.chimney) {
+      s.add(P.box, '#a5544a', [w * 0.32, 0.5 + h + 2.2, -d * 0.1], null, [0.9, 3.6, 0.9]);
+      s.add(P.box, '#7a3a32', [w * 0.32, 0.5 + h + 4.05, -d * 0.1], null, [1.05, 0.2, 1.05]);
+    }
+  }
+  // Single-storey ranch house with an attached garage on the left.
+  function ranchHouse(s, o) {
+    suburbanHouse(s, Object.assign({}, o, { w: o.w - 4, stories: 1, winX: [o.w * 0.12], doorX: -0.6 }));
+    const gx = -(o.w - 4) / 2 - 2.1, h = 3.1;
+    s.add(P.box, '#4a443c', [gx, 0.2, 0], null, [4.4, 0.4, o.d - 1.6]);
+    s.add(P.box, o.wall, [gx, 0.4 + h / 2, 0], null, [4.2, h, o.d - 1.8]);
+    siding(s, 4.2, h, (o.d - 1.8) / 2 + 0.01, shade(o.wall, 0.9));
+    s.add(P.prism, o.roof, [gx, 0.4 + h, 0], null, [4.8, 1.8, o.d - 0.8]);
+    garageDoor(s, gx, (o.d - 1.8) / 2, 3.2, 2.5, o.trim);
+  }
+  // A white sectional garage door.
+  function garageDoor(s, x, z, w, h, trim) {
+    s.add(P.box, trim, [x, 0.4 + h / 2 + 0.05, z + 0.03], null, [w + 0.3, h + 0.2, 0.08]);
+    s.add(P.box, '#f4f2ec', [x, 0.4 + h / 2, z + 0.08], null, [w, h, 0.06]);
+    for (let i = 1; i < 4; i++) s.add(P.box, '#d4d0c6', [x, 0.4 + i * h / 4, z + 0.12], null, [w, 0.05, 0.03]);
+    for (let i = 0; i < 4; i++) s.add(P.box, '#bfdcec', [x - w * 0.375 + i * w / 4, 0.4 + h * 0.84, z + 0.12], null, [w / 4 - 0.15, 0.32, 0.03]);
+  }
+
   // ---------- Prop models (unit scale, base on the ground) ----------
   const MODELS = {
-    house(s) {
-      s.add(P.box, '#f7f1e3', [0, 3, 0], null, [11, 6, 9]);
-      const roof = new T.ConeGeometry(8.6, 3.8, 4, 1);
-      roof.rotateY(Math.PI / 4);
-      s.add(roof, '#b8473b', [0, 7.9, 0], null, [1.0, 1, 0.82]);
-      roof.dispose();
-      s.add(P.box, '#7a4a2a', [-2.5, 1.4, 4.52], null, [1.6, 2.8, 0.1]);
-      s.add(P.box, '#d9d4c6', [2.6, 1.5, 4.52], null, [3.6, 3.0, 0.1]);
-      for (const x of [-4.2, -0.6]) s.add(P.box, '#9fd6ff', [x, 3.9, 4.52], null, [1.5, 1.3, 0.1]);
-      for (const x of [-3, 3]) s.add(P.box, '#9fd6ff', [x, 3.6, -4.52], null, [1.8, 1.4, 0.1]);
-      s.add(P.box, '#a33a30', [3.2, 9.2, -1], null, [0.9, 2.2, 0.9]);
-    },
+    house(s) { suburbanHouse(s, { w: 11, d: 8.5, h: 5.6, stories: 2, wall: '#ffffff', trim: '#fbfaf6', roof: '#8a7f78', door: '#7a3a2a', shutter: '#5a6a7a', porch: true, chimney: true }); },
+    house2(s) { ranchHouse(s, { w: 13, d: 9, h: 3.3, wall: '#ffffff', trim: '#fbfaf6', roof: '#7d7068', door: '#3a5a7a', shutter: '#6a5a4a' }); },
     tree(s) {
-      s.add(P.cylLo, '#7a5230', [0, 1.6, 0], null, [0.35, 3.2, 0.35]);
-      s.add(P.sphereLo, '#3f9a3a', [0, 4.6, 0], null, [2.2, 2.0, 2.2]);
-      s.add(P.sphereLo, '#4db044', [0.9, 5.8, 0.3], null, [1.5, 1.4, 1.5]);
-      s.add(P.sphereLo, '#56bf4b', [-0.7, 6.3, -0.4], null, [1.2, 1.2, 1.2]);
+      // Show trees: a short brown trunk with two forks and a puffy, lumpy canopy.
+      s.add(P.cylLo, '#7a5232', [0, 1.4, 0], null, [0.32, 2.8, 0.32]);
+      s.add(P.cylLo, '#7a5232', [0.45, 3.1, 0], [0, 0, -0.6], [0.16, 1.4, 0.16]);
+      s.add(P.cylLo, '#7a5232', [-0.4, 3.2, 0.1], [0.2, 0, 0.55], [0.15, 1.3, 0.15]);
+      const lumps = [[0, 4.6, 0, 2.3], [1.4, 4.2, 0.5, 1.5], [-1.4, 4.3, -0.3, 1.5], [0.3, 4.4, 1.4, 1.4], [-0.2, 4.3, -1.4, 1.4], [0.5, 5.9, 0.2, 1.6], [-0.7, 5.6, 0.6, 1.3]];
+      for (const [x, y, z, r] of lumps) s.add(P.sphere, y > 5 ? '#5cb84a' : '#4aa03e', [x, y, z], null, [r, r * 0.9, r]);
     },
     car(s) {
-      s.add(P.capsule, '#ffffff', [0, 0.75, 0], [Math.PI / 2, 0, 0], [0.95, 2.0, 0.55]);
-      s.add(P.sphere, '#ffffff', [0, 1.35, -0.2], null, [0.85, 0.55, 1.2]);
-      s.add(P.sphere, '#a8dcff', [0, 1.45, -0.15], null, [0.8, 0.42, 1.0]);
-      for (const x of [-0.85, 0.85]) for (const z of [-1.2, 1.2]) s.add(P.cyl, '#222', [x, 0.4, z], [0, 0, Math.PI / 2], [0.42, 0.3, 0.42]);
-      s.add(P.sphereLo, '#fff6b0', [0.5, 0.8, 1.9], null, [0.18, 0.12, 0.08], true);
-      s.add(P.sphereLo, '#fff6b0', [-0.5, 0.8, 1.9], null, [0.18, 0.12, 0.08], true);
+      // A plain family sedan: body, cabin, dark windows, wheels with hubcaps, lights.
+      s.add(P.box, '#ffffff', [0, 0.72, 0], null, [1.8, 0.62, 4.2]);
+      s.add(P.box, '#ffffff', [0, 1.3, -0.25], null, [1.62, 0.6, 2.1]);
+      s.add(P.box, '#3e4d5c', [0, 1.32, 0.82], [0.55, 0, 0], [1.5, 0.55, 0.06]);
+      s.add(P.box, '#3e4d5c', [0, 1.32, -1.32], [-0.5, 0, 0], [1.5, 0.5, 0.06]);
+      for (const sx of [-1, 1]) s.add(P.box, '#3e4d5c', [sx * 0.82, 1.32, -0.25], null, [0.04, 0.42, 1.8]);
+      for (const sz of [-1, 1]) s.add(P.box, '#9aa0a6', [0, 0.5, sz * 2.12], null, [1.84, 0.22, 0.12]);
+      for (const x of [-0.85, 0.85]) for (const z of [-1.35, 1.35]) { s.add(P.cyl, '#26262a', [x, 0.4, z], [0, 0, Math.PI / 2], [0.4, 0.28, 0.4]); s.add(P.cyl, '#c9cdd2', [x * 1.17, 0.4, z], [0, 0, Math.PI / 2], [0.2, 0.04, 0.2]); }
+      for (const sx of [-1, 1]) { s.add(P.box, '#fff6c0', [sx * 0.6, 0.8, 2.11], null, [0.4, 0.18, 0.05], true); s.add(P.box, '#e2483d', [sx * 0.65, 0.82, -2.11], null, [0.32, 0.16, 0.05], true); }
+    },
+    streetlamp(s) {
+      s.add(P.cylLo, '#4a5058', [0, 2.6, 0], null, [0.09, 5.2, 0.09]);
+      s.add(P.box, '#4a5058', [0, 5.2, 0.6], null, [0.12, 0.12, 1.3]);
+      s.add(P.box, '#3a3f45', [0, 5.05, 1.2], null, [0.5, 0.18, 0.7]);
+      s.add(P.box, '#fff4c0', [0, 4.94, 1.2], null, [0.4, 0.05, 0.55], true);
+    },
+    fence(s) {
+      for (let i = -4; i <= 4; i++) { s.add(P.box, '#fbfaf6', [i * 0.5, 0.55, 0], null, [0.14, 1.1, 0.06]); s.add(P.cone, '#fbfaf6', [i * 0.5, 1.15, 0], [0, Math.PI / 4, 0], [0.1, 0.15, 0.1]); }
+      for (const y of [0.35, 0.85]) s.add(P.box, '#fbfaf6', [0, y, -0.05], null, [4.4, 0.1, 0.05]);
     },
     mailbox(s) {
-      s.add(P.cylLo, '#6b4a2b', [0, 0.55, 0], null, [0.07, 1.1, 0.07]);
-      s.add(P.capsule, '#3c6fb5', [0, 1.2, 0], [Math.PI / 2, 0, 0], [0.2, 0.35, 0.2]);
-      s.add(P.box, '#e33', [0.22, 1.35, 0.1], null, [0.03, 0.25, 0.1]);
+      s.add(P.box, '#6b4a2b', [0, 0.55, 0], null, [0.1, 1.1, 0.1]);
+      s.add(P.box, '#4a5560', [0, 1.15, 0], null, [0.26, 0.24, 0.5]);
+      s.add(P.cyl, '#4a5560', [0, 1.27, 0], [Math.PI / 2, 0, 0], [0.13, 0.5, 0.13]);
+      s.add(P.box, '#e2483d', [0.15, 1.3, 0.08], null, [0.03, 0.22, 0.06]);
     },
     hedge(s) {
       s.add(P.sphereLo, '#3c8f34', [0, 0.65, 0], null, [1.6, 0.85, 1.0]);
@@ -360,48 +441,77 @@
       for (let y = 0; y < 4; y++) for (let i = 0; i < 8; i++) s.add(P.cyl, ['#3a6a2a', '#6a1a2a', '#ffd84d'][(i * 3 + y) % 3], [-1.7 + i * 0.48, 0.45 + y * 0.7, 0.3], [Math.PI / 2, 0, 0], [0.11, 0.6, 0.11], (i * 3 + y) % 3 === 2);
     },
     // ----- Landmarks -----
+    // The Smith family home: two storeys, tan siding, brown roof, porch with columns.
     lm_home(s) {
-      s.add(P.box, '#f3e4c4', [0, 3.2, 0], null, [12, 6.4, 10]);
-      const roof = new T.ConeGeometry(9.2, 4.2, 4, 1); roof.rotateY(Math.PI / 4);
-      s.add(roof, '#5a6f96', [0, 8.5, 0], null, [1, 1, 0.84]); roof.dispose();
-      s.add(P.box, '#8a5a2a', [0, 1.5, 5.02], null, [1.8, 3, 0.1]);
-      for (const x of [-3.6, 3.6]) s.add(P.box, '#ffe9a8', [x, 3.6, 5.02], null, [2, 1.6, 0.1], true);
-      s.add(P.box, '#d0c0a0', [0, 0.15, 6.2], null, [3, 0.3, 2.4]);
-      s.add(P.box, '#a33a30', [3.6, 9.6, -1.5], null, [1, 2.4, 1]);
+      suburbanHouse(s, { w: 12.5, d: 9.5, h: 6.0, stories: 2, wall: '#e6d2a8', trim: '#fbf6ea', roof: '#6b4a3a', door: '#7a3326', shutter: null, porch: true, chimney: true, winX: [-3.6, 3.6] });
+      s.add(P.box, '#c9b48c', [0, 0.05, 6.5], null, [1.4, 0.05, 3]);     // front path
     },
+    // Rick's garage: same siding and roof as the house, white sectional door, side window.
     lm_garage(s) {
-      s.add(P.box, '#d8d2c4', [0, 2.6, 0], null, [9, 5.2, 8]);
-      s.add(P.box, '#6b7280', [0, 5.4, 0], null, [9.6, 0.5, 8.6]);
-      s.add(P.box, '#3a3f4a', [0, 2.0, 4.02], null, [6, 4, 0.1]);
-      for (let i = 0; i < 4; i++) s.add(P.box, '#59606e', [0, 0.6 + i * 1.0, 4.08], null, [6, 0.08, 0.05]);
-      s.add(P.box, '#39ff6a', [0, 4.6, 4.1], null, [3.2, 0.6, 0.05], true);
-      s.add(P.cyl, '#39ff6a', [3.6, 6.2, 2], null, [0.15, 1.2, 0.15], true);
-      s.add(P.sphere, '#39ff6a', [3.6, 6.9, 2], null, [0.3, 0.3, 0.3], true);
+      const w = 9, d = 9, h = 3.6, wall = '#e6d2a8', trim = '#fbf6ea';
+      s.add(P.box, '#4a443c', [0, 0.2, 0], null, [w + 0.2, 0.4, d + 0.2]);
+      s.add(P.box, wall, [0, 0.4 + h / 2, 0], null, [w, h, d]);
+      siding(s, w, h, d / 2 + 0.01, shade(wall, 0.9));
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) s.add(P.box, trim, [sx * w / 2, 0.4 + h / 2, sz * d / 2], null, [0.22, h, 0.22]);
+      gable(s, w, d, 0.4 + h, 2.4, '#6b4a3a', trim);
+      garageDoor(s, -0.6, d / 2, 5.6, 2.9, trim);
+      win(s, w / 2, 2.4, -1.5, 1.2, 1.0, null, 1);
+      s.add(P.box, trim, [3.6, 1.5, d / 2 + 0.03], null, [1.1, 2.3, 0.08]);
+      s.add(P.box, '#8a7a6a', [3.6, 1.45, d / 2 + 0.07], null, [0.85, 2.1, 0.06]);
+      s.add(P.box, '#b8b0a2', [0, 0.03, d / 2 + 3], null, [6, 0.06, 6]);   // driveway apron
     },
+    // Harry Herpson High: red brick, white cornice, two rows of windows, a columned entrance, flagpole.
     lm_school(s) {
-      s.add(P.box, '#c8504a', [0, 3.5, 0], null, [18, 7, 9]);
-      s.add(P.box, '#e9e2d0', [0, 7.2, 0], null, [18.6, 0.5, 9.6]);
-      for (let i = -3; i <= 3; i++) for (const y of [2, 5]) s.add(P.box, '#bfe6ff', [i * 2.4, y, 4.52], null, [1.5, 1.4, 0.1]);
-      s.add(P.box, '#e9e2d0', [0, 1.6, 4.6], null, [3, 3.2, 0.3]);
-      s.add(P.cylLo, '#cccccc', [7, 6, 6.5], null, [0.08, 12, 0.08]);
-      s.add(P.box, '#3c6fb5', [7.9, 11, 6.5], null, [1.8, 1.0, 0.05]);
+      const W = 18, D = 9, H = 7.4, brick = '#b4563f';
+      s.add(P.box, '#4a443c', [0, 0.2, 0], null, [W + 0.3, 0.4, D + 0.3]);
+      s.add(P.box, brick, [0, 0.4 + H / 2, 0], null, [W, H, D]);
+      for (let y = 0.7; y < H; y += 0.55) s.add(P.box, shade(brick, 0.88), [0, y, D / 2 + 0.01], null, [W, 0.04, 0.02]);
+      s.add(P.box, '#f2ede2', [0, 0.4 + H + 0.2, 0], null, [W + 0.6, 0.45, D + 0.6]);
+      s.add(P.box, '#f2ede2', [0, 0.4 + H - 1.75, D / 2 + 0.04], null, [W, 0.18, 0.08]);
+      for (let i = -3; i <= 3; i++) { if (i === 0) continue; const x = i * 2.5; win(s, x, 2.0, D / 2, 1.4, 1.5); win(s, x, 4.4, D / 2, 1.4, 1.5); }
+      for (const sx of [-1, 1]) for (const z of [-2.2, 2.2]) win(s, sx * W / 2, 3.2, z, 1.3, 1.4, null, sx);
+      // Entrance: steps, columns, pediment, double doors.
+      s.add(P.box, '#d8d2c4', [0, 0.25, D / 2 + 1.4], null, [5.2, 0.5, 2.8]);
+      s.add(P.box, '#d8d2c4', [0, 0.55, D / 2 + 0.9], null, [4.6, 0.3, 1.8]);
+      for (const x of [-2, -0.7, 0.7, 2]) s.add(P.cyl, '#f6f2ea', [x, 2.6, D / 2 + 2.1], null, [0.24, 4.2, 0.24]);
+      s.add(P.box, '#f2ede2', [0, 4.8, D / 2 + 1.2], null, [5.2, 0.4, 2.4]);
+      s.add(P.box, '#3c5a7a', [0, 1.8, D / 2 + 0.05], null, [2.2, 2.6, 0.08]);
+      s.add(P.box, '#f2ede2', [0, 1.8, D / 2 + 0.09], null, [0.08, 2.6, 0.04]);
+      s.add(P.cylLo, '#cfd2d6', [7.5, 6, D / 2 + 3.5], null, [0.08, 12, 0.08]);
+      s.add(P.box, '#3c6fb5', [8.4, 11.2, D / 2 + 3.5], null, [1.8, 1.1, 0.05]);
+      s.add(P.box, '#e2483d', [8.4, 10.85, D / 2 + 3.53], null, [1.8, 0.2, 0.02]);
     },
+    // The horse hospital: a white clinic with a green trim band, big windows and a horse statue.
     lm_hospital(s) {
-      s.add(P.box, '#f4f6f8', [0, 3.8, 0], null, [14, 7.6, 10]);
-      s.add(P.box, '#e2483d', [0, 6.2, 5.05], null, [3, 0.9, 0.08], true);
-      s.add(P.box, '#e2483d', [0, 6.2, 5.05], null, [0.9, 3, 0.08], true);
-      s.add(P.box, '#9fd6ff', [0, 1.6, 5.02], null, [3.4, 3.2, 0.1]);
+      const W = 14, D = 10, H = 7.6;
+      s.add(P.box, '#4a443c', [0, 0.2, 0], null, [W + 0.3, 0.4, D + 0.3]);
+      s.add(P.box, '#f3f1ea', [0, 0.4 + H / 2, 0], null, [W, H, D]);
+      s.add(P.box, '#4a9a6a', [0, 0.4 + H - 0.3, 0], null, [W + 0.2, 0.6, D + 0.2]);
+      s.add(P.box, '#4a9a6a', [0, 0.9, D / 2 + 0.02], null, [W, 0.25, 0.05]);
+      for (const x of [-4.6, -2.3, 2.3, 4.6]) { win(s, x, 2.3, D / 2, 1.6, 1.8); win(s, x, 4.9, D / 2, 1.6, 1.5); }
+      s.add(P.box, '#bfdcec', [0, 1.6, D / 2 + 0.05], null, [2.6, 2.6, 0.06]);
+      s.add(P.box, '#f3f1ea', [0, 1.6, D / 2 + 0.09], null, [0.08, 2.6, 0.04]);
+      s.add(P.box, '#4a9a6a', [0, 3.3, D / 2 + 0.9], [-0.15, 0, 0], [4, 0.15, 2]);
       // A horse statue out front, in honour of the patients.
-      s.add(P.capsule, '#a0703f', [4.5, 1.6, 7], [0, 0, Math.PI / 2], [0.5, 1.6, 0.5]);
-      for (const x of [3.7, 5.3]) for (const z of [6.7, 7.3]) s.add(P.cylLo, '#a0703f', [x, 0.6, z], null, [0.12, 1.2, 0.12]);
-      s.add(P.capsule, '#a0703f', [5.6, 2.4, 7], [0, 0, -0.6], [0.3, 0.9, 0.35]);
-      s.add(P.box, '#3a2a1a', [5.4, 2.6, 7], [0, 0, -0.6], [0.15, 1.0, 0.1]);
+      s.add(P.box, '#9aa0a6', [5, 0.4, D / 2 + 2.5], null, [3.4, 0.8, 1.4]);
+      s.add(P.capsule, '#a0703f', [5, 2.1, D / 2 + 2.5], [0, 0, Math.PI / 2], [0.5, 1.7, 0.5]);
+      for (const x of [4.2, 5.8]) for (const z of [-0.3, 0.3]) s.add(P.cylLo, '#a0703f', [x, 1.25, D / 2 + 2.5 + z], null, [0.12, 1.0, 0.12]);
+      s.add(P.capsule, '#a0703f', [6.2, 2.9, D / 2 + 2.5], [0, 0, -0.6], [0.3, 0.9, 0.35]);
+      s.add(P.box, '#3a2a1a', [6.0, 3.1, D / 2 + 2.5], [0, 0, -0.6], [0.15, 1.0, 0.1]);
+      s.add(P.capsule, '#3a2a1a', [3.7, 2.0, D / 2 + 2.5], [0, 0, 0.6], [0.06, 0.6, 0.06]);
     },
+    // The unemployment office: a grey municipal block with a queue of chairs outside.
     lm_office(s) {
-      s.add(P.box, '#9aa3ab', [0, 3.5, 0], null, [11, 7, 8]);
-      for (let i = -2; i <= 2; i++) s.add(P.box, '#6b7280', [i * 2, 4.5, 4.02], null, [1.4, 3.5, 0.1]);
-      s.add(P.box, '#59606e', [0, 1.4, 4.02], null, [2.2, 2.8, 0.1]);
-      for (let i = 0; i < 5; i++) s.add(P.box, '#c9c9c9', [-3 + i * 1.5, 0.2, 6 + i * 0.1], null, [0.5, 0.4, 0.5]);
+      const W = 11, D = 8, H = 7;
+      s.add(P.box, '#4a443c', [0, 0.2, 0], null, [W + 0.3, 0.4, D + 0.3]);
+      s.add(P.box, '#a7adb2', [0, 0.4 + H / 2, 0], null, [W, H, D]);
+      for (let y = 1.2; y < H; y += 1.2) s.add(P.box, '#959ba0', [0, y, D / 2 + 0.01], null, [W, 0.06, 0.02]);
+      s.add(P.box, '#7d8388', [0, 0.4 + H + 0.15, 0], null, [W + 0.4, 0.3, D + 0.4]);
+      for (const x of [-3.6, -1.2, 1.2, 3.6]) win(s, x, 4.3, D / 2, 1.3, 1.4);
+      for (const x of [-3.6, 3.6]) win(s, x, 2.0, D / 2, 1.3, 1.4);
+      s.add(P.box, '#59606e', [0, 1.5, D / 2 + 0.05], null, [2.2, 2.6, 0.08]);
+      s.add(P.box, '#bfdcec', [0, 1.7, D / 2 + 0.1], null, [1.8, 1.8, 0.04]);
+      for (let i = 0; i < 5; i++) { const x = -3.2 + i * 1.3; s.add(P.box, '#6a7078', [x, 0.5, D / 2 + 1.8], null, [0.6, 0.08, 0.6]); s.add(P.box, '#6a7078', [x, 0.85, D / 2 + 2.08], null, [0.6, 0.6, 0.06]); for (const sx of [-1, 1]) s.add(P.cylLo, '#3a3f45', [x + sx * 0.25, 0.25, D / 2 + 1.8], null, [0.03, 0.5, 0.03]); }
     },
     lm_forge(s) {
       s.add(P.sphere, '#b84a5d', [0, 2.6, 0], null, [6, 4, 5.5]);
@@ -442,9 +552,451 @@
       s.add(P.cone, '#e2483d', [0, 13.5, 0], null, [5, 3.5, 5]);
       for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; s.add(P.sphere, '#ffd84d', [Math.cos(a) * 3, 15.5, Math.sin(a) * 3], [0, -a, 0.6], [1.6, 0.25, 0.5]); }
     },
+    // ----- Blips and Chitz -----
+    // An upright arcade cabinet: angled marquee, glowing screen, control deck, coin door.
+    arcade(s) {
+      const body = '#2a1e4a', side = '#ff6fd0';
+      s.add(P.box, body, [0, 1.1, 0], null, [1.1, 2.2, 0.9]);
+      for (const sx of [-1, 1]) s.add(P.box, side, [sx * 0.56, 1.25, 0], null, [0.04, 2.5, 0.95]);
+      s.add(P.box, '#ffe066', [0, 2.3, 0.3], null, [1.1, 0.4, 0.3], true);
+      s.add(P.box, '#141020', [0, 1.65, 0.38], [-0.2, 0, 0], [0.9, 0.75, 0.1]);
+      s.add(P.box, '#5ff8ff', [0, 1.65, 0.44], [-0.2, 0, 0], [0.76, 0.6, 0.02], true);
+      s.add(P.box, body, [0, 1.05, 0.55], [0.35, 0, 0], [1.1, 0.12, 0.45]);
+      s.add(P.cylLo, '#1a1a1a', [-0.22, 1.18, 0.6], null, [0.03, 0.18, 0.03]);
+      s.add(P.sphereLo, '#e2483d', [-0.22, 1.29, 0.6], null, [0.07, 0.07, 0.07]);
+      for (let i = 0; i < 3; i++) s.add(P.cylLo, ['#ffd84d', '#39ff6a', '#5ff8ff'][i], [0.05 + i * 0.16, 1.15, 0.62], null, [0.05, 0.04, 0.05], true);
+      s.add(P.box, '#14101e', [0, 0.45, 0.46], null, [0.4, 0.3, 0.02]);
+      s.add(P.box, '#ff5a3a', [0, 0.5, 0.48], null, [0.08, 0.1, 0.01], true);
+    },
+    // A skee-ball lane: a long ramp, a target with rings and a ticket slot.
+    skeeball(s) {
+      s.add(P.box, '#3a2a6a', [0, 0.4, 0.5], null, [1.2, 0.8, 2.4]);
+      s.add(P.box, '#d8a868', [0, 0.85, 0.5], [-0.15, 0, 0], [0.9, 0.06, 2.3]);
+      for (const sx of [-1, 1]) s.add(P.box, '#ff6fd0', [sx * 0.55, 0.95, 0.5], [-0.15, 0, 0], [0.08, 0.25, 2.4], true);
+      s.add(P.box, '#3a2a6a', [0, 1.3, -0.8], null, [1.2, 2.2, 0.5]);
+      s.add(P.cyl, '#5ff8ff', [0, 1.25, -0.52], [Math.PI / 2, 0, 0], [0.45, 0.04, 0.45], true);
+      s.add(P.cyl, '#2a1e4a', [0, 1.25, -0.5], [Math.PI / 2, 0, 0], [0.33, 0.04, 0.33]);
+      s.add(P.cyl, '#ffd84d', [0, 1.25, -0.48], [Math.PI / 2, 0, 0], [0.2, 0.04, 0.2], true);
+      s.add(P.box, '#ffe066', [0, 2.2, -0.7], null, [1.2, 0.3, 0.3], true);
+      for (let i = 0; i < 3; i++) s.add(P.sphereLo, '#f4efe0', [-0.25 + i * 0.25, 0.95, 1.55], null, [0.11, 0.11, 0.11]);
+    },
+    // A claw machine: glass box of plush toys on a lit base.
+    claw(s) {
+      s.add(P.box, '#e2483d', [0, 0.5, 0], null, [1.4, 1.0, 1.4]);
+      s.add(P.box, '#ffe066', [0, 0.95, 0.71], null, [1.4, 0.12, 0.02], true);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) s.add(P.box, '#ffd84d', [sx * 0.67, 1.65, sz * 0.67], null, [0.08, 1.3, 0.08]);
+      s.add(P.box, '#e2483d', [0, 2.4, 0], null, [1.45, 0.3, 1.45]);
+      s.add(P.box, '#ffffff', [0, 2.4, 0.73], null, [1.0, 0.18, 0.02], true);
+      const toys = ['#ff8fd0', '#5ff8ff', '#ffd84d', '#9ae86a', '#b48aff', '#ff9b4d'];
+      for (let i = 0; i < 9; i++) s.add(P.sphereLo, toys[i % 6], [-0.4 + (i % 3) * 0.4, 1.15 + Math.floor(i / 3) * 0.08, -0.4 + Math.floor(i / 3) * 0.4], null, [0.17, 0.17, 0.17]);
+      s.add(P.cylLo, '#c9cfd6', [0.2, 2.05, 0.1], null, [0.02, 0.5, 0.02]);
+      for (let i = 0; i < 3; i++) { const a = i / 3 * Math.PI * 2; s.add(P.box, '#c9cfd6', [0.2 + Math.cos(a) * 0.08, 1.72, 0.1 + Math.sin(a) * 0.08], [Math.sin(a) * 0.4, 0, -Math.cos(a) * 0.4], [0.03, 0.22, 0.03]); }
+      s.add(P.box, '#bfdcec', [0, 1.65, -0.68], null, [1.26, 1.26, 0.02]);
+      s.add(P.box, '#ffd84d', [0, 1.02, 0.67], null, [1.3, 0.08, 0.08]);
+    },
+    // Roy: A Life Well Lived. A reclined game chair with the VR helmet hanging over it.
+    lm_roy(s) {
+      s.add(P.box, '#2a1e4a', [0, 0.25, 0], null, [2.4, 0.5, 3.0]);
+      s.add(P.box, '#5ff8ff', [0, 0.52, 0], null, [2.45, 0.05, 3.05], true);
+      s.add(P.box, '#c84a3a', [0, 0.85, 0.3], null, [1.2, 0.5, 1.6]);
+      s.add(P.box, '#c84a3a', [0, 1.6, -0.6], [-0.35, 0, 0], [1.2, 1.6, 0.4]);
+      for (const sx of [-1, 1]) s.add(P.box, '#8a2a20', [sx * 0.7, 1.1, 0.2], null, [0.2, 0.3, 1.4]);
+      s.add(P.box, '#2a1e4a', [0, 2.1, -1.3], null, [0.3, 3.4, 0.3]);
+      s.add(P.box, '#2a1e4a', [0, 3.7, -0.7], null, [0.3, 0.25, 1.4]);
+      s.add(P.sphere, '#e8e4dc', [0, 3.05, -0.05], null, [0.45, 0.42, 0.45]);
+      s.add(P.box, '#141020', [0, 3.0, 0.32], null, [0.6, 0.22, 0.1]);
+      s.add(P.box, '#39ff6a', [0, 3.0, 0.38], null, [0.5, 0.12, 0.02], true);
+      s.add(P.cylLo, '#14101e', [0, 3.45, -0.05], null, [0.04, 0.35, 0.04]);
+    },
+
+    // ----- Purge Planet: a calm, old-fashioned farming world -----
+    farmhouse(s) {
+      const wall = '#c8a878', trim = '#6a4a2a', w = 7, d = 6, h = 3.6;
+      s.add(P.box, '#5a4a3a', [0, 0.25, 0], null, [w + 0.2, 0.5, d + 0.2]);
+      s.add(P.box, wall, [0, 0.5 + h / 2, 0], null, [w, h, d]);
+      for (let x = -w / 2 + 0.4; x < w / 2; x += 0.55) s.add(P.box, shade(wall, 0.88), [x, 0.5 + h / 2, d / 2 + 0.01], null, [0.04, h, 0.03]);   // board and batten
+      gable(s, w, d, 0.5 + h, 2.6, '#6a4a3a', trim);
+      for (const x of [-2.2, 2.2]) {
+        s.add(P.box, trim, [x, 2.4, d / 2 + 0.03], null, [1.2, 1.3, 0.08]);
+        s.add(P.box, '#ffd890', [x, 2.4, d / 2 + 0.06], null, [0.95, 1.05, 0.04], true);
+        s.add(P.box, trim, [x, 2.4, d / 2 + 0.09], null, [0.06, 1.05, 0.03]);
+      }
+      s.add(P.box, trim, [0, 1.6, d / 2 + 0.05], null, [1.1, 2.2, 0.08]);
+      // Porch on posts, and a rocking chair.
+      s.add(P.box, '#7a5a3a', [0, 0.45, d / 2 + 1.1], null, [w, 0.15, 2.2]);
+      s.add(P.box, '#6a4a3a', [0, 3.3, d / 2 + 1.1], [-0.18, 0, 0], [w + 0.2, 0.12, 2.4]);
+      for (const x of [-3.2, -1, 1, 3.2]) s.add(P.box, trim, [x, 1.9, d / 2 + 2.0], null, [0.16, 2.8, 0.16]);
+      s.add(P.box, '#7a4a2a', [2.2, 1.05, d / 2 + 1.0], null, [0.6, 0.08, 0.6]);
+      s.add(P.box, '#7a4a2a', [2.2, 1.45, d / 2 + 0.72], [-0.15, 0, 0], [0.6, 0.8, 0.06]);
+      s.add(P.box, '#7d3a2a', [w * 0.3, 0.5 + h + 1.8, -1], null, [0.7, 2.2, 0.7]);
+    },
+    barn(s) {
+      const red = '#b23a2e', white = '#f4efe0', w = 9, d = 12, h = 4.6;
+      s.add(P.box, red, [0, h / 2, 0], null, [w, h, d]);
+      for (let x = -w / 2 + 0.5; x < w / 2; x += 0.6) s.add(P.box, shade(red, 0.85), [x, h / 2, d / 2 + 0.01], null, [0.05, h, 0.03]);
+      // Gambrel roof: two pitches each side.
+      for (const sx of [-1, 1]) {
+        s.add(P.box, '#4a4a52', [sx * 3.3, h + 0.9, 0], [0, 0, sx * -1.0], [2.6, 0.18, d + 0.6]);
+        s.add(P.box, '#4a4a52', [sx * 1.25, h + 2.5, 0], [0, 0, sx * -0.35], [2.7, 0.18, d + 0.6]);
+      }
+      // Gable fronts filled in.
+      for (const sz of [-1, 1]) {
+        s.add(P.prism, red, [0, h, sz * d / 2], null, [w - 0.2, 2.9, 0.2]);
+        s.add(P.box, white, [0, h + 1.6, sz * (d / 2 + 0.1)], null, [1.4, 1.0, 0.06]);
+      }
+      // Big doors with the white X.
+      for (const sx of [-1, 1]) {
+        const x = sx * 1.3;
+        s.add(P.box, white, [x, 1.6, d / 2 + 0.05], null, [2.5, 3.2, 0.06]);
+        s.add(P.box, red, [x, 1.6, d / 2 + 0.08], null, [2.2, 2.9, 0.04]);
+        for (const r of [0.9, -0.9]) s.add(P.box, white, [x, 1.6, d / 2 + 0.11], [0, 0, r], [0.18, 3.5, 0.03]);
+      }
+      s.add(P.box, white, [0, 3.45, d / 2 + 0.09], null, [5.2, 0.16, 0.04]);
+      // A silo alongside.
+      s.add(P.cyl, '#c9cfd6', [w / 2 + 2.2, 4.5, -3], null, [1.8, 9, 1.8]);
+      s.add(P.hemi, '#9aa3ab', [w / 2 + 2.2, 9, -3], null, [1.85, 1.4, 1.85]);
+      for (let y = 1.5; y < 9; y += 1.5) s.add(P.cyl, '#aab3bd', [w / 2 + 2.2, y, -3], null, [1.83, 0.08, 1.83]);
+    },
+    // A row of wheat: golden stalks with heads, swaying fields are made of many.
+    wheat(s) {
+      for (let i = 0; i < 26; i++) {
+        const x = -1.5 + (i % 13) * 0.25 + (i > 12 ? 0.12 : 0), z = i > 12 ? 0.25 : -0.15;
+        const hh = 1.0 + ((i * 37) % 7) * 0.05;
+        s.add(P.cylLo, '#c8a848', [x, hh / 2, z], [0, 0, ((i * 13) % 5 - 2) * 0.05], [0.025, hh, 0.025]);
+        s.add(P.capsule, '#e8c860', [x, hh + 0.12, z], null, [0.06, 0.08, 0.06]);
+      }
+    },
+    // An old oil lantern on a wooden post.
+    lantern(s) {
+      s.add(P.box, '#5a3a20', [0, 1.4, 0], null, [0.16, 2.8, 0.16]);
+      s.add(P.box, '#5a3a20', [0, 2.75, 0.3], null, [0.1, 0.1, 0.7]);
+      s.add(P.cylLo, '#2a2a2a', [0, 2.5, 0.6], null, [0.02, 0.4, 0.02]);
+      s.add(P.cyl, '#2a2a2a', [0, 2.33, 0.6], null, [0.16, 0.05, 0.16]);
+      s.add(P.cyl, '#ffcf6a', [0, 2.15, 0.6], null, [0.13, 0.32, 0.13], true);
+      s.add(P.cone, '#2a2a2a', [0, 2.38, 0.6], null, [0.16, 0.12, 0.16]);
+      s.add(P.cyl, '#2a2a2a', [0, 1.98, 0.6], null, [0.15, 0.04, 0.15]);
+    },
+
+    // ----- Planet Squanch -----
+    // A round mud-and-thatch hut with a striped door curtain.
+    squanchhut(s) {
+      s.add(P.cyl, '#c88a5a', [0, 1.3, 0], null, [2.4, 2.6, 2.4]);
+      for (let y = 0.6; y < 2.6; y += 0.6) s.add(P.cyl, '#b07a4a', [0, y, 0], null, [2.42, 0.06, 2.42]);
+      s.add(P.cone, '#d8b860', [0, 3.3, 0], null, [3.0, 2.2, 3.0]);
+      s.add(P.cone, '#c8a050', [0, 4.05, 0], null, [1.2, 0.9, 1.2]);
+      s.add(P.box, '#3a1a4a', [0, 1.0, 2.33], null, [1.1, 2.0, 0.1]);
+      for (let i = 0; i < 4; i++) s.add(P.box, i % 2 ? '#ffd84d' : '#ff6fd0', [-0.42 + i * 0.28, 1.0, 2.4], null, [0.24, 1.9, 0.03]);
+      for (const x of [-1.5, 1.5]) s.add(P.cyl, '#ffe8a0', [x, 1.7, 1.9], [Math.PI / 2, 0, 0], [0.32, 0.1, 0.32], true);
+    },
+    // A party light pole: a tall stick with a string of glowing bulbs.
+    partylight(s) {
+      s.add(P.cylLo, '#3a2a4a', [0, 3, 0], null, [0.08, 6, 0.08]);
+      const c = ['#ff6fd0', '#ffd84d', '#5ff8ff', '#39ff6a', '#ff9b4d'];
+      for (let i = 0; i < 10; i++) { const a = i * 0.9; s.add(P.sphereLo, c[i % 5], [Math.cos(a) * 0.35, 0.8 + i * 0.52, Math.sin(a) * 0.35], null, [0.14, 0.17, 0.14], true); }
+      s.add(P.sphere, '#ff6fd0', [0, 6.1, 0], null, [0.3, 0.3, 0.3], true);
+    },
+    // A big party speaker stack.
+    speaker(s) {
+      for (const y of [0.65, 1.95]) {
+        s.add(P.box, '#1e1e24', [0, y, 0], null, [1.4, 1.25, 1.0]);
+        s.add(P.cyl, '#3a3a44', [0, y - 0.1, 0.51], [Math.PI / 2, 0, 0], [0.42, 0.02, 0.42]);
+        s.add(P.cyl, '#121216', [0, y - 0.1, 0.53], [Math.PI / 2, 0, 0], [0.24, 0.02, 0.24]);
+        s.add(P.cyl, '#3a3a44', [0, y + 0.42, 0.51], [Math.PI / 2, 0, 0], [0.13, 0.02, 0.13]);
+      }
+      s.add(P.box, '#ff6fd0', [0, 2.62, 0.4], null, [1.2, 0.06, 0.06], true);
+    },
+
+    // ----- Gazorpazorp -----
+    // A layered red mesa with a flat top.
+    redmesa(s) {
+      const c = ['#a8442e', '#c0583a', '#b04a32', '#d06a48'];
+      for (let i = 0; i < 4; i++) s.add(P.cylLo, c[i], [Math.sin(i * 2.3) * 0.2, 1.2 + i * 2.2, Math.cos(i * 1.7) * 0.2], [0, i * 0.4, 0], [4.6 - i * 0.55, 2.3, 4.2 - i * 0.5]);
+      s.add(P.cylLo, '#e08a5a', [0, 9.0, 0], [0, 1.4, 0], [2.6, 0.3, 2.4]);
+      for (let i = 0; i < 5; i++) { const a = i * 1.3; s.add(P.dodeca, '#8a3a2a', [Math.cos(a) * 4.7, 0.5, Math.sin(a) * 4.3], [a, a, 0], [0.9, 0.7, 0.9]); }
+    },
+    // Bleached bones and a big horned skull.
+    bonepile(s) {
+      const b = '#efe6cc';
+      s.add(P.sphere, b, [0, 0.6, 0], null, [0.6, 0.5, 0.7]);
+      for (const sx of [-1, 1]) { s.add(P.sphereLo, '#2a1a12', [sx * 0.22, 0.68, 0.55], null, [0.15, 0.17, 0.08]); s.add(P.cone, b, [sx * 0.6, 1.0, 0], [0, 0, sx * -0.9], [0.13, 0.7, 0.13]); }
+      s.add(P.box, '#2a1a12', [0, 0.4, 0.62], null, [0.3, 0.06, 0.04]);
+      for (let i = 0; i < 4; i++) { const a = i * 1.6 + 0.4; s.add(P.capsule, b, [Math.cos(a) * 1.1, 0.12, Math.sin(a) * 1.0], [Math.PI / 2, a, 0], [0.08, 0.35, 0.08]); }
+    },
+    // A spiky desert plant with a toothy bulb.
+    spikeplant(s) {
+      for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; s.add(P.cone, '#6a8a3a', [Math.cos(a) * 0.3, 0.7, Math.sin(a) * 0.3], [Math.sin(a) * 0.45, 0, -Math.cos(a) * 0.45], [0.14, 1.5, 0.14]); }
+      s.add(P.sphere, '#8a3a6a', [0, 1.7, 0], null, [0.35, 0.4, 0.35]);
+      s.add(P.sphereLo, '#2a0a1a', [0, 1.75, 0.27], null, [0.18, 0.1, 0.1]);
+      for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; s.add(P.cone, '#efe6cc', [Math.cos(a) * 0.34, 1.7 + Math.sin(a) * 0.38, 0], [0, 0, a - Math.PI / 2], [0.05, 0.22, 0.05]); }
+    },
+
+    // ----- Froopyland -----
+    cottontree(s) {
+      s.add(P.cylLo, '#f4d8a8', [0, 1.6, 0], [0, 0, 0.08], [0.18, 3.2, 0.18]);
+      for (let y = 0.4; y < 3; y += 0.5) s.add(P.cyl, '#ff8fd0', [0, y, 0], [0.4, 0, 0.08], [0.19, 0.1, 0.19]);
+      const lumps = [[0, 4.2, 0, 1.6], [0.9, 3.9, 0.3, 1.1], [-0.9, 4.0, -0.2, 1.1], [0.2, 5.0, 0.2, 1.1]];
+      lumps.forEach(([x, y, z, r], i) => s.add(P.sphere, i % 2 ? '#ffc0ec' : '#c8b0ff', [x, y, z], null, [r, r * 0.85, r]));
+    },
+    lollipop(s) {
+      s.add(P.cylLo, '#fbfaf6', [0, 1.6, 0], null, [0.08, 3.2, 0.08]);
+      s.add(P.cyl, '#ff5a8a', [0, 3.5, 0], [Math.PI / 2, 0, 0], [0.75, 0.22, 0.75]);
+      s.add(P.torus, '#fbfaf6', [0, 3.5, 0.08], null, [0.5, 0.5, 0.4]);
+      s.add(P.torus, '#ffd84d', [0, 3.5, 0.08], null, [0.26, 0.26, 0.4]);
+      s.add(P.cyl, '#fbfaf6', [0, 3.5, 0.0], [Math.PI / 2, 0, 0], [0.12, 0.24, 0.12]);
+    },
+    // A solid rainbow you can walk under.
+    rainbow(s) {
+      const bands = ['#e2483d', '#ff9b4d', '#ffe066', '#6ad86a', '#5aa8ff', '#9a6ae0'];
+      bands.forEach((c, i) => {
+        const arc = new T.TorusGeometry(8.6 - i * 0.55, 0.3, 6, 28, Math.PI);
+        s.add(arc, c, [0, 0, 0], null, [1, 1.1, 1.1]);
+        arc.dispose();
+      });
+      for (const x of [-6.9, 6.9]) for (let i = 0; i < 3; i++) s.add(P.sphere, '#ffffff', [x + (i - 1) * 0.9, 0.4 + (i % 2) * 0.3, (i - 1) * 0.4], null, [1.2, 0.8, 1.0]);
+    },
+    candyrock(s) {
+      s.add(P.dodeca, '#ffb0e0', [0, 0.8, 0], [0.3, 0.5, 0], [1.3, 0.9, 1.1]);
+      for (let i = 0; i < 6; i++) { const a = i * 1.05; s.add(P.sphereLo, ['#5ff8ff', '#ffd84d', '#9ae86a', '#ff6f9a'][i % 4], [Math.cos(a) * 0.9, 1.1 + Math.sin(i) * 0.3, Math.sin(a) * 0.8], null, [0.16, 0.16, 0.16]); }
+      s.add(P.octa, '#b48aff', [0.4, 1.5, 0.2], [0.2, 0.3, -0.2], [0.35, 0.6, 0.35], true);
+    },
+
+    // ----- Anatomy Park -----
+    // A red blood cell: a disc with a dimple on each side.
+    bloodcell(s) {
+      s.add(P.torus, '#d83a3a', [0, 0.7, 0], [0.3, 0, 0.2], [1.2, 1.2, 1.9]);
+      s.add(P.cyl, '#b82a2a', [0, 0.7, 0], [Math.PI / 2 + 0.3, 0, 0.2], [1.05, 0.25, 1.05]);
+    },
+    // A rib-like bone column with knobbly ends.
+    bonepillar(s) {
+      const b = '#f2e8d0';
+      s.add(P.cyl, b, [0, 4.5, 0], null, [0.75, 9, 0.75]);
+      for (const y of [0.3, 8.7]) for (const sx of [-1, 1]) s.add(P.sphere, b, [sx * 0.6, y, 0], null, [0.9, 0.8, 0.9]);
+      s.add(P.sphere, '#e8d8b8', [0.2, 4.5, 0.6], null, [0.3, 1.8, 0.2]);
+      s.add(P.capsule, '#c84a5a', [0.75, 6, 0], [0, 0, 0.3], [0.12, 1.2, 0.12]);
+    },
+    // A big pulsing artery arching overhead.
+    artery(s) {
+      const arc = new T.TorusGeometry(4.2, 0.9, 10, 22, Math.PI);
+      s.add(arc, '#c83a4a', [0, 0, 0], null, [1, 1.4, 1]);
+      arc.dispose();
+      const vein = new T.TorusGeometry(4.2, 0.35, 6, 22, Math.PI);
+      s.add(vein, '#5a6ad8', [0, 0, 0.7], null, [1, 1.4, 1]);
+      vein.dispose();
+      for (const x of [-4.2, 4.2]) s.add(P.sphere, '#a82a3a', [x, 0.4, 0], null, [1.4, 0.6, 1.4]);
+    },
+    // Pirates of the Pancreas: a pirate ship sailing through a pink pancreas, under a ride sign.
+    lm_ride(s) {
+      s.add(P.sphere, '#f0a0a0', [0, 1.8, -1], null, [7, 3.4, 4.5]);
+      for (let i = 0; i < 7; i++) s.add(P.sphereLo, '#e88a8a', [-6 + i * 2, 3.6 + Math.sin(i) * 0.6, -1.5], null, [1.3, 1.1, 1.3]);
+      s.add(P.box, '#4a8ac8', [0, 0.2, 2.6], null, [12, 0.4, 3]);
+      // The ship.
+      s.add(P.box, '#7a4a2a', [0, 1.1, 2.6], null, [5, 1.4, 2]);
+      s.add(P.box, '#5a3420', [0, 1.85, 2.6], null, [5.3, 0.15, 2.2]);
+      s.add(P.box, '#7a4a2a', [-2.2, 2.2, 2.6], null, [1.2, 0.8, 2]);
+      s.add(P.cone, '#7a4a2a', [2.9, 1.2, 2.6], [0, 0, -Math.PI / 2], [0.9, 1.2, 0.9]);
+      s.add(P.cylLo, '#4a2a1a', [0.4, 4, 2.6], null, [0.12, 4.2, 0.12]);
+      s.add(P.box, '#fbfaf6', [0.4, 4.2, 2.6], [0, Math.PI / 2, 0], [1.8, 2.2, 0.06]);
+      s.add(P.box, '#1a1a1a', [0.4, 6.0, 2.6], null, [0.8, 0.5, 0.04]);
+      s.add(P.sphereLo, '#fbfaf6', [0.4, 6.05, 2.63], null, [0.12, 0.12, 0.02]);
+      for (let i = 0; i < 3; i++) s.add(P.cyl, '#1a1a1a', [-1.4 + i * 1.2, 1.2, 3.62], [Math.PI / 2, 0, 0], [0.15, 0.1, 0.15]);
+      // Sign frame.
+      for (const x of [-4.8, 4.8]) s.add(P.box, '#ffe066', [x, 3.8, 3.1], null, [0.3, 7.6, 0.3]);
+    },
+
+    // ----- Pizza-Phone-Chair dimension: furniture-scale everything -----
+    giantchair(s) {
+      const wood = '#b07a4a';
+      s.add(P.box, wood, [0, 2.6, 0], null, [3.6, 0.4, 3.4]);
+      s.add(P.box, '#c84a3a', [0, 2.9, 0], null, [3.3, 0.25, 3.1]);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) s.add(P.box, wood, [sx * 1.6, 1.2, sz * 1.5], null, [0.3, 2.4, 0.3]);
+      for (const sx of [-1, 1]) s.add(P.box, wood, [sx * 1.6, 4.4, -1.5], null, [0.3, 3.2, 0.3]);
+      for (const y of [4.0, 5.4]) s.add(P.box, wood, [0, y, -1.5], null, [3.3, 0.35, 0.2]);
+    },
+    // A beige desk phone, big as a car, with a curly cord.
+    giantphone(s) {
+      s.add(P.box, '#e8dcc0', [0, 1.0, 0], [-0.15, 0, 0], [2.4, 2.0, 2.6]);
+      s.add(P.box, '#d8ccb0', [0, 0.15, 0], null, [2.6, 0.3, 2.8]);
+      for (let i = 0; i < 12; i++) s.add(P.box, '#fbfaf6', [-0.6 + (i % 3) * 0.6, 1.62 - Math.floor(i / 3) * 0.36, 1.34 - 0.149 * (0.62 - Math.floor(i / 3) * 0.36)], [-0.15, 0, 0], [0.42, 0.26, 0.1]);
+      s.add(P.capsule, '#e8dcc0', [0, 2.6, -0.4], [0, 0, Math.PI / 2], [0.35, 1.2, 0.35]);
+      for (const sx of [-1, 1]) s.add(P.sphere, '#e8dcc0', [sx * 1.5, 2.45, -0.4], null, [0.55, 0.4, 0.55]);
+      for (let i = 0; i < 8; i++) s.add(P.torus, '#d8ccb0', [1.6 + i * 0.22, 0.6, -1.0], [0, Math.PI / 2, 0], [0.25, 0.25, 0.5]);
+    },
+    // An open pizza box with a pizza in it.
+    pizzabox(s) {
+      s.add(P.box, '#e8d6a8', [0, 0.15, 0], null, [3.2, 0.3, 3.2]);
+      s.add(P.box, '#e8d6a8', [0, 1.75, -1.6], [-0.15, 0, 0], [3.2, 3.2, 0.12]);
+      s.add(P.box, '#e2483d', [0, 2.0, -1.5], [-0.15, 0, 0], [1.8, 0.5, 0.02]);
+      s.add(P.cyl, '#e8a848', [0, 0.36, 0], null, [1.45, 0.14, 1.45]);
+      s.add(P.cyl, '#f4c860', [0, 0.42, 0], null, [1.3, 0.06, 1.3]);
+      for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; s.add(P.cyl, '#c83a2a', [Math.cos(a) * 0.8, 0.46, Math.sin(a) * 0.8], null, [0.22, 0.03, 0.22]); }
+      s.add(P.cyl, '#c83a2a', [0, 0.46, 0], null, [0.22, 0.03, 0.22]);
+    },
+    couch(s) {
+      const c = '#5a7ab0';
+      s.add(P.box, c, [0, 0.7, 0], null, [4.2, 0.7, 1.8]);
+      s.add(P.box, c, [0, 1.5, -0.7], null, [4.2, 1.3, 0.4]);
+      for (const sx of [-1, 1]) s.add(P.box, shade(c, 0.9), [sx * 2.0, 1.15, 0], null, [0.45, 1.0, 1.8]);
+      for (const sx of [-1, 1]) s.add(P.box, shade(c, 1.12), [sx * 0.9, 1.15, 0.1], null, [1.7, 0.25, 1.4]);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) s.add(P.cylLo, '#3a2a1a', [sx * 1.9, 0.18, sz * 0.7], null, [0.1, 0.36, 0.1]);
+    },
+
+    // ----- Post-apocalyptic Earth -----
+    // A burned-out car with spikes welded on.
+    wreck(s) {
+      s.add(P.box, '#8a5a3a', [0, 0.65, 0], [0, 0, 0.05], [1.9, 0.6, 4.2]);
+      s.add(P.box, '#6a4a32', [0, 1.2, -0.3], [0, 0, 0.05], [1.7, 0.55, 2.0]);
+      s.add(P.box, '#1a1a1a', [0, 1.22, 0.75], [0.5, 0, 0.05], [1.5, 0.45, 0.05]);
+      for (const x of [-0.85, 0.85]) for (const z of [-1.35, 1.35]) s.add(P.cyl, '#26262a', [x, 0.35, z], [0, 0, Math.PI / 2], [0.38, 0.3, 0.38]);
+      for (let i = 0; i < 5; i++) s.add(P.cone, '#9aa0a6', [-0.8 + i * 0.4, 1.0, 2.2], [Math.PI / 2, 0, 0], [0.07, 0.5, 0.07]);
+      s.add(P.box, '#9aa0a6', [0, 0.65, 2.15], null, [2.0, 0.25, 0.1]);
+      s.add(P.box, '#59606e', [0.3, 1.6, -0.6], null, [0.5, 0.3, 0.9]);
+    },
+    // A lookout tower made of junk and sheet metal.
+    scraptower(s) {
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) s.add(P.box, '#6a5a4a', [sx * 1.1, 3.5, sz * 1.1], [sz * 0.06, 0, sx * -0.06], [0.25, 7, 0.25]);
+      for (const y of [2, 4.5]) { s.add(P.box, '#7a6a5a', [0, y, 1.1], [0, 0, 0.6], [0.12, 3.2, 0.12]); s.add(P.box, '#7a6a5a', [1.1, y, 0], [0.6, 0, 0], [0.12, 3.2, 0.12]); }
+      s.add(P.box, '#8a7a6a', [0, 7, 0], null, [3.2, 0.25, 3.2]);
+      s.add(P.box, '#9a5a3a', [0, 7.7, 1.55], null, [3.2, 1.2, 0.1]);
+      s.add(P.box, '#7a8a9a', [-1.55, 7.7, 0], null, [0.1, 1.2, 3.2]);
+      s.add(P.box, '#6a6a6a', [0.3, 8.8, 0], [0, 0, 0.12], [3.6, 0.15, 3.6]);
+      s.add(P.cylLo, '#3a3a3a', [1.3, 9.6, 1.3], null, [0.04, 1.6, 0.04]);
+      s.add(P.box, '#e2483d', [1.65, 10.1, 1.3], null, [0.7, 0.45, 0.03]);
+    },
+    cactus(s) {
+      const g = '#5a9a4a';
+      C.capsuleAt(s, g, 0.4, 3.4, [0, 0, 0]);
+      C.capsuleAt(s, g, 0.25, 1.1, [0.45, 1.3, 0], [0, 0, -Math.PI / 2]);
+      C.capsuleAt(s, g, 0.25, 1.2, [0.95, 1.3, 0]);
+      C.capsuleAt(s, g, 0.22, 0.9, [-0.4, 1.9, 0], [0, 0, Math.PI / 2]);
+      C.capsuleAt(s, g, 0.22, 0.9, [-0.85, 1.9, 0]);
+      s.add(P.sphereLo, '#ff6f9a', [0, 3.42, 0], null, [0.18, 0.12, 0.18]);
+    },
+
+    // ----- The Microverse -----
+    // A sleek white tower with glowing bands, like a hopeful little civilisation.
+    microtower(s) {
+      s.add(P.cyl, '#f4f6fa', [0, 6, 0], null, [1.4, 12, 1.4]);
+      s.add(P.cyl, '#d8dee8', [0, 0.5, 0], null, [2.0, 1.0, 2.0]);
+      for (let y = 2; y < 12; y += 2) s.add(P.cyl, '#5ff8ff', [0, y, 0], null, [1.43, 0.25, 1.43], true);
+      s.add(P.sphere, '#f4f6fa', [0, 12.6, 0], null, [2.4, 0.8, 2.4]);
+      s.add(P.cylLo, '#c9cfd6', [0, 13.8, 0], null, [0.06, 2, 0.06]);
+      s.add(P.sphereLo, '#ffd84d', [0, 14.8, 0], null, [0.2, 0.2, 0.2], true);
+    },
+    microdome(s) {
+      s.add(P.cyl, '#d8dee8', [0, 0.3, 0], null, [3, 0.6, 3]);
+      s.add(P.hemi, '#a8e0ff', [0, 0.6, 0], null, [2.7, 2.6, 2.7], true);
+      s.add(P.box, '#f4f6fa', [0, 1.0, 2.8], null, [1.2, 1.6, 0.6]);
+      s.add(P.box, '#3a5a8a', [0, 0.9, 3.12], null, [0.7, 1.2, 0.04]);
+    },
+    // The gooble box power plant: a factory hall, stacks, and a row of stompable gooble boxes.
+    lm_gooble(s) {
+      s.add(P.box, '#d8dee8', [0, 3.5, 0], null, [14, 7, 10]);
+      s.add(P.box, '#3a5a8a', [0, 7.15, 0], null, [14.4, 0.3, 10.4]);
+      for (let x = -5; x <= 5; x += 2.5) s.add(P.box, '#a8e0ff', [x, 4.5, 5.02], null, [1.6, 1.4, 0.06], true);
+      for (const x of [-4, 4]) { s.add(P.cyl, '#9aa3ab', [x, 10, -2.5], null, [0.9, 6, 0.9]); s.add(P.cyl, '#e2483d', [x, 12.8, -2.5], null, [0.95, 0.4, 0.95]); }
+      s.add(P.box, '#3a5a8a', [0, 1.6, 5.05], null, [3, 3.2, 0.1]);
+      // Gooble boxes waiting by the door.
+      for (let i = 0; i < 4; i++) {
+        const x = -4.5 + i * 3;
+        s.add(P.box, '#b48aff', [x, 0.45, 7.2], null, [0.9, 0.9, 0.9]);
+        s.add(P.box, '#ffd84d', [x, 0.92, 7.2], null, [0.5, 0.06, 0.5], true);
+      }
+    },
+
+    // ----- Unity's planet -----
+    // A tidy apartment tower: Unity keeps everything the same.
+    cityblock(s) {
+      s.add(P.box, '#e8e4dc', [0, 8, 0], null, [7, 16, 7]);
+      for (let y = 1.8; y < 15.5; y += 1.8) for (const x of [-2.2, 0, 2.2]) {
+        s.add(P.box, '#7ab8e0', [x, y, 3.52], null, [1.2, 1.1, 0.05]);
+        s.add(P.box, '#7ab8e0', [3.52, y, x], null, [0.05, 1.1, 1.2]);
+      }
+      s.add(P.box, '#5fd6b0', [0, 16.2, 0], null, [7.4, 0.4, 7.4]);
+      s.add(P.box, '#5fd6b0', [0, 1.4, 3.6], null, [2.4, 2.8, 0.1]);
+    },
+    // A statue of Unity's hosts, all holding hands.
+    unitystatue(s) {
+      s.add(P.cyl, '#c9cfd6', [0, 0.6, 0], null, [3.2, 1.2, 3.2]);
+      for (let i = 0; i < 3; i++) {
+        const a = i / 3 * Math.PI * 2, x = Math.cos(a) * 1.1, z = Math.sin(a) * 1.1;
+        C.capsuleAt(s, '#e8e8f0', 0.5, 4.2, [x, 1.2, z]);
+        s.add(P.sphere, '#e8e8f0', [x, 6.0, z], null, [0.6, 0.65, 0.6]);
+        s.add(P.box, '#e8e8f0', [x * 0.5, 4.5, z * 0.5], [0, -a, 0], [0.18, 0.18, 1.3]);
+      }
+      s.add(P.torus, '#5fd6b0', [0, 7.3, 0], [Math.PI / 2, 0, 0], [1.5, 1.5, 0.6], true);
+    },
+
+    // ----- Galactic Federation -----
+    // A white tower with the Federation's red bands and a disc on top.
+    fedtower(s) {
+      s.add(P.box, '#f4f6fa', [0, 10, 0], null, [5, 20, 5]);
+      for (const sx of [-1, 1]) s.add(P.box, '#d8dee8', [sx * 2.7, 9, 0], null, [0.5, 18, 3]);
+      for (let y = 3; y < 19; y += 4) s.add(P.box, '#e2483d', [0, y, 2.52], null, [5, 0.4, 0.04]);
+      for (let y = 1.5; y < 19; y += 1.4) s.add(P.box, '#3a4a6a', [0, y, 2.53], null, [3.6, 0.6, 0.03]);
+      s.add(P.cyl, '#f4f6fa', [0, 20.6, 0], null, [4.5, 0.6, 4.5]);
+      s.add(P.cyl, '#5ff8ff', [0, 20.3, 0], null, [4.55, 0.15, 4.55], true);
+      s.add(P.cylLo, '#c9cfd6', [0, 22.5, 0], null, [0.1, 3.2, 0.1]);
+      s.add(P.sphereLo, '#e2483d', [0, 24.1, 0], null, [0.25, 0.25, 0.25], true);
+    },
+    // A parked Federation ship: white wedge, dark canopy, red stripes.
+    fedship(s) {
+      s.add(P.box, '#f4f6fa', [0, 1.1, 0], null, [3.2, 0.8, 5.4]);
+      s.add(P.cone, '#f4f6fa', [0, 1.1, 3.3], [Math.PI / 2, 0, 0], [1.6, 1.4, 0.45]);
+      s.add(P.box, '#2a3448', [0, 1.65, 1.4], [0.25, 0, 0], [1.6, 0.5, 1.8]);
+      for (const sx of [-1, 1]) {
+        s.add(P.box, '#f4f6fa', [sx * 2.6, 1.0, -0.8], [0, 0, sx * -0.12], [2.2, 0.18, 2.6]);
+        s.add(P.box, '#e2483d', [sx * 2.6, 1.12, -0.8], [0, 0, sx * -0.12], [2.2, 0.04, 0.4]);
+        s.add(P.cyl, '#59606e', [sx * 1.0, 1.1, -2.85], [Math.PI / 2, 0, 0], [0.4, 0.4, 0.4]);
+        s.add(P.cyl, '#5ff8ff', [sx * 1.0, 1.1, -3.06], [Math.PI / 2, 0, 0], [0.3, 0.05, 0.3], true);
+        s.add(P.box, '#59606e', [sx * 1.2, 0.35, 0], null, [0.2, 0.7, 0.2]);
+      }
+      s.add(P.box, '#e2483d', [0, 1.52, -0.8], null, [0.3, 0.02, 3.2]);
+    },
+    // A prison block: grey walls, barred windows and searchlights.
+    prisonblock(s) {
+      s.add(P.box, '#9aa3ab', [0, 3, 0], null, [10, 6, 6]);
+      s.add(P.box, '#7d8790', [0, 6.15, 0], null, [10.4, 0.3, 6.4]);
+      for (let x = -4; x <= 4; x += 2) for (const y of [2, 4.3]) {
+        s.add(P.box, '#2a2f38', [x, y, 3.02], null, [1.0, 1.0, 0.04]);
+        for (let i = -1; i <= 1; i++) s.add(P.box, '#c9cfd6', [x + i * 0.25, y, 3.06], null, [0.06, 1.0, 0.04]);
+      }
+      for (const sx of [-1, 1]) { s.add(P.cylLo, '#59606e', [sx * 4.6, 7, 2.6], null, [0.1, 1.6, 0.1]); s.add(P.cone, '#ffe8a0', [sx * 4.6, 7.8, 2.9], [-1.1, 0, 0], [0.3, 0.6, 0.3], true); }
+      s.add(P.box, '#e2483d', [0, 5.4, 3.03], null, [3, 0.5, 0.04]);
+    },
+
+    // ----- Planet Gear -----
+    // A huge standing gear: rim, teeth, spokes and hub.
+    biggear(s) {
+      const c = '#b08a3a';
+      s.add(P.torus, c, [0, 3.2, 0], null, [2.4, 2.4, 2.0]);
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; s.add(P.box, c, [Math.cos(a) * 2.95, 3.2 + Math.sin(a) * 2.95, 0], [0, 0, a], [0.6, 0.55, 0.4]); }
+      for (let i = 0; i < 3; i++) s.add(P.box, shade(c, 0.85), [0, 3.2, 0], [0, 0, i * Math.PI / 3], [4.4, 0.35, 0.3]);
+      s.add(P.cyl, '#8a6a2a', [0, 3.2, 0], [Math.PI / 2, 0, 0], [0.6, 0.6, 0.6]);
+      s.add(P.box, '#5a4a3a', [0, 0.25, 0], null, [1.4, 0.5, 1.0]);
+    },
+    // Copper pipes with a valve wheel and a puff of steam.
+    pipe(s) {
+      s.add(P.cyl, '#b0703a', [0, 2.5, 0], null, [0.45, 5, 0.45]);
+      s.add(P.cyl, '#b0703a', [0.9, 4.6, 0], [0, 0, Math.PI / 2], [0.4, 1.8, 0.4]);
+      for (const y of [0.4, 2.5, 4.6]) s.add(P.cyl, '#8a5a2a', [0, y, 0], null, [0.55, 0.2, 0.55]);
+      s.add(P.torus, '#e2483d', [0, 2.0, 0.55], null, [0.35, 0.35, 0.5]);
+      s.add(P.sphereLo, '#f4f6fa', [1.8, 5.0, 0], null, [0.5, 0.4, 0.5]);
+    },
+    // A riveted brass house with a gear on the roof.
+    gearhouse(s) {
+      s.add(P.cyl, '#a07a3a', [0, 2, 0], null, [3, 4, 3]);
+      for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; s.add(P.sphereLo, '#7a5a2a', [Math.cos(a) * 3.02, 3.6, Math.sin(a) * 3.02], null, [0.08, 0.08, 0.08]); }
+      s.add(P.cone, '#6a5a4a', [0, 4.7, 0], null, [3.3, 1.4, 3.3]);
+      s.add(P.torus, '#d8b04a', [0, 5.6, 0], [0, 0, 0], [0.9, 0.9, 1.4]);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.box, '#d8b04a', [Math.cos(a) * 1.15, 5.6 + Math.sin(a) * 1.15, 0], [0, 0, a], [0.3, 0.3, 0.3]); }
+      s.add(P.box, '#5a3a20', [0, 1.2, 2.95], null, [1.2, 2.2, 0.1]);
+      s.add(P.cyl, '#ffd890', [1.8, 2.4, 2.4], [Math.PI / 2, 0, -0.6], [0.45, 0.1, 0.45], true);
+      s.add(P.torus, '#7a5a2a', [1.8, 2.4, 2.42], [0, -0.6, 0], [0.45, 0.45, 0.5]);
+    },
   };
 
   const modelCache = {};
+  C.propModel = propModel;
   function propModel(type) {
     if (modelCache[type]) return modelCache[type];
     const s = new C.Shape();
@@ -581,13 +1133,6 @@
       const n = MM.fbm(x * 0.05, z * 0.05, dim.seed + 99, 3);
       tmp.copy(c0).lerp(c1, Math.min(1, Math.max(0, (n - 0.35) * 3)));
       if (n < 0.38) tmp.lerp(c2, Math.min(1, (0.38 - n) * 6));
-      if (dim.id === 'suburbia') {
-        const rx = Math.abs(((x % 44) + 44) % 44 - 22), rz = Math.abs(((z % 44) + 44) % 44 - 22);
-        const dRoad = Math.min(22 - rx, 22 - rz);
-        if (dRoad < 3.2 && Math.max(Math.abs(x), Math.abs(z)) < 150) tmp.copy(road);
-        else if (dRoad < 4.2 && Math.max(Math.abs(x), Math.abs(z)) < 150) tmp.copy(side);
-        if (Math.hypot(x, z) < 12) tmp.copy(side).lerp(c1, 0.3);
-      }
       if (dim.id === 'meatlands') {
         const v = Math.abs(Math.sin(x * 0.11 + Math.sin(z * 0.07) * 3) * Math.cos(z * 0.09 + Math.sin(x * 0.05) * 2));
         if (v < 0.05) tmp.set('#7c1e34');
@@ -608,6 +1153,57 @@
     g.setAttribute('color', new T.BufferAttribute(cols, 3));
     g.computeVertexNormals();
     const m = new T.Mesh(g, C.toonMat);
+    return m;
+  }
+
+  // ---------- Streets (Earth C-137) ----------
+  // Asphalt roads on a 44 m grid, sidewalks with curbs between the intersections, corner
+  // squares, and a driveway plus a front path for every house.
+  function makeStreets(dim, props) {
+    const S = dim.streets, G = S.grid, E = S.extent, s = new C.Shape();
+    const ROAD = '#5d6168', WALK = '#d8d3c7', CURB = '#bcb6a9', DRIVE = '#c8c2b5';
+    for (let k = -3; k <= 3; k++) {
+      const c = k * G;
+      s.add(P.box, ROAD, [c, 0.03, 0], null, [7, 0.06, 2 * E]);
+      s.add(P.box, ROAD, [0, 0.031, c], null, [2 * E, 0.06, 7]);
+      for (let m = -4; m <= 3; m++) {
+        const a = Math.max(-E, m * G + 5.5), b = Math.min(E, (m + 1) * G - 5.5);
+        if (b <= a) continue;
+        const mid = (a + b) / 2, len = b - a;
+        for (const sd of [-1, 1]) {
+          s.add(P.box, WALK, [c + sd * 4.6, 0.07, mid], null, [1.8, 0.1, len]);
+          s.add(P.box, CURB, [c + sd * 3.62, 0.09, mid], null, [0.25, 0.14, len]);
+          s.add(P.box, WALK, [mid, 0.071, c + sd * 4.6], null, [len, 0.1, 1.8]);
+          s.add(P.box, CURB, [mid, 0.091, c + sd * 3.62], null, [len, 0.14, 0.25]);
+        }
+      }
+      for (let m = -3; m <= 3; m++) for (const sx of [-1, 1]) for (const sz of [-1, 1]) s.add(P.box, WALK, [c + sx * 4.6, 0.072, m * G + sz * 4.6], null, [1.8, 0.1, 1.8]);
+    }
+    for (const p of props) {
+      if (p.type !== 'house' && p.type !== 'house2' && p.type !== 'lm_home' && p.type !== 'lm_garage') continue;
+      const f = Math.sin(p.rot) > 0 ? 1 : -1;
+      const front = p.x + f * (p.type === 'house2' ? 4.5 : 4.3);
+      const curb = Math.round((p.x + f * 14) / G) * G - f * 3.6;
+      const dz = p.type === 'house2' ? p.z + f * 6.6 : p.type === 'lm_garage' ? p.z + f * 0.6 : p.z + f * 4.4;
+      const x0 = Math.min(front, curb), x1 = Math.max(front, curb);
+      if (p.type !== 'lm_home') s.add(P.box, DRIVE, [(x0 + x1) / 2, 0.085, dz], null, [x1 - x0, 0.1, p.type === 'lm_garage' ? 6 : 3.2]);
+      if (p.type !== 'lm_garage') s.add(P.box, WALK, [(x0 + x1) / 2, 0.08, p.z], null, [x1 - x0, 0.1, 1.3]);
+    }
+    return C.meshOf(s.build(), 0);
+  }
+
+  // A painted sign: dark letters on a cream board with a dark frame (canvas, never HTML).
+  function makeSign(text, w) {
+    const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 160;
+    const g = cv.getContext('2d');
+    g.fillStyle = '#2a2622'; g.fillRect(0, 0, 1024, 160);
+    g.fillStyle = '#f4efe2'; g.fillRect(10, 10, 1004, 140);
+    g.fillStyle = '#2a2622'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    let size = 96;
+    do { g.font = '700 ' + size + 'px "Fredoka", "Trebuchet MS", sans-serif'; size -= 4; } while (g.measureText(text).width > 960 && size > 20);
+    g.fillText(text, 512, 84);
+    const tex = new T.CanvasTexture(cv);
+    const m = new T.Mesh(new T.PlaneGeometry(w, w * 160 / 1024), new T.MeshBasicMaterial({ map: tex, fog: true }));
     return m;
   }
 
@@ -709,7 +1305,8 @@
       const av = C.buildAvatar(look, type === 'invader' ? 'trooper' : type === 'birdcitizen' ? 'birdfolk' : type === 'meeseeks' ? 'meeseeks' : H.variant || 'joe');
       return { root: av.root, av };
     }
-    if (!npcCache[type]) {
+    const key = type === 'froopy' ? type + ((seed || 0) % 4) : type;
+    if (!npcCache[key]) {
       const s = new C.Shape();
       if (type === 'meatblob') {
         s.add(P.sphere, '#d9677a', [0, 0.8, 0], null, [0.95, 0.8, 0.9]);
@@ -765,6 +1362,65 @@
         s.add(P.sphereLo, '#fff', [0.25, 0.9, 0.95], null, [0.12, 0.12, 0.08]); s.add(P.sphereLo, '#fff', [-0.25, 0.9, 0.95], null, [0.12, 0.12, 0.08]);
         s.add(P.sphereLo, '#111', [0.25, 0.9, 1.02], null, [0.05, 0.05, 0.03]); s.add(P.sphereLo, '#111', [-0.25, 0.9, 1.02], null, [0.05, 0.05, 0.03]);
         s.add(P.sphere, '#ffcf4d', [0.6, 0.8, 0.1], [0, 0, -0.5], [0.6, 0.1, 0.3]); s.add(P.sphere, '#ffcf4d', [-0.6, 0.8, 0.1], [0, 0, 0.5], [0.6, 0.1, 0.3]);
+      } else if (type === 'gazorpian') {
+        // A hulking Gazorpian brute: huge shoulders, little head, tusks, a loincloth.
+        const sk = '#8a9a5a';
+        for (const sx of [-1, 1]) { C.capsuleAt(s, sk, 0.24, 1.1, [sx * 0.35, 0, 0]); C.capsuleAt(s, sk, 0.22, 1.6, [sx * 0.95, 0.5, 0.1], [0, 0, sx * 0.12]); s.add(P.sphere, sk, [sx * 0.98, 0.45, 0.15], null, [0.3, 0.3, 0.3]); }
+        s.add(P.sphere, sk, [0, 1.65, 0], null, [0.85, 0.75, 0.6]);
+        s.add(P.sphere, sk, [0, 2.15, 0.05], null, [1.05, 0.45, 0.6]);
+        s.add(P.box, '#6a4a2a', [0, 1.05, 0.05], null, [0.95, 0.4, 0.62]);
+        s.add(P.sphere, sk, [0, 2.45, 0.35], null, [0.38, 0.36, 0.38]);
+        s.add(P.box, shade(sk, 0.7), [0, 2.6, 0.62], null, [0.5, 0.1, 0.12]);
+        for (const sx of [-1, 1]) { s.add(P.sphereLo, '#ffee88', [sx * 0.15, 2.5, 0.68], null, [0.07, 0.05, 0.04], true); s.add(P.cone, '#fff8e0', [sx * 0.16, 2.33, 0.68], null, [0.05, 0.18, 0.05]); }
+        s.add(P.box, '#3a1a12', [0, 2.3, 0.7], null, [0.3, 0.05, 0.03]);
+      } else if (type === 'froopy') {
+        // A Froopyland creature: a soft pastel blob on stubby legs, with big friendly eyes.
+        const c = ['#ffb0e0', '#b0d8ff', '#c8ffb0', '#ffe0a0'][(seed || 0) % 4];
+        s.add(P.sphere, c, [0, 0.75, 0], null, [0.65, 0.6, 0.6]);
+        for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; s.add(P.sphereLo, shade(c, 1.15), [Math.cos(a) * 0.45, 1.15, Math.sin(a) * 0.4], null, [0.25, 0.22, 0.25]); }
+        for (const sx of [-1, 1]) {
+          C.capsuleAt(s, shade(c, 0.9), 0.12, 0.4, [sx * 0.28, 0, 0]);
+          s.add(P.sphere, '#ffffff', [sx * 0.2, 0.9, 0.5], null, [0.17, 0.2, 0.1]);
+          s.add(P.sphereLo, '#1a1a1a', [sx * 0.2, 0.88, 0.58], null, [0.08, 0.1, 0.04]);
+          s.add(P.sphereLo, '#ff7aa8', [sx * 0.38, 0.68, 0.48], null, [0.08, 0.05, 0.03]);
+          C.capsuleAt(s, shade(c, 0.9), 0.08, 0.45, [sx * 0.6, 0.65, 0.1], [0, 0, sx * -0.9]);
+        }
+        s.add(P.sphereLo, '#3a1a2a', [0, 0.62, 0.56], null, [0.1, 0.05, 0.03]);
+        s.add(P.sphere, shade(c, 0.85), [0, 1.35, 0], null, [0.1, 0.2, 0.1]);
+      } else if (type === 'bacteria') {
+        // An Anatomy Park disease: a green, spiky, angry germ.
+        s.add(P.sphere, '#7ac83a', [0, 0.75, 0], null, [0.65, 0.6, 0.65]);
+        for (let i = 0; i < 12; i++) { const a = i * 2.4, y = Math.sin(i * 1.7) * 0.5; const r = Math.sqrt(1 - y * y); s.add(P.cone, '#5a9a2a', [Math.cos(a) * r * 0.65, 0.75 + y * 0.6, Math.sin(a) * r * 0.65], [Math.sin(a) * 1.2 * r, 0, -Math.cos(a) * 1.2 * r + (y > 0 ? 0 : Math.PI)], [0.1, 0.35, 0.1]); }
+        for (const sx of [-1, 1]) { s.add(P.sphere, '#ffff9a', [sx * 0.22, 0.95, 0.5], null, [0.16, 0.13, 0.1]); s.add(P.sphereLo, '#1a1a1a', [sx * 0.2, 0.93, 0.59], null, [0.07, 0.07, 0.03]); s.add(P.box, '#2a4a12', [sx * 0.22, 1.1, 0.56], [0, 0, sx * -0.4], [0.28, 0.05, 0.05]); }
+        s.add(P.sphereLo, '#2a0a12', [0, 0.6, 0.55], null, [0.25, 0.12, 0.08]);
+        for (let i = -2; i <= 2; i++) s.add(P.cone, '#fff8e0', [i * 0.08, 0.66, 0.6], [Math.PI, 0, 0], [0.03, 0.08, 0.03]);
+      } else if (type === 'pizzaperson' || type === 'phoneperson' || type === 'chairperson') {
+        // Objects that are people: a body made of the object, with a face, arms and legs.
+        const skin = '#f0c8a0';
+        if (type === 'pizzaperson') {
+          s.add(P.cone, '#f4c860', [0, 1.25, 0.0], [Math.PI, 0, 0], [0.55, 1.3, 0.14]);
+          s.add(P.box, '#c8883a', [0, 1.9, 0], null, [1.1, 0.2, 0.3]);
+          for (const [x, y] of [[0.2, 1.3], [-0.16, 1.16], [0, 0.95]]) s.add(P.cyl, '#c83a2a', [x, y, 0.15], [Math.PI / 2, 0, 0], [0.09, 0.02, 0.09]);
+        } else if (type === 'phoneperson') {
+          s.add(P.box, '#e2483d', [0, 1.35, 0], null, [0.9, 1.1, 0.7]);
+          s.add(P.cyl, '#fbfaf6', [0, 1.12, 0.35], [Math.PI / 2, 0, 0], [0.24, 0.04, 0.24]);
+          for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.cyl, '#1a1a1a', [Math.cos(a) * 0.16, 1.12 + Math.sin(a) * 0.16, 0.38], [Math.PI / 2, 0, 0], [0.03, 0.02, 0.03]); }
+          s.add(P.capsule, '#e2483d', [0, 2.02, 0], [0, 0, Math.PI / 2], [0.12, 0.35, 0.12]);
+        } else {
+          s.add(P.box, '#b07a4a', [0, 1.0, 0], null, [0.8, 0.12, 0.8]);
+          s.add(P.box, '#c84a3a', [0, 1.1, 0], null, [0.72, 0.1, 0.72]);
+          s.add(P.box, '#b07a4a', [0, 1.65, -0.36], null, [0.8, 1.2, 0.1]);
+          for (const sx of [-1, 1]) for (const sz of [-1, 1]) s.add(P.box, '#b07a4a', [sx * 0.34, 0.5, sz * 0.34], null, [0.08, 1.0, 0.08]);
+        }
+        // A face on the object.
+        const fz = type === 'chairperson' ? -0.3 : type === 'phoneperson' ? 0.38 : 0.15, fy = type === 'pizzaperson' ? 1.62 : type === 'phoneperson' ? 1.68 : 1.85;
+        for (const sx of [-1, 1]) { s.add(P.sphere, '#ffffff', [sx * 0.13, fy, fz], null, [0.09, 0.11, 0.05]); s.add(P.sphereLo, '#1a1a1a', [sx * 0.13, fy, fz + 0.04], null, [0.04, 0.05, 0.02]); }
+        s.add(P.box, '#3a1a1a', [0, fy - 0.2, fz + 0.01], null, [0.18, 0.04, 0.02]);
+        if (type !== 'chairperson') for (const sx of [-1, 1]) {
+          C.capsuleAt(s, skin, 0.07, 0.75, [sx * 0.2, 0, 0]);
+          s.add(P.sphereLo, '#3a3a3a', [sx * 0.2, 0.05, 0.06], null, [0.09, 0.06, 0.13]);
+          C.capsuleAt(s, skin, 0.06, 0.55, [sx * 0.42, 1.25, 0.05], [0, 0, sx * 2.4]);
+        }
       } else if (type === 'mooncrab') {
         s.add(P.sphere, '#c9c9d6', [0, 0.55, 0], null, [0.85, 0.35, 0.7]);
         for (const sx of [-1, 1]) {
@@ -775,10 +1431,10 @@
           s.add(P.sphereLo, '#111', [sx * 0.2, 1.18, 0.55], null, [0.05, 0.05, 0.03]);
         }
       }
-      npcCache[type] = s.build();
+      npcCache[key] = s.build();
     }
     const root = new T.Group();
-    const m = C.meshOf(npcCache[type], 0.05);
+    const m = C.meshOf(npcCache[key], 0.05);
     root.add(m);
     const sh = C.blobShadow(1.8); sh.position.y = 0.03; root.add(sh);
     root.userData.model = m;
@@ -848,6 +1504,7 @@
     group.add(makeSky(dim));
     if (dim.interior) group.add(makeRoom(dim));
     else { skyDecor(dim, group); group.add(makeTerrain(dim)); }
+    if (dim.streets) group.add(makeStreets(dim, MM.genProps(dimId)));
 
     // Instanced props
     const props = MM.genProps(dimId);
@@ -884,9 +1541,17 @@
     }
     const zero = new T.Matrix4().makeScale(0, 0, 0);
 
-    // Name signs over the landmarks.
+    // Name signs over the landmarks, and painted signs on their walls.
     for (const l of MM.LANDMARKS) {
       if (l.dim !== dimId) continue;
+      if (l.sign) {
+        const sg = makeSign(l.sign.text, l.sign.w);
+        const rot = l.rot !== undefined ? l.rot : 0;
+        const lx = 0, lz = l.sign.z + 0.06;
+        sg.position.set(l.x + lx * Math.cos(rot) + lz * Math.sin(rot), MM.heightAt(dimId, l.x, l.z) + l.sign.y, l.z - lx * Math.sin(rot) + lz * Math.cos(rot));
+        sg.rotation.y = rot;
+        group.add(sg);
+      }
       const tag = C.makeTag(l.name, '', '', '#ffd84d');
       tag.draw(-1);
       if (dim.room) { tag.sprite.scale.set(2.6, 0.65, 1); tag.sprite.position.set(l.x, Math.min(dim.room.h - 0.8, l.h + 0.7), l.z); }
@@ -895,14 +1560,17 @@
     }
 
     const kiosk = makeKiosk(dim);
-    kiosk.position.set(MM.KIOSK.x, MM.heightAt(dimId, MM.KIOSK.x, MM.KIOSK.z), MM.KIOSK.z);
-    if (!dim.interior) group.add(kiosk);
+    const K = MM.kioskOf(dimId);
+    kiosk.position.set(K.x, MM.heightAt(dimId, K.x, K.z), K.z);
+    if (MM.hasKiosk(dimId)) group.add(kiosk);
 
     // Lights
-    const sun = new T.DirectionalLight(dim.sun, 0.9);
+    // Flat, even light so colours read as painted: a strong neutral fill and a modest sun.
+    const sun = new T.DirectionalLight(dim.sun, 0.55);
     sun.position.set(80, 140, 60);
     group.add(sun);
-    group.add(new T.HemisphereLight(dim.ambient, shade(dim.ground[0], 0.6), 0.75));
+    const sky = new T.Color(dim.ambient).lerp(new T.Color('#ffffff'), 0.65), gnd = new T.Color(dim.ambient).lerp(new T.Color('#ffffff'), 0.4);
+    group.add(new T.HemisphereLight(sky, gnd, 0.58));
 
     return {
       dim, group, kiosk,
