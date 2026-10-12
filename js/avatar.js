@@ -598,6 +598,18 @@
     picklerick: { slouch: 0, bounce: 1.4, swing: 1.0, stride: 1.2, jitter: 0, carry: 0.5 },
     squanchy:   { slouch: 0.08, bounce: 1.1, swing: 0.7, stride: 1.0, jitter: 0.2, carry: 0.5 },
   };
+  function mkRag(dx, dz, power, av) {
+    const l = Math.hypot(dx, dz) || 1;
+    return { dx: dx / l, dz: dz / l, power, t: 0, dur: 0.8 + power * 0.9, seeds: Array.from({ length: 8 }, () => Math.random()) };
+  }
+  // Knock a character over: push direction (world x, z) and strength 0..1.
+  C.ragdoll = function (av, dx, dz, power) {
+    if (!av || av.inShip || av.roller) return;
+    power = Math.max(0.2, Math.min(1, power));
+    if (av.rag && av.rag.t < av.rag.dur * 0.5) { av.rag.power = Math.max(av.rag.power, power); return; }
+    av.rag = mkRag(dx || Math.random() - 0.5, dz || Math.random() - 0.5, power, av);
+  };
+  C.hitReact = function (av, front) { if (av) { av.hitT = 0.3; av.hitDir = front === false ? -1 : 1; } };
   const BASE_GAIT = { slouch: 0.03, bounce: 1, swing: 0.7, stride: 1, jitter: 0, carry: 0.55 };
   const lerp = (a, b, k) => a + (b - a) * k;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -663,6 +675,25 @@
     av.stretch = Math.max(0, (av.stretch || 0) - dt * 4);
     if (av.squash > 0) { kL += av.squash * 0.7; kR += av.squash * 0.7; lL -= av.squash * 0.35; lR -= av.squash * 0.35; bob -= av.squash * 0.12; }
 
+    // Floppy follow-through: arms, head and torso lag behind when the body speeds up, stops
+    // or turns, then spring back (a damped spring driven by the body's acceleration).
+    const rp = av.root.position;
+    if (av.prevPos && dt > 0 && dt < 0.1) {
+      const vx = (rp.x - av.prevPos.x) / dt, vz = (rp.z - av.prevPos.z) / dt;
+      if (Math.hypot(vx, vz) < 40) {
+        const ry = av.root.rotation.y, fwdV = vx * Math.sin(ry) + vz * Math.cos(ry), sideV = vx * Math.cos(ry) - vz * Math.sin(ry);
+        const af = (fwdV - (av.pfV || 0)) / dt, as = (sideV - (av.psV || 0)) / dt;
+        av.pfV = fwdV; av.psV = sideV;
+        const tf = clamp(-af * 0.012, -0.6, 0.6), ts2 = clamp(as * 0.008, -0.4, 0.4);
+        av.lagV = (av.lagV || 0) + ((tf - (av.lag || 0)) * 90 - (av.lagV || 0) * 9) * dt; av.lag = (av.lag || 0) + av.lagV * dt;
+        av.sLagV = (av.sLagV || 0) + ((ts2 - (av.sLag || 0)) * 90 - (av.sLagV || 0) * 9) * dt; av.sLag = (av.sLag || 0) + av.sLagV * dt;
+      }
+    }
+    av.prevPos = av.prevPos || new T.Vector3(); av.prevPos.copy(rp);
+    const lag = av.lag || 0, sLag = av.sLag || 0;
+    aL += lag * 1.4; aR += av.attackT > 0 ? 0 : lag * 1.4; aLz += sLag; aRz += sLag; headX += lag * 0.5; twist += sLag * 0.4;
+    // Getting hit: a jolt through the body.
+    if (av.hitT > 0) { av.hitT -= dt; const k2 = Math.max(0, av.hitT) / 0.3; tilt -= k2 * 0.5 * (av.hitDir || 1); headX -= k2 * 0.8; aL -= k2 * 0.9; aR -= k2 * 0.9; aLz += k2 * 0.4; aRz -= k2 * 0.4; }
     const set = (o, ax, v, sharp) => { if (o) o.rotation[ax] = sharp ? v : lerp(o.rotation[ax], v, f); };
     set(p.legL, 'x', lL); set(p.legR, 'x', lR);
     set(p.shinL, 'x', kL); set(p.shinR, 'x', kR);
@@ -687,12 +718,36 @@
     p.head.rotation.y = lerp(p.head.rotation.y, headY - twist * 0.6, f);
     if (av.jet) { av.jet.flame.visible = fly; av.jet.flame.scale.y = 0.8 + Math.random() * 0.4; }
     if (av.inShip) { set(p.legL, 'x', 0); set(p.legR, 'x', 0); set(p.shinL, 'x', 0.1); set(p.shinR, 'x', 0.1); tilt = 0; roll = clamp(-av.turn * 0.05, -0.3, 0.3); bob = Math.sin(av.t * 3) * 0.05; if (av.ship) av.ship.rotation.y += 0.02; }
-    if (dead) av.deadT = Math.min(1, av.deadT + dt * 3); else av.deadT = Math.max(0, av.deadT - dt * 4);
+    if (dead) av.deadT = Math.min(1, av.deadT + dt * 3); else { av.deadT = Math.max(0, av.deadT - dt * 4); if (!av.deadT) av.deadRag = null; }
     const D = av.deadT;
-    av.body.rotation.x = lerp(av.body.rotation.x, tilt, f) * (1 - D) - D * 1.45;
-    av.body.rotation.z = lerp(av.body.rotation.z, roll, f) * (1 - D);
-    av.body.position.y = lerp(av.body.position.y, bob, f) * (1 - D) + D * 0.25;
-    av.body.position.z = -D * 0.6;
+    av.body.rotation.x = lerp(av.body.rotation.x, tilt, f);
+    av.body.rotation.z = lerp(av.body.rotation.z, roll, f);
+    av.body.position.y = lerp(av.body.position.y, bob, f);
+    av.body.position.z = 0;
+    // Ragdoll: knocked over (explosions, slams, big falls) or dead. The body topples in the
+    // push direction while the limbs flail, then (if alive) gets back up.
+    let RW = 0;
+    if (av.rag) { av.rag.t += dt; const u = av.rag.t / av.rag.dur; if (u >= 1) av.rag = null; else RW = u < 0.55 ? Math.min(1, u / 0.1) : 1 - (u - 0.55) / 0.45; }
+    if (D > 0 && !av.deadRag) { const a = Math.random() * Math.PI * 2; av.deadRag = mkRag(Math.sin(a), Math.cos(a), 1, av); }
+    const rg = D > RW ? av.deadRag : av.rag, w = Math.max(RW, D);
+    if (rg && w > 0.001 && !av.inShip && !av.roller) {
+      rg.t2 = (rg.t2 || 0) + dt;
+      const t2 = D > RW ? Math.min(rg.t2, 0.9) : rg.t2, S = rg.seeds, fl = (i, fq) => Math.sin(t2 * fq + S[i] * 6.28);
+      const mix = (o, ax, v) => { if (o) o.rotation[ax] = o.rotation[ax] * (1 - w) + v * w; };
+      mix(p.armL, 'x', -1.4 + fl(0, 9) * 0.9); mix(p.armR, 'x', -1.4 + fl(1, 8) * 0.9);
+      mix(p.armL, 'z', 1.2 + fl(2, 6) * 0.5); mix(p.armR, 'z', -1.2 - fl(3, 7) * 0.5);
+      mix(p.foreL, 'x', -0.4 + fl(4, 10) * 0.5); mix(p.foreR, 'x', -0.4 + fl(5, 11) * 0.5);
+      mix(p.legL, 'x', fl(6, 8) * 0.8); mix(p.legR, 'x', fl(7, 7) * 0.8);
+      mix(p.legL, 'z', -0.35); mix(p.legR, 'z', 0.35);
+      mix(p.shinL, 'x', 0.6 + fl(0, 9) * 0.4); mix(p.shinR, 'x', 0.6 + fl(1, 9) * 0.4);
+      mix(p.head, 'x', fl(2, 5) * 0.5); mix(p.head, 'y', fl(3, 4) * 0.6);
+      // Topple in the push direction (local frame), with a little bounce on the way down.
+      const ry = av.root.rotation.y, lx = rg.dx * Math.cos(ry) - rg.dz * Math.sin(ry), lz = rg.dx * Math.sin(ry) + rg.dz * Math.cos(ry);
+      const fall = 1.45 * Math.min(1, w * 1.15) + Math.sin(Math.min(1, rg.t2 * 2.2) * Math.PI) * 0.12 * rg.power;
+      av.body.rotation.x = av.body.rotation.x * (1 - w) + fall * lz;
+      av.body.rotation.z = av.body.rotation.z * (1 - w) - fall * lx;
+      av.body.position.y = av.body.position.y * (1 - w) + w * 0.32;
+    }
     if (av.roller) {
       // Lie down along the left-right axis and roll forward; stand up again when stopped.
       av.lie = lerp(av.lie || 0, ground && speed > 0.5 ? 1 : 0, Math.min(1, dt * 7));

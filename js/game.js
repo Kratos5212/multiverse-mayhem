@@ -599,10 +599,16 @@
         sfxAt('boom', e.x, e.z, Math.min(1, e.r / 6));
         const d = Math.hypot(e.x - me.x, e.z - me.z);
         if (d < 25) G.shake = Math.max(G.shake, (1 - d / 25) * 0.6 * Math.min(1, e.r / 5));
+        // Everyone caught in the blast goes flying, limbs and all.
+        const blast = (av, x, z) => { const dd = Math.hypot(x - e.x, z - e.z), R = e.r * 1.6; if (av && dd < R) C.ragdoll(av, x - e.x, z - e.z, (1 - dd / R) * Math.min(1, e.r / 5) + 0.3); };
+        blast(G.meAv, me.x, me.z);
+        for (const p of G.players.values()) blast(p.av, p.x, p.z);
+        for (const n of G.npcs.values()) if (n.m.av) blast(n.m.av, n.x, n.z);
         break;
       }
       case 'mel': { const p = G.players.get(e.id); if (p) { p.av.attackT = 0.3; sfxAt('melee', p.x, p.z); } break; }
       case 'dmg': {
+        { const tav = e.p === G.myId ? G.meAv : e.p ? (G.players.get(e.p) || {}).av : (G.npcs.get(e.n) || { m: {} }).m.av; C.hitReact(tav); }
         if (e.p === G.myId) {
           $('flash').style.opacity = '1'; setTimeout(() => { $('flash').style.opacity = '0'; }, 120);
           C.sfx('hurt', 0.8);
@@ -711,7 +717,7 @@
   function onPrivate(e) {
     const me = G.me;
     if (e.k === 'tp') { me.x = e.x; me.y = e.y; me.z = e.z; me.vx = me.vy = me.vz = 0; G.ep = e.ep; }
-    else if (e.k === 'kb') { me.vx += e.vx; me.vz += e.vz; me.vy = Math.max(me.vy, e.vy); me.grounded = false; me.kbT = 0.7; }
+    else if (e.k === 'kb') { me.vx += e.vx; me.vz += e.vz; me.vy = Math.max(me.vy, e.vy); me.grounded = false; me.kbT = 0.7; C.ragdoll(G.meAv, e.vx, e.vz, Math.min(1, Math.hypot(e.vx, e.vz) / 14 + 0.2)); }
     else if (e.k === 'toast') UI.toast(e.text, 3500);
     else if (e.k === 'built') { C.sfx('craft'); UI.toast('Built: ' + MM.RECIPES[e.r].name); if (G.modal === 'craft') setTimeout(openCraft, 50); }
     else if (e.k === 'task') {
@@ -1459,6 +1465,7 @@
     if (inShip) { if (ny < g) { ny = g; me.vy = Math.max(0, me.vy); } ny = Math.min(ny, g + 90); }
     else if (ny <= g) {
       if (!me.grounded && me.vy < -14) fx.puff(nx, g, nz, '#ddd', 6, 1, 1, 0.5);
+      if (!me.grounded && me.vy < -24 && !inShip) C.ragdoll(G.meAv, me.vx || Math.sin(me.yaw), me.vz || Math.cos(me.yaw), Math.min(0.8, -me.vy / 50));   // a hard landing: stumble over
       ny = g; me.vy = 0; me.grounded = true;
     } else if (ny > g + 0.15) me.grounded = false;
     else if (me.grounded && me.vy <= 0) ny = g;
