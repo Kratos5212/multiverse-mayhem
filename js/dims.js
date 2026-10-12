@@ -83,6 +83,34 @@
     for (let i = 0; i < 4; i++) s.add(P.box, '#bfdcec', [x - w * 0.375 + i * w / 4, 0.4 + h * 0.84, z + 0.12], null, [w / 4 - 0.15, 0.32, 0.03]);
   }
 
+  // A rounded family sedan (the near model): an extruded side profile with soft corners,
+  // glass all round, tyres, hubcaps, round lights and bumpers.
+  function smoothCar(s) {
+    const body = C.profileGeo([[-2.12, 0.42], [-2.16, 0.98], [-1.25, 1.1], [-0.92, 1.66], [0.42, 1.68], [0.98, 1.12], [2.08, 0.98], [2.16, 0.42]], 0.28, 1.8, 0.1);
+    body.rotateY(-Math.PI / 2);
+    s.add(body, '#ffffff', [0, 0, 0]);
+    body.dispose();
+    const glass = C.profileGeo([[-1.08, 1.12], [-0.86, 1.56], [0.36, 1.58], [0.84, 1.13]], 0.08, 1.82, 0);
+    glass.rotateY(-Math.PI / 2);
+    s.add(glass, '#3e4d5c', [0, 0, 0]);
+    glass.dispose();
+    s.add(P.box, '#3e4d5c', [0, 1.45, 0.79], [-0.785, 0, 0], [1.46, 0.68, 0.04]);   // windshield
+    s.add(P.box, '#3e4d5c', [0, 1.43, -1.16], [0.532, 0, 0], [1.46, 0.5, 0.04]);   // rear window
+    s.add(P.box, '#ffffff', [0, 1.37, -0.25], null, [0.05, 0.45, 0.05]);         // door pillar (tinted with the body)
+    for (const sz of [-1, 1]) s.add(P.capsule, '#b0b5ba', [0, 0.52, sz * 2.27], [0, 0, Math.PI / 2], [0.12, 0.55, 0.12]);   // bumpers
+    for (const x of [-0.84, 0.84]) for (const z of [-1.32, 1.32]) {
+      s.add(P.torus, '#26262a', [x, 0.4, z], [0, Math.PI / 2, 0], [0.32, 0.32, 1.1]);
+      s.add(P.cyl, '#26262a', [x, 0.4, z], [0, 0, Math.PI / 2], [0.3, 0.24, 0.3]);
+      s.add(P.cyl, '#c9cdd2', [x * 1.17, 0.4, z], [0, 0, Math.PI / 2], [0.2, 0.04, 0.2]);
+    }
+    for (const sx of [-1, 1]) {
+      s.add(P.sphere, '#fff6c0', [sx * 0.6, 0.8, 2.24], null, [0.2, 0.12, 0.06], true);
+      s.add(P.sphere, '#e2483d', [sx * 0.64, 0.84, -2.25], null, [0.18, 0.1, 0.05], true);
+      s.add(P.sphere, '#ffffff', [sx * 0.95, 1.18, 0.55], null, [0.08, 0.06, 0.1]);   // mirrors
+      s.add(P.box, '#d0d0d0', [sx * 0.91, 0.95, 0.1], null, [0.03, 0.04, 0.18]);       // door handles
+    }
+  }
+
   // ---------- Prop models (unit scale, base on the ground) ----------
   const MODELS = {
     house(s) { suburbanHouse(s, { w: 11, d: 8.5, h: 5.6, stories: 2, wall: '#ffffff', trim: '#fbfaf6', roof: '#8a7f78', door: '#7a3a2a', shutter: '#5a6a7a', porch: true, chimney: true }); },
@@ -96,6 +124,7 @@
       for (const [x, y, z, r] of lumps) s.add(P.sphere, y > 5 ? '#5cb84a' : '#4aa03e', [x, y, z], null, [r, r * 0.9, r]);
     },
     car(s) {
+      if (s.smooth) return smoothCar(s);
       // A plain family sedan: body, cabin, dark windows, wheels with hubcaps, lights.
       s.add(P.box, '#ffffff', [0, 0.72, 0], null, [1.8, 0.62, 4.2]);
       s.add(P.box, '#ffffff', [0, 1.3, -0.25], null, [1.62, 0.6, 2.1]);
@@ -995,13 +1024,15 @@
     },
   };
 
+  // Each prop has a smooth, high-polygon model for up close and a plain one for far away.
   const modelCache = {};
   C.propModel = propModel;
-  function propModel(type) {
-    if (modelCache[type]) return modelCache[type];
-    const s = new C.Shape();
+  function propModel(type, far) {
+    const key = far ? type + ':far' : type;
+    if (modelCache[key]) return modelCache[key];
+    const s = new C.Shape({ smooth: !far });
     MODELS[type](s);
-    return (modelCache[type] = s.build());
+    return (modelCache[key] = s.build());
   }
 
   // ---------- Sky ----------
@@ -1228,14 +1259,21 @@
   }
 
   // ---------- Kiosk ----------
+  C.kioskModel = dim => makeKiosk(dim);
   function makeKiosk(dim) {
     const s = new C.Shape();
     s.add(P.cyl, '#3a3f4a', [0, 0.25, 0], null, [3.2, 0.5, 3.2]);
     s.add(P.cyl, '#ffd84d', [0, 0.52, 0], null, [3.25, 0.08, 3.25]);
-    for (const x of [-2.2, 2.2]) s.add(P.box, '#59606e', [x, 2.6, 0], null, [0.6, 4.4, 0.6]);
-    s.add(P.box, '#59606e', [0, 4.9, 0], null, [5.0, 0.6, 0.7]);
-    s.add(P.box, '#1d2230', [0, 1.6, -1.6], null, [1.4, 2.2, 0.6]);
-    s.add(P.box, '#5ff8ff', [0, 2.0, -1.28], null, [1.1, 0.9, 0.04], true);
+    // A round gate around the portal, on two curved legs, with a console behind it.
+    const gate = new T.TorusGeometry(2.12, 0.3, 16, 56), inner = new T.TorusGeometry(1.8, 0.07, 8, 56);
+    s.add(gate, '#59606e', [0, 2.6, 0], null, [1, 1, 0.9]);
+    s.add(inner, '#ffd84d', [0, 2.6, 0.12], null, null, true);
+    s.add(inner, '#ffd84d', [0, 2.6, -0.12], null, null, true);
+    gate.dispose(); inner.dispose();
+    for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; s.add(P.sphere, '#3a3f4a', [Math.cos(a) * 2.12, 2.6 + Math.sin(a) * 2.12, 0.26], null, [0.08, 0.08, 0.06]); }
+    for (const sx of [-1, 1]) C.capsuleAt(s, '#4a505c', 0.22, 1.5, [sx * 1.7, 0.4, 0], [0, 0, sx * 0.5]);
+    s.add(P.capsule, '#1d2230', [0, 1.3, -1.7], null, [0.55, 0.45, 0.4]);
+    s.add(P.sphere, '#5ff8ff', [0, 1.75, -1.33], null, [0.42, 0.3, 0.06], true);
     const g = C.meshOf(s.build(), 0.06);
     const sign = C.makeTag('PORTAL KIOSK', '', 'Any dimension, free', '#ffd84d');
     sign.sprite.position.set(0, 6.2, 0); sign.sprite.scale.set(5, 1.25, 1);
@@ -1510,36 +1548,82 @@
     const props = MM.genProps(dimId);
     const byType = {};
     for (const p of props) (byType[p.type] || (byType[p.type] = [])).push(p);
-    const slots = [];   // prop id -> { meshes, index, matrix }
+    const slots = [];   // prop id -> { set, index, matrix, tint, x, z, r, alive, isNear }
+    const all = [], typeSets = [];
     const m4 = new T.Matrix4(), q = new T.Quaternion(), v = new T.Vector3(), sc = new T.Vector3(), up = new T.Vector3(0, 1, 0);
     const tint = new T.Color(), white = new T.Color(1, 1, 1);
     const rand = MM.rng(dim.seed + 5);
+    const zero = new T.Matrix4().makeScale(0, 0, 0);
     for (const type in byType) {
       const list = byType[type];
-      const model = propModel(type);
-      const meshes = [];
       const thick = type === 'house' ? 0.09 : 0.06;
-      for (const [geo, mat] of [[model.lit, C.toonMat], [model.glow, C.glowMat]]) {
-        if (!geo) continue;
-        const im = new T.InstancedMesh(geo, mat, list.length);
-        const om = new T.InstancedMesh(geo, C.outlineMat(thick), list.length);
-        meshes.push(im, om);
+      const sets = { slots: [], dirty: false };
+      for (const lod of ['near', 'far']) {
+        const model = propModel(type, lod === 'far');
+        const meshes = [];
+        for (const [geo, mat] of [[model.lit, C.toonMat], [model.glow, C.glowMat]]) {
+          if (!geo) continue;
+          const im = new T.InstancedMesh(geo, mat, list.length);
+          const om = new T.InstancedMesh(geo, C.outlineMat(thick), list.length);
+          meshes.push(im, om);
+        }
+        meshes.lit = !!model.lit;
+        sets[lod] = meshes;
       }
-      list.forEach((p, i) => {
-        q.setFromAxisAngle(up, p.rot);
-        m4.compose(v.set(p.x, p.y - 0.05, p.z), q, sc.set(p.s, p.s, p.s));
-        for (const im of meshes) im.setMatrixAt(i, m4);
+      const tints = list.map(() => {
         // Every lit and glowing instance gets a colour (white = as modelled): three.js
         // r149 shares one shader between instanced meshes of a material, so they must
         // all have instance colours or none.
-        if (type === 'house' || type === 'car') tint.setHSL(rand(), type === 'car' ? 0.7 : 0.45, type === 'car' ? 0.55 : 0.82);
-        else tint.setRGB(1, 1, 1);
-        for (let k = 0; k < meshes.length; k += 2) meshes[k].setColorAt(i, k === 0 && model.lit ? tint : white);
-        slots[p.id] = { meshes, index: i, matrix: m4.clone() };
+        if (type === 'house' || type === 'car') return new T.Color().setHSL(rand(), type === 'car' ? 0.7 : 0.45, type === 'car' ? 0.55 : 0.82);
+        return white;
       });
-      for (const im of meshes) { im.instanceMatrix.needsUpdate = true; im.frustumCulled = false; group.add(im); }
+      list.forEach((p, i) => {
+        q.setFromAxisAngle(up, p.rot);
+        m4.compose(v.set(p.x, p.y - 0.05, p.z), q, sc.set(p.s, p.s, p.s));
+        for (const lod of ['near', 'far']) {
+          const meshes = sets[lod];
+          for (const im of meshes) im.setMatrixAt(i, lod === 'far' ? m4 : zero);
+          for (let k = 0; k < meshes.length; k += 2) meshes[k].setColorAt(i, k === 0 && meshes.lit ? tints[i] : white);
+        }
+        const R = (MM.PROPS[type] ? MM.PROPS[type].r : 8) * p.s;
+        const slot = { set: sets, index: i, matrix: m4.clone(), tint: tints[i], x: p.x, z: p.z, r: R, alive: true, isNear: false };
+        slots[p.id] = slot; all.push(slot); sets.slots.push(slot);
+      });
+      for (const im of sets.near) im.count = 0;
+      for (const lod of ['near', 'far']) for (const im of sets[lod]) { im.instanceMatrix.needsUpdate = true; im.frustumCulled = false; group.add(im); }
+      typeSets.push(sets);
     }
-    const zero = new T.Matrix4().makeScale(0, 0, 0);
+    // Swap props between their near and far models as the camera moves.
+    const nearDist = quality === 'low' ? 38 : 60;
+    // Far models keep one instance per prop (hidden when near or destroyed). Near models
+    // are packed: only the props close to the camera are in the list at all, so the
+    // detailed geometry costs nothing for the rest of the world.
+    function place(sl) {
+      for (const im of sl.set.far) { im.setMatrixAt(sl.index, sl.alive && !sl.isNear ? sl.matrix : zero); im.instanceMatrix.needsUpdate = true; }
+      sl.set.dirty = true;
+    }
+    function pack(sets) {
+      sets.dirty = false;
+      let n = 0;
+      for (const sl of sets.slots) {
+        if (!sl.alive || !sl.isNear) continue;
+        for (let k = 0; k < sets.near.length; k++) {
+          sets.near[k].setMatrixAt(n, sl.matrix);
+          if (k % 2 === 0) sets.near[k].setColorAt(n, k === 0 && sets.near.lit ? sl.tint : white);
+        }
+        n++;
+      }
+      for (const im of sets.near) { im.count = n; im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; }
+    }
+    let lodT = 0;
+    function updateLod(camPos) {
+      for (const sl of all) {
+        const d = Math.hypot(sl.x - camPos.x, sl.z - camPos.z) - sl.r;
+        const near = d < (sl.isNear ? nearDist + 6 : nearDist);
+        if (near !== sl.isNear) { sl.isNear = near; place(sl); }
+      }
+      for (const sets of typeSets) if (sets.dirty) pack(sets);
+    }
 
     // Name signs over the landmarks, and painted signs on their walls.
     for (const l of MM.LANDMARKS) {
@@ -1577,9 +1661,12 @@
       setAlive(id, alive) {
         const s = slots[id];
         if (!s) return;
-        for (const im of s.meshes) { im.setMatrixAt(s.index, alive ? s.matrix : zero); im.instanceMatrix.needsUpdate = true; }
+        s.alive = alive;
+        place(s);
+        pack(s.set);
       },
       update(dt, t, camPos) {
+        if (camPos && (lodT -= dt) <= 0) { lodT = 0.25; updateLod(camPos); }
         kiosk.userData.ring.userData.tick(dt);
         kiosk.userData.ring.rotation.y = Math.sin(t * 0.5) * 0.3;
         if (group.userData.eye && camPos) group.userData.eye.lookAt(camPos);

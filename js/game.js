@@ -16,10 +16,12 @@
   if (!profile.home) profile.home = 'ABDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random() * 23)] + '-' + Math.floor(Math.random() * 999 + 1);
   if (profile.startDim && !MM.DIM_BY_ID[profile.startDim]) profile.startDim = '';
   C.setVolume(settings.volume);
+  C.bevelSegs = settings.quality === 'low' ? 2 : 3;   // rounded-edge smoothness
 
   // ---------- Renderer ----------
   const canvas = $('view');
   const renderer = new T.WebGLRenderer({ canvas, antialias: settings.quality === 'high', powerPreference: 'high-performance' });
+  C.renderer = renderer;
   const applyQuality = () => renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, settings.quality === 'high' ? 2 : 1.25));
   applyQuality();
   renderer.setClearColor('#0b0f1e');
@@ -1299,6 +1301,7 @@
       if (inShip !== !!p.av.inShip) { C.setShip(p.av, inShip, p.info.gear); collectOutlines(p.av); }
       const anim = s.a === MM.ANIM.dead ? s.a : p.emoteT > 0 ? MM.ANIM.emote : s.a;
       p.av.animate(dt, { speed: s.a === MM.ANIM.run ? Math.max(p.speed, 3) : p.speed * 0.3, anim, fx: s.fx });
+      p.av.setDetail(nearCam(p.x, p.z));
       const near = d < 40;
       for (const o of p.av.outlines) o.visible = near || settings.quality === 'high';
       p.tag.sprite.visible = d < 45 && s.a !== MM.ANIM.dead;
@@ -1312,7 +1315,7 @@
       const root = n.m.root;
       root.position.set(n.x, n.y, n.z);
       root.rotation.y = n.r;
-      if (n.m.av) n.m.av.animate(dt, { speed: n.speed, anim: (n.flags & 4) ? MM.ANIM.emote : n.speed > 0.4 ? 1 : 0 });
+      if (n.m.av) { n.m.av.animate(dt, { speed: n.speed, anim: (n.flags & 4) ? MM.ANIM.emote : n.speed > 0.4 ? 1 : 0 }); n.m.av.setDetail(nearCam(n.x, n.z)); }
       else {
         const md = root.userData.model;
         if (n.type === 'meatblob') { const s = 1 + Math.sin(n.t * (3 + n.speed)) * 0.08; md.scale.set(1 / s, s, 1 / s); }
@@ -1339,6 +1342,9 @@
     for (const tu of G.turrets.values()) tu.m.userData.head.rotation.y += wrap(tu.aim - tu.m.userData.head.rotation.y) * Math.min(1, dt * 10);
     for (const m of G.pickups.values()) { m.userData.ph += dt; m.position.y = m.userData.base + Math.sin(m.userData.ph * 2) * 0.2; m.userData.spin.rotation.y += dt * 2; }
   }
+
+  // Characters within this distance of the camera get their smooth, detailed model.
+  function nearCam(x, z) { return (x - camera.position.x) ** 2 + (z - camera.position.z) ** 2 < (settings.quality === 'low' ? 16 * 16 : 26 * 26); }
 
   // ---------- Camera ----------
   function firstPerson() { return settings.view === 'first'; }

@@ -217,19 +217,48 @@
     return top;
   }
 
-  // A ray gun held in the right hand, pointing forward.
-  function addGun(s, weapon, L, y) {
+  // The gun: a rounded body along +z, a glowing vial on top and an emitter at the front,
+  // with its grip going down from (x, y, z). Rick's portal gun glows in his portal colour.
+  function gunAt(s, x, y, z, weapon, L) {
     const col = weapon === 'plasma' ? L.portalColor : WEAPON_COLORS[weapon] || '#ffd84d';
-    s.add(P.box, '#d8dde2', [0, y, 0.18], null, [0.1, 0.12, 0.28]);
-    s.add(P.box, '#9aa3ab', [0, y - 0.1, 0.08], [0.3, 0, 0], [0.07, 0.16, 0.08]);
-    s.add(P.cyl, col, [0, y + 0.02, 0.22], [Math.PI / 2, 0, 0], [0.05, 0.22, 0.05], true);
-    s.add(P.sphereLo, col, [0, y + 0.02, 0.36], null, [0.055, 0.055, 0.055], true);
+    const fwd = [Math.PI / 2, 0, 0];
+    C.capsuleAt(s, '#7d858e', 0.042, 0.2, [x, y - 0.17, z - 0.05], [0.3, 0, 0]);                 // grip
+    C.capsuleAt(s, '#d8dde2', 0.072, 0.36, [x, y + 0.04, z - 0.1], fwd);                      // body
+    s.add(P.cyl, col, [x, y + 0.13, z + 0.06], fwd, [0.042, 0.2, 0.042], true);                 // vial
+    for (const dz of [-0.05, 0.17]) s.add(P.cyl, '#9aa3ab', [x, y + 0.13, z + dz], fwd, [0.05, 0.035, 0.05]);
+    s.add(P.cyl, '#9aa3ab', [x, y + 0.04, z + 0.27], fwd, [0.062, 0.05, 0.062]);                // emitter
+    s.add(P.sphereLo, col, [x, y + 0.04, z + 0.3], null, [0.046, 0.046, 0.028], true);
+    s.add(P.cyl, '#59606e', [x + 0.075, y + 0.05, z + 0.02], [0, 0, Math.PI / 2], [0.028, 0.03, 0.028]);   // dial
   }
+  function addGun(s, weapon, L, y) { gunAt(s, 0, y, 0.12, weapon, L); }
 
   function s_bump(shape, c, x, y, z) { shape.add(C.prim.sphereLo, c, [x, y, z], null, [0.035, 0.055, 0.03]); }
 
   // ---------- Full character ----------
+  // Every character is built twice: smooth for up close and plain for far away. Both sit
+  // on the same joints, so one animation drives them; setDetail() shows one or the other.
   C.buildAvatar = function (look, arch, opts) {
+    const av = buildAvatarOnce(look, arch, opts);
+    C.shapeSmooth = false;
+    let lo;
+    try { lo = buildAvatarOnce(look, arch, opts); } finally { C.shapeSmooth = true; }
+    av.lodNear = []; av.lodFar = [];
+    for (const k in av.parts) {
+      if (k === 'root' || k === 'body' || !lo.parts[k]) continue;
+      for (const m of av.parts[k].children.slice()) av.lodNear.push(m);
+      for (const m of lo.parts[k].children.slice()) { av.parts[k].add(m); av.lodFar.push(m); }
+    }
+    av.near = null;
+    av.setDetail = near => {
+      if (av.near === near) return;
+      av.near = near;
+      for (const m of av.lodNear) m.visible = near;
+      for (const m of av.lodFar) m.visible = !near;
+    };
+    av.setDetail(true);
+    return av;
+  };
+  function buildAvatarOnce(look, arch, opts) {
     opts = opts || {};
     const L = MM.sanitizeLook(look);
     const A = MM.ARCHETYPES[arch] || MM.ARCHETYPES.genius;
@@ -391,7 +420,7 @@
     // Where the eyes are, for the first-person camera.
     av.eyeY = bean ? neckY + headR * 0.4 : neckY + headR * 1.1;
     return av;
-  };
+  }
 
   // ---------- First-person arm ----------
   // Your right arm as you see it in first person: the forearm points forward (+z) from the
@@ -416,13 +445,7 @@
     s.add(P.sphere, species === 'robot' ? shade(skin, 0.8) : skin, [0, 0, len], null, [armR * 1.6, armR * 1.5, armR * 1.7]);
     const melee = MM.WEAPONS[A.weapon].melee;
     if (!melee) {
-      const col = A.weapon === 'plasma' ? L.portalColor : WEAPON_COLORS[A.weapon] || '#ffd84d';
-      const z = len + 0.02;
-      s.add(P.box, '#9aa3ab', [0, -0.03, z], [-0.35, 0, 0], [0.07, 0.16, 0.08]);   // grip in the fist
-      s.add(P.box, '#d8dde2', [0, 0.08, z + 0.08], null, [0.1, 0.12, 0.3]);
-      s.add(P.cyl, col, [0, 0.1, z + 0.26], fwd, [0.05, 0.22, 0.05], true);
-      s.add(P.sphereLo, col, [0, 0.1, z + 0.39], null, [0.055, 0.055, 0.055], true);
-      s.add(P.box, '#59606e', [0, 0.155, z + 0.0], null, [0.04, 0.03, 0.12]);
+      gunAt(s, 0, 0.0, len + 0.04, A.weapon, L);
     } else if (species === 'birdfolk') {
       for (let i = -1; i <= 1; i++) s.add(P.cone, '#e8e2d0', [i * 0.04, 0.02, len + 0.1], [Math.PI / 2, 0, 0], [0.025, 0.14, 0.025]);
     }
