@@ -605,7 +605,7 @@
       for (const g of MM.GADGET_IDS) if (!prog.inv[g]) prog.inv[g] = prog.inv[g] || 0;
       const p = {
         id: this.nextId++, conn: c.conn, bot: c.bot, token,
-        name: MM.sanitizeName(m.name), home: MM.sanitizeHome(m.home), look: MM.sanitizeLook(m.look), arch: m.arch, A, pvp: !!m.pvp,
+        name: MM.sanitizeName(m.name), home: MM.sanitizeHome(m.home), look: MM.sanitizeLook(m.look), arch: m.arch, A, pvp: m.pvp !== false,
         prog, inv: prog.inv, st: null,
         inst: null, ep: 0, x: 0, y: 0, z: 0, r: 0, a: 0, lastSt: this.time, strikes: 0,
         hp: A.hp, maxHp: A.hp, dead: false, respawnAt: 0, ship: false,
@@ -622,7 +622,9 @@
       if (token) this.tokens.set(token, p);
       this.send(p, { t: 'hi', id: p.id, name: this.name, cap: this.cap, dims: MM.DIM_IDS, tok: token, you: { name: p.name, home: p.home, arch: p.arch } });
       this.log(`join ${p.name} (${p.id}) as ${p.arch}${p.bot ? ' [bot]' : ''}${saved ? ' (saved progress)' : ''}`);
-      this.travel(p, m.dim && MM.DIM_BY_ID[m.dim] ? m.dim : A.home, null, null, true);
+      // You start in your own world: the one your character lives in.
+      const starts = MM.startWorlds(m.arch);
+      this.travel(p, m.dim && starts.includes(m.dim) ? m.dim : starts[0], null, null, true);
     }
 
     restat(p) {
@@ -872,6 +874,8 @@
       if (src && src !== p) {
         src.kills++; src.prog.chaos += 5;
         this.progress(src, 'ko');
+        // Knock out someone with a portal gun and you can grab a charge from it.
+        if (src.A && p.st.gun && p.charges > 0 && !src.st.gun) { p.charges--; src.borrow = (src.borrow || 0) + 1; this.toast(src, 'You grabbed their portal gun for one jump (E).'); this.dirty(src); }
         if (p.arch === 'beanling') { src.fx.guilt = this.time + 10; this.toast(src, 'You feel terrible about that.'); }
       }
       inst.ev({ k: 'kill', v: p.id, by: src ? src.id : 0, w: how || '' });
@@ -961,15 +965,21 @@
       this.travel(p, l.door.dim, { x: l.door.x, z: l.door.z });
     }
 
+    // Portals need a portal gun: your own, or one you borrowed from Rick's workbench
+    // (or took off someone you knocked out). Gold portals are the only way past the Curve.
     onPortal(p, d) {
       const now = this.time;
-      if (!p.st.gun || p.dead || p.charges <= 0 || d === p.inst.dimId || MM.DIM_BY_ID[d].hidden) return;
-      p.charges--;
-      if (!p.chargeAt) p.chargeAt = now + p.st.gun.recharge;
+      if (p.dead || !MM.DIM_BY_ID[d]) return;
+      const own = p.st.gun && p.charges > 0;
+      if (!own && !(p.borrow > 0)) { this.toast(p, 'You need a portal gun. Build one, or borrow (steal) Rick\'s.'); return; }
+      const why = MM.travelWhy('portal', p.inst.dimId, d, { gold: !!(own && p.st.gun.gold) });
+      if (why) { this.toast(p, why); return; }
+      if (own) { p.charges--; if (!p.chargeAt) p.chargeAt = now + p.st.gun.recharge; }
+      else p.borrow--;
       const fx = Math.sin(p.r), fz = Math.cos(p.r);
       let x = p.x + fx * 3.2, z = p.z + fz * 3.2;
       [x, z] = MM.collideProps(p.inst.dimId, x, z, 1.2, null);
-      this.openPortalPair(p.inst, x, z, p.r + Math.PI, d, p.look.portalColor, p.id);
+      this.openPortalPair(p.inst, x, z, p.r + Math.PI, d, own ? (p.st.gun.gold && MM.DIM_BY_ID[d].outsideCurve ? '#ffcc33' : p.look.portalColor) : '#39ff6a', p.id);
       this.dirty(p);
     }
 
@@ -985,15 +995,21 @@
       dest.ev({ k: 'po+', po: dest.portalRow(b) });
     }
 
+    // Portal stations: the Citadel's public portals and Federation customs. Pay the fee
+    // (Ricks, Mortys and the Federation's own ride free) and step through.
     onKiosk(p, d) {
-      const now = this.time;
-      if (p.dead || d === p.inst.dimId || now < p.cdKiosk || !MM.hasKiosk(p.inst.dimId) || MM.DIM_BY_ID[d].hidden) return;
-      const K = MM.kioskOf(p.inst.dimId);
-      if (dist2(p.x, p.z, K.x, K.z) > MM.KIOSK_RADIUS * MM.KIOSK_RADIUS) return;
+      const now = this.time, S = MM.DIM_BY_ID[p.inst.dimId].station;
+      if (p.dead || !S || now < p.cdKiosk || !MM.DIM_BY_ID[d]) return;
+      if (dist2(p.x, p.z, S.x, S.z) > MM.KIOSK_RADIUS * MM.KIOSK_RADIUS) return;
+      const why = MM.travelWhy('station', p.inst.dimId, d, {});
+      if (why) { this.toast(p, why); return; }
+      const fee = S.free.includes(p.arch) ? {} : S.fee;
+      for (const k in fee) if ((p.inv[k] || 0) < fee[k]) { this.toast(p, 'The ' + S.name + ' costs ' + fee[k] + ' ' + MM.MATERIALS[k].name + '.'); return; }
+      for (const k in fee) p.inv[k] -= fee[k];
       p.cdKiosk = now + 3;
       p.inst.ev({ k: 'kiosk', id: p.id });
-      const K2 = MM.kioskOf(d);
-      this.travel(p, d, { x: K2.x + (Math.random() - 0.5) * 6, z: K2.z + 5 + Math.random() * 3 });
+      this.travel(p, d, null);
+      this.dirty(p);
     }
 
     // ----- Ship -----
@@ -1004,9 +1020,14 @@
       p.inst.ev({ k: 'ship', id: p.id, on });
       this.dirty(p);
     }
+    // Flying somewhere: the Moon is a short hop, other planets in this universe need
+    // the Turbo Engine, and other dimensions need the Dimension Drive.
     onDrive(p, d) {
       const now = this.time;
-      if (p.dead || !p.ship || !p.st.ship.drive || d === p.inst.dimId || now < p.cdDrive || MM.DIM_BY_ID[d].hidden) return;
+      if (p.dead || !p.ship || !MM.DIM_BY_ID[d] || now < p.cdDrive) return;
+      const sh = p.st.ship;
+      const why = MM.travelWhy('ship', p.inst.dimId, d, { hull: true, engine: sh.engine, drive: sh.drive });
+      if (why) { this.toast(p, why); return; }
       p.cdDrive = now + 15;
       p.inst.ev({ k: 'warp', id: p.id });
       this.travel(p, d, null);
@@ -1071,7 +1092,7 @@
       if (p.dead || !l || l.dim !== p.inst.dimId || this.time < p.cdUse) return;
       if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2) return;
       p.cdUse = this.time + 1;
-      const mine = Object.keys(MM.TASKS).filter(t => MM.TASKS[t].at === lid && (MM.TASKS[t].any || p.A.life.daily.includes(t)));
+      const mine = Object.keys(MM.TASKS).filter(t => MM.TASKS[t].at === lid && (MM.TASKS[t].any || p.A.life.daily.includes(t)) && !(MM.TASKS[t].notFor || []).includes(p.arch));
       const id = taskId && mine.includes(taskId) ? taskId : mine[0];
       if (!id) { if (l.door) this.onDoor(p, lid); else this.toast(p, 'Nothing for you to do at the ' + l.name + '. You could still build things here (C).'); return; }
       const T = MM.TASKS[id], wall = this.wall();
@@ -1081,6 +1102,7 @@
       for (const k in T.give) p.inv[k] = (p.inv[k] || 0) + T.give[k] * mult;
       if (T.heal) p.hp = p.maxHp;
       if (T.summon) this.summonMeeseeks(p, 1, 45);
+      if (T.effect === 'borrowgun') { p.borrow = 2; this.dirty(p); }   // Rick's gun: two charges, no recharging
       this.priv(p, { k: 'task', id, text: T.text, give: T.give, mult });
       p.inst.ev({ k: 'em', id: p.id, e: 0 });
       this.progress(p, 'use', id);
@@ -1207,7 +1229,7 @@
     youState(p) {
       const now = this.time;
       return { t: 'y', hp: Math.max(0, Math.round(p.hp)), max: p.maxHp, inv: p.inv,
-        ch: p.charges, chMax: p.st.gun ? p.st.gun.charges : 0, chIn: p.chargeAt ? r2(p.chargeAt - now) : 0,
+        ch: p.charges, chMax: p.st.gun ? p.st.gun.charges : 0, bor: p.borrow || 0, chIn: p.chargeAt ? r2(p.chargeAt - now) : 0,
         ab: r2(Math.max(0, p.cdAb - now)), chaos: p.prog.chaos, kills: p.kills, deaths: p.deaths, dead: p.dead,
         rsIn: p.dead ? r2(Math.max(0, p.respawnAt - now)) : 0, fx: this.fxBits(p, now), ship: p.ship };
     }

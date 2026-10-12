@@ -19,7 +19,7 @@
     // tok = the random save token this browser keeps, so progress survives a reload.
     hello: m => (int(m.v, 0, 1e6) && str(m.name, 64) && str(m.home || '', 16) && typeof m.look === 'object' && m.look !== null &&
       typeof m.arch === 'string' && own(MM.ARCHETYPES, m.arch) && (m.dim === undefined || own(MM.DIM_BY_ID, m.dim)) && (m.tok === undefined || str(m.tok, 40)) && (m.pvp === undefined || typeof m.pvp === 'boolean'))
-      ? { v: m.v, name: m.name, home: m.home || '', look: m.look, arch: m.arch, dim: m.dim, tok: m.tok, pvp: !!m.pvp } : null,
+      ? { v: m.v, name: m.name, home: m.home || '', look: m.look, arch: m.arch, dim: m.dim, tok: m.tok, pvp: m.pvp !== false } : null,   // fights are on unless you turned them off
     // Where I am (15 times a second). ep = travel epoch, so stale positions from the
     // previous dimension are ignored.
     st: m => (num(m.x, -B, B) && num(m.y, -200, 600) && num(m.z, -B, B) && num(m.r, -10, 10) && int(m.a, 0, 9) && int(m.ep, 0, 1e9))

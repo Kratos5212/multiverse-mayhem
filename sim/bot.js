@@ -9,7 +9,7 @@
     'Gunthra', 'Snorbi', 'Vexil', 'Pib', 'Dorbo', 'Quanta', 'Flemm', 'Yorp', 'Nebb', 'Ozzle', 'Chuffy', 'Grimble',
     'Wuzz', 'Klaxa', 'Tinsel', 'Borp', 'Moxie', 'Jibb', 'Floob', 'Raxx'];
   const LINES = ['anyone seen my portal gun', 'this dimension smells weird', 'who blew up my house', 'I am the smartest one here',
-    'gg', 'lol', 'run!!', 'there are SO many of me', 'stop shooting the mailboxes', 'meet at the kiosk', 'the moon is bouncy',
+    'gg', 'lol', 'run!!', 'there are SO many of me', 'stop shooting the mailboxes', 'meet at the Citadel', 'the moon is bouncy',
     'I just want to go home', 'scrap for sale', 'where am I', 'that was not me', 'the meat is warm'];
 
   const pick = (a, r) => a[Math.floor((r || Math.random)() * a.length)];
@@ -38,8 +38,11 @@
       this.home = pick('ABCDEFGHJKLMNPQRSTUVWXYZ') + '-' + Math.floor(Math.random() * 999);
       this.look = opts.look || (Math.random() < 0.85 ? MM.variantLook(this.arch) : MM.randomLook(this.arch));
       this.chatty = opts.chatty !== undefined ? opts.chatty : 0.5;
-      this.startDim = opts.dim;
       this.A = MM.ARCHETYPES[this.arch];
+      // Bots live where their character lives (a Squanchy on Planet Squanch, troopers at the Federation).
+      const starts = MM.startWorlds(this.arch);
+      this.startDim = opts.dim && starts.includes(opts.dim) ? opts.dim : pick(starts);
+      this.temper = this.A.temper || { fights: 'defend' };
       this.id = 0; this.ep = 0; this.dim = null;
       this.x = 0; this.y = 0; this.z = 0; this.vy = 0; this.yaw = 0;
       this.others = new Map(); this.npcs = new Map(); this.pickups = new Map(); this.portals = new Map();
@@ -70,6 +73,7 @@
           for (const pk of m.pickups) this.pickups.set(pk[0], { x: pk[2], z: pk[4] });
           for (const n of m.npcs) this.npcs.set(n[0], { x: n[2], y: n[3], z: n[4], type: n[1] });
           for (const po of m.portals) this.portals.set(po.id, po);
+          for (const p of m.players || []) if (p.id !== this.id) this.others.set(p.id, { arch: p.arch, x: 0, z: 0 });
           for (const [i, hp] of m.props) if (hp <= 0) this.deadProps.add(i);
           this.goal = null; this.target = null;
           break;
@@ -80,6 +84,12 @@
         case 'ev':
           for (const e of m.l) {
             if (e.k === 'leave') this.others.delete(e.id);
+            else if (e.k === 'join' && e.p && e.p.id !== this.id) { const o = this.others.get(e.p.id) || {}; o.arch = e.p.arch; this.others.set(e.p.id, o); }
+            else if (e.k === 'dmg' && e.p === this.id && e.by && e.by !== this.id) {
+              // Somebody hit me. Peaceful characters run; everyone else hits back.
+              if (this.temper.fights === 'never') { const o = this.others.get(e.by); if (o) { const dx = this.x - o.x, dz = this.z - o.z, l = Math.hypot(dx, dz) || 1; this.goal = { x: this.x + dx / l * 25, z: this.z + dz / l * 25 }; } }
+              else this.target = { kind: 'p', id: e.by };
+            }
             else if (e.k === 'pk+') this.pickups.set(e.p[0], { x: e.p[2], z: e.p[4] });
             else if (e.k === 'pk-') this.pickups.delete(e.id);
             else if (e.k === 'npc+') this.npcs.set(e.n[0], { x: e.n[2], y: e.n[3], z: e.n[4], type: e.n[1] });
@@ -96,6 +106,7 @@
           }
           break;
         case 'y': this.you = m; break;
+        case 'pg': this.st = m.st; break;
         case 'err': this.closed = true; break;
       }
     }
@@ -122,10 +133,24 @@
       }
       // Bots are explorers, not fighters: they never attack players. They defend themselves
       // from monsters that come close, and now and then wreck a mailbox for the fun of it.
-      if (!this.target || Math.random() < 0.1) {
+      if (this.target && this.target.kind === 'p') { const o = this.others.get(this.target.id); if (!o || o.dead || (o.x - this.x) ** 2 + (o.z - this.z) ** 2 > 40 * 40 || !(o.fx & 4096)) this.target = null; }
+      // In character: hunters go after their prey (the Federation hunts Ricks), wild ones
+      // pick fights with anyone nearby. Only players who have fights on can be targeted.
+      if (!this.target && this.temper.fights !== 'never') {
+        let best = null, bd = (this.temper.fights === 'often' ? 14 : 26) ** 2;
+        for (const [id, o] of this.others) {
+          if (o.dead || !(o.fx & 4096) || (o.fx & 32)) continue;
+          const prey = (this.temper.hunts || []).includes(o.arch);
+          if (!prey && !(this.temper.fights === 'often' && Math.random() < 0.3)) continue;
+          const d = (o.x - this.x) ** 2 + (o.z - this.z) ** 2;
+          if (d < bd) { bd = d; best = { kind: 'p', id }; }
+        }
+        if (best) this.target = best;
+      }
+      if (!this.target || (this.target.kind !== 'p' && Math.random() < 0.1)) {
         let best = null, bd = 12 * 12;
         for (const [id, n] of this.npcs) { if (!MM.NPCS[n.type].hostile) continue; const d = (n.x - this.x) ** 2 + (n.z - this.z) ** 2; if (d < bd) { bd = d; best = { kind: 'n', id }; } }
-        if (!best && Math.random() < 0.04) {
+        if (!best && Math.random() < (this.temper.chaos || 0.02)) {
           let pd = 14 * 14;
           for (const p of MM.genProps(this.dim)) { if (this.deadProps.has(p.id) || MM.PROPS[p.type].hp > 80) continue; const d = (p.x - this.x) ** 2 + (p.z - this.z) ** 2; if (d < pd) { pd = d; best = { kind: 'prop', id: p.id }; } }
         }
@@ -137,12 +162,14 @@
         for (const pk of this.pickups.values()) { const d = (pk.x - this.x) ** 2 + (pk.z - this.z) ** 2; if (d < bd) { bd = d; best = pk; } }
         this.goal = best ? { x: best.x, z: best.z } : MM.randomSpot(this.dim, Math.random, 5, 120);
       }
-      // Hop dimensions now and then: own portal gun, someone's portal, or the kiosk.
+      // Hop dimensions now and then, the way the show does it: own portal gun, a station
+      // if this world has one, or someone else's open portal (below). No gun, no hopping.
       if (this.t > this.travelT) {
         this.travelT = this.t + 50 + Math.random() * 100;
-        const others = MM.WORLD_IDS.filter(d => d !== this.dim);
-        if (you.chMax > 0 && you.ch > 0) { this.send({ t: 'po', d: pick(others) }); this.goal = { x: this.x + Math.sin(this.yaw) * 4, z: this.z + Math.cos(this.yaw) * 4, portal: true }; }
-        else { const K = MM.kioskOf(this.dim); this.goal = { x: K.x, z: K.z, kiosk: pick(others) }; }
+        const gold = !!(this.st && this.st.gun && this.st.gun.gold);
+        const ok = m => MM.WORLD_IDS.filter(d => !MM.travelWhy(m, this.dim, d, { gold }));
+        if (you.chMax > 0 && you.ch > 0) { const o = ok('portal'); if (o.length) { this.send({ t: 'po', d: pick(o) }); this.goal = { x: this.x + Math.sin(this.yaw) * 4, z: this.z + Math.cos(this.yaw) * 4, portal: true }; } }
+        else if (MM.DIM_BY_ID[this.dim].station) { const K = MM.kioskOf(this.dim), o = ok('station'); if (o.length) this.goal = { x: K.x, z: K.z, kiosk: pick(o) }; }
       }
       for (const po of this.portals.values()) {
         if (Math.random() < 0.02 && (po.x - this.x) ** 2 + (po.z - this.z) ** 2 < 400) this.goal = { x: po.x, z: po.z, portal: true };

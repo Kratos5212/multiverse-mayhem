@@ -333,10 +333,10 @@ test('Meeseeks Box gadget and the Citadel', () => {
   assert.ok([...p.inst.npcs.values()].some(n => n.type === 'citrick'), 'Ricks live at the Citadel');
 });
 
-test('free roam: players only hurt each other when both turned fights on', () => {
+test('fights: players only hurt each other when both have fights on (the default)', () => {
   const host = new MM.Host();
-  const a = join(host, 'genius', { dim: 'moon' }), b = join(host, 'teen', { dim: 'moon' });   // not Morty: he dodges at random
-  for (const { p } of [a, b]) p.fx.prot = 0;
+  const a = join(host, 'genius', { pvp: false }), b = join(host, 'teen', { pvp: false });   // not Morty: he dodges at random
+  for (const { p } of [a, b]) { host.travel(p, 'moon'); p.fx.prot = 0; }
   b.p.x = a.p.x; b.p.z = a.p.z + 5; b.p.y = a.p.y;
   const hp0 = b.p.hp;
   const shoot = () => { a.p.cdFire = 0; host.message(a.c, JSON.stringify({ t: 'f', dx: 0, dy: 0, dz: 1 })); run(host, 0.6); };
@@ -355,7 +355,8 @@ test('free roam: players only hurt each other when both turned fights on', () =>
 
 test('monsters leave you alone unless you come close or hit them', () => {
   const host = new MM.Host();
-  const { p } = join(host, 'genius', { dim: 'meatlands' });
+  const { p } = join(host, 'genius');
+  host.travel(p, 'meatlands');
   p.fx.prot = 0;
   const inst = p.inst;
   const n = [...inst.npcs.values()].find(x => x.T.hostile);
@@ -369,4 +370,58 @@ test('monsters leave you alone unless you come close or hit them', () => {
   assert.strictEqual(p.hp, hp0);
   inst.hurtNpc(n, 1, p);
   assert.strictEqual(n.angry, p.id, 'hit it and it comes for you');
+});
+
+test('fights are on by default, and you start in your own world', () => {
+  const host = new MM.Host();
+  const { p } = join(host, 'birdfolk', { dim: 'moon' });
+  assert.strictEqual(p.pvp, true);
+  assert.strictEqual(p.inst.dimId, 'featherhold', 'Birdperson starts on Bird World, not wherever he asked');
+  const t = join(host, 'trooper');
+  assert.strictEqual(t.p.inst.dimId, 'federation');
+});
+
+test('lore travel: no gun, no portal; borrow Rick\'s; stations charge; ships need range; gold leaves the Curve', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'teen', { dim: 'suburbia' });
+  assert.ok(!p.st.gun);
+  host.message(c, '{"t":"po","d":"moon"}');
+  assert.strictEqual(p.inst.portals.size, 0, 'no portal gun, no portal');
+  // Pocket worlds only through their entrance; no kiosk on Earth any more.
+  assert.ok(MM.travelWhy('portal', 'suburbia', 'microverse', {}));
+  assert.ok(!MM.DIM_BY_ID.suburbia.station);
+  // Borrow Rick's gun from the garage workbench: two jumps, no recharge.
+  near(host, c, p, 'garage'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"garage"}');
+  near(host, c, p, 'workbench'); run(host, 1.2);
+  host.message(c, '{"t":"use","l":"workbench","task":"borrowgun"}');
+  assert.strictEqual(p.borrow, 2);
+  run(host, 1.2);
+  host.message(c, '{"t":"po","d":"cableworld"}');
+  assert.strictEqual(p.inst.portals.size, 0, 'a plain portal cannot leave the Curve');
+  host.message(c, '{"t":"po","d":"citadel"}');
+  assert.strictEqual(p.borrow, 1);
+  const po = [...p.inst.portals.values()][0];
+  run(host, 2.1);
+  host.message(c, JSON.stringify({ t: 'st', x: po.x, y: po.y, z: po.z, r: 0, a: 1, ep: p.ep }));
+  run(host, 0.1);
+  assert.strictEqual(p.inst.dimId, 'citadel');
+  // The Citadel portal station charges anyone who isn't a Rick or a Morty.
+  const S = MM.DIM_BY_ID.citadel.station;
+  p.inv.k = 5;
+  run(host, 3.1);
+  host.teleport(p, S.x, MM.heightAt('citadel', S.x, S.z + 2), S.z + 2);
+  host.message(c, '{"t":"ki","d":"gazorp"}');
+  assert.strictEqual(p.inst.dimId, 'gazorp');
+  assert.strictEqual(p.inv.k, 2);
+  // Ships: Earth to the Moon is a hop, other planets need the engine.
+  assert.strictEqual(MM.travelWhy('ship', 'suburbia', 'moon', { hull: true }), '');
+  assert.ok(MM.travelWhy('ship', 'suburbia', 'squanch', { hull: true }));
+  assert.strictEqual(MM.travelWhy('ship', 'suburbia', 'squanch', { hull: true, engine: true }), '');
+  assert.ok(MM.travelWhy('ship', 'suburbia', 'dogworld', { hull: true, engine: true }));
+  // Evil Morty's gun is gold.
+  const em = join(host, 'evilmorty');
+  assert.ok(em.p.st.gun.gold);
+  host.message(em.c, '{"t":"po","d":"cableworld"}');
+  assert.ok([...em.p.inst.portals.values()].some(po => po.owner === em.p.id && po.destDim === 'cableworld'));
 });

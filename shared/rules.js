@@ -6,6 +6,8 @@
 
   MM.VERSION = 4;
   // Monsters notice you within AGGRO_RANGE metres and stop chasing beyond LEASH of their home.
+  // Where a character can start: their home world (and, for some, another place they live).
+  MM.startWorlds = arch => { const A = MM.ARCHETYPES[arch]; return (A.homes || [A.home]).filter(d => MM.DIM_BY_ID ? MM.DIM_BY_ID[d] : true); };
   MM.AGGRO_RANGE = 9;
   MM.LEASH = 26;               // protocol version; client and server must match
   MM.TICK = 1 / 30;             // server simulation step (seconds)
@@ -49,6 +51,12 @@
     { id: 'roy', dim: 'blips', name: 'Roy: A Life Well Lived', x: 0, z: -24, r: 2.2, h: 3.6, model: 'lm_roy', rot: 0 },
     { id: 'pancreas', dim: 'anatomy', name: 'Pirates of the Pancreas', x: 0, z: 38, r: 7, h: 9, model: 'lm_ride', sign: { text: 'PIRATES OF THE PANCREAS', y: 7.4, z: 3.1, w: 9 } },
     { id: 'gooble', dim: 'microverse', name: 'Gooble Box Power Plant', x: 0, z: 38, r: 8, h: 10, model: 'lm_gooble', sign: { text: 'POWER PLANT', y: 8, z: 6.1, w: 7 } },
+    // Ways into the pocket worlds, and back out.
+    { id: 'anatomyentry', dim: 'suburbia', name: 'Anatomy Park (inside Ruben)', x: 66, z: -66, r: 5, h: 4, model: 'lm_anatomytent', door: { dim: 'anatomy', x: 0, z: 18 }, sign: { text: 'ANATOMY PARK', y: 4.4, z: 4.1, w: 6 } },
+    { id: 'chalkdoor', dim: 'suburbia', name: "Rick's chalk door", x: -66, z: 66, r: 2.5, h: 3.5, model: 'lm_chalkdoor', door: { dim: 'froopy', x: 0, z: 16 } },
+    { id: 'microexit', dim: 'microverse', name: 'Out of the battery', x: 0, z: 10, r: 2.5, h: 4, model: 'lm_exitportal', door: { dim: 'rickgarage', x: 4.6, z: 5.4 } },
+    { id: 'anatomyexit', dim: 'anatomy', name: "Out of Ruben", x: 0, z: 12, r: 2.5, h: 4, model: 'lm_exitportal', door: { dim: 'suburbia', x: 66, z: -58 } },
+    { id: 'froopyexit', dim: 'froopy', name: 'Back through the chalk door', x: 0, z: 10, r: 2.5, h: 3.5, model: 'lm_chalkdoor', door: { dim: 'suburbia', x: -66, z: 58 } },
     { id: 'curveedge', dim: 'beyond', name: 'Edge of the Curve', x: 0, z: 62, r: 8, h: 12, model: 'lm_curveedge' },
     { id: 'fakedoors', dim: 'cableworld', name: 'Real Fake Doors', x: 26, z: 34, r: 7, h: 8, model: 'lm_fakedoors', rot: -Math.PI / 2, sign: { text: 'REAL FAKE DOORS', y: 6.6, z: 5.1, w: 9 } },
     { id: 'antsjohnson', dim: 'cableworld', name: "Ants in my Eyes Johnson's", x: -26, z: 34, r: 7, h: 8, model: 'lm_antsjohnson', rot: Math.PI / 2, sign: { text: "ANTS IN MY EYES JOHNSON'S", y: 6.6, z: 5.1, w: 9.5 } },
@@ -58,7 +66,7 @@
     { id: 'workbench', dim: 'rickgarage', name: "Rick's Workbench", x: 0, z: -6.6, r: 2.4, h: 1.3, model: 'lm_workbench', alias: 'garage' },
     { id: 'plumbus', dim: 'rickgarage', name: 'Plumbus', x: -5.6, z: -6.4, r: 1.0, h: 1.6, model: 'lm_plumbus' },
     { id: 'mbox', dim: 'rickgarage', name: 'Meeseeks Box', x: 5.6, z: -6.4, r: 0.9, h: 1.4, model: 'lm_mbox' },
-    { id: 'battery', dim: 'rickgarage', name: 'Microverse Battery', x: 6.4, z: 6.2, r: 1.1, h: 1.2, model: 'lm_battery' },
+    { id: 'battery', dim: 'rickgarage', name: 'Microverse Battery', x: 6.4, z: 6.2, r: 1.1, h: 1.2, model: 'lm_battery', door: { dim: 'microverse', x: 0, z: 16 } },
     { id: 'gdoor', dim: 'rickgarage', name: 'Garage door (outside)', x: 0, z: 8.2, r: 2.6, h: 4, model: 'lm_gdoor', door: { dim: 'suburbia', x: -7, z: 12.5 } },
     { id: 'trapdoor', dim: 'rickgarage', name: 'Hatch to the secret lab', x: 6.3, z: -3.0, r: 1.2, h: 0.3, model: 'lm_trapdoor', door: { dim: 'ricklab', x: 0, z: 6 } },
     { id: 'cellardoor', dim: 'rickgarage', name: 'Door to the wine cellar', x: -8.1, z: -3.4, r: 1.2, h: 3.4, model: 'lm_cellardoor', rot: Math.PI / 2, door: { dim: 'cellar', x: 0, z: 6 } },
@@ -102,6 +110,7 @@
     fetch:   { at: 'palace', any: true, name: 'Play fetch with the dogs', cd: 120, give: { s: 2, p: 1 }, text: 'You threw. They fetched. Then they made you fetch. Then they patted your head.' },
     roy:     { at: 'roy', any: true, name: 'Play Roy: A Life Well Lived', cd: 150, heal: 1, give: { k: 3 }, text: 'You lived 55 years as Roy. Carpet store, football, everything. Then you took off the helmet. Rough.' },
     ride:    { at: 'pancreas', any: true, name: 'Ride Pirates of the Pancreas', cd: 150, heal: 1, give: { g: 3 }, text: 'Yo-ho, yo-ho, through the digestive tract. Arrr.' },
+    borrowgun: { at: 'workbench', any: true, notFor: ['genius'], name: "Borrow Rick's portal gun", cd: 600, give: {}, effect: 'borrowgun', text: "You took Rick's portal gun off the bench. Two charges. Do not tell him. Seriously." },
     gaze:    { at: 'curveedge', any: true, name: 'Look back at the Curve', cd: 300, give: { m: 1, c: 2 }, text: 'From out here the Curve is just a golden spiral of little lights. Every one of them thinks it is the centre of everything.' },
     fakedoor:{ at: 'fakedoors', any: true, name: 'Buy a real fake door', cd: 150, give: { k: 4 }, text: "You bought a real fake door. Don't get in there, it's fake. They gave you change." },
     tvdeal:  { at: 'antsjohnson', any: true, name: 'Haggle with Ants in my Eyes Johnson', cd: 150, give: { c: 2, s: 2 }, text: "He can't see the price tags. Or feel anything. You got a great deal on a microwave. Is it on fire? It is on fire." },
@@ -134,6 +143,7 @@
     gunbuild: { cat: 'gun', name: 'Build a Portal Gun', cost: { s: 10, c: 6, g: 4, p: 4, f: 2 }, at: 'garage', nogun: true, desc: 'Your very own portal gun (2 charges). Needs parts from every world.' },
     guncap1:  { cat: 'gun', name: 'Fluid Tank', cost: { c: 4, p: 2 }, at: 'refinery', gun: true, desc: '+1 portal charge.' },
     guncap2:  { cat: 'gun', name: 'Twin Tank', cost: { c: 8, p: 4, f: 2 }, at: 'refinery', gun: true, needs: 'guncap1', desc: '+1 more portal charge.' },
+    curvebreaker: { cat: 'gun', name: 'Golden Portal Fluid', cost: { c: 10, f: 4, g: 4 }, at: 'garage', gun: true, needs: 'guncap1', desc: 'Gold portals punch through the Central Finite Curve to the worlds outside it.' },
     gunfast:  { cat: 'gun', name: 'Quick Mixer', cost: { g: 3, p: 3 }, at: 'market', gun: true, desc: 'Portal charges come back 35% faster.' },
     hull:     { cat: 'ship', name: 'Ship Hull', cost: { s: 15, c: 4 }, at: 'shipyard', desc: 'Your own flying saucer. Press B to board.' },
     engine:   { cat: 'ship', name: 'Turbo Engine', cost: { p: 6, g: 4 }, at: 'shipyard', needs: 'hull', desc: 'The ship flies 60% faster.' },
@@ -158,6 +168,7 @@
   MM.ARCHETYPES = {
     genius: {
       name: 'Rick', hp: 80, speed: 7, jump: 8.5, weapon: 'plasma', home: 'suburbia',
+      temper: { fights: 'defend', chaos: 0.15 }, homes: ['suburbia', 'citadel'],
       portal: { charges: 3, recharge: 14 }, knows: '*', discount: 2 / 3,
       ability: { id: 'shield', name: 'Science Shield', cd: 16, dur: 4 },
       blurb: 'Smartest being in any dimension. Owns a portal gun, builds anything, but is fragile and has a terrible attitude.',
@@ -172,6 +183,7 @@
     },
     sidekick: {
       name: 'Morty', hp: 100, speed: 7.5, jump: 8.5, weapon: 'blaster', home: 'suburbia',
+      temper: { fights: 'defend' }, homes: ['suburbia', 'citadel'],
       portal: { charges: 1, recharge: 35 }, knows: ['grenade', 'fluid', 'legs1', 'armor1'],
       ability: { id: 'sprint', name: 'Panic Sprint', cd: 11, dur: 3 },
       blurb: 'Dragged along on every adventure. Panics a lot, survives anyway.',
@@ -187,6 +199,7 @@
     },
     teen: {
       name: 'Summer', hp: 90, speed: 7.8, jump: 9, weapon: 'toy', home: 'suburbia',
+      temper: { fights: 'defend' }, homes: ['suburbia'],
       portal: null, knows: ['grenade', 'legs1'],
       ability: { id: 'flash', name: 'Selfie Flash', cd: 12 },
       blurb: 'Stuck in high school while the family goes on adventures. Bored, sharp, and secretly the most capable one.',
@@ -203,6 +216,7 @@
     },
     surgeon: {
       name: 'Beth', hp: 100, speed: 7, jump: 8.5, weapon: 'scalpel', home: 'suburbia',
+      temper: { fights: 'defend' }, homes: ['suburbia'],
       portal: null, knows: ['grenade', 'armor1', 'armor2', 'legs1'], selfDiscount: 0.5,
       ability: { id: 'patch', name: 'Field Surgery', cd: 14 },
       blurb: 'A brilliant surgeon (of horses) who wonders what life could have been. She could still go find out.',
@@ -217,6 +231,7 @@
     },
     joe: {
       name: 'Jerry', hp: 100, speed: 6.5, jump: 7.5, weapon: 'toy', home: 'suburbia',
+      temper: { fights: 'never' }, homes: ['suburbia'],
       portal: null, knows: ['grenade'],
       ability: { id: 'sob', name: 'Sob Story', cd: 18, dur: 3 },
       blurb: 'Completely normal. No portal gun, no powers, no job. Breaking out of this life is possible, but it is a long road.',
@@ -234,6 +249,7 @@
     },
     birdfolk: {
       name: 'Birdperson', hp: 140, speed: 8, jump: 9, weapon: 'talon', fly: true, home: 'featherhold',
+      temper: { fights: 'defend', hunts: ['trooper'] }, homes: ['featherhold'],
       portal: null, knows: ['armor1', 'armor2', 'armor3', 'blaster1', 'blaster2'],
       ability: { id: 'dive', name: 'Dive Strike', cd: 8 },
       blurb: 'Proud warrior of the bird people, with a life, a people and duties of his own on Bird World.',
@@ -249,6 +265,7 @@
     },
     beanling: {
       name: 'Mr. Poopybutthole', hp: 70, speed: 8.5, jump: 9, weapon: 'slap', home: 'suburbia',
+      temper: { fights: 'never' }, homes: ['suburbia'],
       portal: null, knows: ['grenade', 'legs1'],
       ability: { id: 'cheer', name: 'Cheer Up', cd: 13 },
       blurb: 'Tall, polite and always happy to see you. Nobody remembers meeting one, but everyone loves them.',
@@ -263,6 +280,7 @@
     },
     mutant: {
       name: 'Cronenberg', hp: 200, speed: 5.5, jump: 7, weapon: 'punch', home: 'meatlands',
+      temper: { fights: 'often' }, homes: ['meatlands'],
       portal: null, knows: ['armor1', 'armor2', 'armor3'],
       ability: { id: 'slam', name: 'Body Slam', cd: 9 },
       blurb: 'A lab accident made flesh. Huge, slow, and very hard to kill.',
@@ -276,6 +294,7 @@
     },
     trooper: {
       name: 'Federation Officer', hp: 120, speed: 7, jump: 8.5, weapon: 'rifle', home: 'federation',
+      temper: { fights: 'defend', hunts: ['genius', 'birdfolk', 'squanchy'] }, homes: ['federation'],
       portal: null, knows: ['grenade', 'turret', 'blaster1', 'engine', 'lasers'], start: ['hull'],
       ability: { id: 'cuff', name: 'Stun Cuffs', cd: 12 },
       blurb: 'Enforcer of an interplanetary bureaucracy. Comes with a patrol ship and a lot of paperwork.',
@@ -290,6 +309,7 @@
     },
     hive: {
       name: 'Unity', hp: 90, speed: 7, jump: 8.5, weapon: 'slap', home: 'unityworld',
+      temper: { fights: 'never' }, homes: ['unityworld'],
       portal: null, knows: ['grenade', 'shrink'],
       ability: { id: 'assimilate', name: 'Assimilate', cd: 20 },
       blurb: 'One mind in many bodies. Charming, lonely, and very good at making friends do things.',
@@ -303,6 +323,7 @@
     },
     meeseeks: {
       name: 'Mr. Meeseeks', hp: 60, speed: 8, jump: 10, weapon: 'slap', home: 'suburbia',
+      temper: { fights: 'defend' }, homes: ['suburbia'],
       portal: null, knows: ['grenade', 'legs1'],
       ability: { id: 'summon', name: 'Look at me!', cd: 22 },
       blurb: 'Pops into existence to help with one task, then really, really wants to stop existing. Very cheerful about it.',
@@ -317,6 +338,7 @@
     },
     squanchy: {
       name: 'Squanchy', hp: 110, speed: 8, jump: 10, weapon: 'claws', home: 'squanch',
+      temper: { fights: 'defend', hunts: ['trooper'], chaos: 0.1 }, homes: ['squanch'],
       portal: null, knows: ['grenade', 'turret', 'blaster1'],
       ability: { id: 'rage', name: 'Squanch Out', cd: 15 },
       blurb: 'Cat-like party animal and freedom fighter. Squanches when he is happy, squanches when he is angry.',
@@ -331,10 +353,11 @@
     },
     evilmorty: {
       name: 'Evil Morty', hp: 100, speed: 7.5, jump: 8.5, weapon: 'blaster', home: 'suburbia',
+      temper: { fights: 'defend', hunts: ['genius'] }, homes: ['citadel'],
       portal: { charges: 1, recharge: 30 }, knows: ['grenade', 'shrink', 'fluid', 'guncap1', 'gunfast', 'legs1'],
       ability: { id: 'scheme', name: 'Vanish', cd: 18, dur: 5 },
       blurb: 'A Morty with an eye patch and a plan. Quiet, patient, and always three steps ahead.',
-      perk: 'Vanish: monsters and turrets lose track of you for 5 s. Starts with a portal gun.',
+      perk: 'Vanish: monsters and turrets lose track of you for 5 s. Starts with a golden portal gun that can leave the Central Finite Curve.',
       life: { normal: 'Quiet Morty', breakout: 'President Morty', daily: ['school', 'daycare', 'council'] },
       steps: [
         { name: 'Blend in', desc: 'Sit through class at Harry Herpson High.', goal: { type: 'use', task: 'school', n: 1 } },
@@ -345,6 +368,7 @@
     },
     picklerick: {
       name: 'Pickle Rick', hp: 60, speed: 6, jump: 11, weapon: 'slap', home: 'suburbia',
+      temper: { fights: 'often', chaos: 0.3 }, homes: ['suburbia'],
       portal: null, knows: ['grenade', 'legs1', 'armor1', 'armor2', 'blaster1'], discount: 2 / 3,
       ability: { id: 'roll', name: 'Pickle Roll', cd: 8, dur: 2.5 },
       blurb: 'A genius who turned himself into a pickle to get out of family therapy. Tiny, green, and furious.',
@@ -425,7 +449,9 @@
       const base = A.portal || { charges: 2, recharge: 25 };
       s.gun = { charges: base.charges + (up.guncap1 ? 1 : 0) + (up.guncap2 ? 1 : 0), recharge: base.recharge * (up.gunfast ? 0.65 : 1) };
     }
-    if (up.hull) s.ship = { speed: up.engine ? 30 : 19, lasers: !!up.lasers, drive: !!up.drive };
+    if (up.hull) s.ship = { speed: up.engine ? 30 : 19, lasers: !!up.lasers, engine: !!up.engine, drive: !!up.drive };
+    // Evil Morty already escaped the Curve once; everyone else needs the golden fluid.
+    if (s.gun) s.gun.gold = arch === 'evilmorty' || !!up.curvebreaker;
     return s;
   };
 

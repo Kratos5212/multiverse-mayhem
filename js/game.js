@@ -102,14 +102,20 @@
   $('stage').addEventListener('pointerup', () => { dragging = false; });
   $('stage').addEventListener('pointercancel', () => { dragging = false; });
 
-  function menuChanged() { previewDirty = true; previewT = 0.05; UI.save('profile', profile); }
+  function menuChanged() { previewDirty = true; previewT = 0.05; UI.save('profile', profile); fillStarts(); }
+  // You can only start where your character lives.
+  function fillStarts() {
+    const sel = $('startDim'), starts = MM.startWorlds(profile.arch);
+    sel.textContent = '';
+    for (const id of starts) sel.append(el('option', { value: id, text: MM.DIM_BY_ID[id].name }));
+    if (!starts.includes(profile.startDim)) profile.startDim = starts[0];
+    sel.value = profile.startDim;
+  }
 
   function initMenu() {
     $('name').value = profile.name;
     $('home').value = profile.home;
-    $('startDim').append(el('option', { value: '', text: 'My home world' }));
-    for (const d of MM.DIMS) $('startDim').append(el('option', { value: d.id, text: d.name }));
-    $('startDim').value = profile.startDim;
+    fillStarts();
     // The Android app (Capacitor) serves the game from inside the app, so there is no server to prefill.
     const inApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
     const httpHosted = !inApp && /^https?:$/.test(location.protocol) && !/claude|artifact/.test(location.hostname);
@@ -172,7 +178,7 @@
     $('loading').hidden = false;
     $('loading').textContent = kind === 'online' ? 'Connecting to ' + (profile.server || location.host) + '…' : 'Opening a portal…';
     const h = {
-      open: () => G.net.send({ t: 'hello', v: MM.VERSION, name: profile.name, home: profile.home, look: profile.look, arch: profile.arch, dim: profile.startDim || undefined, tok: tokenFor(G.net), pvp: !!settings.pvp }),
+      open: () => G.net.send({ t: 'hello', v: MM.VERSION, name: profile.name, home: profile.home, look: profile.look, arch: profile.arch, dim: profile.startDim || undefined, tok: tokenFor(G.net), pvp: settings.pvp !== false }),
       message: onMessage,
       close: reason => leave(reason),
     };
@@ -675,8 +681,8 @@
       slots[g].classList.toggle('off', !(y.inv[g] > 0));
     }
     const st = G.st;
-    slots.portal.querySelector('.n').textContent = y.chMax ? String(y.ch) : '';
-    slots.portal.classList.toggle('off', !(y.chMax && y.ch > 0) && !nearKiosk() && !(y.ship && st && st.ship && st.ship.drive));
+    slots.portal.querySelector('.n').textContent = y.chMax ? String(y.ch) : y.bor ? String(y.bor) : '';
+    slots.portal.classList.toggle('off', !(y.chMax && y.ch > 0) && !(y.bor > 0) && !nearKiosk() && !y.ship);
     slots.ship.hidden = !(st && st.ship);
     slots.ship.querySelector('span:nth-child(2)').textContent = y.ship ? 'Land' : 'Ship';
     $('tShip').hidden = !(st && st.ship);
@@ -746,13 +752,27 @@
     C.sfx('ability');
   }
   function nearKiosk() { return G.dimId && MM.hasKiosk(G.dimId) && Math.hypot(G.me.x - MM.kioskOf(G.dimId).x, G.me.z - MM.kioskOf(G.dimId).z) < MM.KIOSK_RADIUS; }
+  // How you can travel from here, best first: the station you are standing at, the ship
+  // you are flying, then a portal gun (your own or a borrowed one).
+  function travelModes() {
+    const y = G.you, st = G.st, m = [];
+    if (nearKiosk()) m.push('station');
+    if (y.ship && st && st.ship) m.push('ship');
+    if ((y.chMax && y.ch > 0) || y.bor > 0) m.push('gun');
+    return m;
+  }
+  function travelOpts(mode) {
+    const st = G.st || {};
+    return mode === 'ship' ? { hull: true, engine: !!(st.ship && st.ship.engine), drive: !!(st.ship && st.ship.drive) }
+      : mode === 'gun' ? { gold: !!(G.you.chMax && G.you.ch > 0 && st.gun && st.gun.gold) } : {};
+  }
   function portalAction() {
     if (!canAct()) return;
-    if (G.you.ship && G.st.ship && G.st.ship.drive) return openDims('drive');
-    if (nearKiosk()) return openDims('kiosk');
-    if (!G.you.chMax) { UI.toast('No portal gun in your life (yet). Use the kiosk in the middle, jump into someone\'s portal, or follow your path (J).', 4500); return; }
-    if (G.you.ch <= 0) { UI.toast('Portal gun is recharging'); return; }
-    openDims('gun');
+    const m = travelModes();
+    if (m.length) return openDims(m[0]);
+    if (G.you.chMax && G.you.ch <= 0) { UI.toast('Portal gun is recharging'); return; }
+    UI.toast(MM.DIM_BY_ID[G.dimId].station ? 'Walk up to the ' + MM.kioskOf(G.dimId).name + ' to travel.'
+      : 'No portal gun. Step through someone else\'s portal, fly a ship, find a portal station (the Citadel), borrow Rick\'s gun from his workbench, or build your own (J).', 5000);
   }
   function toggleShip() {
     if (!canAct()) return;
@@ -780,12 +800,12 @@
     if (n) { send({ t: 'talk', n: n.id }); return; }
     const l = nearLandmark();
     if (l) { if (l.door && !tasksAt(l).length) send({ t: 'door', l: l.id }); else openLandmark(l); return; }
-    if (nearKiosk()) openDims('kiosk');
+    if (nearKiosk()) openDims('station');
   }
   // Daily tasks you can do at a landmark: your own life's, plus the ones anyone can do.
   function tasksAt(l) {
     const A = MM.ARCHETYPES[profile.arch];
-    return Object.keys(MM.TASKS).filter(t => MM.TASKS[t].at === l.id && (MM.TASKS[t].any || A.life.daily.includes(t)));
+    return Object.keys(MM.TASKS).filter(t => MM.TASKS[t].at === l.id && (MM.TASKS[t].any || A.life.daily.includes(t)) && !(MM.TASKS[t].notFor || []).includes(profile.arch));
   }
   function openLandmark(l) {
     const A = MM.ARCHETYPES[profile.arch];
@@ -873,27 +893,41 @@
   }
   function openDims(mode) {
     G.modalMode = mode;
+    const why = id => MM.travelWhy(mode === 'gun' ? 'portal' : mode, G.dimId, id, travelOpts(mode));
     const go = id => {
-      if (mode === 'kiosk') send({ t: 'ki', d: id });
-      else if (mode === 'drive') send({ t: 'drive', d: id });
-      else { send({ t: 'po', d: id }); UI.toast('Portal open. Walk through it!'); }
+      const w = why(id);
+      if (w) { UI.toast(w, 3500); return; }
+      if (mode === 'station') send({ t: 'ki', d: id });
+      else if (mode === 'ship') send({ t: 'drive', d: id });
+      else { send({ t: 'po', d: id }); UI.toast('Portal open. Walk through it! Anyone nearby can follow you.'); }
       UI.closeModal();
     };
-    openModal('dims', mode === 'kiosk' ? 'Portal Kiosk' : mode === 'drive' ? 'Dimension Drive' : 'Portal gun', box => {
+    const S = MM.DIM_BY_ID[G.dimId].station;
+    const title = mode === 'station' ? S.name : mode === 'ship' ? 'Fly your ship' : G.you.chMax && G.you.ch > 0 ? 'Portal gun' : 'Borrowed portal gun';
+    openModal('dims', title, box => {
+      const others = travelModes().filter(x => x !== mode);
+      if (others.length) {
+        const tabs = el('div', { class: 'chips' });
+        for (const o of others) tabs.append(el('button', { class: 'btn', onclick: () => { UI.closeModal(); openDims(o); } }, o === 'station' ? 'Use the station' : o === 'ship' ? 'Fly the ship' : 'Use the portal gun'));
+        box.append(tabs);
+      }
       box.append(curveMap(go));
       for (const outside of [false, true]) {
-        const ids = MM.WORLD_IDS.filter(id => !!MM.DIM_BY_ID[id].outsideCurve === outside && id !== G.dimId);
+        const ids = MM.WORLD_IDS.filter(id => !!MM.DIM_BY_ID[id].outsideCurve === outside && id !== G.dimId && !MM.DIM_BY_ID[id].pocket);
         if (!ids.length) continue;
         const list = el('div', { class: 'list' });
         for (const id of ids) {
-          const d = MM.DIM_BY_ID[id], n = G.pop ? G.pop.d[id] || 0 : 0;
-          list.append(el('div', { class: 'row dim' },
-            el('div', { class: 't' }, el('b', { text: d.name + '  ' + d.code }), el('small', { text: d.blurb + ' · ' + n + ' here' })),
-            el('button', { class: 'btn go', onclick: () => go(id) }, mode === 'gun' ? 'Open' : 'Go')));
+          const d = MM.DIM_BY_ID[id], n = G.pop ? G.pop.d[id] || 0 : 0, w = why(id);
+          list.append(el('div', { class: 'row dim' + (w ? ' locked' : '') },
+            el('div', { class: 't' }, el('b', { text: d.name + '  ' + d.code }), el('small', { text: w || d.blurb + ' · ' + n + ' here' })),
+            el('button', { class: 'btn go', disabled: !!w, onclick: () => go(id) }, mode === 'gun' ? 'Open' : mode === 'ship' ? 'Fly' : 'Go')));
         }
         box.append(el('h3', { text: outside ? 'Outside the Central Finite Curve' : 'Inside the Central Finite Curve' }), list);
       }
-      box.append(el('p', { class: 'note', text: mode === 'kiosk' ? 'The kiosk sends you straight there.' : mode === 'drive' ? 'Your ship jumps straight there (15 s cooldown).' : 'Opens a portal in front of you for ' + MM.PORTAL_TTL + ' s. Anyone can walk through it, including your enemies.' }));
+      const fee = S && !S.free.includes(profile.arch) ? Object.keys(S.fee).map(k => S.fee[k] + ' ' + MM.MATERIALS[k].name).join(', ') : '';
+      box.append(el('p', { class: 'note', text: mode === 'station' ? 'Step through the station portal' + (fee ? ' for ' + fee : ' (free for you)') + '.'
+        : mode === 'ship' ? 'The Moon is a short hop. Other planets need the Turbo Engine; other dimensions need the Dimension Drive (15 s cooldown).'
+        : 'Opens a portal in front of you for ' + MM.PORTAL_TTL + ' s. Anyone can walk through it, so your friends (and enemies) can follow.' }));
     });
   }
   // The workbench: everything you could ever build, and exactly why you can or can't yet.
@@ -994,7 +1028,7 @@
       box.append(
         row('Look sensitivity', el('input', { type: 'range', min: 0.3, max: 2.5, step: 0.05, value: settings.sens, oninput: e => { settings.sens = Number(e.target.value); UI.save('settings', settings); } })),
         row('Volume', el('input', { type: 'range', min: 0, max: 1, step: 0.05, value: settings.volume, oninput: e => { settings.volume = Number(e.target.value); C.setVolume(settings.volume); UI.save('settings', settings); } })),
-        row('Fights', el('div', { class: 'chips' }, ...[[false, 'Off: nobody can hurt you'], [true, 'On: fight others who are on']].map(([v, t]) => el('button', { class: 'chip', 'aria-pressed': String(!!settings.pvp === v), onclick: () => { settings.pvp = v; UI.save('settings', settings); if (G.net) send({ t: 'pvp', on: v }); openMenu(); } }, t)))),
+        row('Fights', el('div', { class: 'chips' }, ...[[true, 'On: anyone with fights on can hurt you'], [false, 'Off: nobody can hurt you']].map(([v, t]) => el('button', { class: 'chip', 'aria-pressed': String((settings.pvp !== false) === v), onclick: () => { settings.pvp = v; UI.save('settings', settings); if (G.net) send({ t: 'pvp', on: v }); openMenu(); } }, t)))),
         row('View', el('div', { class: 'chips' }, ...[['third', 'Third person'], ['first', 'First person']].map(([v, t]) => el('button', { class: 'chip', 'aria-pressed': String(settings.view === v), onclick: () => { setView(v); openMenu(); } }, t)))),
         row('Graphics', el('div', { class: 'chips' }, ...['high', 'low'].map(q => el('button', { class: 'chip', 'aria-pressed': String(settings.quality === q), onclick: () => { settings.quality = q; applyQuality(); resize(); UI.save('settings', settings); openMenu(); } }, q)))),
         row('Options', el('div', { class: 'chips' },
@@ -1262,7 +1296,7 @@
           $('prompt').append(b, ' ' + (l.door ? (dest === l.name ? 'Enter ' + dest : l.name + ' → ' + dest) : l.name));
           $('tTalk').textContent = l.door && !tasksAt(l).length ? 'GO' : 'USE';
         }
-        else if (nk) { $('prompt').append(b, ' Portal Kiosk: travel to any dimension'); $('tTalk').textContent = 'KIOSK'; }
+        else if (nk) { $('prompt').append(b, ' ' + MM.kioskOf(G.dimId).name + ': travel to another dimension'); $('tTalk').textContent = 'TRAVEL'; }
         updateHotbar();
       }
     }
@@ -1523,12 +1557,12 @@
   }
   function vrPortal(id) {
     if (!canAct() || id === G.dimId) return;
-    if (G.you.ship && G.st.ship && G.st.ship.drive) { send({ t: 'drive', d: id }); return; }
-    if (nearKiosk()) { send({ t: 'ki', d: id }); return; }
-    if (!G.you.chMax) { vr.say('No portal gun in your life (yet). Find a kiosk.'); return; }
-    if (G.you.ch <= 0) { vr.say('Portal gun is recharging.'); return; }
-    send({ t: 'po', d: id });
-    vr.say('Portal open to ' + MM.DIM_BY_ID[id].name + '. Walk through it!');
+    const m = travelModes()[0];
+    if (!m) { vr.say(G.you.chMax ? 'Portal gun is recharging.' : 'No portal gun. Find a station, a ship, or someone else\'s portal.'); return; }
+    const w = MM.travelWhy(m === 'gun' ? 'portal' : m, G.dimId, id, travelOpts(m));
+    if (w) { vr.say(w); return; }
+    send(m === 'station' ? { t: 'ki', d: id } : m === 'ship' ? { t: 'drive', d: id } : { t: 'po', d: id });
+    if (m === 'gun') vr.say('Portal open to ' + MM.DIM_BY_ID[id].name + '. Walk through it!');
   }
   renderer.setAnimationLoop(frame);
 })();

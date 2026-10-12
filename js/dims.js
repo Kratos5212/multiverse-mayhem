@@ -1190,6 +1190,44 @@
       s.add(P.box, '#d8d2c4', [0, 0.05, 0], null, [1.6, 0.1, 0.8]);
       s.add(P.box, '#ffe066', [0.9, 0.4, 0.2], null, [0.35, 0.2, 0.02]);   // price tag
     },
+    // Ruben lies in a striped event tent; Anatomy Park's gate is a sign over his tummy.
+    lm_anatomytent(s) {
+      for (let i = 0; i < 12; i++) {
+        const a = i / 12 * Math.PI * 2;
+        s.add(P.box, i % 2 ? '#e23b3b' : '#fbf6ea', [Math.sin(a) * 4.1, 1.4, Math.cos(a) * 4.1], [0, a, 0], [2.2, 2.8, 0.12]);
+      }
+      s.add(P.cone, '#e23b3b', [0, 4.0, 0], null, [5.0, 2.4, 5.0]);
+      s.add(P.cyl, '#fbf6ea', [0, 2.82, 0], null, [4.25, 0.1, 4.25]);
+      s.add(P.cyl, '#7a5a3a', [0, 5.3, 0], null, [0.08, 0.8, 0.08]);
+      s.add(P.cone, '#ffd84d', [0, 5.9, 0], [0, 0, -Math.PI / 2], [0.3, 0.6, 0.06]);
+      // The doorway, with a hospital bed and Ruben's big belly peeking out.
+      s.add(P.box, '#2a1a14', [0, 1.2, 4.12], null, [1.8, 2.4, 0.14]);
+      s.add(P.box, '#c9ccd4', [2.6, 0.55, 5.6], null, [1.3, 0.12, 2.4]);
+      s.add(P.sphere, '#f0c8a0', [2.6, 0.95, 5.5], null, [0.75, 0.55, 1.0]);
+      s.add(P.box, '#5ff8ff', [0, 2.75, 4.3], null, [2.6, 0.55, 0.08], true);
+      s.add(P.box, '#e23b3b', [0, 2.75, 4.36], null, [2.2, 0.16, 0.04], true);
+    },
+    // A door drawn in chalk on a wall that opens for real (Froopyland's way in).
+    lm_chalkdoor(s) {
+      s.add(P.box, '#b8a68e', [0, 1.75, -0.2], null, [3.0, 3.5, 0.4]);
+      s.add(P.box, '#a0907a', [0, 3.55, -0.2], null, [3.2, 0.14, 0.5]);
+      const w = 0.07, c = '#c78bff';
+      s.add(P.box, c, [-0.7, 1.2, 0.02], null, [w, 2.3, 0.02], true);
+      s.add(P.box, c, [0.7, 1.2, 0.02], null, [w, 2.3, 0.02], true);
+      s.add(P.box, c, [0, 2.35, 0.02], null, [1.47, w, 0.02], true);
+      s.add(P.sphere, '#ffd84d', [0.48, 1.15, 0.04], null, [0.09, 0.09, 0.03], true);
+      s.add(P.box, '#6a3aa8', [0, 1.2, 0.0], null, [1.33, 2.2, 0.01], true);
+      for (let i = 0; i < 5; i++) s.add(P.sphere, ['#ff8fc8', '#ffe066', '#8fe0ff', '#b7ff8f', '#d7a8ff'][i], [-1.1 + i * 0.55, 3.1, 0.03], null, [0.1, 0.1, 0.02], true);
+    },
+    // A small green portal on a stand: the way back out of a pocket world.
+    lm_exitportal(s) {
+      s.add(P.cyl, '#3a3f4a', [0, 0.12, 0], null, [1.4, 0.24, 1.4]);
+      const ring = new T.TorusGeometry(1.15, 0.16, 12, 40);
+      s.add(ring, '#59606e', [0, 1.45, 0]);
+      ring.dispose();
+      s.add(P.sphere, '#39ff6a', [0, 1.45, 0], null, [1.0, 1.0, 0.05], true);
+      s.add(P.sphere, '#b8ffcc', [0, 1.45, 0.03], null, [0.45, 0.45, 0.03], true);
+    },
     lm_fakedoors(s) {
       MODELS.storefront(s);
       for (let i = 0; i < 4; i++) {
@@ -1606,28 +1644,49 @@
   }
 
   // ---------- Kiosk ----------
-  C.kioskModel = dim => makeKiosk(dim);
-  function makeKiosk(dim) {
+  C.kioskModel = dim => makeKiosk(dim, dim && dim.station);
+  // Public portal stations: the Citadel's green portal arch and Federation customs.
+  function makeKiosk(dim, St) {
+    St = St || { name: 'Portal Station', fee: {} };
+    const fed = dim && dim.id === 'federation';
+    const col = fed ? '#5fb4ff' : '#39ff6a', metal = fed ? '#c9ccd4' : '#59606e', dark = fed ? '#3c4a66' : '#2b303a';
     const s = new C.Shape();
-    s.add(P.cyl, '#3a3f4a', [0, 0.25, 0], null, [3.2, 0.5, 3.2]);
-    s.add(P.cyl, '#ffd84d', [0, 0.52, 0], null, [3.25, 0.08, 3.25]);
-    // A round gate around the portal, on two curved legs, with a console behind it.
-    const gate = new T.TorusGeometry(2.12, 0.3, 16, 56), inner = new T.TorusGeometry(1.8, 0.07, 8, 56);
-    s.add(gate, '#59606e', [0, 2.6, 0], null, [1, 1, 0.9]);
-    s.add(inner, '#ffd84d', [0, 2.6, 0.12], null, null, true);
-    s.add(inner, '#ffd84d', [0, 2.6, -0.12], null, null, true);
+    s.add(P.cyl, dark, [0, 0.25, 0], null, [3.6, 0.5, 3.6]);
+    s.add(P.cyl, col, [0, 0.52, 0], null, [3.65, 0.06, 3.65], true);
+    s.add(P.cyl, metal, [0, 0.62, 0], null, [3.0, 0.16, 3.0]);
+    // The arch: a thick ring with ribbed clamps, held by two curved pylons.
+    const gate = new T.TorusGeometry(2.3, 0.34, 18, 64), inner = new T.TorusGeometry(1.95, 0.07, 8, 64);
+    s.add(gate, metal, [0, 2.85, 0], null, [1, 1, 0.9]);
+    s.add(inner, col, [0, 2.85, 0.14], null, null, true);
+    s.add(inner, col, [0, 2.85, -0.14], null, null, true);
     gate.dispose(); inner.dispose();
-    for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; s.add(P.sphere, '#3a3f4a', [Math.cos(a) * 2.12, 2.6 + Math.sin(a) * 2.12, 0.26], null, [0.08, 0.08, 0.06]); }
-    for (const sx of [-1, 1]) C.capsuleAt(s, '#4a505c', 0.22, 1.5, [sx * 1.7, 0.4, 0], [0, 0, sx * 0.5]);
-    s.add(P.capsule, '#1d2230', [0, 1.3, -1.7], null, [0.55, 0.45, 0.4]);
-    s.add(P.sphere, '#5ff8ff', [0, 1.75, -1.33], null, [0.42, 0.3, 0.06], true);
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.box, dark, [Math.cos(a) * 2.3, 2.85 + Math.sin(a) * 2.3, 0], [0, 0, a], [0.3, 0.75, 0.8]); }
+    for (const sx of [-1, 1]) {
+      C.capsuleAt(s, metal, 0.26, 1.9, [sx * 1.95, 0.6, 0], [0, 0, sx * 0.42]);
+      s.add(P.box, dark, [sx * 3.2, 1.0, 0], null, [0.6, 2.0, 0.9]);
+      s.add(P.sphere, col, [sx * 3.2, 2.1, 0], null, [0.22, 0.22, 0.22], true);
+    }
+    if (fed) {
+      // Customs: a booth with a window and a barrier arm in front of the gate.
+      s.add(P.box, '#e8eaee', [4.6, 1.3, -1.2], null, [1.8, 2.6, 1.8]);
+      s.add(P.box, '#7fc4ff', [4.6, 1.7, -0.29], null, [1.3, 0.8, 0.05], true);
+      s.add(P.box, '#3c4a66', [4.6, 2.7, -1.2], null, [2.0, 0.2, 2.0]);
+      s.add(P.box, '#ffffff', [1.6, 1.05, 2.2], null, [3.2, 0.14, 0.14]);
+      s.add(P.box, '#e23b3b', [0.6, 1.05, 2.2], null, [0.5, 0.15, 0.15]);
+    } else {
+      // Citadel: a control console and a queue rail.
+      s.add(P.capsule, '#1d2230', [0, 1.3, -2.0], null, [0.6, 0.48, 0.42]);
+      s.add(P.sphere, col, [0, 1.78, -1.62], null, [0.45, 0.3, 0.06], true);
+      for (const sx of [-1, 1]) { s.add(P.box, '#c7ccd6', [sx * 1.4, 0.95, 4.2], null, [0.06, 0.9, 3.4]); s.add(P.cyl, '#c7ccd6', [sx * 1.4, 1.42, 4.2], [Math.PI / 2, 0, 0], [0.05, 3.4, 0.05]); }
+    }
     const g = C.meshOf(s.build(), 0.06);
-    const sign = C.makeTag('PORTAL KIOSK', '', 'Any dimension, free', '#ffd84d');
-    sign.sprite.position.set(0, 6.2, 0); sign.sprite.scale.set(5, 1.25, 1);
+    const fee = Object.keys(St.fee || {}).map(k => St.fee[k] + ' ' + MM.MATERIALS[k].name).join(', ');
+    const sign = C.makeTag(St.name.toUpperCase(), '', fee ? 'Fee: ' + fee : 'Free', col);
+    sign.sprite.position.set(0, 6.6, 0); sign.sprite.scale.set(5.6, 1.4, 1);
     sign.draw(-1);
     g.add(sign.sprite);
-    const ring = C.portalMesh('#ffd84d', 1.7);
-    ring.position.set(0, 2.5, 0);
+    const ring = C.portalMesh(col, 1.9);
+    ring.position.set(0, 2.85, 0);
     g.add(ring);
     g.userData.ring = ring;
     return g;
@@ -2043,8 +2102,8 @@
       group.add(tag.sprite);
     }
 
-    const kiosk = makeKiosk(dim);
     const K = MM.kioskOf(dimId);
+    const kiosk = makeKiosk(dim, dim.station);
     kiosk.position.set(K.x, MM.heightAt(dimId, K.x, K.z), K.z);
     if (MM.hasKiosk(dimId)) group.add(kiosk);
 

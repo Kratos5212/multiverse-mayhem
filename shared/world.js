@@ -43,7 +43,7 @@
       blurb: 'The Smith family suburb. Lawns, a garage full of science, and a high school nobody wants to go to.',
       sky: ['#5fb4ff', '#d9f3ff'], fog: '#cdeaff', fogFar: 230, sun: '#fff4dc', ambient: '#9fc6ff',
       ground: ['#5fae3e', '#78c24b', '#4c9636'], accent: '#ffffff',
-      props: [['tree', 40], ['hedge', 20]], streets: { grid: 44, extent: 150 }, spawn: { x: 2, z: -3, spread: 5 }, kiosk: { x: 15, z: -15 },
+      props: [['tree', 40], ['hedge', 20]], streets: { grid: 44, extent: 150 }, spawn: { x: 2, z: -3, spread: 5 },
       npc: [['neighbor', 9], ['schoolkid', 4]], pickups: { s: 18, c: 2 }, mat: 's',
     },
     {
@@ -104,7 +104,7 @@
     },
     // ----- More dimensions from the show -----
     {
-      id: 'blips', name: 'Blips and Chitz', code: 'B&C', seed: 5150, gravity: 24, interior: true, bound: 32, kiosk: { x: 0, z: 22 },
+      id: 'blips', name: 'Blips and Chitz', code: 'B&C', seed: 5150, gravity: 24, interior: true, bound: 32,
       blurb: 'The best arcade in the galaxy. Live a whole life as Roy, then go again.',
       sky: ['#120a24', '#120a24'], fog: '#120a24', fogFar: 400, sun: '#ffe0ff', ambient: '#c0a8ff',
       ground: ['#2a1a4a', '#3a2a5a', '#22143e'], accent: '#ff6fd0', spawn: { x: 0, z: 14, spread: 3 },
@@ -254,7 +254,38 @@
   MM.WORLD_IDS = MM.DIMS.filter(d => !d.hidden).map(d => d.id);
   MM.boundOf = dimId => MM.DIM_BY_ID[dimId].bound || MM.WORLD_HALF;
   // Outdoor worlds have a public kiosk; indoor ones only if they declare one (Blips and Chitz does).
-  MM.hasKiosk = dimId => { const d = MM.DIM_BY_ID[dimId]; return !d.interior || !!d.kiosk; };
+  // ---------- Getting around, the way the show does it ----------
+  // space: worlds in the same universe (ships fly between them). near: a short hop (Earth
+  // and its moon). pocket: only reachable through its entrance (a door, a battery, a man).
+  // Everything else is another dimension: portal guns, the Dimension Drive, the Citadel's
+  // portal station or Federation customs. Outside the Central Finite Curve: gold portals only.
+  const SPACE = { suburbia: 'c137', moon: 'c137', featherhold: 'c137', gazorp: 'c137', squanch: 'c137', purge: 'c137', gearworld: 'c137', unityworld: 'c137', federation: 'c137', blips: 'c137', bazaar: 'c137' };
+  const NEAR = { suburbia: 1, moon: 1 };
+  const POCKET = { microverse: 1, anatomy: 1, froopy: 1 };
+  for (const d of MM.DIMS) { if (SPACE[d.id]) d.space = SPACE[d.id]; if (NEAR[d.id]) d.near = true; if (POCKET[d.id]) d.pocket = true; }
+  // Public interdimensional stations, only where they exist in the lore.
+  MM.DIM_BY_ID.citadel.station = { x: 0, z: -14, name: 'Citadel Portal Station', fee: { k: 3 }, free: ['genius', 'sidekick', 'evilmorty'] };
+  MM.DIM_BY_ID.federation.station = { x: 0, z: -14, name: 'Interdimensional Customs', fee: { k: 6 }, free: ['trooper'] };
+  MM.hasKiosk = dimId => !!MM.DIM_BY_ID[dimId].station;
+  // Can you get from one world to another this way? o: { gold, hull, engine, drive }.
+  // Returns '' if yes, or the reason why not.
+  MM.travelWhy = function (method, from, to, o) {
+    const A = MM.DIM_BY_ID[from], B = MM.DIM_BY_ID[to];
+    o = o || {};
+    if (!B || from === to) return 'You are already here.';
+    if (B.hidden) return 'You can only get there through its door.';
+    if (B.pocket) return 'Only through its entrance: ' + (to === 'microverse' ? "the car battery in Rick's garage." : to === 'anatomy' ? 'Anatomy Park, inside Ruben, on Earth.' : 'the chalk door on Earth.');
+    if (B.outsideCurve && !(method === 'portal' && o.gold)) return 'Outside the Central Finite Curve. Only a gold portal goes there.';
+    if (method === 'portal' || method === 'station') return '';
+    if (method === 'ship') {
+      if (A.space && A.space === B.space) {
+        if (A.near && B.near) return o.hull ? '' : 'You need a ship.';
+        return o.engine ? '' : 'Your ship needs a Turbo Engine to cross the galaxy.';
+      }
+      return o.drive ? '' : 'Another dimension: your ship needs the Dimension Drive.';
+    }
+    return 'You can\'t get there that way.';
+  };
 
   // Prop types: r = collision radius, h = height, hp, scrap dropped when destroyed.
   MM.PROPS = {
@@ -646,7 +677,7 @@
   // Where the public portal kiosk stands in every dimension.
   MM.KIOSK = { x: 0, z: -14 };
   // Each dimension can put its kiosk somewhere else (on Earth it stands on a lawn, not in the road).
-  MM.kioskOf = dimId => MM.DIM_BY_ID[dimId].kiosk || MM.KIOSK;
+  MM.kioskOf = dimId => MM.DIM_BY_ID[dimId].station || MM.DIM_BY_ID[dimId].kiosk || MM.KIOSK;
 
   // ---------- Props ----------
   const propCache = {}, layoutCache = {};

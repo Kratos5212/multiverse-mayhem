@@ -40,7 +40,7 @@
       let bot;
       const conn = { send: s => bot && bot.onMessage(s), close() { if (bot) bot.closed = true; } };
       host.connect(conn, { bot: true });
-      bot = new MM.Bot(s => host.message(conn, s), { dim: i < 8 ? 'suburbia' : MM.WORLD_IDS[i % MM.WORLD_IDS.length], chatty: 0.5 });
+      bot = new MM.Bot(s => host.message(conn, s), { chatty: 0.5 });   // each bot starts in its own character's world
       bot.conn = conn;
       bots.push(bot);
     }

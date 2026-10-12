@@ -42,8 +42,8 @@ Every message is a JSON object with a `t` (type) field. Anything that is not on 
 | `st` | `x`, `y`, `z`, `r`, `a`, `ep` | Where I am, which way I face, my animation, and my travel epoch |
 | `f` | `dx`, `dy`, `dz` | Fire my weapon along this unit vector |
 | `ab` | | Use my archetype ability |
-| `po` | `d` | Open a portal to dimension `d` (portal-gun owners only) |
-| `ki` | `d` | Use the public kiosk to go to `d` (must be standing at it; indoor rooms have none, except Blips and Chitz) |
+| `po` | `d` | Open a portal to dimension `d` (needs a portal gun charge or a borrowed charge; outside the Curve needs a gold gun) |
+| `ki` | `d` | Use the portal station to go to `d` (must be standing at it; only the Citadel and the Federation have one; the fee is paid in materials) |
 | `cr` | `g` | Craft gadget `g` |
 | `g` | `g`, `dx`, `dy`, `dz` | Use gadget `g` (grenade, turret, shrink ray) |
 | `c` | `text` | Chat (sent to everyone on the server) |
@@ -54,12 +54,12 @@ Every message is a JSON object with a `t` (type) field. Anything that is not on 
 | `talk` | `n` | Talk to local `n` (must be within 5 m) |
 | `ans` | `a` | Accept (1) or refuse (0) a local's trade offer |
 | `ship` | `on` | Board or leave your ship (must own one) |
-| `drive` | `d` | Dimension Drive to `d` (in your ship, with the drive, 15 s cooldown) |
-| `pvp` | `on` | Turn fights with other players on or off (both players must have them on; `hello` carries the starting value) |
+| `drive` | `d` | Fly your ship to `d` (Moon from Earth: any ship; other planets in the universe: Turbo Engine; other dimensions: Dimension Drive; 15 s cooldown) |
+| `pvp` | `on` | Turn fights with other players on or off (on by default; both players must have them on; `hello` carries the starting value) |
 
 `hello` also carries `tok`, the random save token this browser was given (see **Saved progress**).
 
-**The travel epoch (`ep`).** Every time the server moves you (portal, kiosk, respawn, snap-back), it increments your epoch. Position reports carrying an old epoch are ignored. This avoids the classic bug where a late packet from your old position pulls you back after a teleport.
+**The travel epoch (`ep`).** Every time the server moves you (portal, station, door, respawn, snap-back), it increments your epoch. Position reports carrying an old epoch are ignored. This avoids the classic bug where a late packet from your old position pulls you back after a teleport.
 
 ## Messages: server → client
 
@@ -70,7 +70,7 @@ Every message is a JSON object with a `t` (type) field. Anything that is not on 
 | `s` | Snapshot: `p` players `[id,x,y,z,yaw,anim,hp%,effects]`, `n` monsters, `u` turret aim |
 | `ev` | A batch of events for this dimension copy: `join`, `leave`, `shot`, `hit`, `boom`, `mel`, `dmg`, `kill`, `prop`, `pk+`/`pk-` (pickups), `npc+`/`npc-`, `po+`/`po-` (portals), `tu+`/`tu-` (turrets), `ab`, `em`, `dodge`, `kiosk`, `bite`, `shrunk`, `say` (a local speaks), `world` (an event starts or ends), `title` (someone broke out of their life), `gear`, `ship`, `warp`, `nfree` |
 | `pv` | Private events: `tp` (you were moved), `kb` (knockback), `toast`, `built`, `task` (a daily task paid out), `step` (a path step completed), `offer` (a local's trade) |
-| `y` | Your private state: health, materials and gadgets, portal charges, cooldowns, score, death timer, ship |
+| `y` | Your private state: health, materials and gadgets, portal charges and borrowed charges (`bor`), cooldowns, score, death timer, ship |
 | `pg` | Your life: upgrades, path step, unlocks, counters, errands, daily-task cooldowns, title, and resulting stats |
 | `c` | A chat line: id, name, home code, dimension, text |
 | `pop` | Players per dimension and the top-10 chaos leaderboard |
@@ -83,10 +83,10 @@ Projectiles are sent once as a `shot` (start point, velocity, gravity, lifetime)
 
 ### Cheating
 * **Server-side game rules.** A client cannot give itself health, items, scrap, kills or portal charges, because none of those are client-controlled values.
-* **Consent for fights.** The server only lets a player hurt another player when both have fights turned on. This covers shots, melee, grenades, turrets, pets and the shrink ray. Shots pass through anyone who isn't fighting, so nobody can grief a player who opted out.
+* **Consent for fights.** Fights are on by default, and the server only lets a player hurt another player when both still have them on. This covers shots, melee, grenades, turrets, pets and the shrink ray. Shots pass through anyone who isn't fighting, so nobody can grief a player who opted out.
 * **Lore limits are enforced on the server.** An Average Joe's `po` is ignored, a Birdfolk's `cr` is ignored, and only Birdfolk get the flying allowance in the movement check.
 * **Movement checks.** Horizontal distance must fit your speed (with sprint, shrink and guilt effects, plus slack for lag). Rising must fit your jump or wings. You can never rise above jump height plus the tallest prop. Knockback grants a short allowance. Every failed check snaps you back; 25 recent failures disconnect you. With 64 bots fighting, knocking each other around and flying on the moon, no false kicks occurred.
-* **Cooldowns and ammo on the server.** Fire rate, ability cooldowns, kiosk cooldown, turret limits and gadget counts are all tracked server-side.
+* **Cooldowns and ammo on the server.** Fire rate, ability cooldowns, station cooldown and fee, travel rules (`MM.travelWhy`: portal gun or borrowed charges, gold portals for outside the Curve, ship range), turret limits and gadget counts are all tracked server-side.
 * **Aim cannot cheat range.** A shot always starts from your server-side position, and the server flies it.
 
 ### Saved progress

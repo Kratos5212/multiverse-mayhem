@@ -44,8 +44,8 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | Click | FIRE | Shoot or hit |
 | Space | JUMP | Jump (hold to fly as a Birdfolk) |
 | Q | SKILL | Archetype ability |
-| E | PORTAL | Portal gun, kiosk, or dimension drive |
-| F | TALK / USE | Talk to locals, daily tasks at buildings, the kiosk |
+| E | PORTAL | Travel: portal gun (own or borrowed), portal station, or your ship |
+| F | TALK / USE | Talk to locals, daily tasks at buildings, doors, portal stations |
 | J | Journal button | Your life, your path, errands |
 | B | SHIP | Board or leave your ship (Space up, Shift down) |
 | 1 2 3 4 | GADGET | Grenade, turret, shrink ray, Meeseeks Box |
@@ -60,7 +60,7 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 
 ## Free roam, not a battle royale
 
-This is an open-world chaos game: wreck things, cause trouble, explore. **Players can't hurt each other** unless both have turned **Fights** on in the settings; then a ⚔ shows in their name tag, and only fighters can hit fighters (shots pass straight through everyone else). Bots are explorers who never attack players. Monsters only go for you if you come within about 9 m or hit them, and they give up when you leave their patch.
+This is an open-world chaos game: wreck things, cause trouble, explore. **Fights are on by default**: players can hurt each other unless one of them turns **Fights** off in the settings (shots then pass straight through them). Bots and locals act by their lore: Gromflomite troopers hunt Ricks, bird people and Squanchies; Evil Morty hunts Ricks; Cronenbergs and Pickle Rick pick fights; Jerrys, Beanlings and Unity never start one. Peaceful characters run when hit; everyone else hits back. Monsters only go for you if you come within about 9 m or hit them, and they give up when you leave their patch. You start in your own world (Ricks and Mortys on Earth or at the Citadel, bird people in Featherhold, troopers at the Federation, and so on).
 
 ## Who you are: characters, lives and lore limits
 
@@ -85,7 +85,7 @@ Your look is completely free. Your **character** is your lore: it decides your s
 
 Picking a character puts them in their **canon look**. **Other universe** rolls an alternate version of the same character (different colours, outfit or accessories), and every option in the creator is still yours to change. Bots are alternate-universe Ricks, Mortys and the rest of the cast, each from their own home dimension.
 
-You never have to break out: you can play a normal life and still go anywhere by kiosk or by jumping through other people's portals. Your **journal (J)** shows your daily tasks, your next step, what each step unlocks, and your errands. Progress is saved per character.
+You never have to break out: you can play a normal life and still travel the way people do in the show (below). Your **journal (J)** shows your daily tasks, your next step, what each step unlocks, and your errands. Progress is saved per character.
 
 ## Crafting across dimensions
 
@@ -166,7 +166,19 @@ Every world is laid out like a real place (`shared/layouts.js`): roads and squar
 
 Every prop except the landmarks can be destroyed. Wrecking things and beating other players earns **chaos points** for the multiverse-wide leaderboard.
 
-The **portal gun, kiosk and Dimension Drive** open a map of the **Central Finite Curve**: every world inside the curve, the odd one outside it, and how many players are in each. Tap a world to see it and go.
+### Travel, the way the show does it
+
+There is no public portal on Earth. To get around you need one of these:
+
+* **A portal gun.** Ricks own one; Morty has a borrowed one with one charge; Evil Morty's is gold. Anyone else can borrow (steal) Rick's from the workbench in his garage (two jumps, no recharge), grab a charge from a gun owner they knock out, or build their own when their life path allows it.
+* **Somebody else's portal.** Portals stay open for a while and anyone can walk through, so a team can follow whoever has the gun.
+* **A portal station.** The Citadel's portal station (free for Ricks and Mortys, 3 Schmeckles for everyone else) and Interdimensional Customs at the Federation (free for troopers).
+* **A ship.** Earth to the Moon is a short hop. Other planets in the same universe (Bird World, Gazorpazorp, Squanch, the Purge Planet, Unity's planet, Gear World, Blips and Chitz, the Bazaar, the Federation) need the Turbo Engine. Other dimensions need the Dimension Drive.
+* **Doors.** The Microverse is inside the car battery in Rick's garage; Anatomy Park is inside Ruben, in a tent on Earth; Froopyland is behind Rick's chalk door. Only the doors go there.
+
+Worlds **outside the Central Finite Curve** can only be reached with a gold portal: Evil Morty's gun, or a gun upgraded with **Golden Portal Fluid** at the garage.
+
+The **portal gun, portal stations and ships** open a map of the **Central Finite Curve**: every world inside the curve, the odd one outside it, and how many players are in each. Tap a world to see it and go.
 
 
 ### Rick's garage (and what's under it)
@@ -182,7 +194,7 @@ Walk up to the garage on Earth C-137 and press **F** to go inside. It's a real r
 * A **trapdoor** down to the **secret underground lab**: clone tanks, a giant computer, a machine, and the **Mind Blowers** cabinet.
 * A **door to Rick's wine cellar**, a pocket dimension with barrels, bottle racks and his private stash.
 
-Kiosks, portals and ships can't take you into these rooms; you have to use the doors.
+Portals, stations and ships can't take you into these rooms; you have to use the doors.
 
 **New things to build and use:**
 * **Meeseeks Box** gadget (Schmeckles, key 4): a Meeseeks fights for you for 30 s. Everyone knows how.
@@ -197,7 +209,7 @@ Rick, Morty and Evil Morty's daily lives now include Council meetings and Morty 
 2. Add new prop types to `MM.PROPS` and models to `MODELS` in `js/dims.js`; add locals to `MM.NPCS` and events to `MM.EVENTS`.
 3. Optionally add landmarks (`MM.LANDMARKS`), daily tasks (`MM.TASKS`) and recipes (`MM.RECIPES`) in `shared/rules.js`.
 
-The server, kiosk, portals, bots and journal pick it up automatically.
+The server, portals, bots and journal pick it up automatically.
 
 ## Virtual reality
 
@@ -208,12 +220,12 @@ Play through a VR headset in a browser that supports WebXR: the **Meta Quest bro
 | Left stick | Walk where you look (real steps move you too) |
 | Right stick left/right | Turn 30° |
 | Right trigger | Fire (aim with the controller; a faint beam shows where) |
-| Right grip | Talk to locals, do a daily task, go through doors, use the kiosk |
+| Right grip | Talk to locals, do a daily task, go through doors, use a portal station |
 | A | Jump (hold to fly); respawn after dying |
 | B | Ability |
 | Right stick click | Grenade |
 | X / Y | Choose a world for your portal gun |
-| Left trigger | Open a portal there (or take the kiosk) |
+| Left trigger | Travel there (portal gun, station or ship) |
 | Left grip | Board or leave your ship |
 
 Your gun is in your right hand. A panel on your left wrist shows the world you're in, your health, your materials, where your portal gun is set to, and any messages. The game needs a secure (https) address for VR: the online server on Render, or the `play/` folder of the releases repository served with GitHub Pages. The Android app is for phones; Android's in-app browser has no VR.
