@@ -7,6 +7,7 @@
   const now = () => performance.now() / 1000;
   const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
   const r2 = v => Math.round(v * 100) / 100;
+  const pick = a => a[Math.floor(Math.random() * a.length)];
 
   // ---------- Profile and settings ----------
   const settings = UI.load('settings', { sens: 1, invert: false, volume: 0.6, quality: isTouch ? 'low' : 'high', botChat: true, view: 'third' });
@@ -457,6 +458,66 @@
     if ((b & 1024) && r < dt * 10) fx.burst(p.x, y + 1.2, p.z, '#bfe0ff', 2, 1.5, 0.3, 0.5, 0);
     if ((b & 256) && r < dt * 8) fx.burst(p.x, y + 2.1, p.z, '#ffe066', 2, 1.2, 0.3, 0.6, -1);   // seeing stars
   }
+  // ---------- Rick's scanner ----------
+  // Point at something and press X: a readout of what it is, how dangerous it is and what it
+  // is made of, with a line of Rick's commentary. Pure information; nothing is sent.
+  const SNARK = ['Ugh. Boring.', 'Fascinating. No, it is not.', 'I have seen this in a thousand dimensions. It is always disappointing.',
+    'Do not lick it.', 'Huh. Okay, that one is actually kind of neat.', 'Classic. Real classic.', 'This is Morty-level tech.', 'Wubba lubba dub dub.'];
+  function scan() {
+    if (!canAct()) return;
+    if (!(G.st && G.st.scanner)) { UI.toast(MM.ARCHETYPES[profile.arch].name === 'Rick' ? 'Build the Scanner Implant at the garage first (C).' : 'Only a Rick has a scanner built in.', 3000); return; }
+    const fwd = new T.Vector3(); camera.getWorldDirection(fwd);
+    const from = camWorld, best = { s: Infinity, it: null };
+    const look = (x, y, z, it, r) => {
+      const dx = x - from.x, dy = y - from.y, dz = z - from.z, d = Math.hypot(dx, dy, dz);
+      if (d > 45 || d < 0.3) return;
+      const cos = (dx * fwd.x + dy * fwd.y + dz * fwd.z) / d, ang = Math.acos(Math.min(1, cos)) - Math.atan((r || 0.6) / d);
+      if (ang > 0.28) return;
+      const sc = ang * 40 + d * 0.15;
+      if (sc < best.s) { best.s = sc; best.it = it; }
+    };
+    for (const [id, p] of G.players) look(p.x, p.y + 1, p.z, { k: 'p', id, p }, 0.7);
+    for (const [id, n] of G.npcs) look(n.x, n.y + 1, n.z, { k: 'n', id, n }, MM.NPCS[n.type].r);
+    for (const [id, m] of G.pickups) look(m.position.x, m.position.y, m.position.z, { k: 'pk', id, m }, 0.5);
+    for (const l of MM.LANDMARKS) if (l.dim === G.dimId) look(l.x, MM.heightAt(G.dimId, l.x, l.z) + l.h / 2, l.z, { k: 'l', l }, l.r);
+    const props = MM.genProps(G.dimId);
+    for (const p of props) if (G.alive[p.id] && !p.type.startsWith('lm_')) look(p.x, p.y + p.h / 2, p.z, { k: 'prop', p }, p.r);
+    const it = best.it;
+    C.sfx('ability', 0.5);
+    if (!it) { showScan('Nothing', [['Signal', 'none']], 'Point me at something, genius.'); return; }
+    const pos = it.k === 'p' ? it.p : it.k === 'n' ? it.n : it.k === 'pk' ? it.m.position : it.k === 'l' ? { x: it.l.x, y: MM.heightAt(G.dimId, it.l.x, it.l.z), z: it.l.z } : it.p;
+    const dx = pos.x - G.me.x, dz = pos.z - G.me.z, dl = Math.hypot(dx, dz) || 1;
+    fx.cone(G.me.x, G.me.y + 1.5, G.me.z, dx / dl, dz / dl, '#39ff6a', 30, Math.min(dl, 20) / 4, 0.25);
+    fx.shockwave(pos.x, pos.y || 0, pos.z, '#39ff6a', 2.2, 0.6, 0.12);
+    const mat = d => Object.keys(d || {}).map(k => d[k] + ' ' + MM.MATERIALS[k].name).join(', ') || 'nothing useful';
+    const pretty = t => t.replace(/^lm_/, '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+    if (it.k === 'p') {
+      const A = MM.ARCHETYPES[it.p.info.arch], tm = A.temper || {};
+      showScan(it.p.info.name + ' ' + it.p.info.home, [['Variant', A.name + (it.p.info.title ? ' · ' + it.p.info.title : '')], ['Health', it.p.hp + '%'],
+        ['Threat', tm.fights === 'often' ? 'picks fights' : tm.fights === 'never' ? 'harmless' : 'hits back'], ['Origin', 'Dimension ' + it.p.info.home]], it.p.info.arch === 'genius' ? 'Another me. Ugh. Probably a Doofus.' : pick(SNARK));
+    } else if (it.k === 'n') {
+      const T = MM.NPCS[it.n.type];
+      showScan(it.n.name || T.name, [['Species', T.name], ['Health', (it.n.hp !== undefined ? it.n.hp : 100) + '%'], ['Threat', T.hostile ? 'HOSTILE' : T.guard ? 'guard: will defend others' : 'peaceful'],
+        ['Drops', mat(T.drop)]], T.talk ? '"' + pick(T.talk) + '"' : pick(SNARK));
+    } else if (it.k === 'pk') showScan('Loose matter', [['Composition', 'collectable material'], ['Value', 'worth picking up']], 'Grab it before a Jerry does.');
+    else if (it.k === 'l') {
+      const tasks = tasksAt(it.l).map(t => MM.TASKS[t].name);
+      const builds = MM.RECIPE_IDS.filter(r => MM.RECIPES[r].at && MM.LANDMARKS.some(x => MM.isAt(x, MM.RECIPES[r].at) && x === it.l)).map(r => MM.RECIPES[r].name);
+      showScan(it.l.name, [['Type', 'landmark'], ['Things to do', tasks.join(', ') || 'nothing for you'], ['Can build', builds.slice(0, 3).join(', ') || '—'], ['Door', it.l.door ? MM.DIM_BY_ID[it.l.door.dim].name : 'no']], pick(SNARK));
+    } else {
+      const P = MM.PROPS[it.p.type];
+      showScan(pretty(it.p.type), [['Integrity', P.hp + ' hp'], ['Salvage', mat(P.drop)], ['Size', it.p.r.toFixed(1) + ' m']], pick(SNARK));
+    }
+  }
+  function showScan(title, rows, quote) {
+    const box = $('scan');
+    box.textContent = '';
+    box.append(el('b', { text: '▸ ' + title }));
+    for (const [k, v] of rows) box.append(el('div', { class: 'r' }, el('span', { text: k }), el('span', { text: String(v) })));
+    if (quote) box.append(el('div', { class: 'q', text: quote }));
+    box.hidden = false; box.classList.remove('show'); void box.offsetWidth; box.classList.add('show');
+    clearTimeout(G.scanT); G.scanT = setTimeout(() => { box.hidden = true; }, 7000);
+  }
   function screenFlash(color, op, ms) {
     const f = $('whiteflash');
     if (!f) return;
@@ -775,6 +836,7 @@
     mk('shrink', '3', 'Shrink', () => useGadget('shrink'));
     mk('meeseeks', '4', 'Meeseeks', () => useGadget('meeseeks'));
     mk('timecrystal', '5', 'Time', () => useGadget('timecrystal'));
+    mk('scan', 'X', 'Scan', () => scan());
     mk('craft', 'C', 'Build', () => openCraft());
     mk('journal', 'J', 'Journal', () => openJournal());
     mk('portal', 'E', 'Portal', () => portalAction());
@@ -793,6 +855,7 @@
       slots[g].classList.toggle('off', !(y.inv[g] > 0));
       slots[g].classList.toggle('empty', !(y.inv[g] > 0));
     }
+    slots.scan.hidden = !(G.st && G.st.scanner);
     // Only Ricks and Evil Morty know how to make a Time Crystal: no slot for everyone else.
     slots.timecrystal.hidden = !(y.inv.timecrystal > 0) && !!(G.prog && MM.canKnow(profile.arch, G.prog, 'timecrystal'));
     const st = G.st;
@@ -1201,6 +1264,7 @@
       case 'KeyE': portalAction(); break;
       case 'KeyF': interact(); break;
       case 'KeyC': openCraft(); break;
+      case 'KeyX': scan(); break;
       case 'KeyJ': openJournal(); break;
       case 'KeyB': toggleShip(); break;
       case 'KeyQ': ability(); break;

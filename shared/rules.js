@@ -189,6 +189,10 @@
     fluid:    { cat: 'gadget', name: 'Portal Fluid', cost: { c: 2 }, gun: true, desc: 'Refills one portal gun charge right away.' },
     timecrystal: { cat: 'gadget', name: 'Time Crystal', cost: { c: 5, m: 2 }, max: 1, desc: 'Press 5: freeze time around you for 4 s. Illegal for third-dimensional beings, so the Time Cops will come for you.' },
     meeseeks: { cat: 'gadget', name: 'Meeseeks Box', cost: { k: 3, s: 1 }, max: 2, desc: 'Press it (4): a Mr. Meeseeks pops out and fights for you for 30 s.' },
+    // Rick's own body upgrades (only Ricks know how): robot limbs and a built-in scanner.
+    cyberarm:  { cat: 'self', name: 'Cybernetic Arm', cost: { c: 6, s: 8, p: 3 }, at: 'garage', onlyFor: ['genius'], desc: 'A robot arm: +35% damage, and your punches and shots hit harder.' },
+    cyberlegs: { cat: 'self', name: 'Cybernetic Legs', cost: { c: 6, s: 8, g: 2 }, at: 'garage', onlyFor: ['genius'], needs: 'cyberarm', desc: 'Robot legs: run 25% faster and jump 35% higher.' },
+    scanner:   { cat: 'self', name: 'Scanner Implant', cost: { c: 4, p: 2 }, at: 'garage', onlyFor: ['genius'], desc: 'Press X to scan whatever you look at: what it is, how dangerous, what it is made of.' },
     megabrain: { cat: 'self', name: 'Mega Seed Smarts', cost: { m: 4, c: 2 }, at: 'garage', desc: 'Abilities recharge 30% faster and you hit 10% harder.' },
     cloak:    { cat: 'self', name: 'Citadel Cloak', cost: { k: 8, p: 3 }, at: 'council', desc: 'Monsters and turrets lose track of you 3 s after you stop fighting.' },
     armor1:   { cat: 'self', name: 'Bio-Armor I', cost: { g: 4, s: 4 }, at: 'forge', desc: '+25 max health. Grown, not built.' },
@@ -473,6 +477,7 @@
   MM.canKnow = function (arch, prog, id) {
     const A = MM.ARCHETYPES[arch], R = MM.RECIPES[id];
     if (!R) return 'Unknown recipe';
+    if (R.onlyFor && !R.onlyFor.includes(arch)) return 'Only ' + R.onlyFor.map(a => MM.ARCHETYPES[a].name).join(' or ') + ' knows how to build this.';
     if (A.knows !== '*' && !A.knows.includes(id) && !prog.grants.includes(id) && !MM.COMMON.includes(id)) return 'Not part of your life yet. Follow your path (J) to unlock it.';
     if (R.gun && !MM.hasGun(arch, prog.up)) return 'Needs a portal gun.';
     if (R.nogun && MM.hasGun(arch, prog.up)) return 'You already have a portal gun.';
@@ -496,10 +501,11 @@
     const A = MM.ARCHETYPES[arch];
     const s = {
       maxHp: A.hp + (up.armor1 ? 25 : 0) + (up.armor2 ? 25 : 0) + (up.armor3 ? 30 : 0),
-      speed: A.speed * (up.legs1 ? 1.15 : 1) * (up.legs2 ? 1.15 : 1),
-      jump: A.jump * (up.legs1 ? 1.1 : 1) * (up.legs2 ? 1.1 : 1),
+      speed: A.speed * (up.legs1 ? 1.15 : 1) * (up.legs2 ? 1.15 : 1) * (up.cyberlegs ? 1.25 : 1),
+      jump: A.jump * (up.legs1 ? 1.1 : 1) * (up.legs2 ? 1.1 : 1) * (up.cyberlegs ? 1.35 : 1),
       fly: A.fly || up.wings ? 'wings' : up.jetpack ? 'jet' : null,
-      dmg: (up.blaster1 ? 1.3 : 1) * (up.blaster2 ? 1.4 : 1) * (up.megabrain ? 1.1 : 1),
+      dmg: (up.blaster1 ? 1.3 : 1) * (up.blaster2 ? 1.4 : 1) * (up.megabrain ? 1.1 : 1) * (up.cyberarm ? 1.35 : 1),
+      scanner: !!up.scanner,
       cdMult: up.megabrain ? 0.7 : 1,
       cloak: !!up.cloak,
       gun: null, ship: null,

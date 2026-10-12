@@ -719,6 +719,21 @@
       av.body.add(jet);
       av.jet = { jet, flame };
     }
+    // Rick's robot limbs: steel shells over the arm and legs, with glowing joints.
+    const shell = (part, len, r, at) => {
+      if (!part) return;
+      const s = new C.Shape();
+      C.capsuleAt(s, '#9aa3ab', r, len, [0, -len, 0]);
+      for (let i = 1; i < 3; i++) s.add(P.cyl, '#59606e', [0, -len * i / 3, 0], null, [r * 1.08, 0.025, r * 1.08]);
+      s.add(P.sphere, '#5ff8ff', [0, -0.02, r * 0.8], null, [r * 0.35, r * 0.35, r * 0.2], true);
+      const m = C.meshOf(s.build(), 0.03);
+      if (at) m.position.y = at;
+      part.add(m);
+      (av.cyber || (av.cyber = [])).push(m);
+    };
+    const L = av.look || {}, w = L.width || 1, h = L.height || 1;
+    if (gear.cyberarm && !av.cyberArm) { av.cyberArm = true; shell(av.parts.armR, 0.68 * h * 0.5, 0.07 * w * 1.25); shell(av.parts.foreR, 0.68 * h * 0.5 * 0.9, 0.07 * w * 1.2); }
+    if (gear.cyberlegs && !av.cyberLegs) { av.cyberLegs = true; for (const k of ['legL', 'legR']) shell(av.parts[k], 0.84 * h * 0.52, 0.1 * w * 1.15); for (const k of ['shinL', 'shinR']) shell(av.parts[k], 0.84 * h * 0.44, 0.1 * w * 1.1); }
     av.gear = gear;
   };
   // A cartoon flying saucer around the character's legs.

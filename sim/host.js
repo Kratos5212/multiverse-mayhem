@@ -655,7 +655,7 @@
     info(p) {
       const up = p.prog.up;
       return { id: p.id, name: p.name, home: p.home, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '',
-        gear: { wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers } };
+        gear: { wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs } };
     }
 
     // ----- Life progress -----
@@ -1128,7 +1128,7 @@
         this.restat(p);
         if (id === 'gunbuild') { p.charges = p.st.gun.charges; this.toast(p, 'You built a portal gun! Press E to use it.'); }
         if (id === 'hull') this.toast(p, 'Your ship is ready. Press B to board it.');
-        if (['wings', 'jetpack', 'engine', 'lasers', 'hull'].includes(id)) p.inst.ev({ k: 'gear', id: p.id, gear: this.info(p).gear });
+        if (['wings', 'jetpack', 'engine', 'lasers', 'hull', 'cyberarm', 'cyberlegs'].includes(id)) p.inst.ev({ k: 'gear', id: p.id, gear: this.info(p).gear });
       }
       for (const k in cost) p.inv[k] -= cost[k];
       this.priv(p, { k: 'built', r: id });

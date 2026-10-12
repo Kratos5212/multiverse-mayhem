@@ -511,3 +511,17 @@ test('home dimensions: your code is a real Earth you start in, and there is only
   assert.ok([...c137.p.inst.portals.values()].some(po => po.destDim === 'h_Y231'));
   assert.strictEqual(MM.DIM_BY_ID.h_bad, undefined);
 });
+
+test("Rick's body upgrades: only Ricks can build them, and they change his stats", () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius');
+  Object.assign(p.inv, { c: 30, s: 30, p: 10, g: 10 });
+  near(host, c, p, 'garage'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"garage"}');
+  near(host, c, p, 'workbench'); run(host, 1.2);
+  const dmg = p.st.dmg, speed = p.st.speed;
+  for (const r of ['cyberarm', 'cyberlegs', 'scanner']) host.message(c, JSON.stringify({ t: 'cr', g: r }));
+  assert.ok(p.prog.up.cyberarm && p.prog.up.cyberlegs && p.prog.up.scanner);
+  assert.ok(p.st.dmg > dmg * 1.3 && p.st.speed > speed * 1.2 && p.st.scanner);
+  assert.ok(MM.canKnow('sidekick', p.prog, 'cyberarm'), 'Morty cannot');
+});

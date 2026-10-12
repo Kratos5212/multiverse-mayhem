@@ -27,6 +27,7 @@
     portal: '<path d="M12 12a1 1 0 1 1 1-1 3 3 0 1 1-4 3 5 5 0 1 1 8 -4 7 7 0 1 1-12 5"/>',
     ship: '<ellipse cx="12" cy="14" rx="9" ry="3"/><path d="M7 13a5 5 0 0 1 10 0M8 18l-1 3M16 18l1 3"/>',
     ab: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+    scan: '<circle cx="12" cy="12" r="8"/><path d="M12 4v3M12 17v3M4 12h3M17 12h3"/><circle cx="12" cy="12" r="2.5"/>',
     fire: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
     jump: '<path d="M6 13l6-6 6 6M6 19l6-6 6 6"/>',
     talk: '<path d="M4 5h16v11H9l-5 4z"/>',
