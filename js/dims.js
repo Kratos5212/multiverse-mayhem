@@ -365,14 +365,83 @@
       for (let i = 0; i < 9; i++) { const a = i * 0.7; s.add(P.sphere, '#c8ff6a', [Math.cos(a) * 7, 18.5, Math.sin(a) * 7], null, [0.7, 1.0, 0.7], true); }
     },
     // ----- Rick's garage -----
+    // Rick's U-shaped workbench against the back wall: cabinets underneath, a CRT monitor,
+    // a vise, a desk lamp, beakers and the portal gun charging. A clock (always 2:00) hangs
+    // above a calendar, next to the bulletin board.
     lm_workbench(s) {
-      s.add(P.box, '#8a5a32', [0, 1.0, 0], null, [5, 0.2, 2]);
-      for (const x of [-2.3, 2.3]) for (const z of [-0.8, 0.8]) s.add(P.box, '#5a3a20', [x, 0.5, z], null, [0.2, 1.0, 0.2]);
-      s.add(P.box, '#d8dde2', [-1.2, 1.25, 0], [0, 0.4, 0], [0.9, 0.3, 0.45]);             // the portal gun
-      s.add(P.cyl, '#39ff6a', [-1.2, 1.35, 0.3], [Math.PI / 2, 0.4, 0], [0.12, 0.6, 0.12], true);
-      for (let i = 0; i < 3; i++) s.add(P.cyl, ['#39ff6a', '#ff6fd0', '#5ff8ff'][i], [1 + i * 0.5, 1.4, -0.3], null, [0.12, 0.6, 0.12], true);
-      s.add(P.box, '#59606e', [0, 2.4, -1.0], null, [5, 2.6, 0.15]);                      // pegboard
-      for (let i = 0; i < 6; i++) s.add(P.box, '#c9c9c9', [-2 + i * 0.8, 2.6 + (i % 2) * 0.5, -0.9], null, [0.1, 0.7, 0.05]);
+      const top = '#8a6a48', cab = '#6e5a44', door = '#7d684f';
+      s.add(P.box, top, [0, 0.95, -0.4], null, [6.4, 0.12, 1.2]);
+      for (const sx of [-1, 1]) s.add(P.box, top, [sx * 2.6, 0.95, 0.75], null, [1.2, 0.12, 2.2]);   // the U's arms
+      s.add(P.box, cab, [0, 0.45, -0.45], null, [6.2, 0.9, 1.05]);
+      for (const sx of [-1, 1]) s.add(P.box, cab, [sx * 2.6, 0.45, 0.8], null, [1.05, 0.9, 2.0]);
+      for (let i = 0; i < 5; i++) { s.add(P.box, door, [-2.0 + i, 0.47, 0.09], null, [0.9, 0.78, 0.04]); s.add(P.box, '#c9c9c9', [-1.7 + i, 0.75, 0.12], null, [0.18, 0.04, 0.03]); }
+      // CRT monitor with a green screen.
+      s.add(P.box, '#d8d2c0', [-0.6, 1.35, -0.6], null, [0.8, 0.65, 0.65]);
+      s.add(P.box, '#163a24', [-0.6, 1.37, -0.27], null, [0.62, 0.48, 0.03]);
+      s.add(P.box, '#39ff6a', [-0.6, 1.4, -0.25], null, [0.5, 0.06, 0.02], true);
+      s.add(P.box, '#d8d2c0', [-0.6, 1.03, -0.1], null, [0.7, 0.05, 0.25]);   // keyboard
+      // A bench vise.
+      s.add(P.box, '#4a6a8a', [2.4, 1.1, -0.1], null, [0.3, 0.22, 0.45]);
+      s.add(P.box, '#4a6a8a', [2.4, 1.22, 0.1], null, [0.42, 0.22, 0.12]);
+      s.add(P.cylLo, '#c9c9c9', [2.4, 1.22, 0.32], [Math.PI / 2, 0, 0], [0.03, 0.4, 0.03]);
+      // Desk lamp.
+      s.add(P.cyl, '#2a2a2a', [1.5, 1.03, -0.7], null, [0.16, 0.04, 0.16]);
+      s.add(P.cylLo, '#2a2a2a', [1.5, 1.35, -0.75], [0.35, 0, 0], [0.025, 0.65, 0.025]);
+      s.add(P.cone, '#2a2a2a', [1.5, 1.62, -0.55], [-0.9, 0, 0], [0.16, 0.22, 0.16]);
+      s.add(P.sphereLo, '#fff4c0', [1.5, 1.56, -0.47], null, [0.07, 0.07, 0.07], true);
+      // The portal gun on its charger, beakers, a jumble of gadgets and wires.
+      s.add(P.box, '#59606e', [0.6, 1.05, -0.3], null, [0.7, 0.1, 0.45]);
+      s.add(P.capsule, '#d8dde2', [0.6, 1.17, -0.3], [0, 0, Math.PI / 2], [0.07, 0.18, 0.07]);
+      s.add(P.cyl, '#39ff6a', [0.6, 1.26, -0.3], [0, 0, Math.PI / 2], [0.045, 0.24, 0.045], true);
+      for (let i = 0; i < 3; i++) s.add(P.cyl, ['#39ff6a', '#ff6fd0', '#5ff8ff'][i], [-2.6 + i * 0.3, 1.15, 1.2], null, [0.09, 0.3 + i * 0.08, 0.09], true);
+      s.add(P.box, '#7d858e', [2.6, 1.12, 1.3], null, [0.6, 0.22, 0.5]);
+      s.add(P.torus, '#2a2a2a', [-2.0, 1.03, -0.5], [Math.PI / 2, 0, 0], [0.25, 0.25, 0.3]);
+      // Wall above: clock over the calendar, the bulletin board, a shelf of boxes.
+      s.add(P.cyl, '#f4efe2', [-2.2, 2.6, -0.98], [Math.PI / 2, 0, 0], [0.32, 0.05, 0.32]);
+      s.add(P.torus, '#3a2a1a', [-2.2, 2.6, -0.95], null, [0.32, 0.32, 0.25]);
+      s.add(P.box, '#2a2a2a', [-2.2, 2.68, -0.93], null, [0.03, 0.18, 0.01]);
+      s.add(P.box, '#2a2a2a', [-2.1, 2.6, -0.93], null, [0.2, 0.03, 0.01]);
+      s.add(P.box, '#fbfaf6', [-2.2, 1.85, -0.98], null, [0.6, 0.8, 0.02]);
+      s.add(P.box, '#e2483d', [-2.2, 2.15, -0.96], null, [0.6, 0.16, 0.01]);
+      s.add(P.box, '#a8794a', [0.6, 2.2, -0.98], null, [1.6, 1.0, 0.05]);
+      for (let i = 0; i < 6; i++) s.add(P.box, ['#fbfaf6', '#ffe066', '#bfdcec', '#ff9fb0'][i % 4], [0.05 + (i % 3) * 0.5, 2.05 + Math.floor(i / 3) * 0.4, -0.94], [0, 0, (i % 2 - 0.5) * 0.2], [0.32, 0.26, 0.01]);
+      s.add(P.box, '#7a5a3a', [2.2, 2.4, -0.8], null, [1.6, 0.06, 0.4]);
+      for (let i = 0; i < 3; i++) s.add(P.box, ['#b89060', '#9a7a52', '#c8a070'][i], [1.7 + i * 0.5, 2.6, -0.8], null, [0.42, 0.34, 0.34]);
+    },
+    // The curio shelf by the door to the house.
+    curioshelf(s) {
+      const wd = '#6b5a44';
+      for (const sx of [-1, 1]) s.add(P.box, wd, [sx * 0.85, 1.2, 0], null, [0.08, 2.4, 0.5]);
+      for (let i = 0; i < 4; i++) s.add(P.box, wd, [0, 0.15 + i * 0.7, 0], null, [1.8, 0.06, 0.5]);
+      s.add(P.sphere, '#efe6cc', [-0.5, 0.95, 0], null, [0.17, 0.15, 0.17]);                          // skull
+      for (const sx of [-1, 1]) s.add(P.sphereLo, '#2a1a12', [-0.5 + sx * 0.06, 0.97, 0.14], null, [0.045, 0.05, 0.03]);
+      s.add(P.cyl, '#bfe6ff', [0.2, 0.98, 0], null, [0.14, 0.32, 0.14]);                               // jar of eyeballs
+      for (let i = 0; i < 4; i++) s.add(P.sphereLo, '#ffffff', [0.17 + (i % 2) * 0.07, 0.9 + Math.floor(i / 2) * 0.1, 0.05 - (i % 2) * 0.06], null, [0.045, 0.045, 0.045]);
+      s.add(P.box, '#2a2a2a', [0.6, 0.95, 0], null, [0.3, 0.18, 0.18]);                                // old camcorder
+      s.add(P.cyl, '#2a2a2a', [0.6, 0.95, 0.15], [Math.PI / 2, 0, 0], [0.06, 0.12, 0.06]);
+      s.add(P.cyl, '#ffd84d', [-0.4, 1.66, 0], null, [0.16, 0.12, 0.16]);                              // crown
+      for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; s.add(P.cone, '#ffd84d', [-0.4 + Math.cos(a) * 0.13, 1.78, Math.sin(a) * 0.13], null, [0.03, 0.1, 0.03]); }
+      s.add(P.capsule, '#5a8a3a', [0.3, 1.72, 0], null, [0.1, 0.12, 0.1]);                             // goblin totem
+      s.add(P.sphere, '#5a8a3a', [0.3, 1.9, 0], null, [0.11, 0.1, 0.1]);
+      s.add(P.cylLo, '#6b4a2b', [0.0, 2.35, 0], [0, 0, 1.2], [0.03, 0.7, 0.03]);                       // mace
+      s.add(P.dodeca, '#9aa3ab', [0.3, 2.47, 0], null, [0.1, 0.1, 0.1]);
+      s.add(P.box, '#b89060', [0.15, 0.4, 0], null, [1.1, 0.42, 0.42]);                                 // "TIME TRAVEL STUFF"
+      s.add(P.box, '#2a2a2a', [0.15, 0.42, 0.215], null, [0.8, 0.08, 0.01]);
+    },
+    // The plain door into the house (it leads to the green kitchen; no one uses it).
+    housedoor(s) {
+      s.add(P.box, '#fbf6ea', [0, 1.2, 0], null, [1.2, 2.4, 0.12]);
+      s.add(P.box, '#c8a878', [0, 1.15, 0.05], null, [0.95, 2.2, 0.06]);
+      for (const y of [0.6, 1.6]) s.add(P.box, '#b89868', [0, y, 0.09], null, [0.7, 0.7, 0.02]);
+      s.add(P.sphereLo, '#e8c050', [0.36, 1.1, 0.12], null, [0.05, 0.05, 0.05]);
+    },
+    // A white washing machine (turn the knob: guns).
+    washer(s) {
+      s.add(P.box, '#f4f4f0', [0, 0.55, 0], null, [0.8, 1.1, 0.75]);
+      s.add(P.box, '#e2e2dc', [0, 1.02, -0.3], null, [0.8, 0.16, 0.12]);
+      s.add(P.cyl, '#bfdcec', [0, 0.55, 0.38], [Math.PI / 2, 0, 0], [0.24, 0.03, 0.24]);
+      s.add(P.torus, '#9aa3ab', [0, 0.55, 0.39], null, [0.26, 0.26, 0.3]);
+      s.add(P.cyl, '#9aa3ab', [0.25, 1.02, -0.22], [Math.PI / 2, 0, 0], [0.05, 0.04, 0.05]);
     },
     lm_plumbus(s) {
       s.add(P.cyl, '#6b6458', [0, 0.45, 0], null, [0.6, 0.9, 0.6]);
@@ -393,27 +462,53 @@
       for (const x of [-0.5, 0.5]) s.add(P.cyl, x < 0 ? '#e2483d' : '#2a2a2a', [x, 1.15, 0], null, [0.12, 0.25, 0.12]);
       s.add(P.box, '#5ff8ff', [0, 0.55, 0.56], null, [1.2, 0.5, 0.03], true);
     },
+    // The sectional roll-up garage door (inside view) with its overhead tracks.
     lm_gdoor(s) {
-      s.add(P.box, '#3a3f4a', [0, 2.0, 0], null, [6, 4, 0.2]);
-      for (let i = 0; i < 4; i++) s.add(P.box, '#59606e', [0, 0.6 + i * 1.0, 0.12], null, [6, 0.08, 0.05]);
-      s.add(P.box, '#bfe6ff', [0, 3.2, 0.13], null, [4, 0.5, 0.03], true);
+      const w = 6.4, h = 3.6;
+      s.add(P.box, '#7a5a3a', [0, h + 0.1, 0], null, [w + 0.5, 0.25, 0.25]);
+      for (const sx of [-1, 1]) s.add(P.box, '#7a5a3a', [sx * (w / 2 + 0.12), h / 2, 0], null, [0.25, h + 0.2, 0.25]);
+      s.add(P.box, '#f4f2ec', [0, h / 2, -0.05], null, [w, h, 0.08]);
+      for (let i = 1; i < 4; i++) s.add(P.box, '#d4d0c6', [0, i * h / 4, -0.1], null, [w, 0.05, 0.03]);
+      for (let i = 0; i < 4; i++) s.add(P.box, '#bfe6ff', [-w * 0.375 + i * w / 4, h * 0.84, -0.11], null, [w / 4 - 0.25, 0.4, 0.02], true);
+      s.add(P.box, '#59606e', [0, 1.0, -0.13], null, [0.5, 0.08, 0.04]);
+      for (const sx of [-1, 1]) {
+        s.add(P.box, '#7d858e', [sx * (w / 2 - 0.05), h - 0.05, -2.0], null, [0.08, 0.1, 4.0]);   // ceiling tracks
+        s.add(P.cylLo, '#59606e', [sx * (w / 2 - 0.05), h + 0.3, -3.8], null, [0.03, 0.7, 0.03]);
+      }
+      s.add(P.box, '#59606e', [0, h + 0.35, -2.6], null, [0.5, 0.25, 0.8]);   // the opener motor
+      s.add(P.box, '#7d858e', [0, h + 0.38, -1.2], null, [0.08, 0.06, 2.6]);
     },
+    // The glass hatch down to the secret lab.
     lm_trapdoor(s) {
-      s.add(P.box, '#5a3a20', [0, 0.06, 0], null, [2.0, 0.12, 2.0]);
-      s.add(P.box, '#3a2618', [0, 0.13, 0], null, [1.7, 0.03, 1.7]);
-      s.add(P.torus, '#c9c9c9', [0.6, 0.16, 0], [Math.PI / 2, 0, 0], [0.18, 0.18, 0.5]);
+      s.add(P.box, '#59606e', [0, 0.04, 0], null, [2.0, 0.08, 2.0]);
+      s.add(P.box, '#7ae8ff', [0, 0.06, 0], null, [1.7, 0.04, 1.7], true);
+      for (const v of [-0.85, 0.85]) { s.add(P.box, '#59606e', [v, 0.09, 0], null, [0.06, 0.06, 1.8]); s.add(P.box, '#59606e', [0, 0.09, v], null, [1.8, 0.06, 0.06]); }
+      s.add(P.box, '#ffd84d', [0, 0.1, 0.6], null, [0.5, 0.04, 0.12], true);
     },
     lm_cellardoor(s) {
       s.add(P.box, '#3a2618', [0, 1.7, 0], null, [2.2, 3.4, 0.3]);
       s.add(P.box, '#ff9b4d', [0, 1.6, 0.16], null, [1.6, 2.8, 0.04], true);
       s.add(P.sphereLo, '#ffd84d', [0.55, 1.6, 0.25], null, [0.1, 0.1, 0.1], true);
     },
+    // The Space Cruiser: a grey-silver saucer of a car with a rim, a bubble windscreen
+    // up front, two open seats, a trunk at the back and an engine pod on each side.
     spacecruiser(s) {
-      s.add(P.sphere, '#c9cfd6', [0, 1.0, 0], null, [2.2, 0.6, 3.2]);
-      s.add(P.hemi, '#a8dcff', [0, 1.4, -0.3], null, [1.4, 1.0, 1.6], true);
-      s.add(P.cyl, '#8f97a0', [0, 0.5, 0], null, [1.4, 0.4, 2.0]);
-      for (const sx of [-1, 1]) { s.add(P.cyl, '#59606e', [sx * 1.8, 0.9, 2.2], [Math.PI / 2, 0, 0], [0.35, 1.2, 0.35]); s.add(P.cyl, '#ffb03a', [sx * 1.8, 0.9, 2.85], [Math.PI / 2, 0, 0], [0.25, 0.1, 0.25], true); }
-      s.add(P.box, '#e2483d', [0, 1.2, -3.0], null, [1.4, 0.3, 0.2]);
+      const hull = '#a8adb0';
+      s.add(P.sphere, hull, [0, 0.85, 0], null, [1.6, 0.42, 2.0]);
+      s.add(P.torus, '#8f969c', [0, 0.85, 0], [Math.PI / 2, 0, 0], [1.6, 2.0, 0.6]);
+      s.add(P.cyl, '#6e757b', [0, 0.45, 0], null, [1.0, 0.3, 1.2]);
+      s.add(P.hemi, '#bfe9ff', [0, 1.05, -0.9], [0.5, 0, 0], [0.95, 0.55, 0.55], true);    // windscreen
+      for (const sx of [-1, 1]) {
+        s.add(P.box, '#7a3a2a', [sx * 0.45, 1.12, 0.15], null, [0.6, 0.2, 0.6]);             // seats
+        s.add(P.box, '#7a3a2a', [sx * 0.45, 1.42, 0.5], [-0.2, 0, 0], [0.6, 0.6, 0.15]);
+        s.add(P.capsule, '#59606e', [sx * 1.75, 0.85, 0.3], [Math.PI / 2, 0, 0], [0.28, 0.55, 0.28]);   // engine pods
+        s.add(P.cyl, '#ffb03a', [sx * 1.75, 0.85, 1.35], [Math.PI / 2, 0, 0], [0.2, 0.06, 0.2], true);
+        s.add(P.cyl, '#26262a', [sx * 1.1, 0.3, -1.1], [0, 0, Math.PI / 2], [0.25, 0.18, 0.25]);   // little wheels
+        s.add(P.cyl, '#26262a', [sx * 1.1, 0.3, 1.1], [0, 0, Math.PI / 2], [0.25, 0.18, 0.25]);
+      }
+      s.add(P.box, '#8f969c', [0, 1.05, 1.45], [-0.15, 0, 0], [1.3, 0.25, 0.8]);             // trunk lid
+      s.add(P.cylLo, '#59606e', [0.5, 1.35, -0.35], [0.7, 0, 0], [0.03, 0.4, 0.03]);          // steering stick
+      s.add(P.box, '#e2483d', [0, 0.9, -2.0], null, [0.9, 0.12, 0.06], true);
     },
     shelf(s) {
       s.add(P.box, '#6b4a2b', [0, 1.6, 0], null, [2.6, 3.2, 0.8]);
@@ -708,14 +803,24 @@
 
     // ----- Planet Squanch -----
     // A round mud-and-thatch hut with a striped door curtain.
+    // A Squanchian house: a giant cat tree. Carpeted posts, round platforms at different
+    // heights, a cosy round den, ladders, and toys dangling on strings.
     squanchhut(s) {
-      s.add(P.cyl, '#c88a5a', [0, 1.3, 0], null, [2.4, 2.6, 2.4]);
-      for (let y = 0.6; y < 2.6; y += 0.6) s.add(P.cyl, '#b07a4a', [0, y, 0], null, [2.42, 0.06, 2.42]);
-      s.add(P.cone, '#d8b860', [0, 3.3, 0], null, [3.0, 2.2, 3.0]);
-      s.add(P.cone, '#c8a050', [0, 4.05, 0], null, [1.2, 0.9, 1.2]);
-      s.add(P.box, '#3a1a4a', [0, 1.0, 2.33], null, [1.1, 2.0, 0.1]);
-      for (let i = 0; i < 4; i++) s.add(P.box, i % 2 ? '#ffd84d' : '#ff6fd0', [-0.42 + i * 0.28, 1.0, 2.4], null, [0.24, 1.9, 0.03]);
-      for (const x of [-1.5, 1.5]) s.add(P.cyl, '#ffe8a0', [x, 1.7, 1.9], [Math.PI / 2, 0, 0], [0.32, 0.1, 0.32], true);
+      const carpet = '#d8b48a', post = '#b0703a';
+      s.add(P.cyl, carpet, [0, 0.2, 0], null, [2.4, 0.4, 2.4]);
+      for (const [x, z, h] of [[-1.2, -0.8, 3.6], [1.2, -0.6, 2.4], [0.2, 1.2, 4.6]]) {
+        s.add(P.cyl, post, [x, h / 2, z], null, [0.28, h, 0.28]);
+        for (let y = 0.6; y < h; y += 0.5) s.add(P.cyl, shade(post, 0.85), [x, y, z], null, [0.3, 0.06, 0.3]);   // sisal rope
+        s.add(P.cyl, carpet, [x, h, z], null, [1.0, 0.18, 1.0]);
+      }
+      s.add(P.sphere, '#c8506a', [-1.2, 1.4, -0.8], null, [0.95, 0.85, 0.95]);   // the den
+      s.add(P.cyl, '#3a1a2a', [-1.2, 1.3, -0.05], [Math.PI / 2, 0, 0], [0.45, 0.1, 0.45]);
+      s.add(P.hemi, '#c8506a', [0.2, 4.7, 1.2], null, [0.8, 0.6, 0.8]);
+      for (let i = 0; i < 5; i++) s.add(P.box, post, [0.9, 0.5 + i * 0.4, 0.4], [0, 0.6, 0], [0.6, 0.06, 0.1]);   // ladder rungs
+      for (const [x, z, h, c] of [[1.9, -0.6, 2.4, '#ff6fd0'], [1.0, 1.2, 4.6, '#ffd84d'], [-2.0, -0.8, 3.6, '#5ff8ff']]) {
+        s.add(P.cylLo, '#f4efe2', [x, h - 0.5, z], null, [0.015, 1.0, 0.015]);
+        s.add(P.sphere, c, [x, h - 1.05, z], null, [0.18, 0.18, 0.18]);
+      }
     },
     // A party light pole: a tall stick with a string of glowing bulbs.
     partylight(s) {
@@ -1022,6 +1127,163 @@
       s.add(P.cyl, '#ffd890', [1.8, 2.4, 2.4], [Math.PI / 2, 0, -0.6], [0.45, 0.1, 0.45], true);
       s.add(P.torus, '#7a5a2a', [1.8, 2.4, 2.42], [0, -0.6, 0], [0.45, 0.45, 0.5]);
     },
+    // ----- Beyond the Curve -----
+    goldorb(s) {
+      s.add(P.cyl, '#2a2440', [0, 0.4, 0], null, [0.9, 0.8, 0.9]);
+      s.add(P.cyl, '#3a3258', [0, 1.4, 0], null, [0.35, 1.4, 0.35]);
+      s.add(P.torus, '#ffd84d', [0, 2.3, 0], [Math.PI / 2, 0, 0], [0.6, 0.6, 0.4], true);
+      s.add(P.sphere, '#ffe9a0', [0, 3.0, 0], null, [0.55, 0.55, 0.55], true);
+      s.add(P.torus, '#ffb84d', [0, 3.0, 0], [1.1, 0.4, 0], [0.85, 0.85, 0.25], true);
+    },
+    voidcrystal(s) {
+      s.add(P.octa, '#c9a8ff', [0, 2.0, 0], [0, 0.4, 0.1], [0.45, 1.1, 0.45], true);
+      s.add(P.octa, '#ffd84d', [0.5, 1.4, 0.2], [0.3, 0, 0.4], [0.25, 0.6, 0.25], true);
+      s.add(P.octa, '#8a6ae0', [-0.45, 1.2, -0.2], [-0.3, 0, -0.3], [0.22, 0.5, 0.22], true);
+      s.add(P.dodeca, '#241e3c', [0, 0.2, 0], null, [0.7, 0.3, 0.7]);
+    },
+    curvepillar(s) {
+      s.add(P.cyl, '#2a2440', [0, 0.5, 0], null, [1.3, 1.0, 1.3]);
+      s.add(P.cyl, '#c8a040', [0, 6, 0], null, [0.55, 10, 0.55]);
+      for (let y = 2; y < 11; y += 2) s.add(P.torus, '#ffd84d', [0, y, 0], [Math.PI / 2, 0, 0], [0.62, 0.62, 0.35], true);
+      s.add(P.sphere, '#fff2c0', [0, 11.6, 0], null, [0.9, 0.9, 0.9], true);
+    },
+    // The edge of the Central Finite Curve: a golden gate, and through it a golden portal.
+    lm_curveedge(s) {
+      const gate = new T.TorusGeometry(5.5, 0.6, 16, 56);
+      s.add(gate, '#c8a040', [0, 6.2, 0], null, null);
+      gate.dispose();
+      s.add(P.cyl, '#ffd84d', [0, 6.2, 0], [Math.PI / 2, 0, 0], [4.9, 0.1, 4.9], true);
+      s.add(P.cyl, '#fff2c0', [0, 6.2, 0.06], [Math.PI / 2, 0, 0], [3.0, 0.1, 3.0], true);
+      for (const sx of [-1, 1]) s.add(P.box, '#2a2440', [sx * 4.5, 0.6, 0], null, [2.4, 1.2, 2.4]);
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; s.add(P.sphere, '#ffe9a0', [Math.cos(a) * 5.5, 6.2 + Math.sin(a) * 5.5, 0.7], null, [0.32, 0.32, 0.32], true); }
+    },
+
+    // ----- Interdimensional Cable -----
+    // A strip-mall store: a coloured front (tinted per instance), big window, awning, door, sign board.
+    storefront(s) {
+      const W = 9, D = 7, H = 5.5;
+      s.add(P.box, '#4a443c', [0, 0.2, 0], null, [W + 0.2, 0.4, D + 0.2]);
+      s.add(P.box, '#f4efe0', [0, 0.4 + H / 2, 0], null, [W, H, D]);
+      s.add(P.box, '#d8d2c4', [0, 0.4 + H + 0.2, 0], null, [W + 0.4, 0.4, D + 0.4]);
+      s.add(P.box, '#bfdcec', [-1.4, 2.0, D / 2 + 0.03], null, [5.0, 2.6, 0.06]);
+      s.add(P.box, '#fbfaf6', [-1.4, 2.0, D / 2 + 0.07], null, [0.1, 2.6, 0.04]);
+      s.add(P.box, '#59606e', [3.0, 1.6, D / 2 + 0.04], null, [1.4, 2.4, 0.06]);
+      s.add(P.box, '#bfdcec', [3.0, 1.9, D / 2 + 0.08], null, [1.0, 1.4, 0.03]);
+      for (let i = 0; i < 7; i++) s.add(P.box, i % 2 ? '#fbfaf6' : '#e2483d', [-W / 2 + 0.64 + i * 1.29, 3.7, D / 2 + 0.6], [0.45, 0, 0], [1.29, 0.08, 1.4]);   // striped awning
+      s.add(P.box, '#ffe066', [0, 5.0, D / 2 + 0.06], null, [W - 1.2, 0.9, 0.08], true);
+    },
+    // A giant TV on a pole, showing an ad.
+    tvscreen(s) {
+      for (const sx of [-1, 1]) s.add(P.box, '#59606e', [sx * 0.6, 2.4, 0], null, [0.25, 4.8, 0.25]);
+      s.add(P.box, '#3a2a1a', [0, 5.6, 0], null, [3.6, 2.6, 1.0]);
+      s.add(P.box, '#c8a878', [0, 5.6, 0.35], null, [3.7, 2.7, 0.4]);
+      s.add(P.box, '#59d8ff', [-0.3, 5.6, 0.56], null, [2.7, 2.0, 0.05], true);
+      s.add(P.box, '#ff6fd0', [-0.3, 5.3, 0.6], null, [1.8, 0.4, 0.02], true);
+      for (let i = 0; i < 2; i++) s.add(P.cyl, '#2a2a2a', [1.45, 5.9 - i * 0.5, 0.58], [Math.PI / 2, 0, 0], [0.12, 0.05, 0.12]);
+      for (const sx of [-1, 1]) s.add(P.cylLo, '#2a2a2a', [sx * 0.6, 7.3, 0], [0, 0, sx * 0.4], [0.03, 0.9, 0.03]);   // rabbit ears
+    },
+    // A real fake door: a door in a frame, standing on its own, leading nowhere.
+    doorframe(s) {
+      s.add(P.box, '#fbf6ea', [0, 1.3, 0], null, [1.3, 2.6, 0.18]);
+      s.add(P.box, '#7a3326', [0, 1.25, 0.07], null, [1.0, 2.3, 0.1]);
+      s.add(P.sphereLo, '#e8c050', [0.36, 1.2, 0.12], null, [0.05, 0.05, 0.05]);
+      s.add(P.box, '#d8d2c4', [0, 0.05, 0], null, [1.6, 0.1, 0.8]);
+      s.add(P.box, '#ffe066', [0.9, 0.4, 0.2], null, [0.35, 0.2, 0.02]);   // price tag
+    },
+    lm_fakedoors(s) {
+      MODELS.storefront(s);
+      for (let i = 0; i < 4; i++) {
+        const x = -3.6 + i * 1.6;
+        s.add(P.box, '#fbf6ea', [x, 1.4, 3.75], null, [1.1, 2.2, 0.1]);
+        s.add(P.box, ['#7a3326', '#3a5a7a', '#5a7a3a', '#7a5a2a'][i], [x, 1.35, 3.82], null, [0.85, 2.0, 0.06]);
+      }
+    },
+    lm_antsjohnson(s) {
+      MODELS.storefront(s);
+      for (let x = -3.4; x < 1; x += 1.0) for (let y = 1.0; y < 3.2; y += 0.8) {
+        s.add(P.box, '#2a2a30', [x, y, 3.7], null, [0.85, 0.65, 0.3]);
+        s.add(P.box, '#5ff8ff', [x - 0.08, y, 3.86], null, [0.55, 0.45, 0.02], true);
+      }
+      s.add(P.box, '#d8dde2', [3.0, 0.6, 4.3], null, [0.9, 0.6, 0.6]);   // a microwave on the step
+      s.add(P.cone, '#ff9b4d', [3.0, 1.2, 4.3], null, [0.3, 0.6, 0.3], true);   // ...on fire
+    },
+
+    // ----- Hamster-in-Butt World -----
+    // A person sitting cross-legged, who is also a house: a door at the back, a window in the
+    // tummy, and a chimney hat. Hamsters live inside. Nobody minds.
+    humanhouse(s) {
+      const skin = '#f0c8a0', shirt = '#5a8ad8', pants = '#4a5a6a';
+      for (const sx of [-1, 1]) {
+        s.add(P.capsule, pants, [sx * 0.9, 0.7, 1.0], [Math.PI / 2, 0, -sx * 0.6], [0.6, 1.0, 0.6]);
+        s.add(P.sphere, '#3a2a1a', [sx * 0.3, 0.6, 2.3], null, [0.5, 0.45, 0.6]);
+        s.add(P.capsule, shirt, [sx * 1.7, 2.6, 0.5], [0.6, 0, sx * 0.3], [0.45, 0.9, 0.45]);
+        s.add(P.sphere, skin, [sx * 1.4, 1.6, 1.4], null, [0.45, 0.4, 0.45]);
+      }
+      s.add(P.sphere, pants, [0, 1.0, 0], null, [1.9, 1.0, 1.7]);
+      s.add(P.sphere, shirt, [0, 2.8, 0], null, [1.7, 1.9, 1.5]);
+      s.add(P.sphere, skin, [0, 5.2, 0.1], null, [1.1, 1.2, 1.1]);
+      for (const sx of [-1, 1]) { s.add(P.sphere, '#fff', [sx * 0.4, 5.4, 1.0], null, [0.25, 0.3, 0.15]); s.add(P.sphereLo, '#2a2a2a', [sx * 0.4, 5.4, 1.12], null, [0.1, 0.13, 0.06]); }
+      s.add(P.box, '#7a3a2a', [0, 4.8, 1.1], null, [0.5, 0.08, 0.05]);
+      s.add(P.cyl, '#3a2a1a', [0, 6.5, 0.1], null, [0.8, 0.5, 0.8]);    // hat with a chimney
+      s.add(P.cyl, '#6a4a3a', [0.4, 7.1, 0.1], null, [0.18, 0.7, 0.18]);
+      s.add(P.cyl, '#ffd890', [0, 2.8, 1.48], [Math.PI / 2, 0, 0], [0.45, 0.05, 0.45], true);   // round window
+      s.add(P.torus, '#6b4a2b', [0, 2.8, 1.5], null, [0.47, 0.47, 0.4]);
+      s.add(P.box, '#6b4a2b', [0, 0.7, -1.62], null, [0.7, 1.2, 0.1]);   // the back door
+      s.add(P.box, '#d8c098', [0, 0.06, -2.3], null, [0.8, 0.12, 1.2]);
+    },
+    hamsterwheel(s) {
+      s.add(P.torus, '#e2483d', [0, 1.4, 0], null, [1.1, 1.1, 1.2]);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.cylLo, '#fbfaf6', [Math.cos(a) * 1.1, 1.4 + Math.sin(a) * 1.1, 0], [Math.PI / 2, 0, 0], [0.04, 0.6, 0.04]); }
+      s.add(P.cyl, '#9aa3ab', [0, 1.4, 0], [Math.PI / 2, 0, 0], [0.12, 0.4, 0.12]);
+      for (const sz of [-1, 1]) s.add(P.box, '#59606e', [0, 0.7, sz * 0.3], [sz * 0.3, 0, 0], [0.15, 1.5, 0.1]);
+    },
+    seedpile(s) {
+      s.add(P.hemi, '#d8b070', [0, 0, 0], null, [0.8, 0.5, 0.8]);
+      for (let i = 0; i < 8; i++) { const a = i * 0.8; s.add(P.sphereLo, i % 2 ? '#8a6a3a' : '#f4e0b0', [Math.cos(a) * 0.4, 0.35 + (i % 3) * 0.05, Math.sin(a) * 0.4], [0, a, 0.5], [0.08, 0.05, 0.12]); }
+    },
+
+    // ----- Plumbubo Prime 51b -----
+    factory(s) {
+      const W = 12, D = 10, H = 6;
+      s.add(P.box, '#b8a8c8', [0, H / 2, 0], null, [W, H, D]);
+      for (let i = 0; i < 4; i++) s.add(P.prism, '#8a7a9a', [-W / 2 + 1.5 + i * 3, H, 0], [0, Math.PI / 2, 0], [D, 1.6, 3]);   // sawtooth roof
+      for (const x of [-3, 3]) { s.add(P.cyl, '#7d6a8a', [x, H + 2.5, -3], null, [0.6, 5, 0.6]); s.add(P.sphere, '#f4c0d8', [x, H + 5.6, -3], null, [1.0, 0.7, 1.0]); }
+      s.add(P.box, '#59606e', [0, 2.0, D / 2 + 0.04], null, [4.2, 4.0, 0.08]);
+      for (let i = 1; i < 5; i++) s.add(P.box, '#7d858e', [0, i * 0.8, D / 2 + 0.09], null, [4.2, 0.06, 0.03]);
+      for (const x of [-4.4, 4.4]) s.add(P.box, '#ffd0e8', [x, 3.8, D / 2 + 0.05], null, [1.8, 1.2, 0.05], true);
+    },
+    // A plumbus production line: a belt on rollers with plumbuses riding along.
+    conveyor(s) {
+      s.add(P.box, '#59606e', [0, 0.9, 0], null, [5.2, 0.15, 1.2]);
+      s.add(P.box, '#2a2a30', [0, 1.0, 0], null, [5.0, 0.06, 1.0]);
+      for (const x of [-2.4, -0.8, 0.8, 2.4]) for (const sz of [-1, 1]) s.add(P.box, '#7d858e', [x, 0.45, sz * 0.5], null, [0.12, 0.9, 0.12]);
+      for (const x of [-1.8, 0, 1.8]) {
+        s.add(P.capsule, '#f4a0b8', [x, 1.25, 0], [0, 0, Math.PI / 2], [0.12, 0.25, 0.12]);
+        s.add(P.sphere, '#e87fa0', [x + 0.2, 1.3, 0], null, [0.22, 0.17, 0.18]);
+      }
+    },
+    fleebvat(s) {
+      s.add(P.cyl, '#8f97a0', [0, 1.3, 0], null, [1.4, 2.6, 1.4]);
+      s.add(P.cyl, '#7affea', [0, 2.62, 0], null, [1.25, 0.05, 1.25], true);
+      for (let i = 0; i < 4; i++) s.add(P.sphereLo, '#c8fff4', [Math.cos(i * 1.7) * 0.6, 2.7, Math.sin(i * 1.7) * 0.6], null, [0.18, 0.12, 0.18], true);
+      for (let y = 0.5; y < 2.6; y += 0.7) s.add(P.torus, '#59606e', [0, y, 0], [Math.PI / 2, 0, 0], [1.42, 1.42, 0.25]);
+      s.add(P.cyl, '#59606e', [1.5, 0.6, 0], [0, 0, Math.PI / 2], [0.15, 0.6, 0.15]);
+    },
+    plumbuspile(s) {
+      for (let i = 0; i < 5; i++) {
+        const a = i * 1.3, x = Math.cos(a) * 0.5, z = Math.sin(a) * 0.5, y = 0.3 + (i === 4 ? 0.5 : 0);
+        s.add(P.capsule, '#f4a0b8', [x, y, z], [0, a, Math.PI / 2], [0.12, 0.3, 0.12]);
+        s.add(P.sphere, '#e87fa0', [x + 0.25, y + 0.05, z], null, [0.24, 0.19, 0.2]);
+        s.add(P.sphere, '#d9b0ff', [x + 0.25, y + 0.25, z], null, [0.11, 0.12, 0.11]);
+      }
+    },
+    lm_plumbusline(s) {
+      MODELS.factory(s);
+      // A giant plumbus on the roof, so nobody can miss it.
+      s.add(P.capsule, '#f4a0b8', [0, 8.6, 2.0], [0, 0, 0.2], [0.6, 1.8, 0.6]);
+      s.add(P.sphere, '#e87fa0', [0.4, 9.2, 2.0], null, [1.1, 0.85, 0.9]);
+      s.add(P.sphere, '#d9b0ff', [-0.3, 10.5, 2.0], null, [0.55, 0.6, 0.55]);
+    },
   };
 
   // Each prop has a smooth, high-polygon model for up close and a plain one for far away.
@@ -1088,6 +1350,18 @@
       ring.position.set(-250, 210, -330); ring.rotation.set(1.2, 0.3, 0);
       group.add(ring);
       group.add(stars(900, 560, '#ffffff', 2));
+    } else if (dim.id === 'beyond') {
+      // Far off: the wall of the Central Finite Curve, a golden helix of universes; everywhere
+      // else, countless loose universes glowing in the dark.
+      const h = new C.Shape();
+      for (let i = 0; i < 160; i++) {
+        const t = i / 160, a = t * Math.PI * 10;
+        h.add(P.sphereLo, i % 3 ? '#ffd84d' : '#fff2c0', [Math.cos(a) * 60 + (t - 0.5) * 520, Math.sin(a) * 60, 0], null, [5, 5, 5], true);
+      }
+      const helix = add(h, [0, 150, 380]);
+      helix.rotation.z = 0.25;
+      group.add(stars(1600, 560, '#ffe6a0', 2.5));
+      group.add(stars(600, 560, '#c9a8ff', 2));
     } else if (dim.id === 'citadel') {
       // The rest of the Citadel floating around you, and a planet.
       for (let i = 0; i < 7; i++) {
@@ -1223,6 +1497,59 @@
     return C.meshOf(s.build(), 0);
   }
 
+  // ---------- Roads and plazas of the planned towns (shared/layouts.js) ----------
+  const PATH_STYLES = {
+    asphalt: { road: '#5d6168', walk: '#d8d3c7', curb: '#bcb6a9' },
+    flesh: { road: '#8a2a40', edge: '#5e1528' },
+    neon: { road: '#241838', edge: '#5ff8ff', glow: true },
+    white: { road: '#e6eaf0', edge: '#5fd6b0', glow: true },
+    metal: { road: '#7d858e', edge: '#ffd84d' },
+    regolith: { road: '#8a8a98', edge: '#6e6e7c' },
+    planks: { road: '#a8794a', edge: '#6b4a2b' },
+    dirt: { road: '#9a7a52', edge: '#86683f' },
+    sand: { road: '#d8bf88', edge: '#bfa46c' },
+    candy: { road: '#ffd0ec', edge: '#ffffff' },
+    vein: { road: '#a8304a', edge: '#5a6ad8' },
+    stone: { road: '#b8b2a6', edge: '#8e887c' },
+    party: { road: '#4a2a7a', edge: '#ffd84d', glow: true },
+    carpet: { road: '#3a1a5a', edge: '#ff6fd0', glow: true },
+    gold: { road: '#3a2e18', edge: '#ffd84d', glow: true },
+  };
+  function makePaths(dim, layout) {
+    const s = new C.Shape({ smooth: false });
+    const H = (x, z) => MM.heightAt(dim.id, x, z);
+    for (const rd of layout.roads) {
+      const st = PATH_STYLES[rd.style] || PATH_STYLES.stone;
+      const dx = rd.x2 - rd.x1, dz = rd.z2 - rd.z1, len = Math.hypot(dx, dz);
+      if (len < 0.5) continue;
+      const n = Math.max(1, Math.ceil(len / 6)), yaw = Math.atan2(dx, dz), ux = dx / len, uz = dz / len, nx = -uz, nz = ux;
+      for (let i = 0; i < n; i++) {
+        const t0 = i / n, t1 = (i + 1) / n, tm = (t0 + t1) / 2;
+        const mx = rd.x1 + dx * tm, mz = rd.z1 + dz * tm, pl = len / n + 0.4;
+        // Sit on the highest of the ends and the middle so the ground never pokes through.
+        const y = Math.max(H(rd.x1 + dx * t0, rd.z1 + dz * t0), H(mx, mz), H(rd.x1 + dx * t1, rd.z1 + dz * t1)) + 0.04;
+        s.add(P.box, st.road, [mx, y, mz], [0, yaw, 0], [rd.w, 0.08, pl]);
+        if (st.edge) for (const sd of [-1, 1]) s.add(P.box, st.edge, [mx + nx * sd * (rd.w / 2 - 0.2), y + 0.015, mz + nz * sd * (rd.w / 2 - 0.2)], [0, yaw, 0], [0.3, 0.08, pl], st.glow);
+        if (st.walk) for (const sd of [-1, 1]) {
+          s.add(P.box, st.curb, [mx + nx * sd * (rd.w / 2 + 0.12), y + 0.04, mz + nz * sd * (rd.w / 2 + 0.12)], [0, yaw, 0], [0.25, 0.14, pl]);
+          s.add(P.box, st.walk, [mx + nx * sd * (rd.w / 2 + 1.15), y + 0.03, mz + nz * sd * (rd.w / 2 + 1.15)], [0, yaw, 0], [1.8, 0.1, pl]);
+        }
+      }
+    }
+    for (const pz of layout.plazas) {
+      const st = PATH_STYLES[pz.style] || PATH_STYLES.stone;
+      const y = Math.max(H(pz.x, pz.z), H(pz.x + pz.r * 0.7, pz.z), H(pz.x - pz.r * 0.7, pz.z), H(pz.x, pz.z + pz.r * 0.7), H(pz.x, pz.z - pz.r * 0.7)) + 0.06;
+      const disc = new T.CylinderGeometry(1, 1, 1, 48);
+      s.add(disc, st.edge || st.curb || st.road, [pz.x, y, pz.z], null, [pz.r + 0.6, 0.12, pz.r + 0.6], st.glow);
+      s.add(disc, st.road, [pz.x, y + 0.02, pz.z], null, [pz.r, 0.12, pz.r]);
+      // A ring of paving inside the square.
+      s.add(disc, st.walk || st.edge || st.road, [pz.x, y + 0.03, pz.z], null, [pz.r * 0.55, 0.12, pz.r * 0.55]);
+      s.add(disc, st.road, [pz.x, y + 0.04, pz.z], null, [pz.r * 0.5, 0.12, pz.r * 0.5]);
+      disc.dispose();
+    }
+    return C.meshOf(s.build(), 0);
+  }
+
   // A painted sign: dark letters on a cream board with a dark frame (canvas, never HTML).
   function makeSign(text, w) {
     const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 160;
@@ -1243,16 +1570,36 @@
     const R = dim.room, s = new C.Shape(), w = R.w, d = R.d, h = R.h;
     s.add(P.box, dim.ground[0], [0, -0.1, 0], null, [w, 0.2, d]);
     // Floor planks / tiles for a bit of texture.
-    for (let i = 0; i < 8; i++) s.add(P.box, i % 2 ? dim.ground[1] : dim.ground[2], [-w / 2 + w / 16 + i * w / 8, 0.005, 0], null, [w / 8 - 0.05, 0.01, d - 0.2]);
+    if (R.style === 'garage') for (let i = 1; i < 4; i++) s.add(P.box, '#7e7e78', [0, 0.004, -d / 2 + i * d / 4], null, [w, 0.008, 0.06]);   // concrete joints
+    else for (let i = 0; i < 8; i++) s.add(P.box, i % 2 ? dim.ground[1] : dim.ground[2], [-w / 2 + w / 16 + i * w / 8, 0.005, 0], null, [w / 8 - 0.05, 0.01, d - 0.2]);
     const walls = [[0, h / 2, -d / 2, w, h, 0.4], [0, h / 2, d / 2, w, h, 0.4], [-w / 2, h / 2, 0, 0.4, h, d], [w / 2, h / 2, 0, 0.4, h, d]];
     for (const [x, y, z, sx, sy, sz] of walls) s.add(P.box, R.wall, [x, y, z], null, [sx, sy, sz]);
+    if (R.style === 'garage') {
+      // Wooden studs on the walls, exposed beams overhead, oil stains on the concrete.
+      for (let v = -w / 2 + 1.2; v < w / 2; v += 1.2) {
+        s.add(P.box, R.trim, [v, h / 2, -d / 2 + 0.25], null, [0.12, h, 0.1]);
+        s.add(P.box, R.trim, [-w / 2 + 0.25, h / 2, v], null, [0.1, h, 0.12]);
+        s.add(P.box, R.trim, [w / 2 - 0.25, h / 2, v], null, [0.1, h, 0.12]);
+      }
+      for (let z = -d / 2 + 1.4; z < d / 2; z += 1.4) s.add(P.box, '#8a6a48', [0, h - 0.25, z], null, [w, 0.28, 0.18]);
+      s.add(P.box, '#8a6a48', [0, h - 0.5, 0], null, [0.2, 0.3, d]);
+      for (const [x, z, a, b] of [[1.8, 3.8, 1.1, 0.7], [3.4, 1.4, 0.6, 0.45], [-3, -2.5, 0.8, 0.5], [0.6, -4.2, 0.5, 0.35]]) s.add(P.cyl, '#5e5e5a', [x, 0.012, z], null, [a, 0.01, b]);
+      // Shop lights on chains over the bench and a bare bulb over the car.
+      for (const x of [-1.6, 1.6]) {
+        for (const sx of [-0.5, 0.5]) s.add(P.cylLo, '#2a2a2a', [x + sx, h - 0.75, -5.6], null, [0.015, 0.9, 0.015]);
+        s.add(P.box, '#d8dde2', [x, h - 1.25, -5.6], null, [1.3, 0.1, 0.32]);
+        s.add(P.box, '#fffbe8', [x, h - 1.31, -5.6], null, [1.15, 0.04, 0.2], true);
+      }
+      s.add(P.cylLo, '#2a2a2a', [1.5, h - 0.7, 3.0], null, [0.015, 0.9, 0.015]);
+      s.add(P.sphereLo, '#fff4c0', [1.5, h - 1.25, 3.0], null, [0.14, 0.18, 0.14], true);
+    }
     for (const [x, z, sx, sz] of [[0, -d / 2 + 0.25, w, 0.1], [0, d / 2 - 0.25, w, 0.1], [-w / 2 + 0.25, 0, 0.1, d], [w / 2 - 0.25, 0, 0.1, d]]) s.add(P.box, R.trim, [x, 0.3, z], null, [sx, 0.6, sz]);
     s.add(P.box, R.trim, [0, h, 0], null, [w, 0.3, d]);
     // Hanging lights.
-    for (const x of [-w / 4, w / 4]) for (const z of [-d / 4, d / 4]) { s.add(P.cylLo, '#2a2a2a', [x, h - 0.5, z], null, [0.03, 1, 0.03]); s.add(P.sphereLo, '#fff4c0', [x, h - 1.1, z], null, [0.35, 0.25, 0.35], true); }
+    if (R.style !== 'garage') for (const x of [-w / 4, w / 4]) for (const z of [-d / 4, d / 4]) { s.add(P.cylLo, '#2a2a2a', [x, h - 0.5, z], null, [0.03, 1, 0.03]); s.add(P.sphereLo, '#fff4c0', [x, h - 1.1, z], null, [0.35, 0.25, 0.35], true); }
     const g = C.meshOf(s.build(), 0.05);
     g.traverse(o => { if (o.material && o.material.side === T.BackSide) o.visible = false; });   // outlines would show through walls
-    const lamp = new T.PointLight('#fff1d0', 0.8, 40);
+    const lamp = new T.PointLight('#fff1d0', R.style === 'garage' ? 0.35 : 0.8, 40);
     lamp.position.set(0, h - 1.5, 0);
     g.add(lamp);
     return g;
@@ -1334,6 +1681,8 @@
     for (const k of ['hairColor', 'topColor', 'shirtColor', 'pantsColor', 'shoeColor', 'accColor']) look[k] = col();
     const hr = H.height || [0.9, 1.2];
     look.height = hr[0] + r() * (hr[1] - hr[0]); look.width = 0.85 + r() * 0.4; look.head = 0.9 + r() * 0.35;
+    if (H.skin) look.skin = H.skin;                    // species that all look alike (Gromflomites, Unity's hosts)
+    if (H.colors) Object.assign(look, H.colors);
     return look;
   };
   C.npcModel = function (type, seed) {
@@ -1360,7 +1709,8 @@
         s.add(P.sphereLo, '#111', [0.25, 1.0, 0.75], null, [0.08, 0.08, 0.05]); s.add(P.sphereLo, '#111', [-0.25, 1.0, 0.75], null, [0.08, 0.08, 0.05]);
       } else if (type === 'dogcitizen' || type === 'dogsoldier') {
         // A dog. Soldiers wear mech armour and carry a cannon.
-        const fur = type === 'dogsoldier' ? '#f4f4f4' : '#c98a4a';
+        const fur = '#c98a4a';
+        if (type === 'dogcitizen') {
         s.add(P.sphere, fur, [0, 0.75, -0.1], null, [0.45, 0.4, 0.75]);
         s.add(P.sphere, fur, [0, 1.25, 0.55], null, [0.38, 0.36, 0.38]);
         s.add(P.sphere, fur, [0, 1.15, 0.9], null, [0.2, 0.17, 0.25]);
@@ -1372,13 +1722,29 @@
           for (const z of [-0.5, 0.35]) s.add(P.cyl, fur, [sx * 0.25, 0.3, z], null, [0.09, 0.6, 0.09]);
         }
         s.add(P.capsule, fur, [0, 0.95, -0.85], [-0.8, 0, 0], [0.06, 0.4, 0.06]);
+        }
         if (type === 'dogsoldier') {
-          s.add(P.box, '#59606e', [0, 0.85, -0.1], null, [1.0, 0.55, 1.3]);
-          s.add(P.box, '#3a3f4a', [0, 0.4, -0.1], null, [1.1, 0.15, 1.4]);
-          for (const sx of [-1, 1]) for (const z of [-0.55, 0.4]) s.add(P.cyl, '#59606e', [sx * 0.55, 0.3, z], null, [0.14, 0.6, 0.14]);
-          s.add(P.cyl, '#3a3f4a', [0.45, 1.2, 0.1], [Math.PI / 2, 0, 0], [0.1, 0.9, 0.1]);
-          s.add(P.sphereLo, '#ff5a3a', [0.45, 1.2, 0.58], null, [0.08, 0.08, 0.06], true);
-          s.add(P.hemi, '#a8dcff', [0, 1.3, 0.55], null, [0.45, 0.45, 0.45]);
+          // The dog rides an egg-shaped walker on two backward-bending legs, in a glass cockpit.
+          for (const sx of [-1, 1]) {
+            C.capsuleAt(s, '#7d858e', 0.12, 0.85, [sx * 0.42, 0.55, -0.35], [0.46, 0, 0]);    // thigh: knee up to the hip
+            C.capsuleAt(s, '#59606e', 0.1, 0.75, [sx * 0.42, 0.05, 0.15], [-0.785, 0, 0]);   // shin: foot back to the knee
+            s.add(P.sphere, '#59606e', [sx * 0.42, 0.55, -0.35], null, [0.14, 0.14, 0.14]);
+            s.add(P.box, '#3a3f4a', [sx * 0.42, 0.05, 0.3], null, [0.28, 0.1, 0.55]);
+          }
+          s.add(P.sphere, '#c9cfd6', [0, 1.75, 0], null, [0.75, 0.62, 0.85]);
+          s.add(P.torus, '#8f969c', [0, 1.65, 0], [Math.PI / 2, 0, 0], [0.75, 0.85, 0.5]);
+          s.add(P.cyl, '#3a3f4a', [0.75, 1.75, 0.35], [Math.PI / 2, 0, 0], [0.09, 0.9, 0.09]);
+          s.add(P.sphereLo, '#ff5a3a', [0.75, 1.75, 0.82], null, [0.08, 0.08, 0.06], true);
+          s.add(P.torus, '#59606e', [0, 2.3, 0.2], [Math.PI / 2, 0, 0], [0.42, 0.42, 0.6]);      // open cockpit rim
+          // The dog itself, sitting up in the cockpit.
+          s.add(P.sphere, '#f4f4f4', [0, 2.62, 0.25], null, [0.26, 0.24, 0.26]);
+          s.add(P.sphere, '#f4f4f4', [0, 2.56, 0.5], null, [0.12, 0.1, 0.15]);
+          s.add(P.sphereLo, '#111', [0, 2.58, 0.64], null, [0.045, 0.04, 0.035]);
+          for (const sx of [-1, 1]) {
+            s.add(P.sphere, '#dcdcdc', [sx * 0.22, 2.68, 0.2], [0, 0, sx * 0.3], [0.07, 0.17, 0.1]);
+            s.add(P.sphere, '#fff', [sx * 0.1, 2.7, 0.46], null, [0.06, 0.065, 0.04]);
+            s.add(P.sphereLo, '#111', [sx * 0.1, 2.7, 0.5], null, [0.028, 0.03, 0.02]);
+          }
         }
       } else if (type === 'seedbeast') {
         s.add(P.sphere, '#7a4ac0', [0, 0.8, 0], null, [0.9, 0.7, 1.1]);
@@ -1401,15 +1767,22 @@
         s.add(P.sphereLo, '#111', [0.25, 0.9, 1.02], null, [0.05, 0.05, 0.03]); s.add(P.sphereLo, '#111', [-0.25, 0.9, 1.02], null, [0.05, 0.05, 0.03]);
         s.add(P.sphere, '#ffcf4d', [0.6, 0.8, 0.1], [0, 0, -0.5], [0.6, 0.1, 0.3]); s.add(P.sphere, '#ffcf4d', [-0.6, 0.8, 0.1], [0, 0, 0.5], [0.6, 0.1, 0.3]);
       } else if (type === 'gazorpian') {
-        // A hulking Gazorpian brute: huge shoulders, little head, tusks, a loincloth.
-        const sk = '#8a9a5a';
+        // A Gazorpian male: a big red brute with four arms (the top pair biggest), little arms
+        // on the head, four eyes, fangs and blue sacs under the chin.
+        const sk = '#c8382e';
+        for (const sx of [-1, 1]) {
+          C.capsuleAt(s, sk, 0.16, 1.0, [sx * 0.8, 1.0, 0.25], [0.4, 0, sx * 0.5]);                   // the lower pair of arms
+          C.capsuleAt(s, sk, 0.06, 0.4, [sx * 0.3, 2.6, 0.3], [0, 0, sx * 0.8]);                       // head arms where ears would be
+          s.add(P.sphereLo, '#5a8ad8', [sx * 0.12, 2.18, 0.62], null, [0.11, 0.14, 0.1]);             // chin sacs
+          s.add(P.sphereLo, '#efe6cc', [sx * 0.75, 1.9, 0.0], null, [0.22, 0.12, 0.2]);               // shoulder hair
+        }
         for (const sx of [-1, 1]) { C.capsuleAt(s, sk, 0.24, 1.1, [sx * 0.35, 0, 0]); C.capsuleAt(s, sk, 0.22, 1.6, [sx * 0.95, 0.5, 0.1], [0, 0, sx * 0.12]); s.add(P.sphere, sk, [sx * 0.98, 0.45, 0.15], null, [0.3, 0.3, 0.3]); }
         s.add(P.sphere, sk, [0, 1.65, 0], null, [0.85, 0.75, 0.6]);
         s.add(P.sphere, sk, [0, 2.15, 0.05], null, [1.05, 0.45, 0.6]);
         s.add(P.box, '#6a4a2a', [0, 1.05, 0.05], null, [0.95, 0.4, 0.62]);
         s.add(P.sphere, sk, [0, 2.45, 0.35], null, [0.38, 0.36, 0.38]);
         s.add(P.box, shade(sk, 0.7), [0, 2.6, 0.62], null, [0.5, 0.1, 0.12]);
-        for (const sx of [-1, 1]) { s.add(P.sphereLo, '#ffee88', [sx * 0.15, 2.5, 0.68], null, [0.07, 0.05, 0.04], true); s.add(P.cone, '#fff8e0', [sx * 0.16, 2.33, 0.68], null, [0.05, 0.18, 0.05]); }
+        for (const sx of [-1, 1]) { s.add(P.sphereLo, '#ffee88', [sx * 0.2, 2.52, 0.66], null, [0.07, 0.05, 0.04], true); s.add(P.sphereLo, '#ffee88', [sx * 0.07, 2.5, 0.7], null, [0.04, 0.035, 0.03], true); s.add(P.cone, '#fff8e0', [sx * 0.16, 2.33, 0.68], null, [0.05, 0.18, 0.05]); }
         s.add(P.box, '#3a1a12', [0, 2.3, 0.7], null, [0.3, 0.05, 0.03]);
       } else if (type === 'froopy') {
         // A Froopyland creature: a soft pastel blob on stubby legs, with big friendly eyes.
@@ -1459,6 +1832,30 @@
           s.add(P.sphereLo, '#3a3a3a', [sx * 0.2, 0.05, 0.06], null, [0.09, 0.06, 0.13]);
           C.capsuleAt(s, skin, 0.06, 0.55, [sx * 0.42, 1.25, 0.05], [0, 0, sx * 2.4]);
         }
+      } else if (type === 'hamster') {
+        // A round, golden-brown hamster with a white belly, pink ears and nose.
+        s.add(P.sphere, '#d89a5a', [0, 0.38, 0], null, [0.36, 0.32, 0.42]);
+        s.add(P.sphere, '#fbf0e0', [0, 0.32, 0.2], null, [0.26, 0.22, 0.25]);
+        s.add(P.sphere, '#d89a5a', [0, 0.6, 0.28], null, [0.24, 0.22, 0.22]);
+        s.add(P.sphere, '#fbf0e0', [0, 0.54, 0.44], null, [0.13, 0.1, 0.1]);
+        s.add(P.sphereLo, '#ff8fb0', [0, 0.58, 0.52], null, [0.04, 0.035, 0.03]);
+        for (const sx of [-1, 1]) {
+          s.add(P.sphere, '#ff9fb8', [sx * 0.15, 0.8, 0.22], null, [0.08, 0.08, 0.04]);
+          s.add(P.sphereLo, '#1a1a1a', [sx * 0.1, 0.66, 0.46], null, [0.04, 0.045, 0.03]);
+          s.add(P.sphereLo, '#ffbfd0', [sx * 0.08, 0.2, 0.36], null, [0.05, 0.03, 0.06]);
+          s.add(P.sphereLo, '#ffbfd0', [sx * 0.2, 0.05, -0.15], null, [0.06, 0.03, 0.08]);
+        }
+      } else if (type === 'blamph') {
+        // A Blamph: a big soft purple lump with two long rubbing arms and a small face.
+        s.add(P.sphere, '#8a6ab8', [0, 0.8, 0], null, [0.8, 0.75, 0.7]);
+        s.add(P.sphere, '#a888d0', [0, 1.3, 0.1], null, [0.5, 0.45, 0.45]);
+        for (const sx of [-1, 1]) {
+          C.capsuleAt(s, '#7a5aa8', 0.12, 0.85, [sx * 0.8, 0.45, 0.85], [-0.74, 0, sx * 0.18]);   // hand up to the shoulder
+          s.add(P.sphere, '#a888d0', [sx * 0.8, 0.45, 0.85], null, [0.2, 0.16, 0.2]);
+          s.add(P.sphere, '#fff', [sx * 0.16, 1.4, 0.5], null, [0.1, 0.12, 0.06]);
+          s.add(P.sphereLo, '#1a1a1a', [sx * 0.16, 1.4, 0.55], null, [0.045, 0.055, 0.03]);
+        }
+        s.add(P.box, '#3a1a3a', [0, 1.2, 0.52], null, [0.22, 0.04, 0.03]);
       } else if (type === 'mooncrab') {
         s.add(P.sphere, '#c9c9d6', [0, 0.55, 0], null, [0.85, 0.35, 0.7]);
         for (const sx of [-1, 1]) {
@@ -1543,6 +1940,8 @@
     if (dim.interior) group.add(makeRoom(dim));
     else { skyDecor(dim, group); group.add(makeTerrain(dim)); }
     if (dim.streets) group.add(makeStreets(dim, MM.genProps(dimId)));
+    const layout = MM.layoutOf(dimId);
+    if (layout.roads.length || layout.plazas.length) group.add(makePaths(dim, layout));
 
     // Instanced props
     const props = MM.genProps(dimId);
@@ -1574,7 +1973,8 @@
         // Every lit and glowing instance gets a colour (white = as modelled): three.js
         // r149 shares one shader between instanced meshes of a material, so they must
         // all have instance colours or none.
-        if (type === 'house' || type === 'car') return new T.Color().setHSL(rand(), type === 'car' ? 0.7 : 0.45, type === 'car' ? 0.55 : 0.82);
+        if (type === 'house' || type === 'car' || type === 'storefront') return new T.Color().setHSL(rand(), type === 'car' ? 0.7 : 0.45, type === 'car' ? 0.55 : 0.8);
+        if (type === 'humanhouse') return new T.Color().setHSL(rand(), 0.35, 0.88);   // everyone wears something different
         return white;
       });
       list.forEach((p, i) => {

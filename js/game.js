@@ -832,7 +832,9 @@
       const t = n === 1 ? 0 : -span + (2 * span * i) / (n - 1);
       spots.push({ id: ids[k], x: cx + rx * f * Math.sin(t), y: cy - ry * f * Math.cos(t) });
     }
-    out.forEach((id, i) => spots.push({ id, x: 40 + i * 70, y: 26, out: true }));
+    // Worlds outside the Curve sit in the dark corners above the dome.
+    const OUT = [[40, 30], [100, 20], [40, 92], [480, 30], [420, 20], [480, 92]];
+    out.forEach((id, i) => { const [x, y] = OUT[i % OUT.length]; spots.push({ id, x, y, out: true }); });
     let sel = null;
     function draw() {
       g.fillStyle = '#0b0f1e'; g.fillRect(0, 0, W, H);
@@ -842,7 +844,7 @@
       for (const [w, a] of [[14, 0.12], [7, 0.3], [2.5, 0.95]]) { g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, Math.PI, Math.PI * 2); g.strokeStyle = 'rgba(95,248,255,' + a + ')'; g.lineWidth = w; g.stroke(); }
       g.fillStyle = '#5ff8ff'; g.font = '700 10px system-ui, sans-serif'; g.textAlign = 'center';
       g.fillText('THE CENTRAL FINITE CURVE', cx, cy - ry - 10);
-      if (out.length) { g.fillStyle = '#9aa6c8'; g.font = '9px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('outside the curve', 12, 52); }
+      if (out.length) { g.fillStyle = '#9aa6c8'; g.font = '9px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('outside the curve', 8, 128); g.textAlign = 'right'; g.fillText('outside the curve', W - 8, 128); }
       for (const s of spots) {
         const d = MM.DIM_BY_ID[s.id], n = G.pop ? G.pop.d[s.id] || 0 : 0, here = s.id === G.dimId;
         const r = 6 + Math.min(5, n);
@@ -1399,6 +1401,7 @@
 
   function updateCamera(dt) {
     const me = G.me;
+    if (C.debugCam) { const d = C.debugCam; camera.position.set(d.x, d.y, d.z); camera.lookAt(d.tx, d.ty, d.tz); return; }   // screenshots and tests
     const sc = G.meAv ? G.meAv.root.scale.x : 1;
     if (firstPerson() && !(G.you && G.you.dead)) {
       const cp = Math.cos(G.camPitch);

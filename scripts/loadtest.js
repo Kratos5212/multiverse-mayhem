@@ -11,6 +11,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 require(path.join(ROOT, 'shared/rules.js'));
 require(path.join(ROOT, 'shared/world.js'));
+require(path.join(ROOT, 'shared/layouts.js'));
 require(path.join(ROOT, 'shared/protocol.js'));
 require(path.join(ROOT, 'sim/host.js'));
 const MM = require(path.join(ROOT, 'sim/bot.js'));

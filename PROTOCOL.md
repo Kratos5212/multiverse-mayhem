@@ -55,6 +55,7 @@ Every message is a JSON object with a `t` (type) field. Anything that is not on 
 | `ans` | `a` | Accept (1) or refuse (0) a local's trade offer |
 | `ship` | `on` | Board or leave your ship (must own one) |
 | `drive` | `d` | Dimension Drive to `d` (in your ship, with the drive, 15 s cooldown) |
+| `pvp` | `on` | Turn fights with other players on or off (both players must have them on; `hello` carries the starting value) |
 
 `hello` also carries `tok`, the random save token this browser was given (see **Saved progress**).
 
@@ -82,6 +83,7 @@ Projectiles are sent once as a `shot` (start point, velocity, gravity, lifetime)
 
 ### Cheating
 * **Server-side game rules.** A client cannot give itself health, items, scrap, kills or portal charges, because none of those are client-controlled values.
+* **Consent for fights.** The server only lets a player hurt another player when both have fights turned on. This covers shots, melee, grenades, turrets, pets and the shrink ray. Shots pass through anyone who isn't fighting, so nobody can grief a player who opted out.
 * **Lore limits are enforced on the server.** An Average Joe's `po` is ignored, a Birdfolk's `cr` is ignored, and only Birdfolk get the flying allowance in the movement check.
 * **Movement checks.** Horizontal distance must fit your speed (with sprint, shrink and guilt effects, plus slack for lag). Rising must fit your jump or wings. You can never rise above jump height plus the tallest prop. Knockback grants a short allowance. Every failed check snaps you back; 25 recent failures disconnect you. With 64 bots fighting, knocking each other around and flying on the moon, no false kicks occurred.
 * **Cooldowns and ammo on the server.** Fire rate, ability cooldowns, kiosk cooldown, turret limits and gadget counts are all tracked server-side.

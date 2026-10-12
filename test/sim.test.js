@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 require('../shared/rules.js');
 require('../shared/world.js');
+require('../shared/layouts.js');
 require('../shared/protocol.js');
 require('../sim/host.js');
 const MM = require('../sim/bot.js');
@@ -334,7 +335,7 @@ test('Meeseeks Box gadget and the Citadel', () => {
 
 test('free roam: players only hurt each other when both turned fights on', () => {
   const host = new MM.Host();
-  const a = join(host, 'genius', { dim: 'moon' }), b = join(host, 'sidekick', { dim: 'moon' });
+  const a = join(host, 'genius', { dim: 'moon' }), b = join(host, 'teen', { dim: 'moon' });   // not Morty: he dodges at random
   for (const { p } of [a, b]) p.fx.prot = 0;
   b.p.x = a.p.x; b.p.z = a.p.z + 5; b.p.y = a.p.y;
   const hp0 = b.p.hp;

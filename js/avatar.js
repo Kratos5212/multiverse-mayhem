@@ -25,8 +25,8 @@
       // Bug head: long, with big compound eyes, mandibles and antennae.
       s.add(P.sphere, skin, [0, 0, 0.05 * R], null, [R * 0.85, R * 1.25, R * 1.0]);
       for (const sx of [-1, 1]) {
-        s.add(P.sphere, '#1d1a2e', [sx * R * 0.55, R * 0.22, R * 0.55], null, [R * 0.42, R * 0.5, R * 0.36]);
-        s.add(P.sphereLo, '#8a86c0', [sx * R * 0.48, R * 0.38, R * 0.82], null, [R * 0.1, R * 0.1, R * 0.05], true);
+        s.add(P.sphere, '#b8302a', [sx * R * 0.55, R * 0.22, R * 0.55], null, [R * 0.42, R * 0.5, R * 0.36]);   // red compound eyes
+        s.add(P.sphereLo, '#ff9a8a', [sx * R * 0.48, R * 0.38, R * 0.82], null, [R * 0.1, R * 0.1, R * 0.05], true);
         s.add(P.cone, shade(skin, 0.7), [sx * R * 0.22, -R * 0.9, R * 0.6], [Math.PI - 0.4, 0, sx * 0.5], [R * 0.12, R * 0.45, R * 0.12]);
         s.add(P.cylLo, shade(skin, 0.8), [sx * R * 0.3, R * 1.3, R * 0.2], [0.5, 0, -sx * 0.4], [R * 0.04, R * 0.8, R * 0.04]);
         s.add(P.sphereLo, shade(skin, 0.8), [sx * R * 0.5, R * 1.65, R * 0.45], null, [R * 0.1, R * 0.1, R * 0.1]);

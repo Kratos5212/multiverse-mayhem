@@ -47,7 +47,7 @@
       npc: [['neighbor', 9], ['schoolkid', 4]], pickups: { s: 18, c: 2 }, mat: 's',
     },
     {
-      id: 'meatlands', name: 'Cronenberg World', code: 'C-131', seed: 4242, gravity: 24, amp: 9, scale: 0.02,
+      id: 'meatlands', flat: 140, name: 'Cronenberg World', code: 'C-131', seed: 4242, gravity: 24, amp: 9, scale: 0.02,
       blurb: 'A love potion went very wrong here. Everything is meat now. It is warm. It is watching.',
       sky: ['#3d0a1c', '#c4485f'], fog: '#7a2236', fogFar: 170, sun: '#ffc2b0', ambient: '#b05068',
       ground: ['#c9576b', '#e07a85', '#9c3a4e'], accent: '#fff2c8',
@@ -55,7 +55,7 @@
       npc: [['meatblob', 11], ['fleshmonk', 4]], pickups: { s: 8, g: 14 }, mat: 'g',
     },
     {
-      id: 'bazaar', name: 'Alien Bazaar', code: 'B-9000', seed: 9001, gravity: 20, amp: 4, scale: 0.015,
+      id: 'bazaar', flat: 128, name: 'Alien Bazaar', code: 'B-9000', seed: 9001, gravity: 20, amp: 4, scale: 0.015,
       blurb: 'An alien night market. Everything is for sale, especially things that should not be.',
       sky: ['#140733', '#ff6fd0'], fog: '#3a1a63', fogFar: 210, sun: '#ffd9fb', ambient: '#8a6cff',
       ground: ['#3b2b7a', '#4d3a9c', '#2e8c8a'], accent: '#5ff8ff',
@@ -63,7 +63,7 @@
       npc: [['jelly', 8], ['merchant', 5], ['tourist', 4]], pickups: { s: 8, p: 14 }, mat: 'p',
     },
     {
-      id: 'moon', name: 'Lowgrav Moon', code: 'L-0', seed: 777, gravity: 7, amp: 12, scale: 0.014,
+      id: 'moon', flat: 30, name: 'Lowgrav Moon', code: 'L-0', seed: 777, gravity: 7, amp: 12, scale: 0.014,
       blurb: 'A cratered moon with almost no gravity. Jump and you might not come down for a while.',
       sky: ['#000006', '#151536'], fog: '#0d0d24', fogFar: 260, sun: '#ffffff', ambient: '#7a86b8',
       ground: ['#9a9aa6', '#b4b4c0', '#7c7c88'], accent: '#7affea',
@@ -71,7 +71,7 @@
       npc: [['mooncrab', 11], ['moonminer', 4]], pickups: { s: 6, c: 16 }, mat: 'c',
     },
     {
-      id: 'featherhold', name: 'Bird World', code: 'BW-1', seed: 3131, gravity: 18, amp: 16, scale: 0.011,
+      id: 'featherhold', flat: 65, name: 'Bird World', code: 'BW-1', seed: 3131, gravity: 18, amp: 16, scale: 0.011,
       blurb: 'Birdperson\'s home world. Golden cliffs, giant nests, and very proud citizens.',
       sky: ['#2f7fd0', '#ffd9a0'], fog: '#e8c99a', fogFar: 240, sun: '#fff1cc', ambient: '#a89878',
       ground: ['#6f9a3a', '#86ad45', '#a8823f'], accent: '#ffd84d',
@@ -79,7 +79,7 @@
       npc: [['birdcitizen', 9], ['skyserpent', 7]], pickups: { s: 6, f: 14 }, mat: 'f',
     },
     {
-      id: 'citadel', name: 'Citadel of Ricks', code: 'CIT-1', seed: 1337, gravity: 22, amp: 0.4, scale: 0.02,
+      id: 'citadel', flat: 140, name: 'Citadel of Ricks', code: 'CIT-1', seed: 1337, gravity: 22, amp: 0.4, scale: 0.02,
       blurb: 'A city of infinite Ricks and Mortys floating in space. The Council meets here. Morty Daycare is down the road.',
       sky: ['#04050d', '#1c2c55'], fog: '#18213f', fogFar: 230, sun: '#e8f0ff', ambient: '#8aa0d8',
       ground: ['#8d97a6', '#a3adbb', '#6d7686'], accent: '#5ff8ff', tiles: true,
@@ -87,7 +87,7 @@
       npc: [['citrick', 12], ['citmorty', 10], ['citguard', 4]], pickups: { s: 8, k: 14 }, mat: 'k',
     },
     {
-      id: 'dogworld', name: "Snowball's Dog World", code: 'DOG-1', seed: 2020, gravity: 24, amp: 4, scale: 0.013,
+      id: 'dogworld', flat: 130, name: "Snowball's Dog World", code: 'DOG-1', seed: 2020, gravity: 24, amp: 4, scale: 0.013,
       blurb: 'Dogs rose up in mech suits and took over. Humans are pets now. Snowball rules from his palace.',
       sky: ['#5aa8ff', '#ffe6c8'], fog: '#d8e8ff', fogFar: 230, sun: '#fff4dc', ambient: '#a8c4ff',
       ground: ['#6fb84a', '#86c95a', '#5a9a3c'], accent: '#ff5a3a',
@@ -112,17 +112,17 @@
       props: [['arcade', 44], ['skeeball', 10], ['claw', 8]], npc: [['arcadegoer', 12]], pickups: { k: 8, p: 6, s: 4 }, mat: 'k',
     },
     {
-      id: 'purge', name: 'Purge Planet', code: 'PG-12', seed: 6006, gravity: 24, amp: 3, scale: 0.012,
+      id: 'purge', flat: 135, name: 'Purge Planet', code: 'PG-12', seed: 6006, gravity: 24, amp: 3, scale: 0.012,
       blurb: 'A peaceful farming world. Except one night a year, when everyone is allowed to do anything.',
       sky: ['#ff9a5a', '#ffe0a8'], fog: '#f0c090', fogFar: 220, sun: '#fff0d0', ambient: '#e8b080',
       ground: ['#b8a84a', '#9aaa48', '#7e8e3a'], accent: '#ff5a3a',
       props: [['farmhouse', 14], ['barn', 6], ['wheat', 60], ['lantern', 22]], npc: [['purger', 12]], pickups: { s: 14, g: 4 }, mat: 's',
     },
     {
-      id: 'squanch', name: 'Planet Squanch', code: 'SQ-1', seed: 7117, gravity: 22, amp: 5, scale: 0.014,
+      id: 'squanch', flat: 112, name: 'Planet Squanch', code: 'SQ-1', seed: 7117, gravity: 22, amp: 5, scale: 0.014,
       blurb: 'Squanchy\'s home world. Every night is a party. Every party gets squanched.',
       sky: ['#1a0a3a', '#ff6fd0'], fog: '#4a2a6a', fogFar: 220, sun: '#ffd0f0', ambient: '#c090ff',
-      ground: ['#5a3aa8', '#6a4ab8', '#3e2a80'], accent: '#ffd84d',
+      ground: ['#a83a3a', '#c04848', '#8a2a32'], accent: '#ffd84d',   // red grass
       props: [['squanchhut', 20], ['partylight', 26], ['speaker', 14]], npc: [['squanchcat', 12]], pickups: { p: 10, s: 6 }, mat: 'p',
     },
     {
@@ -140,62 +140,92 @@
       props: [['cottontree', 30], ['lollipop', 30], ['rainbow', 6], ['candyrock', 20]], npc: [['froopy', 14]], pickups: { f: 6, p: 6, s: 4 }, mat: 'f',
     },
     {
-      id: 'anatomy', name: 'Anatomy Park', code: 'AP-1', seed: 1441, gravity: 24, amp: 6, scale: 0.02,
+      id: 'anatomy', flat: 66, name: 'Anatomy Park', code: 'AP-1', seed: 1441, gravity: 24, amp: 6, scale: 0.02,
       blurb: 'A theme park inside a man. Rides, attractions, and a disease problem.',
       sky: ['#5a0a1a', '#c84a5a'], fog: '#7a2a3a', fogFar: 180, sun: '#ffd0d0', ambient: '#d06070',
       ground: ['#c84a5a', '#d85a6a', '#a83a4a'], accent: '#ffe066',
       props: [['bloodcell', 40], ['bonepillar', 16], ['artery', 14]], npc: [['bacteria', 12]], pickups: { g: 12, s: 4 }, mat: 'g',
     },
     {
-      id: 'pizzaworld', name: 'Pizza-Phone-Chair Dimension', code: 'PZ-35', seed: 3553, gravity: 24, amp: 3, scale: 0.012, outsideCurve: true,
+      id: 'pizzaworld', flat: 135, name: 'Pizza-Phone-Chair Dimension', code: 'PZ-35', seed: 3553, gravity: 24, amp: 3, scale: 0.012, outsideCurve: true,
       blurb: 'People are pizza. Pizza is phones. Phones are people. Chairs sit on people. It makes sense here.',
       sky: ['#7ec0ff', '#e8f4ff'], fog: '#d8ecff', fogFar: 230, sun: '#fff4dc', ambient: '#a8c4ff',
       ground: ['#6fb84a', '#86c95a', '#5a9a3c'], accent: '#e2483d',
       props: [['giantchair', 16], ['giantphone', 14], ['pizzabox', 20], ['couch', 10]], npc: [['pizzaperson', 8], ['phoneperson', 6], ['chairperson', 6]], pickups: { s: 10, p: 4 }, mat: 's',
     },
     {
-      id: 'wasteland', name: 'Post-Apocalyptic Earth', code: 'C-5?', seed: 4664, gravity: 24, amp: 6, scale: 0.012,
+      id: 'wasteland', flat: 48, name: 'Post-Apocalyptic Earth', code: 'C-5?', seed: 4664, gravity: 24, amp: 6, scale: 0.012,
       blurb: 'A burned-out Earth of sand, spikes and raiders in modified cars. Bring your own water.',
       sky: ['#c88a4a', '#f0d8a0'], fog: '#e0b880', fogFar: 220, sun: '#fff0d0', ambient: '#e0b080',
       ground: ['#d8b878', '#c8a868', '#b89858'], accent: '#ff5a3a',
       props: [['wreck', 26], ['scraptower', 10], ['cactus', 30]], npc: [['raider', 10]], pickups: { s: 18, c: 2 }, mat: 's',
     },
     {
-      id: 'microverse', name: 'The Microverse', code: 'MV-1', seed: 5775, gravity: 22, amp: 3, scale: 0.014,
+      id: 'microverse', flat: 125, name: 'The Microverse', code: 'MV-1', seed: 5775, gravity: 22, amp: 3, scale: 0.014,
       blurb: 'A tiny universe inside Rick\'s car battery. The locals stomp on gooble boxes to make power. They think it\'s their idea.',
       sky: ['#3aa0ff', '#c8f0ff'], fog: '#c0e8ff', fogFar: 230, sun: '#ffffff', ambient: '#a8d8ff',
       ground: ['#7ac8a0', '#8ad8b0', '#5aa880'], accent: '#ffd84d',
       props: [['microtower', 20], ['microdome', 16], ['tree', 24], ['streetlamp', 16]], npc: [['microperson', 14]], pickups: { c: 10, s: 6 }, mat: 'c',
     },
     {
-      id: 'unityworld', name: 'Unity\'s Planet', code: 'UN-1', seed: 6886, gravity: 24, amp: 1, scale: 0.012,
+      id: 'unityworld', flat: 130, name: 'Unity\'s Planet', code: 'UN-1', seed: 6886, gravity: 24, amp: 1, scale: 0.012,
       blurb: 'A whole planet assimilated by Unity. Very clean, very polite, very much one mind.',
       sky: ['#7ab8ff', '#e0f0ff'], fog: '#d8e8ff', fogFar: 230, sun: '#ffffff', ambient: '#c0d8ff',
-      ground: ['#9aa8b8', '#aab8c8', '#8a98a8'], accent: '#5fd6b0', tiles: true,
+      ground: ['#5fb86a', '#5a9ad8', '#4aa070'], accent: '#5fd6b0',   // green and blue grass
       props: [['cityblock', 30], ['unitystatue', 3], ['streetlamp', 30]], npc: [['unitydrone', 16]], pickups: { c: 8, k: 4 }, mat: 'c',
     },
     {
-      id: 'federation', name: 'Galactic Federation HQ', code: 'GF-1', seed: 7997, gravity: 24, amp: 0.5, scale: 0.02,
+      id: 'federation', flat: 130, name: 'Galactic Federation HQ', code: 'GF-1', seed: 7997, gravity: 24, amp: 0.5, scale: 0.02,
       blurb: 'White towers, a prison block and a lot of bug-headed bureaucrats. Do not lose your forms.',
       sky: ['#0a1030', '#3a4a8a'], fog: '#2a3460', fogFar: 230, sun: '#ffffff', ambient: '#a0b0e0',
       ground: ['#d8dde4', '#c8ced6', '#b8bec6'], accent: '#e2483d', tiles: true,
       props: [['fedtower', 14], ['fedship', 12], ['prisonblock', 8], ['streetlamp', 24]], npc: [['fedguard', 10], ['fedclerk', 6]], pickups: { k: 8, c: 6 }, mat: 'k',
     },
     {
-      id: 'gearworld', name: 'Planet Gear', code: 'GR-8', seed: 8118, gravity: 24, amp: 5, scale: 0.016,
+      id: 'gearworld', flat: 135, name: 'Planet Gear', code: 'GR-8', seed: 8118, gravity: 24, amp: 5, scale: 0.016,
       blurb: 'Home of the gear people. Everything turns, everything clanks, everyone has a gear on their head.',
       sky: ['#6a5a3a', '#d8c098'], fog: '#b8a078', fogFar: 220, sun: '#fff0d0', ambient: '#d8c0a0',
       ground: ['#8a7a5a', '#9a8a6a', '#6a5a4a'], accent: '#ffd84d',
       props: [['biggear', 24], ['pipe', 20], ['gearhouse', 14]], npc: [['gearperson', 12]], pickups: { s: 16 }, mat: 's',
     },
+    // ----- Outside the Central Finite Curve: realities where Rick is not the smartest -----
+    {
+      id: 'beyond', flat: 150, name: 'Beyond the Curve', code: 'Ω', seed: 9119, gravity: 22, amp: 2, scale: 0.01, outsideCurve: true,
+      blurb: 'Where Evil Morty went. Past the wall of the Central Finite Curve: infinite universes, and not one Rick in charge.',
+      sky: ['#05040e', '#2a1e08'], fog: '#120c18', fogFar: 260, sun: '#ffe7a8', ambient: '#c8a860',
+      ground: ['#1c1830', '#241e3c', '#141024'], accent: '#ffd84d',
+      props: [], npc: [['outsider', 12]], pickups: { m: 2, c: 8, p: 6 }, mat: 'c',
+    },
+    {
+      id: 'cableworld', flat: 140, name: 'Interdimensional Cable', code: 'IC-1', seed: 2552, gravity: 24, amp: 2, scale: 0.012, outsideCurve: true,
+      blurb: 'The dimension of the commercials. Real Fake Doors, Ants in my Eyes Johnson, and an ad on every wall.',
+      sky: ['#6fb8ff', '#e8f4ff'], fog: '#d8ecff', fogFar: 230, sun: '#fff4dc', ambient: '#a8c4ff',
+      ground: ['#6fb84a', '#86c95a', '#5a9a3c'], accent: '#ffd84d',
+      props: [], npc: [['adperson', 14]], pickups: { k: 10, s: 8 }, mat: 'k',
+    },
+    {
+      id: 'hamsterworld', flat: 140, name: 'Hamster-in-Butt World', code: 'HB-0', seed: 3663, gravity: 24, amp: 3, scale: 0.012, outsideCurve: true,
+      blurb: 'Every creature is a hamster, and every home is a person. It is exactly what it sounds like. Wipe your feet.',
+      sky: ['#8ac8ff', '#fff0d8'], fog: '#f0e4d0', fogFar: 230, sun: '#fff4dc', ambient: '#e8c8a0',
+      ground: ['#8ac85a', '#9ad86a', '#6aa848'], accent: '#e8a868',
+      props: [], npc: [['hamster', 16]], pickups: { s: 8, f: 6, p: 4 }, mat: 'f',
+    },
+    {
+      id: 'plumbus', flat: 140, name: 'Plumbubo Prime 51b', code: 'PP-51b', seed: 5115, gravity: 24, amp: 2, scale: 0.012, outsideCurve: true,
+      blurb: 'Where plumbuses come from. Everyone knows how they are made, so we will not explain the fleeb.',
+      sky: ['#8a6aa8', '#f0d0e8'], fog: '#d8b8d8', fogFar: 220, sun: '#fff0f4', ambient: '#e0b0d0',
+      ground: ['#a87a9a', '#b88aaa', '#8a6a8a'], accent: '#f4a0b8',
+      props: [], npc: [['blamph', 10], ['plumbusworker', 6]], pickups: { g: 10, s: 8 }, mat: 'g',
+    },
     // ----- Rick's garage and what's under it: small indoor dimensions -----
     {
-      id: 'rickgarage', name: "Rick's Garage", code: 'C-137', seed: 137, gravity: 24, interior: true, hidden: true, bound: 12.4,
+      id: 'rickgarage', name: "Rick's Garage", code: 'C-137', seed: 137, gravity: 24, interior: true, hidden: true, bound: 7.9,
       blurb: 'Where the science happens. Do not touch anything. Especially that.',
       sky: ['#2a2a30', '#2a2a30'], fog: '#2a2a30', fogFar: 400, sun: '#fff4e0', ambient: '#a0a4b0',
-      ground: ['#8a8578', '#7d786c', '#958f82'], accent: '#39ff6a', spawn: { x: -2, z: 4 },
-      room: { w: 26, d: 26, h: 7, wall: '#c9c2b0', trim: '#6b6458' },
-      fixed: [['spacecruiser', 4, 2, -0.4], ['shelf', 12, -4, -Math.PI / 2], ['shelf', 12, 2, -Math.PI / 2], ['weaponrack', -4, -12, 0], ['beakers', 4, -12, 0], ['drums', -11, 9, 0], ['toolchest', 11, -10, -Math.PI / 2]],
+      ground: ['#6e6e68', '#686862', '#74746e'], accent: '#39ff6a', spawn: { x: -2, z: 4 },
+      // A real garage: khaki walls on wooden studs, beams overhead, a concrete floor.
+      room: { w: 17, d: 17, h: 4.6, wall: '#9c936e', trim: '#6e5034', style: 'garage' },
+      fixed: [['spacecruiser', 2.4, 3.2, Math.PI], ['curioshelf', -7.7, 6.4, Math.PI / 2], ['housedoor', -8.1, 3.2, Math.PI / 2], ['washer', 7.7, 0.4, -Math.PI / 2], ['washer', 7.7, 2.0, -Math.PI / 2], ['shelf', 7.6, 5.4, -Math.PI / 2], ['toolchest', -7.5, -1.0, Math.PI / 2]],
       props: [], npc: [['butterbot', 1]], pickups: {}, mat: 's',
     },
     {
@@ -311,6 +341,23 @@
     beakers:     { r: 1.4, h: 1.6, hp: 1e9, drop: {}, fixed: true },
     drums:       { r: 1.0, h: 1.4, hp: 1e9, drop: {}, fixed: true },
     toolchest:   { r: 1.0, h: 1.6, hp: 1e9, drop: {}, fixed: true },
+    curioshelf:  { r: 1.0, h: 2.4, hp: 1e9, drop: {}, fixed: true },
+    // Outside the Curve
+    goldorb:     { r: 0.9, h: 4, hp: 80, drop: { c: 2 } },
+    voidcrystal: { r: 0.8, h: 3.5, hp: 60, drop: { c: 2 } },
+    curvepillar: { r: 1.3, h: 12, hp: 300, drop: { c: 2, s: 2 } },
+    storefront:  { r: 5.0, h: 6.5, hp: 220, drop: { s: 4, k: 1 } },
+    tvscreen:    { r: 1.6, h: 7.5, hp: 120, drop: { s: 2, c: 1 } },
+    doorframe:   { r: 0.8, h: 2.6, hp: 30, drop: { s: 1 } },
+    humanhouse:  { r: 3.2, h: 6, hp: 200, drop: { g: 2, f: 2 } },
+    hamsterwheel:{ r: 1.3, h: 2.6, hp: 40, drop: { s: 1 } },
+    seedpile:    { r: 0.9, h: 0.8, hp: 15, drop: { f: 1 } },
+    factory:     { r: 7.0, h: 10, hp: 400, drop: { s: 5, g: 2 } },
+    conveyor:    { r: 2.6, h: 1.6, hp: 120, drop: { s: 3 } },
+    fleebvat:    { r: 1.6, h: 3.2, hp: 90, drop: { g: 3 } },
+    plumbuspile: { r: 1.2, h: 1.6, hp: 40, drop: { g: 1, p: 1 } },
+    housedoor:   { r: 0.6, h: 2.4, hp: 1e9, drop: {}, fixed: true },
+    washer:      { r: 0.75, h: 1.1, hp: 1e9, drop: {}, fixed: true },
     clonetank:   { r: 1.0, h: 3.6, hp: 1e9, drop: {}, fixed: true },
     bigcomputer: { r: 2.2, h: 4.0, hp: 1e9, drop: {}, fixed: true },
     labmachine:  { r: 1.8, h: 3.0, hp: 1e9, drop: {}, fixed: true },
@@ -441,19 +488,40 @@
       talk: ['We stomp the gooble boxes and the power just flows. Nobody knows why.', 'A scientist once came from the sky. He was rude.', 'Our universe is the biggest one there is. Obviously.', 'Have you seen the Miniverse? Me neither.'],
       moods: { line: 45, gift: 15, trade: 10, errand: 12, buff: 8, angry: 4, follow: 4 } },
     unitydrone: { name: 'Unity', hp: 35, speed: 2.6, hostile: false, dmg: 0, drop: { c: 1, k: 1 }, r: 0.6, h: 1.8,
-      human: { variant: 'hive' }, names: ['Unity', 'Unity', 'Unity'],
+      // Unity's hosts on her planet: blue-skinned people with feelers on their heads.
+      human: { species: ['alien'], top: ['sweater', 'vest', 'polo'], acc: ['antennae'], skin: '#6e9bd6', colors: { topColor: '#5fd6b0', shirtColor: '#5fd6b0', pantsColor: '#2a3a5a' } }, names: ['Unity', 'Unity', 'Unity'],
       talk: ['We are Unity.', 'We are so happy you came. We are always happy.', 'We missed Rick. We are fine.', 'Would you like to join us? It is very relaxing.'],
       moods: { line: 55, gift: 12, trade: 8, errand: 8, buff: 10, follow: 6, dance: 1 } },
     fedguard: { name: 'Federation Guard', hp: 70, speed: 4.4, hostile: true, dmg: 10, drop: { k: 3, s: 2 }, r: 0.6, h: 2.0,
-      human: { species: ['insect'], top: ['armor'], acc: ['none'] } },
+      human: { species: ['insect'], top: ['armor'], acc: ['none'], skin: '#6e7a4a', colors: { topColor: '#3c6fb5', pantsColor: '#2a3a5a' } } },
     fedclerk: { name: 'Federation Clerk', hp: 40, speed: 2.4, hostile: false, dmg: 0, drop: { k: 2 }, r: 0.6, h: 2.0,
-      human: { species: ['insect'], top: ['polo', 'sweater'], acc: ['none'] }, names: ['Clerk 7', 'Clerk 12', 'Supervisor Zz'],
+      human: { species: ['insect'], top: ['polo', 'sweater'], acc: ['none'], skin: '#7a8456', colors: { topColor: '#d8dde2' } }, names: ['Clerk 7', 'Clerk 12', 'Supervisor Zz'],
       talk: ['Form 7-G, in triplicate.', 'Your request has been received and will be ignored.', 'Rick Sanchez is the most wanted man in the galaxy.', 'Please take a number.'],
       moods: { line: 50, gift: 8, trade: 14, errand: 14, buff: 4, angry: 6, prank: 2 } },
     gearperson: { name: 'Gearperson', hp: 50, speed: 2.6, hostile: false, dmg: 6, drop: { s: 3 }, r: 0.6, h: 1.9,
       human: { species: ['robot'], top: ['armor', 'vest'], acc: ['goggles', 'crown', 'none'] }, names: ['Gearhead', 'Cogsworth', 'Revolio', 'Sprocket'],
       talk: ['Everything here turns. It is very satisfying.', 'You are not a gear person. That is fine.', 'Do NOT tell me about the gear wars.', 'Grind on, friend.'],
       moods: { line: 50, gift: 12, trade: 12, errand: 10, buff: 6, angry: 6, follow: 4 } },
+    outsider: { name: 'Outsider', hp: 35, speed: 2.6, hostile: false, dmg: 0, drop: { c: 2, m: 1 }, r: 0.6, h: 1.6,
+      human: { variant: 'evilmorty' }, names: ['Free Morty', 'Morty Prime', 'Unbound Morty', 'Golden Morty'],
+      talk: ['No Ricks out here. It is so quiet.', 'The Curve was a fence. We just walked out.', 'Every one of those lights is a universe nobody controls.', 'Gold portals only. Green is so last Curve.', 'You came from inside? Brave.'],
+      moods: { line: 50, gift: 14, trade: 8, errand: 10, buff: 10, follow: 6, dance: 2 } },
+    adperson: { name: 'Pitchman', hp: 35, speed: 2.6, hostile: false, dmg: 0, drop: { k: 2 }, r: 0.6, h: 1.8,
+      human: { species: ['human', 'alien'], top: ['polo', 'sweater', 'labcoat'], acc: ['none', 'cap', 'goggles'] }, names: ['Real Fake Doors Guy', 'Ants in my Eyes Johnson', 'Baby Legs', 'Gazorpazorp Field', 'Turbulent Juice Guy', 'Ball Fondlers'],
+      talk: ["Come on down to Real Fake Doors! Don't get in there, it's fake!", "I'm Ants in my Eyes Johnson! Everything's black! I can't see a thing!", 'Turbulent Juice! It will be in your body faster than you can say "what".', 'Do you have Plumbuses? Everyone has a Plumbus.', 'Two Brothers. In a van. This summer.', 'This message brought to you by Lil Bits.'],
+      moods: { line: 50, gift: 12, trade: 16, errand: 10, buff: 6, dance: 4, prank: 2 } },
+    hamster: { name: 'Hamster', hp: 20, speed: 3.4, hostile: false, dmg: 0, drop: { f: 1, p: 1 }, r: 0.5, h: 0.8,
+      names: ['Nibbles', 'Mr. Whiskers', 'Biscuit', 'Professor Squeak'],
+      talk: ['*squeak* Welcome to the neighbourhood.', 'Lovely house, isn\'t it? Very warm. Do not ask.', 'We all live in people here. It is normal.', '*runs in a wheel for a while*'],
+      moods: { line: 55, gift: 15, trade: 8, errand: 10, buff: 8, follow: 4 } },
+    blamph: { name: 'Blamph', hp: 40, speed: 2.4, hostile: false, dmg: 0, drop: { g: 2 }, r: 0.7, h: 1.4,
+      names: ['Blamph', 'Old Blamph', 'Blamph Jr.'],
+      talk: ['The blamphs rub it down. That is me. I am a blamph.', 'Mind the fleeb juice.', 'Every plumbus is made by hand, the old way.'],
+      moods: { line: 55, gift: 12, trade: 12, errand: 12, buff: 4 } },
+    plumbusworker: { name: 'Plumbus Worker', hp: 35, speed: 2.4, hostile: false, dmg: 0, drop: { g: 1, s: 1 }, r: 0.6, h: 1.8,
+      human: { species: ['alien', 'blob'], top: ['vest', 'labcoat'], acc: ['goggles', 'cap'] }, names: ['Schlami', 'Shift Boss', 'Grumbo'],
+      talk: ['First they take the dinglebop, and they smooth it out with a bunch of schleem.', 'The schleem is then repurposed for later batches.', 'Then they cut the fleeb. There are several hizzards in the way.', 'Union break in five.'],
+      moods: { line: 55, gift: 10, trade: 14, errand: 12, buff: 4 } },
     invader: { name: 'Invader', hp: 45, speed: 4.5, hostile: true, dmg: 9, drop: { p: 2, s: 2 }, r: 0.6, h: 1.8,
       human: { species: ['alien'], top: ['armor'], acc: ['antennae', 'goggles'], eyes: ['cyclops', 'visor'] } },
   };
@@ -507,6 +575,10 @@
     microverse: [{ id: 'surge', name: 'Power Surge', text: 'The gooble boxes are overflowing with power.', loot: ['c', 12], dur: 45 }],
     unityworld: [{ id: 'parade', name: 'Unity Parade', text: 'All of Unity is celebrating. They are very generous.', talkBoost: 1, loot: ['k', 8], dur: 60 }],
     federation: [{ id: 'lockdown', name: 'Lockdown', text: 'Alarm! The Federation is hunting intruders.', spawn: [['fedguard', 8]], dur: 90 }],
+    beyond: [{ id: 'shower', name: 'Universe Shower', text: 'A thousand new universes flicker into being. Some fall down here.', loot: ['c', 14], dur: 45 }],
+    cableworld: [{ id: 'sale', name: 'Limited Time Offer!', text: 'Everything is on sale. Call now. Operators are standing by.', talkBoost: 1, loot: ['k', 12], dur: 50 }],
+    hamsterworld: [{ id: 'wheel', name: 'Wheel Day', text: 'It is Wheel Day! Every hamster is out running, and they are generous.', talkBoost: 1, loot: ['f', 10], dur: 50 }],
+    plumbus: [{ id: 'batch', name: 'Fresh Batch', text: 'A fresh batch of plumbuses rolls off the line. Grab the offcuts.', loot: ['g', 14], dur: 45 }],
     gearworld: [{ id: 'grind', name: 'The Big Grind', text: 'The great gears turn and spill scrap everywhere.', loot: ['s', 16], dur: 45 }],
     featherhold: [
       { id: 'molting', name: 'Molting Season', text: 'Feathers are falling from the sky. Very majestic, slightly gross.', loot: ['f', 16], dur: 45 },
@@ -556,6 +628,7 @@
     }
     if (dimId === 'meatlands') h += Math.sin(x * 0.08) * Math.cos(z * 0.07) * 1.5 * smooth(14, 40, r);
     if (dimId === 'suburbia') h *= smooth(138, 160, Math.max(Math.abs(x), Math.abs(z)));
+    if (dim.flat) h *= smooth(dim.flat, dim.flat + 30, Math.max(Math.abs(x), Math.abs(z)));   // towns sit on level ground
     if (dimId === 'featherhold') h += Math.pow(MM.fbm(x * 0.02 + 5, z * 0.02, dim.seed + 7, 2), 3) * 30 * smooth(30, 60, r);
     h += smooth(MM.WORLD_HALF - 30, MM.WORLD_HALF + 10, Math.max(Math.abs(x), Math.abs(z))) * 28;
     return h;
@@ -576,21 +649,24 @@
   MM.kioskOf = dimId => MM.DIM_BY_ID[dimId].kiosk || MM.KIOSK;
 
   // ---------- Props ----------
-  const propCache = {};
+  const propCache = {}, layoutCache = {};
+  // The roads and plazas of a planned world (empty for the rest).
+  MM.layoutOf = function (dimId) { MM.genProps(dimId); return layoutCache[dimId] || { roads: [], plazas: [] }; };
   MM.genProps = function (dimId) {
     if (propCache[dimId]) return propCache[dimId];
     const dim = MM.DIM_BY_ID[dimId];
     const r = MM.rng(dim.seed);
     const out = [];
-    const free = (x, z, rad) => {
+    const layout = MM.LAYOUTS && MM.LAYOUTS[dimId];
+    const free = (x, z, rad, tight) => {
       if (!dim.interior) {
-        if (Math.hypot(x, z) < 22 + rad) return false;
+        if (Math.hypot(x, z) < (layout ? 15 : 22) + rad) return false;   // a town keeps its square clear by itself
         const K = MM.kioskOf(dimId);
         if (Math.hypot(x - K.x, z - K.z) < 8 + rad) return false;
       } else if (dim.fixed) return true;
       else if (dim.spawn && Math.hypot(x - dim.spawn.x, z - dim.spawn.z) < 6 + rad) return false;
       else if (dim.kiosk && Math.hypot(x - dim.kiosk.x, z - dim.kiosk.z) < 6 + rad) return false;
-      for (const p of out) if (Math.hypot(p.x - x, p.z - z) < p.r + rad + 1.5) return false;
+      for (const p of out) if (Math.hypot(p.x - x, p.z - z) < p.r + rad + (tight ? 0.2 : 1.5)) return false;
       return true;
     };
     const add = (type, x, z, rot, scale) => {
@@ -629,7 +705,12 @@
         if (Math.abs(b) < 140 && free(b, a - 6.3, 0.4)) add('streetlamp', b, a - 6.3, 0, 1);
       }
     }
-    for (const [type, count] of dim.props) {
+    if (layout) {
+      // Planned towns (shared/layouts.js) instead of random scatter.
+      const kit = MM.makeLayoutKit(dimId, r, add, free);
+      layout(kit);
+      layoutCache[dimId] = { roads: kit.roads, plazas: kit.plazas };
+    } else for (const [type, count] of dim.props) {
       const t = MM.PROPS[type];
       for (let i = 0, tries = 0; i < count && tries < count * 40; tries++) {
         const span = Math.min(145, MM.boundOf(dimId) - 3);

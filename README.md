@@ -58,6 +58,10 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 
 **First person:** press **V**, scroll all the way in, tap the eye button, or pick it in the menu's settings. You see through your character's eyes, with your own arm, sleeve and gun (or fist) in front of you. In a ship you look out over the saucer's rim. When you die, the camera pulls back so you can see what happened. The choice is remembered.
 
+## Free roam, not a battle royale
+
+This is an open-world chaos game: wreck things, cause trouble, explore. **Players can't hurt each other** unless both have turned **Fights** on in the settings; then a ⚔ shows in their name tag, and only fighters can hit fighters (shots pass straight through everyone else). Bots are explorers who never attack players. Monsters only go for you if you come within about 9 m or hit them, and they give up when you leave their patch.
+
 ## Who you are: characters, lives and lore limits
 
 Your look is completely free. Your **character** is your lore: it decides your stats, your everyday life, what you know how to build, and how you can break out of that life. The server enforces all of it. Each character plays the game through their own eyes:
@@ -129,6 +133,9 @@ Every few minutes a **world event** hits a dimension:
 
 ## Dimensions
 
+Every world is laid out like a real place (`shared/layouts.js`): roads and squares first, buildings lining the streets with their fronts to the road, lamps and benches along the sidewalks, fields and villages where they belong, and wild things only out in the countryside. Cronenberg World is the Smith neighbourhood after the love potion; the Bazaar is a ring of market streets; the Citadel is a white city of towers around a central square; Snowball's palace sits at the end of an avenue of dog statues.
+
+
 | Dimension | Feel | Locals | Material | Landmarks |
 | --- | --- | --- | --- | --- |
 | Earth C-137 | Streets, houses, cars | Neighbours, students | Scrap | Smith House, Rick's Garage, Harry Herpson High, Horse Hospital, Unemployment Office |
@@ -152,6 +159,10 @@ Every few minutes a **world event** hits a dimension:
 | Unity's Planet | Tidy towers, everyone one mind | Unity | Moon Crystal | |
 | Galactic Federation HQ | White towers, ships and a prison block | Federation guards (hostile), clerks | Schmeckles | |
 | Planet Gear | Giant gears, pipes and brass houses | Gearpeople | Scrap | |
+| **Beyond the Curve** | Golden paths through the void past the Curve's wall, universe orbs, the golden helix in the sky; *outside the Curve* | Free Mortys | Moon Crystal (and Mega Seeds) | Edge of the Curve |
+| **Interdimensional Cable** | A commercial strip of stores and giant TVs; *outside the Curve* | Pitchmen from the ads | Schmeckles | Real Fake Doors, Ants in my Eyes Johnson's |
+| **Hamster-in-Butt World** | A village of seated people who are also houses; *outside the Curve* | Hamsters | Sky Feather | |
+| **Plumbubo Prime 51b** | The plumbus works: factory halls, production lines, fleeb vats; *outside the Curve* | Blamphs, plumbus workers | Meat Goo | Plumbus Production Line |
 
 Every prop except the landmarks can be destroyed. Wrecking things and beating other players earns **chaos points** for the multiverse-wide leaderboard.
 
