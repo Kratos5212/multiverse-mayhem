@@ -10,11 +10,15 @@
 
   const WEAPON_COLORS = { plasma: '#5dff8a', blaster: '#ffd84d', toy: '#ff8fd0' };
 
+  // A thin ring for inked eye rims (a torus whose tube is a few percent of its radius).
+  const RIM = new T.TorusGeometry(1, 0.075, 6, 36);
+
   // ---------- Heads ----------
   // opts.noBall: only the face and hat (beanlings wear their face on the body).
   function buildHead(s, L, R, species, opts) {
     opts = opts || {};
-    const skin = L.skin, hair = L.hairColor, dark = '#1b1b1b';
+    // Bird people have a feathered head: lighter plumage than the crest.
+    const skin = species === 'birdfolk' ? shade(L.hairColor, 1.35) : L.skin, hair = L.hairColor, dark = '#1b1b1b';
     // Head shape: round (most people), long (tall oval, like a grumpy scientist), wide.
     const wideF = L.face === 'wide' ? 1.22 : 1;
     let tall = L.face === 'long' ? 1.34 : L.face === 'wide' ? 1.0 : 1.12;
@@ -80,6 +84,7 @@
     // Eyes: big white circles with dot pupils.
     const eye = (x, y, r, pupil) => {
       s.add(P.sphere, '#ffffff', [x, y, fz], null, [r, r, r * 0.55]);
+      s.add(RIM, dark, [x, y, fz], null, [r * 1.0, r * 1.0, r]);   // inked rim around the eye
       s.add(P.sphereLo, dark, [x + (Math.random() - 0.5) * r * 0.2, y, fz + r * 0.52], null, [pupil, pupil, pupil * 0.5]);
     };
     const ey = R * 0.18 * (species === 'alien' ? 1.4 : 1);
@@ -120,8 +125,13 @@
     // Nose and mouth (birdfolk get a beak instead)
     const my = -R * 0.45;
     if (species === 'birdfolk') {
-      s.add(P.cone, '#f2a12c', [0, -R * 0.1, R * 1.05], [Math.PI / 2, 0, 0], [R * 0.24, R * 0.7, R * 0.2]);
-      s.add(P.cone, '#d27f12', [0, -R * 0.3, R * 0.95], [Math.PI / 2 + 0.25, 0, 0], [R * 0.16, R * 0.4, R * 0.12]);
+      // A big hooked beak that juts out and curls down, like Birdperson's.
+      s.add(P.cone, '#f2a12c', [0, -R * 0.05, R * 1.25], [Math.PI / 2 + 0.15, 0, 0], [R * 0.34, R * 1.0, R * 0.28]);
+      s.add(P.sphere, '#f2a12c', [0, -R * 0.02, R * 0.85], null, [R * 0.34, R * 0.28, R * 0.32]);
+      s.add(P.cone, '#d27f12', [0, -R * 0.42, R * 1.62], [Math.PI, 0, 0], [R * 0.1, R * 0.32, R * 0.1]);
+      s.add(P.capsule, '#b86a10', [0, -R * 0.3, R * 1.05], [Math.PI / 2 + 0.35, 0, 0], [R * 0.16, R * 0.3, R * 0.12]);
+      // Feather tufts on the cheeks.
+      for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) s.add(P.cone, shade(hair, 1.15), [sx * R * (0.82 + i * 0.05), -R * (0.15 + i * 0.18), R * 0.25], [0.2, 0, sx * (2.0 + i * 0.25)], [R * 0.12, R * 0.45, R * 0.08]);
     } else {
       if (species !== 'robot') s.add(P.capsule, shade(skin, 0.92), [0, -R * 0.08, fz + R * 0.12], [1.2, 0, 0], [R * 0.08, R * 0.12, R * 0.08]);
       if (L.mouth === 'grin') {
@@ -140,7 +150,11 @@
     const top = R * tall;
     const hs = L.hair;
     if (species === 'birdfolk') {
-      for (let i = 0; i < 6; i++) s.add(P.cone, hair, [0, top * 0.8, -R * 0.2 - i * R * 0.12], [-0.9 - i * 0.12, 0, 0], [R * 0.16, R * 0.75, R * 0.1]);
+      // A crest of long feathers sweeping back from the brow.
+      for (let i = 0; i < 9; i++) {
+        const t = i / 8, sx = (i % 3 - 1) * R * 0.18;
+        s.add(P.cone, i % 2 ? hair : shade(hair, 1.2), [sx, top * (0.9 - t * 0.35), R * (0.25 - t * 1.1)], [-0.45 - t * 0.9, 0, sx * 1.5], [R * 0.19, R * (1.0 + (1 - t) * 0.5), R * 0.1]);
+      }
     } else if (species === 'robot') {
       s.add(P.cylLo, '#777', [0, R * 1.1, 0], null, [R * 0.04, R * 0.5, R * 0.04]);
       s.add(P.sphereLo, '#ff4040', [0, R * 1.4, 0], null, [R * 0.1, R * 0.1, R * 0.1], true);
@@ -191,8 +205,11 @@
     } else if (hs === 'afro') {
       s.add(P.sphere, hair, [0, R * 0.55, -R * 0.15], null, [R * 1.4, R * 1.25, R * 1.3]);
     } else if (hs === 'ponytail') {
+      // Hair down over the back of the head, a tie, and a long tail swinging out behind.
       s.add(P.hemi, hair, [0, R * 0.15, -R * 0.03], null, [R * 1.04, top * 0.9, R * 1.0]);
-      C.capsuleAt(s, hair, R * 0.18, R * 1.2, [0, R * 0.4, -R * 0.95], [Math.PI - 0.35, 0, 0]);
+      s.add(P.sphere, hair, [0, -R * 0.05, -R * 0.35], null, [R * 1.0, R * 0.95, R * 0.75]);
+      C.capsuleAt(s, hair, R * 0.26, R * 1.5, [0, R * 0.75, -R * 0.92], [Math.PI - 0.6, 0, 0]);
+      s.add(P.sphere, hair, [0, -R * 0.55, -R * 1.45], null, [R * 0.22, R * 0.3, R * 0.2]);
     } else if (hs === 'slick') {
       // Neat, combed, side-parted.
       s.add(P.hemi, hair, [0, R * 0.12, -R * 0.04], [-0.18, 0, 0], [R * 1.06 * wideF, top * 0.92, R * 1.04]);
@@ -261,10 +278,14 @@
     let lo;
     try { lo = buildAvatarOnce(look, arch, opts); } finally { C.shapeSmooth = true; }
     av.lodNear = []; av.lodFar = [];
+    // Joints (knees, elbows) are pivots inside pivots: only meshes swap, never joints. The
+    // far model has no knees or elbows (whole limbs), which keeps distant crowds cheap.
+    const joints = new Set(Object.values(av.parts)), loJoints = new Set(Object.values(lo.parts));
     for (const k in av.parts) {
-      if (k === 'root' || k === 'body' || !lo.parts[k]) continue;
-      for (const m of av.parts[k].children.slice()) av.lodNear.push(m);
-      for (const m of lo.parts[k].children.slice()) { av.parts[k].add(m); av.lodFar.push(m); }
+      if (k === 'root' || k === 'body') continue;
+      for (const m of av.parts[k].children.slice()) if (!joints.has(m)) av.lodNear.push(m);
+      if (!lo.parts[k]) continue;
+      for (const m of lo.parts[k].children.slice()) if (!loJoints.has(m)) { av.parts[k].add(m); av.lodFar.push(m); }
     }
     av.near = null;
     av.setDetail = near => {
@@ -309,14 +330,31 @@
     const top = L.top;
     const topC = top === 'none' ? skin : top === 'vest' ? L.shirtColor : (top === 'labcoat' ? L.shirtColor : L.topColor);
 
-    // Legs
+    // Legs. Up close they have knees (a thigh and a shin on their own joint); far away a
+    // leg is one piece.
+    const jointed = C.shapeSmooth !== false;
+    const thighLen = legLen * 0.52;
+    const shoeAt = (s, y) => {
+      if (bean) s.add(P.sphereLo, shoe, [0, y + 0.05, 0.05], null, [0.07, 0.05, 0.11]);
+      else { s.add(P.sphere, shoe, [0, y + 0.06, 0.07], null, [legR * 1.25, 0.08, 0.17]); s.add(P.box, shade(shoe, 0.6), [0, y + 0.012, 0.06], null, [legR * 2.2, 0.025, 0.3]); }
+    };
     for (const side of [-1, 1]) {
       const s = new C.Shape();
       const legC = bean ? skin : pants;
-      C.capsuleAt(s, legC, legR, legLen, [0, -legLen, 0]);
-      if (bean) s.add(P.sphereLo, shoe, [0, -legLen + 0.05, 0.05], null, [0.07, 0.05, 0.11]);
-      else s.add(P.sphere, shoe, [0, -legLen + 0.06, 0.07], null, [legR * 1.25, 0.08, 0.17]);
-      parts[side < 0 ? 'legL' : 'legR'] = mk(s, body, [side * (bean ? 0.12 : 0.11) * w * (blob ? 1.6 : 1), legLen, 0]);
+      const hip = [side * (bean ? 0.12 : 0.11) * w * (blob ? 1.6 : 1), legLen, 0];
+      if (jointed) {
+        C.capsuleAt(s, legC, legR * 1.06, thighLen + legR, [0, -thighLen - legR * 0.5, 0]);
+        const k = new C.Shape();
+        C.capsuleAt(k, legC, legR, legLen - thighLen + legR * 0.5, [0, -(legLen - thighLen), 0]);
+        shoeAt(k, -(legLen - thighLen));
+        const hp = mk(s, body, hip);
+        parts[side < 0 ? 'legL' : 'legR'] = hp;
+        parts[side < 0 ? 'shinL' : 'shinR'] = mk(k, hp, [0, -thighLen, 0]);
+      } else {
+        C.capsuleAt(s, legC, legR, legLen, [0, -legLen, 0]);
+        shoeAt(s, -legLen);
+        parts[side < 0 ? 'legL' : 'legR'] = mk(s, body, hip);
+      }
     }
 
     // Torso
@@ -324,17 +362,19 @@
     let shoulderY, neckY, headR;
     if (bean) {
       // A tall bean: body and head are one shape, the face sits near the top.
-      const bh = 1.15 * h;
-      C.capsuleAt(ts, skin, 0.33 * w, bh, [0, legLen - 0.15, 0]);
+      // Pickle Rick is a long cucumber: slimmer and taller than a bean person.
+      const bh = (pickle ? 1.4 : 1.15) * h, br = (pickle ? 0.27 : 0.33) * w;
+      C.capsuleAt(ts, skin, br, bh, [0, legLen - 0.15, 0]);
       if (pickle) {
-        // Pickle bumps, and a lighter belly.
-        for (let i = 0; i < 22; i++) {
-          const a = i * 2.39996, yy = legLen + (i / 22) * bh * 0.9;
-          s_bump(ts, shade(skin, 0.8), Math.sin(a) * 0.32 * w, yy, Math.cos(a) * 0.31 * w);
+        // Warty bumps down the sides and back (never near the face), and a lighter belly.
+        for (let i = 0; i < 26; i++) {
+          const a = Math.PI * 0.35 + (i * 2.39996) % (Math.PI * 1.3), yy = legLen + 0.05 + (i / 26) * bh * 0.62;
+          s_bump(ts, shade(skin, 0.82), Math.sin(a) * br * 0.97, yy, Math.cos(a) * br * 0.95);
         }
-        ts.add(P.sphere, shade(skin, 1.25), [0, legLen + bh * 0.35, 0.12 * w], null, [0.24 * w, bh * 0.35, 0.22 * w]);
+        ts.add(P.sphere, shade(skin, 1.2), [0, legLen + bh * 0.3, br * 0.42], null, [br * 0.7, bh * 0.3, br * 0.62]);
+        ts.add(P.sphere, shade(skin, 0.75), [0, legLen - 0.15 + bh - br * 0.15, 0], null, [br * 0.35, br * 0.15, br * 0.35]);   // the stem end
       }
-      shoulderY = legLen + bh * 0.48; neckY = legLen + bh * 0.62; headR = 0.33 * w;
+      shoulderY = legLen + bh * 0.48; neckY = legLen + bh * 0.62; headR = br;
       if (top !== 'none') ts.add(P.cyl, topC, [0, legLen + 0.08, 0], null, [0.335 * w, 0.18, 0.335 * w]);
     } else if (blob) {
       ts.add(P.sphere, skin, [0, legLen + torsoLen * 0.5, 0], null, [torsoR, torsoLen * 0.65, torsoR * 0.85]);
@@ -382,15 +422,34 @@
     // Arms: sleeves follow the top.
     const sleeveC = top === 'none' ? skin : top === 'labcoat' ? L.topColor : top === 'vest' ? L.shirtColor : L.topColor;
     const sleeveLen = (top === 'tshirt' || top === 'polo' || top === 'vest') ? 0.35 : (top === 'none' || top === 'tank' || bean) ? 0 : 1;
+    // Arms: an upper arm and, up close, a forearm on an elbow joint. The hand (and the gun)
+    // ride on the forearm.
+    const upLen = armLen * 0.5;
+    const hand = (s, y, side) => {
+      s.add(P.sphere, species === 'robot' ? shade(skin, 0.8) : skin, [0, y - 0.02, 0], null, [armR * 1.5, armR * 1.6, armR * 1.4]);
+      if (side > 0 && !MM.WEAPONS[A.weapon].melee) addGun(s, A.weapon, L, y - 0.04);
+      if (side > 0 && species === 'birdfolk' && MM.WEAPONS[A.weapon].melee) for (let i = -1; i <= 1; i++) s.add(P.cone, '#e8e2d0', [i * 0.04, y - 0.1, 0.05], [Math.PI - 0.3, 0, 0], [0.025, 0.14, 0.025]);
+    };
     for (const side of [-1, 1]) {
       const s = new C.Shape();
-      C.capsuleAt(s, skin, armR, armLen, [0, -armLen, 0]);
-      if (sleeveLen > 0) C.capsuleAt(s, sleeveC, armR * 1.35, armLen * sleeveLen * 0.92, [0, -armLen * sleeveLen * 0.92, 0]);
-      s.add(P.sphere, species === 'robot' ? shade(skin, 0.8) : skin, [0, -armLen - 0.02, 0], null, [armR * 1.5, armR * 1.6, armR * 1.4]);
-      if (side > 0 && !MM.WEAPONS[A.weapon].melee) addGun(s, A.weapon, L, -armLen - 0.04);
-      if (side > 0 && species === 'birdfolk' && MM.WEAPONS[A.weapon].melee) for (let i = -1; i <= 1; i++) s.add(P.cone, '#e8e2d0', [i * 0.04, -armLen - 0.1, 0.05], [Math.PI - 0.3, 0, 0], [0.025, 0.14, 0.025]);
       const px = side * (torsoR + armR * 1.2) * (bean ? 1.0 : 1);
-      parts[side < 0 ? 'armL' : 'armR'] = mk(s, body, [px, shoulderY, 0]);
+      if (jointed) {
+        const sl = armLen * sleeveLen * 0.92;
+        C.capsuleAt(s, skin, armR, upLen + armR, [0, -upLen - armR * 0.5, 0]);
+        if (sleeveLen > 0) C.capsuleAt(s, sleeveC, armR * 1.35, Math.min(sl, upLen + armR * 0.6), [0, -Math.min(sl, upLen + armR * 0.6), 0]);
+        const f = new C.Shape(), fl = armLen - upLen;
+        C.capsuleAt(f, skin, armR * 0.96, fl + armR * 0.5, [0, -fl, 0]);
+        if (sl > upLen) C.capsuleAt(f, sleeveC, armR * 1.33, sl - upLen + armR, [0, -(sl - upLen), 0]);
+        hand(f, -fl, side);
+        const sp = mk(s, body, [px, shoulderY, 0]);
+        parts[side < 0 ? 'armL' : 'armR'] = sp;
+        parts[side < 0 ? 'foreL' : 'foreR'] = mk(f, sp, [0, -upLen, 0]);
+      } else {
+        C.capsuleAt(s, skin, armR, armLen, [0, -armLen, 0]);
+        if (sleeveLen > 0) C.capsuleAt(s, sleeveC, armR * 1.35, armLen * sleeveLen * 0.92, [0, -armLen * sleeveLen * 0.92, 0]);
+        hand(s, -armLen, side);
+        parts[side < 0 ? 'armL' : 'armR'] = mk(s, body, [px, shoulderY, 0]);
+      }
     }
 
     // Head
@@ -471,45 +530,110 @@
   };
 
   // ---------- Animation ----------
+  // How each kind of character carries themselves. slouch: forward hunch. bounce: how
+  // springy the step is. swing: arm swing. stride: leg swing. jitter: nervous fidgeting.
+  // carry: elbow bend while holding a gun. march: stiff straight-armed walk.
+  const GAITS = {
+    genius:     { slouch: 0.12, bounce: 0.7, swing: 0.55, stride: 0.85, jitter: 0, carry: 0.5, headDown: 0.12 },
+    sidekick:   { slouch: 0.07, bounce: 1.25, swing: 0.6, stride: 0.95, jitter: 1, carry: 0.7 },
+    teen:       { slouch: 0, bounce: 1.1, swing: 0.75, stride: 1.0, jitter: 0, carry: 0.6 },
+    surgeon:    { slouch: -0.02, bounce: 0.9, swing: 0.6, stride: 0.95, jitter: 0, carry: 0.6 },
+    joe:        { slouch: 0.05, bounce: 0.85, swing: 0.8, stride: 0.85, jitter: 0.4, carry: 0.5 },
+    birdfolk:   { slouch: -0.05, bounce: 0.8, swing: 0.4, stride: 1.1, jitter: 0, carry: 0.3 },
+    trooper:    { slouch: -0.04, bounce: 0.6, swing: 0.3, stride: 1.0, jitter: 0, carry: 0.9, march: 1 },
+    meeseeks:   { slouch: -0.06, bounce: 1.6, swing: 1.0, stride: 1.0, jitter: 0, carry: 0.4 },
+    evilmorty:  { slouch: 0.02, bounce: 0.7, swing: 0.35, stride: 0.9, jitter: 0, carry: 0.8 },
+    picklerick: { slouch: 0, bounce: 1.4, swing: 1.0, stride: 1.2, jitter: 0, carry: 0.5 },
+    squanchy:   { slouch: 0.08, bounce: 1.1, swing: 0.7, stride: 1.0, jitter: 0.2, carry: 0.5 },
+  };
+  const BASE_GAIT = { slouch: 0.03, bounce: 1, swing: 0.7, stride: 1, jitter: 0, carry: 0.55 };
   const lerp = (a, b, k) => a + (b - a) * k;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   function animate(av, dt, st) {
-    const p = av.parts;
+    const p = av.parts, G = av.gait || (av.gait = Object.assign({}, BASE_GAIT, GAITS[av.arch]));
     av.t += dt;
-    const k = Math.min(1, (st.speed || 0) / 5);
-    av.phase += (st.speed || 0) * dt * 1.7;
-    const sw = Math.sin(av.phase);
+    const speed = st.speed || 0;
+    const k = Math.min(1, speed / 4.5);                  // walking
+    const run = clamp((speed - 4.5) / 4, 0, 1);         // running on top of that
+    av.phase += speed * dt * (1.55 - run * 0.25) / Math.max(0.7, G.stride);
+    const ph = av.phase, sw = Math.sin(ph), cw = Math.cos(ph);
     const anim = st.anim || 0;
     const dead = anim === MM.ANIM.dead;
     const air = anim === MM.ANIM.air, fly = anim === MM.ANIM.fly, emote = anim === MM.ANIM.emote;
-    const f = Math.min(1, dt * 12);
-    let lL = sw * 0.9 * k, lR = -sw * 0.9 * k, aL = -sw * 0.7 * k, aR = sw * 0.7 * k, aLz = 0.08, aRz = -0.08, tilt = k * 0.12, bob = Math.abs(sw) * 0.06 * k;
-    if (air) { lL = -0.7; lR = 0.35; aL = -0.4; aR = -0.4; aLz = 0.9; aRz = -0.9; bob = 0; }
-    if (fly) { lL = 0.3; lR = 0.4; aL = 0.2; aR = 0.2; tilt = 0.5; bob = 0; }
-    if (emote) { aRz = -2.7 + Math.sin(av.t * 12) * 0.35; aR = 0; }
-    if (!air && !fly && k < 0.05) { aLz = 0.08 + Math.sin(av.t * 2) * 0.03; aRz = -aLz; bob = Math.sin(av.t * 2) * 0.012; }
+    const f = Math.min(1, dt * 14);
+    const ground = !air && !fly && !dead;
+
+    // Turning: lean into it a little.
+    const yaw = av.root.rotation.y;
+    let dy = yaw - (av.lastYaw === undefined ? yaw : av.lastYaw);
+    if (dy > Math.PI) dy -= Math.PI * 2; else if (dy < -Math.PI) dy += Math.PI * 2;
+    av.lastYaw = yaw;
+    av.turn = lerp(av.turn || 0, clamp(dy / Math.max(dt, 1e-3), -6, 6), Math.min(1, dt * 6));
+
+    // Legs: hip swing plus a knee that lifts the foot while it swings forward.
+    const stride = 0.75 * G.stride * (k + run * 0.35);
+    let lL = sw * stride, lR = -sw * stride;
+    let kL = Math.max(0, -cw) * (0.9 + run * 0.7) * k + 0.08 * k, kR = Math.max(0, cw) * (0.9 + run * 0.7) * k + 0.08 * k;
+    // Arms swing against the legs; when running, elbows bend and pump.
+    const swing = 0.6 * G.swing * (k + run * 0.5) * (G.march ? 0.5 : 1);
+    let aL = -sw * swing, aR = sw * swing * 0.6, aLz = 0.1, aRz = -0.1;
+    let eL = -(0.15 + run * 1.0) * (G.march ? 0.2 : 1), eR = -G.carry - run * 0.4;
+    let tilt = G.slouch + k * 0.08 + run * 0.16, roll = 0;
+    let bob = (Math.abs(cw) * 0.07 * k + run * Math.abs(cw) * 0.05) * G.bounce - 0.02 * k;
+    let twist = sw * 0.1 * k * (G.march ? 0.3 : 1), headY = 0, headX = G.headDown || 0;
+    roll = clamp(-av.turn * 0.025, -0.18, 0.18) * (0.3 + k) + sw * 0.03 * k;
+    // Standing still: breathing, a slow weight shift, now and then a look around.
+    if (ground && k < 0.05) {
+      const br = Math.sin(av.t * 2.1);
+      aLz = 0.1 + br * 0.025; aRz = -aLz; bob = br * 0.01;
+      lL = 0.02; lR = -0.04; kL = 0.04; kR = 0.08;
+      roll = Math.sin(av.t * 0.7) * 0.025;
+      if (av.t > (av.lookAt || 0)) { av.lookAt = av.t + 3 + Math.random() * 5; av.lookTo = (Math.random() - 0.5) * 1.2; }
+      headY = lerp(p.head.rotation.y, av.lookTo || 0, Math.min(1, dt * 2));
+      if (G.jitter) { headY += Math.sin(av.t * 9) * 0.03 * G.jitter; aL += Math.sin(av.t * 5.3) * 0.05 * G.jitter; }
+    }
+    if (air) { lL = -0.8; lR = 0.25; kL = 1.1; kR = 0.5; aL = -0.5; aR = -0.6; aLz = 0.8; aRz = -0.8; eL = -0.6; bob = 0; tilt = G.slouch - 0.05; }
+    if (fly) { lL = 0.25; lR = 0.4; kL = 0.5; kR = 0.7; aL = 0.3; aR = 0.2; eL = -0.2; tilt = 0.55; bob = Math.sin(av.t * 3) * 0.05; }
+    if (emote) { aRz = -2.6 + Math.sin(av.t * 12) * 0.3; aR = 0; eR = -0.5 + Math.sin(av.t * 12) * 0.4; headY = Math.sin(av.t * 6) * 0.25; }
+    // Shooting: the gun arm snaps up to aim and kicks back. Melee: a big swing.
     if (av.attackT > 0) {
       av.attackT -= dt;
-      const melee = MM.WEAPONS[MM.ARCHETYPES[av.arch].weapon].melee;
-      aR = melee ? lerp(-2.4, 0.6, 1 - av.attackT / 0.3) : -1.5;
+      const melee = MM.WEAPONS[MM.ARCHETYPES[av.arch] ? MM.ARCHETYPES[av.arch].weapon : 'blaster'].melee;
+      const u = 1 - Math.max(0, av.attackT) / 0.3;
+      if (melee) { aR = lerp(-2.6, 0.7, u); eR = lerp(-1.2, -0.1, u); twist = lerp(0.5, -0.4, u); }
+      else { aR = -1.45 - Math.sin(u * Math.PI) * 0.25; eR = -0.05 - Math.sin(u * Math.PI) * 0.35; twist = -0.15; }
     }
-    p.legL.rotation.x = lerp(p.legL.rotation.x, lL, f);
-    p.legR.rotation.x = lerp(p.legR.rotation.x, lR, f);
-    p.armL.rotation.x = lerp(p.armL.rotation.x, aL, f);
-    p.armR.rotation.x = av.attackT > 0 ? aR : lerp(p.armR.rotation.x, aR, f);
-    p.armL.rotation.z = lerp(p.armL.rotation.z, aLz, f);
-    p.armR.rotation.z = lerp(p.armR.rotation.z, aRz, f);
+    // Landing squash and take-off stretch.
+    if (av.wasAir && ground) av.squash = 1;
+    if (!av.wasAir && air) av.stretch = 1;
+    av.wasAir = air;
+    av.squash = Math.max(0, (av.squash || 0) - dt * 5);
+    av.stretch = Math.max(0, (av.stretch || 0) - dt * 4);
+    if (av.squash > 0) { kL += av.squash * 0.7; kR += av.squash * 0.7; lL -= av.squash * 0.35; lR -= av.squash * 0.35; bob -= av.squash * 0.12; }
+
+    const set = (o, ax, v, sharp) => { if (o) o.rotation[ax] = sharp ? v : lerp(o.rotation[ax], v, f); };
+    set(p.legL, 'x', lL); set(p.legR, 'x', lR);
+    set(p.shinL, 'x', kL); set(p.shinR, 'x', kR);
+    set(p.armL, 'x', aL); set(p.armR, 'x', aR, av.attackT > 0);
+    set(p.foreL, 'x', eL); set(p.foreR, 'x', eR, av.attackT > 0);
+    set(p.armL, 'z', aLz); set(p.armR, 'z', aRz);
+    set(p.torso, 'y', twist);
     if (p.wingL) {
       const flap = fly ? Math.sin(av.t * 14) * 0.8 : air ? Math.sin(av.t * 8) * 0.4 : Math.sin(av.t * 1.5) * 0.08;
       p.wingL.rotation.z = -0.2 + flap; p.wingR.rotation.z = 0.2 - flap;
       p.wingL.rotation.y = fly ? 0 : 0.6; p.wingR.rotation.y = fly ? 0 : -0.6;
     }
-    p.head.rotation.y = emote ? Math.sin(av.t * 6) * 0.3 : 0;
+    p.head.rotation.y = lerp(p.head.rotation.y, headY - twist * 0.6, f);
     if (av.jet) { av.jet.flame.visible = fly; av.jet.flame.scale.y = 0.8 + Math.random() * 0.4; }
-    if (av.inShip) { p.legL.rotation.x = p.legR.rotation.x = 0; tilt = 0; bob = Math.sin(av.t * 3) * 0.05; if (av.ship) av.ship.rotation.y += 0.02; }
+    if (av.inShip) { set(p.legL, 'x', 0); set(p.legR, 'x', 0); set(p.shinL, 'x', 0.1); set(p.shinR, 'x', 0.1); tilt = 0; roll = clamp(-av.turn * 0.05, -0.3, 0.3); bob = Math.sin(av.t * 3) * 0.05; if (av.ship) av.ship.rotation.y += 0.02; }
     if (dead) av.deadT = Math.min(1, av.deadT + dt * 3); else av.deadT = Math.max(0, av.deadT - dt * 4);
-    av.body.rotation.x = lerp(av.body.rotation.x, tilt, f) * (1 - av.deadT) - av.deadT * 1.45;
-    av.body.position.y = lerp(av.body.position.y, bob, f) * (1 - av.deadT) + av.deadT * 0.25;
-    av.body.position.z = -av.deadT * 0.6;
+    const D = av.deadT;
+    av.body.rotation.x = lerp(av.body.rotation.x, tilt, f) * (1 - D) - D * 1.45;
+    av.body.rotation.z = lerp(av.body.rotation.z, roll, f) * (1 - D);
+    av.body.position.y = lerp(av.body.position.y, bob, f) * (1 - D) + D * 0.25;
+    av.body.position.z = -D * 0.6;
+    const sq = av.squash * 0.14 - av.stretch * 0.1;
+    av.body.scale.set(1 + sq * 0.6, 1 - sq, 1 + sq * 0.6);
     // Effects
     const fx = st.fx || 0;
     const sc = (fx & 8) ? 0.5 : 1;
@@ -517,14 +641,15 @@
     av.root.visible = !(fx & 32) || Math.floor(av.t * 8) % 2 === 0 || dead;
     if (fx & 1) {
       if (!av.shield) {
-        av.shield = new T.Mesh(new T.SphereGeometry(1.25, 16, 12), new T.MeshBasicMaterial({ color: '#7ff6ff', transparent: true, opacity: 0.25, depthWrite: false }));
+        av.shield = new T.Mesh(new T.SphereGeometry(1.25, 24, 16), new T.MeshBasicMaterial({ color: '#7ff6ff', transparent: true, opacity: 0.25, depthWrite: false }));
         av.shield.position.y = 1;
         av.root.add(av.shield);
       }
       av.shield.visible = true;
-      av.shield.material.opacity = 0.2 + Math.sin(av.t * 10) * 0.05;
+      av.shield.material.opacity = 0.18 + Math.sin(av.t * 10) * 0.05;
+      av.shield.scale.setScalar(1 + Math.sin(av.t * 6) * 0.03);
     } else if (av.shield) av.shield.visible = false;
-    if (fx & 4) { p.head.rotation.x = 0.4 + Math.sin(av.t * 20) * 0.05; } else p.head.rotation.x = 0;
+    p.head.rotation.x = (fx & 4) ? 0.4 + Math.sin(av.t * 20) * 0.05 : lerp(p.head.rotation.x, headX - tilt * 0.5, f);
   }
 
   // ---------- Gear: built wings, jetpack, ship ----------

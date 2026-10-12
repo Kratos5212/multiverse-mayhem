@@ -1820,6 +1820,24 @@
   }
 
   // ---------- Terrain ----------
+  // A hand-painted grain laid over the ground colours: short brush strokes and specks,
+  // almost white so it only shades the colour a little, tiled every few metres.
+  const grain = (function () {
+    const N = 256, cv = document.createElement('canvas'); cv.width = cv.height = N;
+    const g = cv.getContext('2d'), r = MM.rng(4242);
+    g.fillStyle = '#f4f4f4'; g.fillRect(0, 0, N, N);
+    for (let i = 0; i < 900; i++) {
+      const x = r() * N, y = r() * N, l = 3 + r() * 7, a = -1.2 - r() * 0.7, v = 190 + Math.floor(r() * 45);
+      g.strokeStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; g.lineWidth = 1 + r() * 1.4; g.lineCap = 'round';
+      for (const dx of [0, -N, N]) for (const dy of [0, -N, N]) { g.beginPath(); g.moveTo(x + dx, y + dy); g.lineTo(x + dx + Math.cos(a) * l, y + dy + Math.sin(a) * l); g.stroke(); }
+    }
+    for (let i = 0; i < 500; i++) { const v = 255 - Math.floor(r() * 25); g.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; g.fillRect(r() * N, r() * N, 2, 2); }
+    const t = new T.CanvasTexture(cv);
+    t.wrapS = t.wrapT = T.RepeatWrapping;
+    t.anisotropy = 4;
+    return t;
+  })();
+  const terrainMat = new T.MeshToonMaterial({ vertexColors: true, gradientMap: C.gradientMap, map: grain });
   function makeTerrain(dim) {
     const size = MM.WORLD_HALF * 2 + 120, seg = 150;
     const g = new T.PlaneGeometry(size, size, seg, seg);
@@ -1854,7 +1872,10 @@
     }
     g.setAttribute('color', new T.BufferAttribute(cols, 3));
     g.computeVertexNormals();
-    const m = new T.Mesh(g, C.toonMat);
+    // Tile the grain about every 5 m.
+    const uv = g.attributes.uv, rep = size / 5;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * rep, uv.getY(i) * rep);
+    const m = new T.Mesh(g, terrainMat);
     return m;
   }
 

@@ -110,6 +110,37 @@
       this.rings.push({ m: ring, t: 0, life: 0.45, r });
     }
 
+    // A flat ring that races out along the ground (slams, dives, heals).
+    shockwave(x, y, z, color, radius, life, thick) {
+      const inner = 1 - (thick || 0.18);
+      const ring = new T.Mesh(new T.RingGeometry(inner, 1, 48), new T.MeshBasicMaterial({ color, transparent: true, side: T.DoubleSide, depthWrite: false, blending: T.AdditiveBlending }));
+      ring.rotation.x = -Math.PI / 2; ring.position.set(x, y + 0.15, z);
+      this.scene.add(ring);
+      this.rings.push({ m: ring, t: 0, life: life || 0.5, r: radius / 1.3, from: 0.3 });
+    }
+    // A see-through bubble that swells and fades (shields, time stops, camera flashes).
+    dome(x, y, z, color, radius, life, opacity) {
+      const m = new T.Mesh(new T.SphereGeometry(1, 28, 18), new T.MeshBasicMaterial({ color, transparent: true, opacity: opacity || 0.35, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending }));
+      m.position.set(x, y, z);
+      this.scene.add(m);
+      this.rings.push({ m, t: 0, life: life || 0.6, r: radius / 1.3, dome: true, op: opacity || 0.35 });
+    }
+    // A column of light (healing, Meeseeks popping in, assimilation).
+    pillar(x, y, z, color, height, radius, life) {
+      const m = new T.Mesh(new T.CylinderGeometry(radius, radius * 1.3, height, 20, 1, true), new T.MeshBasicMaterial({ color, transparent: true, opacity: 0.5, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending }));
+      m.position.set(x, y + height / 2, z);
+      this.scene.add(m);
+      this.rings.push({ m, t: 0, life: life || 0.8, pillar: true });
+    }
+    // Particles that stream along a direction (stun cuffs, speed lines).
+    cone(x, y, z, dx, dz, color, n, range, spread) {
+      for (let i = 0; i < n; i++) {
+        const a = (Math.random() - 0.5) * spread, c = Math.cos(a), s = Math.sin(a);
+        const vx = (dx * c - dz * s) * range * (0.8 + Math.random() * 0.6), vz = (dx * s + dz * c) * range * (0.8 + Math.random() * 0.6);
+        this.glow.emit(x, y + (Math.random() - 0.5) * 0.6, z, vx * 2.2, (Math.random() - 0.3) * 1.5, vz * 2.2, color, 0.5 + Math.random() * 0.3, 0.35 + Math.random() * 0.2, 0);
+      }
+    }
+
     shot(e, colors) {
       const color = colors[e.w] || '#ffffff';
       const g = new T.Group();
@@ -145,8 +176,9 @@
         const r = this.rings[i];
         r.t += dt;
         const k = r.t / r.life;
-        r.m.scale.setScalar(0.5 + k * r.r * 1.3);
-        r.m.material.opacity = 1 - k;
+        if (r.pillar) { r.m.scale.set(1 - k * 0.5, 1 + k * 0.3, 1 - k * 0.5); r.m.material.opacity = 0.5 * (1 - k); }
+        else if (r.dome) { r.m.scale.setScalar(0.3 + Math.sqrt(k) * r.r * 1.3); r.m.material.opacity = r.op * (1 - k); }
+        else { r.m.scale.setScalar((r.from || 0.5) + (1 - (1 - k) * (1 - k)) * r.r * 1.3); r.m.material.opacity = 1 - k; }
         if (k >= 1) { this.scene.remove(r.m); r.m.geometry.dispose(); r.m.material.dispose(); this.rings.splice(i, 1); }
       }
     }

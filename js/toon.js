@@ -17,18 +17,27 @@
   C.glowMat = new T.MeshBasicMaterial({ vertexColors: true, fog: true });
 
   // Outline: the back faces of the mesh, pushed out along smoothed normals and drawn black.
+  // The shell is also nudged away from the camera (C.outlineDepth x its thickness), so only
+  // real silhouettes and real steps get a line: the shells of pieces sitting just under a
+  // surface (a hair cap under the forehead, eyelids on an eye) stay hidden behind it.
+  C.outlineDepth = 1.6;
   const outlineCache = {};
   C.outlineMat = function (thick, color) {
     const key = thick + ':' + (color || '#1d1813');
     if (outlineCache[key]) return outlineCache[key];
     const m = new T.MeshBasicMaterial({ color: color || '#1d1813', side: T.BackSide, fog: true });
+    // Characters (thin lines) hide every inner shell; props keep the steps that stand out
+    // further (window frames, trim) for a hand-inked look.
+    const depth = thick * (thick < 0.045 ? C.outlineDepth : C.outlineDepth * 0.35);
     m.onBeforeCompile = sh => {
       sh.uniforms.uThick = { value: thick };
+      sh.uniforms.uDepth = { value: depth };
       sh.vertexShader = sh.vertexShader
-        .replace('#include <common>', '#include <common>\nattribute vec3 onrm;\nuniform float uThick;')
-        .replace('#include <begin_vertex>', 'vec3 transformed = vec3(position) + onrm * uThick;');
+        .replace('#include <common>', '#include <common>\nattribute vec3 onrm;\nuniform float uThick;\nuniform float uDepth;')
+        .replace('#include <begin_vertex>', 'vec3 transformed = vec3(position) + onrm * uThick;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nmvPosition.z -= uDepth;\ngl_Position = projectionMatrix * mvPosition;');
     };
-    m.customProgramCacheKey = () => 'outline' + thick;
+    m.customProgramCacheKey = () => 'outline' + thick + ':' + depth;
     outlineCache[key] = m;
     return m;
   };

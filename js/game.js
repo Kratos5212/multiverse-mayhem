@@ -371,6 +371,96 @@
     const p = G.players.get(id); if (p) return p;
     return null;
   }
+  // What each character's ability looks like. Every one is different, and each matches
+  // its lore: Rick's force field, Summer's phone flash, Beth's surgery, a bird person's dive.
+  function abilityFx(a, p, id) {
+    const x = p.x, y = p.y, z = p.z, yaw = p.r !== undefined ? p.r : p.yaw || 0;
+    const fx2 = Math.sin(yaw), fz2 = Math.cos(yaw), mine = id === G.myId;
+    const near = Math.hypot(x - G.me.x, z - G.me.z);
+    switch (a) {
+      case 'shield':
+        fx.dome(x, y + 1, z, '#7ff6ff', 2.2, 0.45, 0.5);
+        fx.burst(x, y + 1, z, '#bffcff', 30, 6, 0.5, 0.5, 0);
+        break;
+      case 'sprint':
+        fx.puff(x - fx2, y + 0.2, z - fz2, '#e8e2d4', 12, 1.2, 1.1, 0.7);
+        fx.burst(x, y + 2.1, z, '#7fc8ff', 6, 2.5, 0.35, 0.6, 14);   // sweat drops
+        break;
+      case 'flash':
+        fx.dome(x + fx2, y + 1.5, z + fz2, '#ffffff', 8, 0.35, 0.8);
+        fx.burst(x + fx2 * 0.6, y + 1.6, z + fz2 * 0.6, '#ffffff', 40, 12, 0.9, 0.3, 0);
+        if (near < 8 && !mine) screenFlash('#ffffff', 0.9, 450);
+        break;
+      case 'patch':
+        fx.shockwave(x, y, z, '#7dff9a', 8, 0.7);
+        fx.pillar(x, y, z, '#7dff9a', 3, 0.8, 0.9);
+        for (let i = 0; i < 6; i++) setTimeout(() => fx.burst(x + (Math.random() - 0.5) * 1.5, y + 0.6, z + (Math.random() - 0.5) * 1.5, '#b8ffcc', 4, 1.5, 0.5, 0.9, -3), i * 90);
+        break;
+      case 'sob':
+        fx.puff(x, y + 3.0, z, '#6a7a8a', 8, 1.2, 1.4, 2.4);    // a little rain cloud
+        for (let i = 0; i < 10; i++) setTimeout(() => fx.burst(x + (Math.random() - 0.5) * 1.2, y + 2.8, z + (Math.random() - 0.5) * 1.2, '#7fc8ff', 3, 0.5, 0.3, 0.8, 14), i * 220);
+        break;
+      case 'dive':
+        fx.shockwave(x, y, z, '#ffd84d', 5.5, 0.45, 0.3);
+        fx.burst(x, y + 0.5, z, '#f0d0a0', 30, 8, 0.5, 0.8, 10);     // feathers
+        fx.puff(x, y + 0.2, z, '#c8b898', 14, 3, 1.4, 0.9);
+        if (near < 12) G.shake = Math.max(G.shake || 0, 0.35 * (1 - near / 12));
+        break;
+      case 'slam':
+        fx.shockwave(x, y, z, '#ff9b4d', 6.5, 0.5, 0.35);
+        fx.shockwave(x, y, z, '#ffffff', 4, 0.3, 0.15);
+        fx.puff(x, y + 0.2, z, '#9a8a72', 20, 4, 1.6, 1.1);
+        fx.burst(x, y + 0.3, z, '#6a5a44', 20, 9, 0.4, 0.9, 22);
+        if (near < 14) G.shake = Math.max(G.shake || 0, 0.5 * (1 - near / 14));
+        break;
+      case 'cheer':
+        fx.shockwave(x, y, z, '#ffe066', 10, 0.8);
+        fx.burst(x, y + 1.5, z, '#7dff9a', 40, 7, 0.7, 0.9, -2);
+        fx.burst(x, y + 1.8, z, '#ffd84d', 20, 5, 0.5, 1.0, -1);
+        sfxAt('cheer', x, z);
+        break;
+      case 'cuff':
+        fx.cone(x + fx2 * 0.8, y + 1.2, z + fz2 * 0.8, fx2, fz2, '#5fb4ff', 40, 3, 1.2);
+        fx.burst(x + fx2 * 3, y + 1.2, z + fz2 * 3, '#bfe0ff', 12, 3, 0.5, 0.4, 0);
+        break;
+      case 'summon':
+        for (const s of [-1, 1]) { const ax = x + Math.cos(yaw) * 1.2 * s + fx2 * 0.9, az = z - Math.sin(yaw) * 1.2 * s + fz2 * 0.9; fx.puff(ax, y + 0.6, az, '#bfe8ff', 10, 1, 1.2, 0.8); fx.burst(ax, y + 1.2, az, '#7ec8f0', 20, 5, 0.5, 0.5, 4); }
+        break;
+      case 'rage':
+        fx.dome(x, y + 1, z, '#ff4d4d', 3, 0.5, 0.45);
+        fx.burst(x, y + 1.2, z, '#ff6a3a', 50, 9, 0.7, 0.7, 2);
+        fx.puff(x, y + 0.5, z, '#5a2a2a', 10, 1.5, 1.2, 0.8);
+        break;
+      case 'scheme':
+        fx.puff(x, y + 0.8, z, '#1a1a22', 24, 1.6, 1.6, 1.0);
+        fx.burst(x, y + 1, z, '#ff5a3a', 10, 3, 0.35, 0.5, 0);
+        break;
+      case 'assimilate':
+        fx.shockwave(x, y, z, '#5fd6b0', 10, 0.9, 0.12);
+        fx.pillar(x, y, z, '#5fd6b0', 4, 1.0, 1.0);
+        break;
+      case 'roll':
+        fx.burst(x, y + 0.5, z, '#7cbf3a', 30, 6, 0.5, 0.6, 8);
+        fx.puff(x, y + 0.2, z, '#c8d8a0', 10, 1.2, 1.0, 0.6);
+        break;
+    }
+  }
+  // Effects that last while an ability does: dust behind a panicking Morty, smoke around a
+  // vanished Evil Morty, sparks off a raging Squanchy, frost on the cuffed.
+  function ongoingFx(p, b, speed, dt) {
+    if (!b) return;
+    const r = Math.random(), y = p.y;
+    if ((b & 2) && speed > 2 && r < dt * 25) fx.puff(p.x, y + 0.15, p.z, '#e8e2d4', 1, 0.5, 0.7, 0.5);
+    if ((b & 2048) && r < dt * 12) fx.puff(p.x, y + 1, p.z, '#22222a', 1, 1, 0.8, 0.6);
+    if ((b & 1024) && r < dt * 10) fx.burst(p.x, y + 1.2, p.z, '#bfe0ff', 2, 1.5, 0.3, 0.5, 0);
+    if ((b & 256) && r < dt * 8) fx.burst(p.x, y + 2.1, p.z, '#ffe066', 2, 1.2, 0.3, 0.6, -1);   // seeing stars
+  }
+  function screenFlash(color, op, ms) {
+    const f = $('whiteflash');
+    if (!f) return;
+    f.style.transition = 'none'; f.style.background = color; f.style.opacity = String(op);
+    requestAnimationFrame(() => { f.style.transition = 'opacity ' + ms + 'ms ease-out'; f.style.opacity = '0'; });
+  }
   function sfxAt(name, x, z, base) {
     const d = Math.hypot(x - G.me.x, z - G.me.z);
     C.sfx(name, (base || 1) * Math.max(0, 1 - d / 70));
@@ -442,6 +532,7 @@
       case 'hit': fx.hit(e.id, e.x, e.y, e.z); break;
       case 'boom': {
         fx.explosion(e.x, e.y, e.z, e.r);
+        { const dd = Math.hypot(e.x - G.me.x, e.z - G.me.z); if (dd < e.r * 4) G.shake = Math.max(G.shake || 0, 0.45 * (1 - dd / (e.r * 4))); }
         sfxAt('boom', e.x, e.z, Math.min(1, e.r / 6));
         const d = Math.hypot(e.x - me.x, e.z - me.z);
         if (d < 25) G.shake = Math.max(G.shake, (1 - d / 25) * 0.6 * Math.min(1, e.r / 5));
@@ -452,6 +543,7 @@
         if (e.p === G.myId) {
           $('flash').style.opacity = '1'; setTimeout(() => { $('flash').style.opacity = '0'; }, 120);
           C.sfx('hurt', 0.8);
+          if (e.d >= 15) G.shake = Math.max(G.shake || 0, Math.min(0.4, e.d / 60));
           numAt(me.x, me.y + 2.2, me.z, '-' + e.d, '#ff5a5a', false);
         } else {
           const at = e.p ? G.players.get(e.p) : G.npcs.get(e.n);
@@ -497,9 +589,7 @@
         const p = posOf(e.id);
         if (!p) break;
         if (e.id !== G.myId) sfxAt('ability', p.x, p.z, 0.7);
-        if (e.a === 'cheer') { fx.burst(p.x, p.y + 1.5, p.z, '#7dff9a', 40, 7, 0.7, 0.9, -2); sfxAt('cheer', p.x, p.z); }
-        if (e.a === 'sob') fx.burst(p.x, p.y + 2, p.z, '#7fc8ff', 25, 4, 0.4, 1.0, 10);
-        if (e.a === 'sprint') fx.puff(p.x, p.y + 0.3, p.z, '#ffffff', 8, 0.8, 1, 0.6);
+        abilityFx(e.a, p, e.id);
         break;
       }
       case 'em': { const p = G.players.get(e.id); if (p) p.emoteT = 2; break; }
@@ -590,7 +680,7 @@
     G.you = y;
     const A = MM.ARCHETYPES[profile.arch];
     $('hpFill').style.transform = 'scaleX(' + Math.max(0, y.hp / y.max) + ')';
-    $('hpFill').style.background = y.hp / y.max > 0.5 ? 'var(--portal)' : y.hp / y.max > 0.25 ? 'var(--gold)' : 'var(--red)';
+    $('hpFill').dataset.lvl = y.hp / y.max > 0.5 ? 'ok' : y.hp / y.max > 0.25 ? 'mid' : 'low';
     $('hpText').textContent = Math.max(0, y.hp) + ' / ' + y.max;
     for (const k of MM.MAT_IDS) $('mat-' + k).textContent = y.inv[k] || 0;
     $('charges').textContent = y.chMax ? 'Portal ' + '●'.repeat(y.ch) + '○'.repeat(Math.max(0, y.chMax - y.ch)) : 'No portal gun';
@@ -674,7 +764,8 @@
     bar.textContent = '';
     const A = MM.ARCHETYPES[profile.arch];
     const mk = (id, key, label, onclick) => {
-      const s = el('button', { class: 'slot pe', onclick }, el('span', { class: 'k', text: isTouch ? '' : key }), el('span', { text: label }), el('span', { class: 'n' }), el('i', { class: 'cd', style: 'transform:scaleY(0)' }));
+      const s = el('button', { class: 'slot pe s-' + id, onclick, title: label + (isTouch ? '' : ' (' + key + ')'), 'aria-label': label },
+        el('i', { class: 'cd' }), UI.icon(id), el('span', { class: 'l', text: label }), el('span', { class: 'k', text: isTouch ? '' : key }), el('span', { class: 'n' }));
       bar.append(s); slots[id] = s;
     };
     mk('grenade', '1', 'Grenade', () => useGadget('grenade'));
@@ -690,22 +781,26 @@
     $('flyBar').hidden = !(G.st && G.st.fly);
     updateHotbar();
   }
+  // Touch buttons: an icon, a short label and (for some) a count or a cooldown sweep.
+  function tLabel(id, text) { const b = $(id), l = b && b.querySelector('.l'); if (l) l.textContent = text; }
   function updateHotbar() {
     const y = G.you;
     if (!y || !slots.grenade) return;
     for (const g of MM.GADGET_IDS) {
       slots[g].querySelector('.n').textContent = y.inv[g] || '';
       slots[g].classList.toggle('off', !(y.inv[g] > 0));
+      slots[g].classList.toggle('empty', !(y.inv[g] > 0));
     }
     // Only Ricks and Evil Morty know how to make a Time Crystal: no slot for everyone else.
     slots.timecrystal.hidden = !(y.inv.timecrystal > 0) && !!(G.prog && MM.canKnow(profile.arch, G.prog, 'timecrystal'));
     const st = G.st;
     slots.portal.querySelector('.n').textContent = y.chMax ? String(y.ch) : y.bor ? String(y.bor) : '';
+    $('tPortal').querySelector('.n').textContent = slots.portal.querySelector('.n').textContent;
     slots.portal.classList.toggle('off', !(y.chMax && y.ch > 0) && !(y.bor > 0) && !nearKiosk() && !y.ship);
     slots.ship.hidden = !(st && st.ship);
     slots.ship.querySelector('span:nth-child(2)').textContent = y.ship ? 'Land' : 'Ship';
     $('tShip').hidden = !(st && st.ship);
-    $('tShip').textContent = y.ship ? 'LAND' : 'SHIP';
+    tLabel('tShip', y.ship ? 'LAND' : 'SHIP');
   }
 
   // ---------- Actions ----------
@@ -1182,6 +1277,7 @@
     const up = () => { touch[key] = false; };
     b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
   };
+  for (const b of document.querySelectorAll('#tbtns button[data-i]')) b.prepend(UI.icon(b.dataset.i));
   hold('tFire', 'fire'); hold('tJump', 'jump');
   $('tAb').addEventListener('pointerdown', () => ability());
   $('tPortal').addEventListener('pointerdown', () => portalAction());
@@ -1294,6 +1390,7 @@
       G.meAv.root.position.set(me.x, me.y, me.z);
       G.meAv.root.rotation.y = me.yaw;
       G.meAv.animate(dt, { speed: me.grounded ? hs : 0, anim: me.anim, fx: fxb });
+      if (!firstPerson()) ongoingFx(me, fxb, me.grounded ? hs : 0, dt);
       G.meAv.body.visible = !firstPerson() || dead;
       vm.bob += (me.grounded && !inShip ? hs : 0) * dt * 1.6; vm.speed = me.grounded && !inShip ? Math.min(1, hs / 5) : 0;
     }
@@ -1316,21 +1413,25 @@
         $('tTalk').hidden = !key;
         $('prompt').textContent = '';
         const b = el('b', { text: isTouch ? 'TALK' : 'F' });
-        if (n) { $('prompt').append(b, ' Talk to ' + n.name); $('tTalk').textContent = 'TALK'; }
+        if (n) { $('prompt').append(b, ' Talk to ' + n.name); tLabel('tTalk', 'TALK'); }
         else if (l) {
           const dest = l.door ? MM.DIM_BY_ID[l.door.dim].name : '';
           $('prompt').append(b, ' ' + (l.door ? (dest === l.name ? 'Enter ' + dest : l.name + ' → ' + dest) : l.name));
-          $('tTalk').textContent = l.door && !tasksAt(l).length ? 'GO' : 'USE';
+          tLabel('tTalk', l.door && !tasksAt(l).length ? 'GO' : 'USE');
         }
-        else if (nk) { $('prompt').append(b, ' ' + MM.kioskOf(G.dimId).name + ': travel to another dimension'); $('tTalk').textContent = 'TRAVEL'; }
+        else if (nk) { $('prompt').append(b, ' ' + MM.kioskOf(G.dimId).name + ': travel to another dimension'); tLabel('tTalk', 'TRAVEL'); }
         updateHotbar();
       }
     }
     // Cooldown shading on the ability slot.
     if (slots.ab && G.abReadyAt !== undefined) {
       const left = Math.max(0, G.abReadyAt - now());
-      slots.ab.querySelector('.cd').style.transform = 'scaleY(' + Math.min(1, left / A.ability.cd) + ')';
+      const pc = (Math.min(1, left / A.ability.cd) * 100).toFixed(1);
+      slots.ab.querySelector('.cd').style.setProperty('--p', pc);
       slots.ab.querySelector('.n').textContent = left > 0 ? Math.ceil(left) : '';
+      const tc = $('tAb').querySelector('.cd'); if (tc) tc.style.setProperty('--p', pc);
+      $('tAb').querySelector('.n').textContent = left > 0 ? Math.ceil(left) : '';
+      $('tAb').classList.toggle('ready', left <= 0);
     }
     if (y && y.dead) {
       const left = Math.max(0, G.rsAt - now());
@@ -1374,6 +1475,7 @@
       if (inShip !== !!p.av.inShip) { C.setShip(p.av, inShip, p.info.gear); collectOutlines(p.av); }
       const anim = s.a === MM.ANIM.dead ? s.a : p.emoteT > 0 ? MM.ANIM.emote : s.a;
       p.av.animate(dt, { speed: s.a === MM.ANIM.run ? Math.max(p.speed, 3) : p.speed * 0.3, anim, fx: s.fx });
+      if (d < 40) ongoingFx(p, s.fx, p.speed, dt);
       p.av.setDetail(nearCam(p.x, p.z));
       const near = d < 40;
       for (const o of p.av.outlines) o.visible = near || settings.quality === 'high';

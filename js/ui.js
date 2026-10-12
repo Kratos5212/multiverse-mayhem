@@ -15,7 +15,31 @@
     for (const k of kids) if (k !== null && k !== undefined) e.append(k);
     return e;
   };
-  const UI = C.UI = { $, el };
+  // Line icons for the hotbar and touch buttons (24x24, drawn with the current colour).
+  const ICONS = {
+    grenade: '<circle cx="11" cy="14" r="6"/><path d="M11 8V5h4M15 5l3-2M8.5 12.5l1 1"/>',
+    turret: '<path d="M4 20h16M7 20l2-6h6l2 6M9 14v-4h6v4M15 11h6"/>',
+    shrink: '<path d="M4 4l6 6M10 5v5H5M20 20l-6-6M14 19v-5h5"/>',
+    meeseeks: '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V8a4 4 0 0 1 8 0v2"/><circle cx="12" cy="15" r="1.6"/>',
+    timecrystal: '<path d="M7 3h10M7 21h10M8 3c0 5 8 6 8 9s-8 4-8 9M16 3c0 5-8 6-8 9s8 4 8 9"/>',
+    craft: '<path d="M15 4a4 4 0 0 0-4 5L4 16a2 2 0 0 0 3 3l7-7a4 4 0 0 0 5-4l-3 1-2-2 1-3z"/>',
+    journal: '<path d="M6 3h11a2 2 0 0 1 2 2v16H8a2 2 0 0 1-2-2zM6 17a2 2 0 0 1 2-2h11M10 7h5"/>',
+    portal: '<path d="M12 12a1 1 0 1 1 1-1 3 3 0 1 1-4 3 5 5 0 1 1 8 -4 7 7 0 1 1-12 5"/>',
+    ship: '<ellipse cx="12" cy="14" rx="9" ry="3"/><path d="M7 13a5 5 0 0 1 10 0M8 18l-1 3M16 18l1 3"/>',
+    ab: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+    fire: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
+    jump: '<path d="M6 13l6-6 6 6M6 19l6-6 6 6"/>',
+    talk: '<path d="M4 5h16v11H9l-5 4z"/>',
+    gadget: '<circle cx="11" cy="14" r="6"/><path d="M11 8V5h4M15 5l3-2"/>',
+  };
+  const icon = name => {
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor');
+    s.setAttribute('stroke-width', '2.2'); s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round'); s.setAttribute('aria-hidden', 'true');
+    s.innerHTML = ICONS[name] || ICONS.ab;   // fixed strings above, never user text
+    return s;
+  };
+  const UI = C.UI = { $, el, icon };
 
   // ---------- Saved settings and profile ----------
   UI.load = function (key, def) {
