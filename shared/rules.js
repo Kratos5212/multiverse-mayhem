@@ -8,6 +8,7 @@
   // Monsters notice you within AGGRO_RANGE metres and stop chasing beyond LEASH of their home.
   // Where a character can start: their home world (and, for some, another place they live).
   MM.startWorlds = arch => { const A = MM.ARCHETYPES[arch]; return (A.homes || [A.home]).filter(d => MM.DIM_BY_ID ? MM.DIM_BY_ID[d] : true); };
+  MM.TEAM_MAX = 8; MM.TEAM_REACH = 14;
   MM.AGGRO_RANGE = 9;
   MM.LEASH = 26;               // protocol version; client and server must match
   MM.TICK = 1 / 30;             // server simulation step (seconds)

@@ -146,7 +146,7 @@
     meAv: null, players: new Map(), npcs: new Map(), pickups: new Map(), portals: new Map(), turrets: new Map(), alive: [],
     vm, camYaw: 0, camPitch: 0.25, camDist: 6, shake: 0,
     offset: null, lastSnap: 0, stT: 0, fireT: 0, pingT: 0, ping: 0, pop: null, top: [],
-    muted: new Set(), deadBy: '', modal: null, entered: false,
+    muted: new Set(), team: new Set(), teamNames: [], deadBy: '', modal: null, entered: false,
     promptT: 0, promptKey: '', camPropT: 0, camProps: [],
   };
   C.G = G; // for debugging from the console
@@ -567,6 +567,21 @@
       if (e.title) fx.burst(me.x, me.y + 1.5, me.z, '#ffd84d', 80, 10, 0.9, 1.2, 2);
     }
     else if (e.k === 'offer') openOffer(e);
+    else if (e.k === 'team') {
+      const was = G.team.size;
+      G.team = new Set(e.ids); G.teamNames = e.names || [];
+      UI.toast(e.ids.length ? 'Team: ' + G.teamNames.join(', ') : was ? 'You left the team.' : '', 3500);
+      if (G.modal === 'board') openBoard();
+    }
+    else if (e.k === 'tminv') {
+      C.sfx('chat', 0.6);
+      openModal('offer', e.name + ' invites you to their team', box => {
+        box.append(el('p', { text: 'Teammates can\'t hurt each other, and when one of you takes a door, a portal station or a ship, the others standing nearby come along. Anyone can follow through an open portal.' }),
+          el('div', { class: 'chips' },
+            el('button', { class: 'btn go', onclick: () => { send({ t: 'tm', op: 'join', id: e.id }); UI.closeModal(); } }, 'Join'),
+            el('button', { class: 'btn', onclick: () => UI.closeModal() }, 'No thanks')));
+      });
+    }
   }
 
   function onYou(y) {
@@ -920,7 +935,7 @@
           const d = MM.DIM_BY_ID[id], n = G.pop ? G.pop.d[id] || 0 : 0, w = why(id);
           list.append(el('div', { class: 'row dim' + (w ? ' locked' : '') },
             el('div', { class: 't' }, el('b', { text: d.name + '  ' + d.code }), el('small', { text: w || d.blurb + ' · ' + n + ' here' })),
-            el('button', { class: 'btn go', disabled: !!w, onclick: () => go(id) }, mode === 'gun' ? 'Open' : mode === 'ship' ? 'Fly' : 'Go')));
+            el('button', { class: 'btn go', disabled: w ? 'disabled' : null, onclick: () => go(id) }, mode === 'gun' ? 'Open' : mode === 'ship' ? 'Fly' : 'Go')));
         }
         box.append(el('h3', { text: outside ? 'Outside the Central Finite Curve' : 'Inside the Central Finite Curve' }), list);
       }
@@ -1011,11 +1026,18 @@
       box.append(el('h3', { text: 'Chaos leaderboard (everyone online)' }));
       const tb = el('table', { class: 'lb' }, el('tr', null, el('th', { text: '#' }), el('th', { text: 'Variant' }), el('th', { text: 'Chaos' }), el('th', { text: 'KOs' }), el('th', { text: 'Where' })));
       G.top.forEach((r, i) => tb.append(el('tr', null, el('td', { text: String(i + 1) }), el('td', { text: r[0] + ' ' + r[1] + (r[5] ? ' (bot)' : '') }), el('td', { text: String(r[2]) }), el('td', { text: String(r[3]) }), el('td', { text: MM.DIM_BY_ID[r[4]] ? MM.DIM_BY_ID[r[4]].name : '' }))));
-      box.append(tb, el('h3', { text: 'In this dimension' }));
+      box.append(tb);
+      if (G.team.size) {
+        box.append(el('h3', { text: 'Your team' }), el('div', { class: 'row' }, el('div', { class: 't' }, el('b', { text: G.teamNames.join(', ') }),
+          el('small', { text: 'Stand close when someone takes a door, station or ship, and you go too.' })),
+          el('button', { class: 'btn', onclick: () => send({ t: 'tm', op: 'leave' }) }, 'Leave')));
+      }
+      box.append(el('h3', { text: 'In this dimension' }));
       const list = el('div', { class: 'list' });
       for (const [id, p] of G.players) {
-        const muted = G.muted.has(id);
-        list.append(el('div', { class: 'row' }, el('div', { class: 't' }, el('b', { text: p.info.name + ' ' + p.info.home }), el('small', { text: archLabel(p.info) })),
+        const muted = G.muted.has(id), mate = G.team.has(id);
+        list.append(el('div', { class: 'row' }, el('div', { class: 't' }, el('b', { text: (mate ? '★ ' : '') + p.info.name + ' ' + p.info.home }), el('small', { text: archLabel(p.info) })),
+          mate ? '' : el('button', { class: 'btn go', onclick: () => { send({ t: 'tm', op: 'inv', id }); } }, 'Invite'),
           el('button', { class: 'btn', onclick: () => { if (muted) G.muted.delete(id); else G.muted.add(id); openBoard(); } }, muted ? 'Unmute' : 'Mute')));
       }
       if (!G.players.size) list.append(el('p', { class: 'note', text: 'Nobody else here right now.' }));
@@ -1336,7 +1358,8 @@
       const sp = Math.hypot(p.x - p.px, p.z - p.pz) / Math.max(dt, 1e-3);
       p.speed += (sp - p.speed) * Math.min(1, dt * 10);
       p.px = p.x; p.pz = p.z;
-      if (s.hp !== p.hp || !!(s.fx & 4096) !== p.tag.fight) { p.hp = s.hp; p.tag.draw(p.hp, !!(s.fx & 4096)); }
+      const mate = G.team.has(p.id);
+      if (s.hp !== p.hp || !!(s.fx & 4096) !== p.tag.fight || mate !== p.tag.mate) { p.hp = s.hp; p.tag.draw(p.hp, !!(s.fx & 4096), mate); }
       p.emoteT = Math.max(0, p.emoteT - dt);
       const d = Math.hypot(p.x - G.me.x, p.z - G.me.z);
       p.av.root.visible = d < fogFar + 10;

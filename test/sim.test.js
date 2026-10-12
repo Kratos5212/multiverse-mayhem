@@ -425,3 +425,28 @@ test('lore travel: no gun, no portal; borrow Rick\'s; stations charge; ships nee
   host.message(em.c, '{"t":"po","d":"cableworld"}');
   assert.ok([...em.p.inst.portals.values()].some(po => po.owner === em.p.id && po.destDim === 'cableworld'));
 });
+
+test('teams: invite, no friendly fire, and teammates come along through doors and ships', () => {
+  const host = new MM.Host();
+  const a = join(host, 'trooper', { dim: 'federation' });
+  const b = join(host, 'trooper', { dim: 'federation' });
+  assert.strictEqual(a.p.inst, b.p.inst);
+  host.message(a.c, JSON.stringify({ t: 'tm', op: 'inv', id: b.p.id }));
+  run(host, 0.1);
+  host.message(b.c, JSON.stringify({ t: 'tm', op: 'join', id: a.p.id }));
+  assert.ok(a.p.team && a.p.team === b.p.team);
+  // Teammates can't hurt each other.
+  const hp = b.p.hp;
+  host.hurtPlayer(b.p.inst, b.p, 20, a.p);
+  assert.strictEqual(b.p.hp, hp);
+  // Fly to the Moon: the teammate standing next to the ship rides along.
+  a.p.prog.up.engine = 1; host.restat(a.p);
+  host.teleport(b.p, a.p.x + 3, a.p.y, a.p.z);
+  host.message(a.c, '{"t":"ship","on":true}');
+  run(host, 0.2);
+  host.message(a.c, '{"t":"drive","d":"moon"}');
+  assert.strictEqual(a.p.inst.dimId, 'moon');
+  assert.strictEqual(b.p.inst, a.p.inst, 'passenger came along');
+  host.message(b.c, JSON.stringify({ t: 'tm', op: 'leave' }));
+  assert.ok(!a.p.team && !b.p.team);
+});

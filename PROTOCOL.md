@@ -55,6 +55,7 @@ Every message is a JSON object with a `t` (type) field. Anything that is not on 
 | `ans` | `a` | Accept (1) or refuse (0) a local's trade offer |
 | `ship` | `on` | Board or leave your ship (must own one) |
 | `drive` | `d` | Fly your ship to `d` (Moon from Earth: any ship; other planets in the universe: Turbo Engine; other dimensions: Dimension Drive; 15 s cooldown) |
+| `tm` | `op`, `id` | Teams: `inv` invites player `id` (same dimension copy), `join` accepts an invite from `id` (valid 60 s), `leave` leaves your team |
 | `pvp` | `on` | Turn fights with other players on or off (on by default; both players must have them on; `hello` carries the starting value) |
 
 `hello` also carries `tok`, the random save token this browser was given (see **Saved progress**).

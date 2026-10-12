@@ -103,6 +103,8 @@
           for (const e of m.l) {
             if (e.k === 'tp') { this.x = e.x; this.y = e.y; this.z = e.z; this.ep = e.ep; this.vy = 0; }
             else if (e.k === 'kb') { this.vy = e.vy; this.kbx = e.vx; this.kbz = e.vz; }
+            // Friendly bots usually say yes to a team invite.
+            else if (e.k === 'tminv' && this.temper.fights !== 'often' && Math.random() < 0.7) setTimeout(() => this.send({ t: 'tm', op: 'join', id: e.id }), 1500 + Math.random() * 2500);
           }
           break;
         case 'y': this.you = m; break;

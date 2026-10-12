@@ -535,6 +535,7 @@
       this.save(p);
       if (p.token && this.tokens.get(p.token) === p) this.tokens.delete(p.token);
       if (p.inst) { p.inst.players.delete(p.id); p.inst.ev({ k: 'leave', id: p.id }); p.inst.emptySince = this.time; }
+      this.leaveTeam(p);
       this.players.delete(p.id);
       this.log(`leave ${p.name} (${p.id})`);
     }
@@ -584,6 +585,7 @@
         case 'pvp': p.pvp = m.on; this.toast(p, m.on ? 'Fights on: players who also turned fights on can hurt you, and you them.' : 'Fights off: no other player can hurt you.'); break;
         case 'drive': this.onDrive(p, m.d); break;
         case 'door': this.onDoor(p, m.l); break;
+        case 'tm': this.onTeam(p, m); break;
       }
     }
 
@@ -848,6 +850,7 @@
     // when both of them have turned fights on. Monsters, the world and yourself still can.
     canHurt(src, p) {
       if (!src || src === p || !src.A) return true;   // monsters, hazards, yourself
+      if (src.team && src.team === p.team) return false;   // never your own team
       return !!(src.pvp && p.pvp);
     }
 
@@ -954,6 +957,58 @@
       }
     }
 
+    // ----- Teams -----
+    // Up to 8 players. Teammates can't hurt each other, see each other on the map, and
+    // anyone standing near you comes along when you take a door, a station or your ship.
+    onTeam(p, m) {
+      const now = this.time;
+      if (m.op === 'leave') { this.leaveTeam(p); return; }
+      const o = this.players.get(m.id);
+      if (!o || o === p) return;
+      if (m.op === 'inv') {
+        if (o.inst !== p.inst) { this.toast(p, 'They need to be in the same place as you.'); return; }
+        if (p.team && p.team === o.team) return;
+        if (p.team && p.team.ids.size >= MM.TEAM_MAX) { this.toast(p, 'Your team is full.'); return; }
+        (p.invites || (p.invites = new Map())).set(o.id, now + 60);
+        this.priv(o, { k: 'tminv', id: p.id, name: p.name + ' ' + p.home });
+        this.toast(p, 'Invited ' + o.name + '.');
+      } else if (m.op === 'join') {
+        const t = o.invites && o.invites.get(p.id);
+        if (!t || t < now) { this.toast(p, 'That invite ran out.'); return; }
+        o.invites.delete(p.id);
+        if (!o.team) { o.team = { ids: new Set([o.id]) }; }
+        if (o.team.ids.size >= MM.TEAM_MAX) { this.toast(p, 'That team is full.'); return; }
+        this.leaveTeam(p);
+        p.team = o.team; p.team.ids.add(p.id);
+        this.teamChanged(p.team);
+      }
+    }
+    leaveTeam(p) {
+      const T = p.team;
+      if (!T) return;
+      T.ids.delete(p.id); p.team = null;
+      this.priv(p, { k: 'team', ids: [] });
+      if (T.ids.size === 1) { const last = this.players.get([...T.ids][0]); if (last) { last.team = null; this.priv(last, { k: 'team', ids: [] }); } T.ids.clear(); }
+      else this.teamChanged(T);
+    }
+    teamChanged(T) {
+      const ids = [...T.ids], names = ids.map(id => { const q = this.players.get(id); return q ? q.name + ' ' + q.home : '?'; });
+      for (const id of ids) { const q = this.players.get(id); if (q) this.priv(q, { k: 'team', ids, names }); }
+    }
+    // Teammates within reach come along (doors, stations, ships). Portals don't need
+    // this: anyone can walk through an open portal.
+    bringTeam(p, from, ox, oz) {
+      if (!p.team) return;
+      for (const id of p.team.ids) {
+        const q = this.players.get(id);
+        if (!q || q === p || q.dead || q.inst !== from || dist2(q.x, q.z, ox, oz) > MM.TEAM_REACH * MM.TEAM_REACH) continue;
+        if (q.ship) { q.ship = false; from.ev({ k: 'ship', id: q.id, on: false }); }
+        from.ev({ k: 'kiosk', id: q.id });
+        this.travel(q, p.inst.dimId, { x: p.x + (Math.random() - 0.5) * 4, z: p.z + (Math.random() - 0.5) * 4 }, p.inst);
+        this.toast(q, p.name + ' took the team along.');
+      }
+    }
+
     // Walking through a door (into the garage, down to the lab, into the cellar, back out).
     onDoor(p, lid) {
       const l = MM.LANDMARK_BY_ID[lid];
@@ -961,8 +1016,10 @@
       if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2) return;
       p.cdUse = this.time + 1;
       if (p.ship && MM.DIM_BY_ID[l.door.dim].interior) { this.toast(p, 'Park your ship first (B).'); return; }
+      const from = p.inst, ox = p.x, oz = p.z;
       p.inst.ev({ k: 'kiosk', id: p.id });
       this.travel(p, l.door.dim, { x: l.door.x, z: l.door.z });
+      this.bringTeam(p, from, ox, oz);
     }
 
     // Portals need a portal gun: your own, or one you borrowed from Rick's workbench
@@ -1007,8 +1064,10 @@
       for (const k in fee) if ((p.inv[k] || 0) < fee[k]) { this.toast(p, 'The ' + S.name + ' costs ' + fee[k] + ' ' + MM.MATERIALS[k].name + '.'); return; }
       for (const k in fee) p.inv[k] -= fee[k];
       p.cdKiosk = now + 3;
+      const from = p.inst, ox = p.x, oz = p.z;
       p.inst.ev({ k: 'kiosk', id: p.id });
       this.travel(p, d, null);
+      this.bringTeam(p, from, ox, oz);
       this.dirty(p);
     }
 
@@ -1029,8 +1088,10 @@
       const why = MM.travelWhy('ship', p.inst.dimId, d, { hull: true, engine: sh.engine, drive: sh.drive });
       if (why) { this.toast(p, why); return; }
       p.cdDrive = now + 15;
+      const from = p.inst, ox = p.x, oz = p.z;
       p.inst.ev({ k: 'warp', id: p.id });
       this.travel(p, d, null);
+      this.bringTeam(p, from, ox, oz);   // teammates near the ship ride along as passengers
     }
 
     // ----- Crafting -----

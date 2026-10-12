@@ -166,6 +166,10 @@ Every world is laid out like a real place (`shared/layouts.js`): roads and squar
 
 Every prop except the landmarks can be destroyed. Wrecking things and beating other players earns **chaos points** for the multiverse-wide leaderboard.
 
+### Teams
+
+Open the **Multiverse** board and press **Invite** next to anyone in your dimension (up to 8 per team). Teammates show a green ★ in their name tags and can't hurt each other. When one of you takes a door, a portal station or a ship, every teammate standing within about 14 m comes along (ship passengers ride with the pilot). Anyone can follow through an open portal anyway.
+
 ### Travel, the way the show does it
 
 There is no public portal on Earth. To get around you need one of these:
