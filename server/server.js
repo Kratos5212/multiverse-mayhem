@@ -46,10 +46,10 @@ const MAX_SAVES = Math.max(100, Number(env.MAX_SAVES) || 100000);
 MM.INSTANCE_CAP = CAP;
 
 // ---------- Static files ----------
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.txt': 'text/plain; charset=utf-8' };
-const PUBLIC_DIRS = ['vendor', 'shared', 'sim', 'js'];
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.txt': 'text/plain; charset=utf-8', '.woff2': 'font/woff2' };
+const PUBLIC_DIRS = ['vendor', 'shared', 'sim', 'js', 'fonts'];
 const SECURITY_HEADERS = {
-  'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'none'; frame-ancestors 'self'; form-action 'none'",
+  'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'none'; frame-ancestors 'self'; form-action 'none'",
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
   'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
@@ -64,7 +64,7 @@ function serveFile(req, res) {
   const rel = url === '/' ? 'index.html' : url.replace(/^\/+/, '');
   // Only known folders, no dot-files, nothing that climbs out of the game folder.
   const parts = rel.split('/');
-  const ok = (rel === 'index.html' || PUBLIC_DIRS.includes(parts[0])) && parts.every(p => p && !p.startsWith('.')) && !rel.includes('\\');
+  const ok = (rel === 'index.html' || rel === 'version.json' || PUBLIC_DIRS.includes(parts[0])) && parts.every(p => p && !p.startsWith('.')) && !rel.includes('\\');
   const file = path.join(ROOT, path.normalize(rel));
   if (!ok || !file.startsWith(ROOT + path.sep) || !TYPES[path.extname(file)]) { res.writeHead(404, SECURITY_HEADERS); res.end('Not found'); return; }
   const send = data => {

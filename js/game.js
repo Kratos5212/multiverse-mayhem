@@ -108,7 +108,9 @@
     $('startDim').append(el('option', { value: '', text: 'My home world' }));
     for (const d of MM.DIMS) $('startDim').append(el('option', { value: d.id, text: d.name }));
     $('startDim').value = profile.startDim;
-    const httpHosted = /^https?:$/.test(location.protocol) && !/claude|artifact/.test(location.hostname);
+    // The Android app (Capacitor) serves the game from inside the app, so there is no server to prefill.
+    const inApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+    const httpHosted = !inApp && /^https?:$/.test(location.protocol) && !/claude|artifact/.test(location.hostname);
     $('server').value = profile.server || (httpHosted ? location.host : '');
     UI.initMenu(profile, menuChanged);
     $('name').oninput = () => { profile.name = $('name').value; UI.save('profile', profile); };
@@ -120,6 +122,10 @@
       $('playOnline').hidden = true; $('server').closest('.grp').hidden = true;
       $('menuNote').textContent = 'Offline preview with bots. For online play with friends, run the server from the repository. Unofficial free fan game, not affiliated with Adult Swim.';
     }
+    // Show which game build this is (written by scripts/build-www.js), so you can see updates arrive.
+    fetch('version.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(v => {
+      if (v && v.build) $('menuNote').append(el('span', { class: 'ver', text: ' · Version ' + v.build }));
+    }).catch(() => {});
     $('playOffline').onclick = () => start('offline');
     $('playOnline').onclick = () => start('online');
     $('helpBtn').onclick = () => UI.help();

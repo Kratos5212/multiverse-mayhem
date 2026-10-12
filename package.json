@@ -2,10 +2,22 @@
   "name": "multiverse-mayhem",
   "version": "1.0.0",
   "private": true,
-  "description": "Multiverse Mayhem: a 3D cartoon multiplayer game about infinite versions of yourself.",
+  "description": "Multiverse Mayhem: an unofficial Rick and Morty fan game in cartoon 3D. Web game, online server and Android app (Capacitor).",
   "scripts": {
     "start": "node server/server.js",
     "test": "node --test test/*.test.js",
-    "loadtest": "node scripts/loadtest.js"
+    "loadtest": "node scripts/loadtest.js",
+    "build": "node scripts/build-www.js",
+    "sync": "npm run build && npx cap sync android",
+    "android:debug": "npm run sync && cd android && ./gradlew assembleDebug",
+    "android:release": "npm run sync && cd android && ./gradlew bundleRelease",
+    "android:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.6.9",
+    "@capacitor/core": "^7.6.9"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.6.9"
   }
 }

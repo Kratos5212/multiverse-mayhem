@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Multiverse Mayhem</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body { background: #0b0f1e; color: #dfe6ff; font: 600 16px/1.4 system-ui, sans-serif; display: grid; place-items: center; }
+  .box { display: grid; justify-items: center; gap: 18px; text-align: center; }
+  .portal { width: 140px; height: 140px; border-radius: 50%; border: 6px solid #1d1813;
+    background: conic-gradient(from 0deg, #39ff6a, #b8ff9a, #2fd85a, #b8ff9a, #39ff6a);
+    box-shadow: 0 0 40px #39ff6a99; animation: spin 1.2s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  h1 { margin: 0; font-size: 26px; color: #39ff6a; letter-spacing: .02em; }
+  .bar { width: 260px; height: 10px; border-radius: 6px; background: #1d2440; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: #39ff6a; transition: width .2s; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="portal"></div>
+  <h1>Multiverse Mayhem</h1>
+  <div id="msg">Checking for updates…</div>
+  <div class="bar"><i id="fill"></i></div>
+</div>
+<script>
+  const msg = document.getElementById('msg'), fill = document.getElementById('fill');
+  async function poll() {
+    try {
+      const s = await (await fetch('/__launcher/status', { cache: 'no-store' })).json();
+      msg.textContent = s.msg;
+      fill.style.width = s.total ? Math.round(s.done / s.total * 100) + '%' : (s.state === 'ready' ? '100%' : '15%');
+      if (s.state === 'ready') { setTimeout(() => location.replace('/'), 500); return; }
+    } catch (e) {}
+    setTimeout(poll, 250);
+  }
+  poll();
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "appId": "com.multiversemayhem.game",
+  "appName": "Multiverse Mayhem",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#0b0f1e"
+  },
+  "server": {
+    "androidScheme": "http"
+  }
+}

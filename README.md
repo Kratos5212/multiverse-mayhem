@@ -188,6 +188,28 @@ Rick, Morty and Evil Morty's daily lives now include Council meetings and Morty 
 
 The server, kiosk, portals, bots and journal pick it up automatically.
 
+## Android app and Windows launcher (with automatic updates)
+
+* **Android:** install `MultiverseMayhem.apk`. Allow installs from unknown sources the first time.
+* **Windows:** run `MultiverseMayhem.exe`. It needs no installer and opens the game in its own window through Microsoft Edge, which every Windows 10 and 11 PC has. Windows SmartScreen may warn about an unknown publisher; choose **More info → Run anyway**.
+
+Both download from the public releases repository, **Kratos5212/multiverse-mayhem-releases**. Every time they open, they read its `latest.json`:
+
+* **A newer game build:** downloaded file by file, each checked against its SHA-256, and switched to straight away. Nothing to install, and your characters and progress are kept.
+* **A newer Android app:** downloaded, and Android's installer opens (you confirm with one tap).
+* **A newer Windows launcher:** downloaded in the background, and it takes over from the next start.
+* **No connection:** you play the version you already have. Both apps carry a full copy of the game, so they work offline from the first start.
+
+**Publishing an update** (with the releases repository cloned next to this one):
+
+```
+node scripts/release.js --push              # a new game build: most updates
+node scripts/release.js --android --push    # also a new APK (when android/ changed)
+node scripts/release.js --windows --push    # also a new launcher (when desktop/launcher changed)
+```
+
+Version numbers live in `version.json`. The APK is signed with the project key in `android/keystore/`. Keep that key: Android only installs an update over the app if it is signed with the same key. Building needs Node 18+, JDK 21 and the Android SDK for the APK, and Go for the launcher.
+
 ## Files
 
 | Path | What it is |
