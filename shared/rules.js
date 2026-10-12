@@ -4,7 +4,10 @@
   'use strict';
   const MM = root.MM || (root.MM = {});
 
-  MM.VERSION = 4;               // protocol version; client and server must match
+  MM.VERSION = 4;
+  // Monsters notice you within AGGRO_RANGE metres and stop chasing beyond LEASH of their home.
+  MM.AGGRO_RANGE = 9;
+  MM.LEASH = 26;               // protocol version; client and server must match
   MM.TICK = 1 / 30;             // server simulation step (seconds)
   MM.SNAP_EVERY = 2;            // a snapshot every 2 ticks = 15 per second
   MM.INSTANCE_CAP = 64;         // players per dimension instance (servers can raise it)

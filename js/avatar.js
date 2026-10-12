@@ -592,15 +592,17 @@
     const sp = new T.Sprite(mat);
     sp.scale.set(2.6, 0.65, 1);
     sp.renderOrder = 10;
-    const tag = { sprite: sp, hp: -1, draw(hp) {
-      if (hp === tag.hp) return;
-      tag.hp = hp;
+    // fight: draw crossed swords, for players who have fights (PvP) turned on.
+    const tag = { sprite: sp, hp: -1, fight: false, draw(hp, fight) {
+      if (fight === undefined) fight = tag.fight;
+      if (hp === tag.hp && fight === tag.fight) return;
+      tag.hp = hp; tag.fight = fight;
       const g = cv.getContext('2d');
       g.clearRect(0, 0, 512, 128);
       g.font = '700 44px "Fredoka", "Trebuchet MS", sans-serif';
       g.textAlign = 'center'; g.textBaseline = 'middle';
       g.lineWidth = 9; g.strokeStyle = 'rgba(0,0,0,0.85)';
-      const label = name + (home ? '  ' + home : '');
+      const label = (fight ? '⚔ ' : '') + name + (home ? '  ' + home : '');
       g.strokeText(label, 256, 42); g.fillStyle = color || '#ffffff'; g.fillText(label, 256, 42);
       if (sub) { g.font = '600 26px "Fredoka", sans-serif'; g.lineWidth = 6; g.strokeText(sub, 256, 78); g.fillStyle = '#d6e4ff'; g.fillText(sub, 256, 78); }
       if (hp >= 0) {

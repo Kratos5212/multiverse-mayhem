@@ -331,3 +331,41 @@ test('Meeseeks Box gadget and the Citadel', () => {
   assert.ok([...p.inst.npcs.values()].some(n => n.type === 'meeseeks'));
   assert.ok([...p.inst.npcs.values()].some(n => n.type === 'citrick'), 'Ricks live at the Citadel');
 });
+
+test('free roam: players only hurt each other when both turned fights on', () => {
+  const host = new MM.Host();
+  const a = join(host, 'genius', { dim: 'moon' }), b = join(host, 'sidekick', { dim: 'moon' });
+  for (const { p } of [a, b]) p.fx.prot = 0;
+  b.p.x = a.p.x; b.p.z = a.p.z + 5; b.p.y = a.p.y;
+  const hp0 = b.p.hp;
+  const shoot = () => { a.p.cdFire = 0; host.message(a.c, JSON.stringify({ t: 'f', dx: 0, dy: 0, dz: 1 })); run(host, 0.6); };
+  for (let i = 0; i < 5; i++) shoot();
+  assert.strictEqual(b.p.hp, hp0, 'shots pass through someone with fights off');
+  host.hurtPlayer(a.p.inst, b.p, 30, a.p, 'test');
+  assert.strictEqual(b.p.hp, hp0, 'no damage without consent');
+  host.message(a.c, '{"t":"pvp","on":true}');
+  host.hurtPlayer(a.p.inst, b.p, 30, a.p, 'test');
+  assert.strictEqual(b.p.hp, hp0, 'one side is not enough');
+  host.message(b.c, '{"t":"pvp","on":true}');
+  host.hurtPlayer(a.p.inst, b.p, 10, a.p, 'test');
+  assert.ok(b.p.hp < hp0, 'both on: fights happen');
+  assert.ok(host.fxBits(b.p, host.time) & 4096, 'fighters are marked for everyone to see');
+});
+
+test('monsters leave you alone unless you come close or hit them', () => {
+  const host = new MM.Host();
+  const { p } = join(host, 'genius', { dim: 'meatlands' });
+  p.fx.prot = 0;
+  const inst = p.inst;
+  const n = [...inst.npcs.values()].find(x => x.T.hostile);
+  assert.ok(n, 'a monster to test with');
+  for (const o of inst.npcs.values()) if (o !== n) inst.npcs.delete(o.id);
+  n.home = { x: n.x, z: n.z };
+  p.x = n.x + 20; p.z = n.z; p.y = MM.heightAt('meatlands', p.x, p.z);
+  const hp0 = p.hp;
+  run(host, 4);
+  assert.ok(Math.hypot(n.x - p.x, n.z - p.z) > 12, 'it does not come after you from 20 m away');
+  assert.strictEqual(p.hp, hp0);
+  inst.hurtNpc(n, 1, p);
+  assert.strictEqual(n.angry, p.id, 'hit it and it comes for you');
+});

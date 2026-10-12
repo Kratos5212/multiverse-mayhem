@@ -87,7 +87,6 @@
             else if (e.k === 'po+') this.portals.set(e.po.id, e.po);
             else if (e.k === 'po-') this.portals.delete(e.id);
             else if (e.k === 'prop') { if (e.hp <= 0) this.deadProps.add(e.id); else this.deadProps.delete(e.id); }
-            else if (e.k === 'dmg' && e.p === this.id && e.by && Math.random() < 0.7) this.target = { kind: 'p', id: e.by };
           }
           break;
         case 'pv':
@@ -121,17 +120,14 @@
           if (!T.hostile && (n.x - this.x) ** 2 + (n.z - this.z) ** 2 < 16) { this.send({ t: 'talk', n: id }); break; }
         }
       }
-      // Pick a fight now and then.
+      // Bots are explorers, not fighters: they never attack players. They defend themselves
+      // from monsters that come close, and now and then wreck a mailbox for the fun of it.
       if (!this.target || Math.random() < 0.1) {
-        const r = Math.random();
-        let best = null, bd = 30 * 30;
-        if (r < 0.45) {
-          for (const [id, o] of this.others) { if (o.dead || (o.fx & 32)) continue; const d = (o.x - this.x) ** 2 + (o.z - this.z) ** 2; if (d < bd) { bd = d; best = { kind: 'p', id }; } }
-        } else if (r < 0.75) {
-          for (const [id, n] of this.npcs) { if (!MM.NPCS[n.type].hostile && Math.random() < 0.7) continue; const d = (n.x - this.x) ** 2 + (n.z - this.z) ** 2; if (d < bd) { bd = d; best = { kind: 'n', id }; } }
-        } else if (r < 0.95) {
-          const props = MM.genProps(this.dim);
-          for (const p of props) { if (this.deadProps.has(p.id)) continue; const d = (p.x - this.x) ** 2 + (p.z - this.z) ** 2; if (d < bd) { bd = d; best = { kind: 'prop', id: p.id }; } }
+        let best = null, bd = 12 * 12;
+        for (const [id, n] of this.npcs) { if (!MM.NPCS[n.type].hostile) continue; const d = (n.x - this.x) ** 2 + (n.z - this.z) ** 2; if (d < bd) { bd = d; best = { kind: 'n', id }; } }
+        if (!best && Math.random() < 0.04) {
+          let pd = 14 * 14;
+          for (const p of MM.genProps(this.dim)) { if (this.deadProps.has(p.id) || MM.PROPS[p.type].hp > 80) continue; const d = (p.x - this.x) ** 2 + (p.z - this.z) ** 2; if (d < pd) { pd = d; best = { kind: 'prop', id: p.id }; } }
         }
         this.target = best;
       }

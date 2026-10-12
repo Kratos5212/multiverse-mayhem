@@ -214,8 +214,9 @@
         pr.x += pr.vx * dt; pr.y += pr.vy * dt; pr.z += pr.vz * dt;
         pr.life -= dt;
         let hit = null;
+        const shooter = pr.owner ? this.host.players.get(pr.owner) : null;
         for (const p of this.players.values()) {
-          if (p.dead || p.id === pr.owner) continue;
+          if (p.dead || p.id === pr.owner || (shooter && !this.host.canHurt(shooter, p))) continue;   // shots pass through people not fighting
           const s = this.host.scaleOf(p);
           const rr = (p.ship ? 1.8 : 0.85 * s) + (pr.rad || 0.15);
           if (segDist2(ox, oy, oz, pr.x, pr.y, pr.z, p.x, p.y + (p.ship ? 0.8 : 1.0 * s), p.z) < rr * rr) { hit = { p }; break; }
@@ -248,7 +249,7 @@
         this.ev({ k: 'hit', id: pr.id, x: r2(pr.x), y: r2(Math.max(pr.y, ground)), z: r2(pr.z) });
         if (pr.kind === 'gren') { this.explode(pr.x, Math.max(pr.y, ground), pr.z, 6.5, 35, owner, 'grenade'); continue; }
         if (hit.p) {
-          if (pr.kind === 'shrink') { hit.p.fx.shrink = now + 8; this.host.dirty(hit.p); this.ev({ k: 'shrunk', id: hit.p.id }); }
+          if (pr.kind === 'shrink' && this.host.canHurt(owner, hit.p)) { hit.p.fx.shrink = now + 8; this.host.dirty(hit.p); this.ev({ k: 'shrunk', id: hit.p.id }); }
           this.host.hurtPlayer(this, hit.p, pr.dmg, owner, pr.kind);
         } else if (hit.n) this.hurtNpc(hit.n, pr.dmg, owner);
         else if (hit.t) this.hurtTurret(hit.t, pr.dmg);
@@ -267,6 +268,7 @@
         if (d > rad) continue;
         const f = 1 - d / rad;
         const self = owner && p.id === owner.id;
+        if (!self && !this.host.canHurt(owner, p)) continue;   // no blasting people who didn't sign up for it
         if (!self || opts.selfDamage) this.host.hurtPlayer(this, p, Math.round(dmg * (0.4 + 0.6 * f)), owner, how);
         if ((opts.noSelfKnock && self) || p.ship) continue;
         const kx = p.x - x, kz = p.z - z, kl = Math.hypot(kx, kz) || 1;
@@ -314,6 +316,7 @@
         n.target = owner.id;
         // Locals you hit hit back (if they are the fighting kind).
         if (!n.T.hostile && n.T.human && Math.random() < 0.5) { n.angry = owner.id; n.angryUntil = this.host.time + 15; }
+        if (n.T.hostile) { n.angry = owner.id; n.angryUntil = this.host.time + 12; }
       }
       this.ev({ k: 'dmg', n: n.id, d: dmg });
       if (n.hp > 0) return;
@@ -356,7 +359,7 @@
             if (d < bd) { bd = d; best = m; }
           }
           for (const p of this.players.values()) {
-            if (p === owner || !this.visible(p, now)) continue;
+            if (p === owner || !this.visible(p, now) || !this.host.canHurt(owner, p)) continue;
             const d = dist2(p.x, p.z, n.x, n.z);
             if (d < Math.min(bd, 7 * 7)) { bd = d; best = p; isNpc = false; }
           }
@@ -369,14 +372,16 @@
             }
           } else if (dist2(owner.x, owner.z, n.x, n.z) > 9) { goal = { x: owner.x - Math.sin(owner.r) * 2, z: owner.z - Math.cos(owner.r) * 2 }; speed = Math.max(speed, owner.st.speed); }
         } else if (T.hostile || (n.angry && now < n.angryUntil)) {
-          // Chase the nearest player in range (or the one who made a local angry).
-          let best = null, bd = 22 * 22;
+          // Monsters mind their own business: they go for you only if you come close
+          // (or hit them), and give up once you are well away from their patch.
+          let best = null, bd = MM.AGGRO_RANGE * MM.AGGRO_RANGE;
           if (n.angry && now < n.angryUntil) { const p = this.host.players.get(n.angry); if (p && p.inst === this && !p.dead) best = p, bd = dist2(p.x, p.z, n.x, n.z); }
-          else for (const p of this.players.values()) {
+          else if (dist2(n.x, n.z, n.home.x, n.home.z) < MM.LEASH * MM.LEASH) for (const p of this.players.values()) {
             if (!this.visible(p, now)) continue;
             const d = dist2(p.x, p.z, n.x, n.z);
             if (d < bd) { bd = d; best = p; }
           }
+          if (best && (dist2(n.x, n.z, n.home.x, n.home.z) > MM.LEASH * MM.LEASH * 1.6 || bd > 30 * 30)) { best = null; n.angry = 0; }
           if (best) {
             goal = best; speed *= 1.15;
             if (bd < (T.r + 1.1) * (T.r + 1.1) && now >= n.cd && Math.abs(best.y - n.y) < 3) {
@@ -420,7 +425,8 @@
         if (now < t.cd) continue;
         let best = null, bd = 26 * 26, isNpc = false;
         for (const p of this.players.values()) {
-          if (p.id === t.owner || !this.visible(p, now)) continue;
+          const o = this.host.players.get(t.owner);
+          if (p.id === t.owner || !this.visible(p, now) || (o && !this.host.canHurt(o, p))) continue;
           const d = dist2(p.x, p.z, t.x, t.z);
           if (d < bd) { bd = d; best = p; isNpc = false; }
         }
@@ -575,6 +581,7 @@
         case 'talk': this.onTalk(p, m.n); break;
         case 'ans': this.onAnswer(p, m.a); break;
         case 'ship': this.onShip(p, m.on); break;
+        case 'pvp': p.pvp = m.on; this.toast(p, m.on ? 'Fights on: players who also turned fights on can hurt you, and you them.' : 'Fights off: no other player can hurt you.'); break;
         case 'drive': this.onDrive(p, m.d); break;
         case 'door': this.onDoor(p, m.l); break;
       }
@@ -598,7 +605,7 @@
       for (const g of MM.GADGET_IDS) if (!prog.inv[g]) prog.inv[g] = prog.inv[g] || 0;
       const p = {
         id: this.nextId++, conn: c.conn, bot: c.bot, token,
-        name: MM.sanitizeName(m.name), home: MM.sanitizeHome(m.home), look: MM.sanitizeLook(m.look), arch: m.arch, A,
+        name: MM.sanitizeName(m.name), home: MM.sanitizeHome(m.home), look: MM.sanitizeLook(m.look), arch: m.arch, A, pvp: !!m.pvp,
         prog, inv: prog.inv, st: null,
         inst: null, ep: 0, x: 0, y: 0, z: 0, r: 0, a: 0, lastSt: this.time, strikes: 0,
         hp: A.hp, maxHp: A.hp, dead: false, respawnAt: 0, ship: false,
@@ -729,6 +736,7 @@
       if (p.ship) b |= 512;
       if (now < p.fx.cuff) b |= 1024;
       if (now < p.fx.cloak) b |= 2048;
+      if (p.pvp) b |= 4096;
       return b;
     }
 
@@ -825,7 +833,7 @@
       };
       const dmg = Math.round(w.dmg * this.dmgMult(p));
       for (const o of [...inst.players.values()]) {
-        if (o === p || o.dead || Math.abs(o.y - p.y) > 2.5 || !inFront(o.x, o.z, 0.5)) continue;
+        if (o === p || o.dead || !this.canHurt(p, o) || Math.abs(o.y - p.y) > 2.5 || !inFront(o.x, o.z, 0.5)) continue;
         this.hurtPlayer(inst, o, dmg, p, wid);
         if (w.knock && !o.ship) { const dx = o.x - p.x, dz = o.z - p.z, l = Math.hypot(dx, dz) || 1; this.knock(o, dx / l * w.knock, 5, dz / l * w.knock); }
       }
@@ -834,9 +842,17 @@
       MM.genProps(inst.dimId).forEach((pr, i) => { if (inst.props[i].hp > 0 && p.y < pr.y + pr.h && inFront(pr.x, pr.z, pr.r)) inst.hurtProp(i, dmg, p); });
     }
 
+    // This is a free-roaming chaos game, not a battle royale: players only hurt each other
+    // when both of them have turned fights on. Monsters, the world and yourself still can.
+    canHurt(src, p) {
+      if (!src || src === p || !src.A) return true;   // monsters, hazards, yourself
+      return !!(src.pvp && p.pvp);
+    }
+
     hurtPlayer(inst, p, amt, src, how) {
       const now = this.time;
       if (p.dead || now < p.fx.prot || now < p.fx.sob || amt <= 0) return;
+      if (!this.canHurt(src, p)) return;
       if (p.arch === 'sidekick' && Math.random() < 0.2) { inst.ev({ k: 'dodge', id: p.id }); return; }
       if (now < p.fx.shield) amt *= 0.3;
       if (p.ship) amt *= 0.6;

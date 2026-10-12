@@ -172,7 +172,7 @@
     $('loading').hidden = false;
     $('loading').textContent = kind === 'online' ? 'Connecting to ' + (profile.server || location.host) + '…' : 'Opening a portal…';
     const h = {
-      open: () => G.net.send({ t: 'hello', v: MM.VERSION, name: profile.name, home: profile.home, look: profile.look, arch: profile.arch, dim: profile.startDim || undefined, tok: tokenFor(G.net) }),
+      open: () => G.net.send({ t: 'hello', v: MM.VERSION, name: profile.name, home: profile.home, look: profile.look, arch: profile.arch, dim: profile.startDim || undefined, tok: tokenFor(G.net), pvp: !!settings.pvp }),
       message: onMessage,
       close: reason => leave(reason),
     };
@@ -992,6 +992,7 @@
       box.append(
         row('Look sensitivity', el('input', { type: 'range', min: 0.3, max: 2.5, step: 0.05, value: settings.sens, oninput: e => { settings.sens = Number(e.target.value); UI.save('settings', settings); } })),
         row('Volume', el('input', { type: 'range', min: 0, max: 1, step: 0.05, value: settings.volume, oninput: e => { settings.volume = Number(e.target.value); C.setVolume(settings.volume); UI.save('settings', settings); } })),
+        row('Fights', el('div', { class: 'chips' }, ...[[false, 'Off: nobody can hurt you'], [true, 'On: fight others who are on']].map(([v, t]) => el('button', { class: 'chip', 'aria-pressed': String(!!settings.pvp === v), onclick: () => { settings.pvp = v; UI.save('settings', settings); if (G.net) send({ t: 'pvp', on: v }); openMenu(); } }, t)))),
         row('View', el('div', { class: 'chips' }, ...[['third', 'Third person'], ['first', 'First person']].map(([v, t]) => el('button', { class: 'chip', 'aria-pressed': String(settings.view === v), onclick: () => { setView(v); openMenu(); } }, t)))),
         row('Graphics', el('div', { class: 'chips' }, ...['high', 'low'].map(q => el('button', { class: 'chip', 'aria-pressed': String(settings.quality === q), onclick: () => { settings.quality = q; applyQuality(); resize(); UI.save('settings', settings); openMenu(); } }, q)))),
         row('Options', el('div', { class: 'chips' },
@@ -1299,7 +1300,7 @@
       const sp = Math.hypot(p.x - p.px, p.z - p.pz) / Math.max(dt, 1e-3);
       p.speed += (sp - p.speed) * Math.min(1, dt * 10);
       p.px = p.x; p.pz = p.z;
-      if (s.hp !== p.hp) { p.hp = s.hp; p.tag.draw(p.hp); }
+      if (s.hp !== p.hp || !!(s.fx & 4096) !== p.tag.fight) { p.hp = s.hp; p.tag.draw(p.hp, !!(s.fx & 4096)); }
       p.emoteT = Math.max(0, p.emoteT - dt);
       const d = Math.hypot(p.x - G.me.x, p.z - G.me.z);
       p.av.root.visible = d < fogFar + 10;
