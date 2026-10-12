@@ -15,6 +15,8 @@
 //   BOTS            bot players that keep the world lively (default 6, 0 to turn off)
 //   ALLOWED_ORIGINS comma-separated web origins allowed to connect (default: any)
 //   TRUST_PROXY     set to 1 behind a proxy (Render, Fly, nginx) to read X-Forwarded-For
+//   SAVE_FILE       where character progress is kept (default server/data/saves.json)
+//   MAX_SAVES       most save tokens kept; the least recently played are dropped (default 100000)
 
 const fs = require('fs');
 const http = require('http');
@@ -38,6 +40,8 @@ const CONNECT_RATE = Math.max(1, Number(env.CONNECT_RATE) || 20);
 const BOTS = Math.max(0, Math.min(64, env.BOTS === undefined ? 6 : Number(env.BOTS) || 0));
 const ORIGINS = (env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
 const TRUST_PROXY = env.TRUST_PROXY === '1';
+const SAVE_FILE = env.SAVE_FILE || path.join(__dirname, 'data', 'saves.json');
+const MAX_SAVES = Math.max(100, Number(env.MAX_SAVES) || 100000);
 
 MM.INSTANCE_CAP = CAP;
 
@@ -91,8 +95,41 @@ const server = http.createServer((req, res) => {
 server.headersTimeout = 15000;
 server.requestTimeout = 15000;
 
+// ---------- Saved progress ----------
+// One JSON file: { token: { at: last played (ms), chars: { archetype: progress } } }.
+// Tokens are 128-bit random secrets that only the player's browser knows.
+let saves = {};
+try { saves = JSON.parse(fs.readFileSync(SAVE_FILE, 'utf8')) || {}; } catch (_) { saves = {}; }
+let savesDirty = false;
+const store = {
+  load(tok, arch) { const r = saves[tok]; return r && r.chars ? r.chars[arch] || null : null; },
+  save(tok, arch, prog) {
+    const r = saves[tok] || (saves[tok] = { at: 0, chars: {} });
+    r.at = Date.now();
+    r.chars[arch] = JSON.parse(JSON.stringify(prog));
+    savesDirty = true;
+  },
+};
+function flushSaves() {
+  if (!savesDirty) return;
+  savesDirty = false;
+  const keys = Object.keys(saves);
+  if (keys.length > MAX_SAVES) {
+    keys.sort((a, b) => saves[a].at - saves[b].at);
+    for (const k of keys.slice(0, keys.length - MAX_SAVES)) delete saves[k];
+  }
+  try {
+    fs.mkdirSync(path.dirname(SAVE_FILE), { recursive: true });
+    const tmp = SAVE_FILE + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(saves));
+    fs.renameSync(tmp, SAVE_FILE);    // atomic: a crash never leaves half a file
+  } catch (e) { console.error('Could not write saves:', e.message); }
+}
+setInterval(flushSaves, 20000);
+
 // ---------- The world ----------
-const host = new MM.Host({ name: NAME, cap: CAP, maxPlayers: MAX_PLAYERS + BOTS, log: s => console.log(new Date().toISOString().slice(11, 19), s) });
+const host = new MM.Host({ name: NAME, cap: CAP, maxPlayers: MAX_PLAYERS + BOTS, store, newToken: () => require('crypto').randomBytes(16).toString('hex'),
+  log: s => console.log(new Date().toISOString().slice(11, 19), s) });
 
 // Bots join through the same front door as everyone else.
 const bots = [];
@@ -178,4 +215,6 @@ server.listen(PORT, () => {
   console.log(`  ${CAP} players per dimension copy, ${MAX_PLAYERS} max, ${BOTS} bots, ${MAX_PER_IP} connections per address`);
 });
 
-process.on('SIGTERM', () => { server.close(); process.exit(0); });
+function shutdown() { host.saveAll(); flushSaves(); server.close(); process.exit(0); }
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

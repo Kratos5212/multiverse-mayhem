@@ -142,6 +142,13 @@ input[type=range] { width: 100%; accent-color: var(--portal); }
 #dmgNums div { position: absolute; font-weight: 700; color: #fff; -webkit-text-stroke: 1px #000; text-shadow: 0 2px 0 #000; transform: translate(-50%, -50%); white-space: nowrap; }
 #flash { position: absolute; inset: 0; background: radial-gradient(transparent 55%, rgba(255,0,0,.45)); opacity: 0; transition: opacity .3s; }
 #netWarn { position: absolute; top: 64px; left: 12px; color: var(--red); font-weight: 700; }
+#tracker { position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 62px); left: 12px; width: min(330px, 46vw); display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+#tracker b { color: var(--gold); }
+#tracker small { color: var(--muted); font-size: 11px; }
+#tracker:empty { display: none; }
+#banner { position: absolute; top: 22%; left: 50%; transform: translateX(-50%); width: min(560px, 90vw); text-align: center; background: rgba(11,15,30,.9); border: 3px solid #000; border-radius: 18px; box-shadow: 0 5px 0 #000; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; }
+#banner b { font-size: 24px; color: var(--portal); -webkit-text-stroke: 1px #000; }
+#banner.show { animation: pop .3s ease-out; }
 
 /* ---------- Touch controls ---------- */
 #touch { position: fixed; inset: 0; pointer-events: none; }
@@ -154,8 +161,11 @@ input[type=range] { width: 100%; accent-color: var(--portal); }
 #tAb { right: 0; bottom: 98px; width: 64px; height: 64px; }
 #tPortal { right: 76px; bottom: 76px; width: 56px; height: 56px; background: rgba(57,255,106,.75) !important; color: #062b10; }
 #tGadget { right: 138px; bottom: 74px; width: 50px; height: 50px; }
+#tTalk { right: 60px; bottom: 140px; width: 56px; height: 56px; background: rgba(255,216,77,.9) !important; color: #3a2a00; }
+#tShip { right: 150px; bottom: 132px; width: 50px; height: 50px; background: rgba(95,248,255,.85) !important; color: #06303a; }
 @media (pointer: coarse) { #hotbar { bottom: auto; top: max(62px, calc(env(safe-area-inset-top) + 52px)); transform: translateX(-50%) scale(.72); transform-origin: top; } #toasts { top: 120px; } #chat { bottom: 240px; width: 50vw; } #status { bottom: max(10px, env(safe-area-inset-bottom)); } }
 @media (max-width: 700px) { #hotbar .slot { width: 46px; height: 46px; font-size: 9px; } #dimBadge b { font-size: 14px; } }
+@media (pointer: coarse) { #tracker { top: calc(max(10px, env(safe-area-inset-top)) + 54px); left: auto; right: 12px; width: min(300px, 27vw); font-size: 11px; padding: 3px 8px; opacity: .92; } #feed { top: 150px; } #tracker small { display: none; } #toasts { top: 175px; } }
 
 /* ---------- Dialogs ---------- */
 #modal { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.45); padding: 16px; }
@@ -167,6 +177,13 @@ input[type=range] { width: 100%; accent-color: var(--portal); }
 .row .t b { display: block; }
 .row .t small { color: var(--muted); }
 .row.dim b { color: var(--portal); }
+.row.locked { opacity: .55; }
+.row.done { opacity: .6; }
+.row.cur { outline: 3px solid var(--portal); outline-offset: -1px; }
+.row.later { opacity: .75; }
+.row .chip { flex: none; }
+#modalBox h3 { margin: 14px 0 6px; font-size: 15px; color: var(--cyan); }
+#modalBox .chips .chip { cursor: default; }
 table.lb { width: 100%; border-collapse: collapse; font-size: 14px; }
 table.lb td, table.lb th { padding: 4px 6px; text-align: left; border-bottom: 2px solid #0e1328; }
 table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
@@ -218,9 +235,12 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 
 <section id="hud" hidden>
   <div id="dimBadge" class="badge"><b id="dimName"></b><small id="dimInfo"></small></div>
+  <div id="tracker" class="badge"></div>
+  <div id="banner" hidden></div>
   <div id="netWarn" hidden></div>
   <div id="topRight">
     <div id="score" class="badge">Chaos <b id="chaos">0</b> · KOs <b id="kos">0</b></div>
+    <button class="ibtn pe" id="bJournal" aria-label="Journal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM9 8h6M9 12h6"/></svg></button>
     <button class="ibtn pe" id="bBoard" aria-label="Players and leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
     <button class="ibtn pe" id="bChat" aria-label="Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
     <button class="ibtn pe" id="bMenu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -234,7 +254,10 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
   <div id="status">
     <div class="bar" id="hpBar"><i id="hpFill"></i><span id="hpText"></span></div>
     <div class="bar" id="flyBar" hidden><i id="flyFill" style="background: var(--cyan)"></i><span>Wings</span></div>
-    <div id="res"><span>⚙ <b id="scrap">0</b></span><span>◆ <b id="crys">0</b></span><span id="charges"></span></div>
+    <div id="res">
+      <span title="Scrap" style="color:#c9d1d9">⚙ <b id="mat-s">0</b></span><span title="Moon Crystal" style="color:#7affea">◆ <b id="mat-c">0</b></span><span title="Meat Goo" style="color:#ff7a8a">● <b id="mat-g">0</b></span><span title="Neon Plasma" style="color:#ff6fd0">✦ <b id="mat-p">0</b></span><span title="Sky Feather" style="color:#ffd84d">➶ <b id="mat-f">0</b></span>
+      <span id="charges"></span>
+    </div>
   </div>
   <div id="hotbar"></div>
   <div id="prompt" class="badge" hidden></div>
@@ -249,6 +272,8 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
     <button id="tAb">SKILL</button>
     <button id="tPortal">PORTAL</button>
     <button id="tGadget">GADGET</button>
+    <button id="tTalk" hidden>TALK</button>
+    <button id="tShip" hidden>SHIP</button>
   </div>
 </div>
 

@@ -2,7 +2,7 @@
 
 Created by **Gabi** (Kratos5212).
 
-A cartoon 3D multiplayer game about infinite versions of yourself. Build your own variant, pick who you are in this universe, then smash, fight, craft and portal-hop across dimensions with everyone else online. It runs in the browser on PC and phones, with [three.js](https://threejs.org) for graphics and a small Node server for online play.
+A cartoon 3D multiplayer game about infinite versions of yourself. Build your own variant, pick who you are in this universe, and live that life, or break out of it: craft across worlds, build a portal gun and a ship, talk to strange locals, and portal-hop across dimensions with everyone else online. It runs in the browser on PC and phones, with [three.js](https://threejs.org) for graphics and a small Node server for online play.
 
 It's an original game in the spirit of multiverse sci-fi comedies: original names, characters, dimensions and art, not affiliated with any show or studio.
 
@@ -33,6 +33,7 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | `CONNECT_RATE` | 20 | New connections per minute from one address |
 | `ALLOWED_ORIGINS` | any | Comma-separated web origins allowed to connect |
 | `TRUST_PROXY` | off | Set to `1` behind Render, Fly or nginx so limits apply per real player |
+| `SAVE_FILE` | `server/data/saves.json` | Where character progress is kept. On Render's free plan the disk is wiped on redeploy; attach a disk to keep saves |
 
 ## Controls
 
@@ -43,52 +44,98 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | Click | FIRE | Shoot or hit |
 | Space | JUMP | Jump (hold to fly as a Birdfolk) |
 | Q | SKILL | Archetype ability |
-| E | PORTAL | Portal gun, or the kiosk when standing at it |
-| F | PORTAL | Use the kiosk |
+| E | PORTAL | Portal gun, kiosk, or dimension drive |
+| F | TALK / USE | Talk to locals, daily tasks at buildings, the kiosk |
+| J | Journal button | Your life, your path, errands |
+| B | SHIP | Board or leave your ship (Space up, Shift down) |
 | 1 2 3 | GADGET | Grenade, turret, shrink ray |
-| C | Craft slot | Workbench |
+| C | Build slot | Workbench |
 | Enter | Chat button | Chat with the whole multiverse |
 | Tab | Chart button | Leaderboard, players here, mute |
 | V |  | Wave |
 | Esc | Menu button | Settings and leave |
 
-## Who you are: archetypes and lore limits
+## Who you are: characters, lives and lore limits
 
-Your look is completely free. Your **archetype** is your lore, and it decides what you can do. The server enforces it.
+Your look is completely free. Your **character** is your lore: it decides your stats, your everyday life, what you know how to build, and how you can break out of that life. The server enforces all of it. Each character plays the game through their own eyes:
 
-| Archetype | Health | Portal gun | Builds | Ability | Lore |
-| --- | --- | --- | --- | --- | --- |
-| Genius Scientist | 80 | Yes, 3 charges | Everything, a third cheaper | Science Shield (70% less damage, 4 s) | Fragile genius |
-| Reluctant Sidekick | 100 | Borrowed, 1 charge | Grenades, boots, portal fluid | Panic Sprint | Dodges 20% of hits by luck |
-| Average Joe | 100 | No | Grenades only | Sob Story (can't be hurt, can't attack, 3 s) | Monsters and turrets ignore him |
-| Birdfolk Warrior | 140 | No | Nothing | Dive Strike (slam from the air) | Flies; strong talons |
-| Cheerful Beanling | 70 | No | Grenades, boots | Cheer Up (heals everyone nearby) | Whoever takes one down feels awful (slowed 10 s) |
-| Meat Mutant | 200 | No | Nothing | Body Slam (knocks everyone back) | Slow; regenerates |
+| Character | Starts as | Daily life | Can become | Lore |
+| --- | --- | --- | --- | --- |
+| Genius Scientist | Garage Genius | Tinker in the garage, family dinner | Multiverse Menace | Portal gun (3 charges), knows every recipe at a third off; fragile |
+| Reluctant Sidekick | Reluctant Sidekick | School, family dinner | Seasoned Adventurer | Borrowed gun (1 charge), dodges 20% of hits |
+| Rebellious Teen | Regular Teen | School, family dinner | **Space Teen** | Daily tasks pay double; breaks out to her own portal gun and ship |
+| Horse Surgeon | Horse Surgeon | Operate on horses, family dinner | **Space Surgeon** | Self-upgrades cost half; Field Surgery heals everyone near |
+| Average Joe | Average Joe | Look for a job, watch TV | Adventure Dad | The longest road out (7 steps). Monsters ignore him |
+| Birdfolk Warrior | Aerie Warrior (Featherhold) | Guard the Aerie, train with elders | Hero of Many Skies | Flies, strong talons, no gadgets; his own life in his own world |
+| Cheerful Beanling | Friendly Beanling | Visit old friends, TV | Beanling of Many Worlds | Heals everyone; makes friends; killers feel guilty |
+| Meat Mutant | Lurking Mutant (Meatlands) | Feed the Flesh Forge | Apex Abomination | Huge, slow, regenerates |
+| Federation Trooper | Loyal Trooper (Bazaar) | Patrol reports, ship repairs | Rogue Trooper | Starts with a ship; Stun Cuffs |
+| Hive Mind | Small Collective (Moon) | Refinery shifts, haggling | Planetary Hive | Assimilate turns locals into followers that fight for you |
 
-Without a portal gun, you travel by the **Portal Kiosk** in the middle of every dimension, or by jumping through someone else's portal before it closes.
+You never have to break out: you can play a normal life and still go anywhere by kiosk or by jumping through other people's portals. Your **journal (J)** shows your daily tasks, your next step, what each step unlocks, and your errands. Progress is saved per character.
 
-## The character creator
+## Crafting across dimensions
 
-Six species (human, alien, birdfolk, robot, beanling, blob), height, build and head size, skin colour, eyes (normal, wide, sleepy, one eye, three eyes, visor), brows (including a unibrow), mouths (including drool), eight hairstyles, seven tops (lab coat, T-shirt, polo, sweater, armour, vest, none), colours for every piece of clothing, nine accessories, and your own **portal colour**, which also tints your ray gun. Presets give quick starting points, and Randomize makes a random variant. You also pick a name and a home-dimension code (like `K-42`) that floats over your head.
+Every world has its own material: **Scrap** (everywhere), **Moon Crystals** (Lowgrav Moon), **Meat Goo** (The Meatlands), **Neon Plasma** (Neon Bazaar) and **Sky Feathers** (Featherhold). Gadgets can be built anywhere; big upgrades must be built at a particular station in a particular world, from materials gathered in others.
+
+| What | Built at | Needs |
+| --- | --- | --- |
+| Gravity Grenade, Auto-Turret, Shrink Ray, Portal Fluid | Anywhere | Scrap, crystals |
+| Bio-Armor I–III (+80 health) | Flesh Forge, Meatlands | Goo, crystals, plasma |
+| Spring Legs, Crystal Tendons (speed, jump) | Garage Lab, Suburbia / Refinery, Moon | Scrap, crystals, plasma |
+| Jetpack → Feather Wings (hover → fly) | Bazaar Shipyard / Aerie Temple, Featherhold | Plasma, feathers, goo |
+| Weapon Mod, Overcharged Core (+30%, +40% damage) | Black Market, Bazaar | Plasma, crystals, goo |
+| **Build a Portal Gun** | Garage Lab | Material from **every** world |
+| Fluid Tank, Twin Tank, Quick Mixer (portal gun) | Refinery / Black Market | Crystals, plasma, goo, feathers |
+| **Ship Hull** → Turbo Engine, Ship Lasers → **Dimension Drive** | Bazaar Shipyard / Black Market | All five materials for the drive |
+
+Your character decides which recipes you know. Breaking out of your life unlocks more.
+
+## The ship
+
+Press **B** to board (phone: SHIP). Fly where you look: **W** forward, **Space** up, **Shift** down. You take less damage inside, and with Ship Lasers you fire heavy lasers. With the Dimension Drive, the portal button jumps your ship straight into any world.
+
+## Locals and random events
+
+Every world has locals who walk around with names, faces and opinions: neighbours and students in Suburbia, flesh monks in the Meatlands, merchants and tourists in the Bazaar, miners on the moon, bird citizens in Featherhold. Walk up and press **F** to talk. Anything can happen:
+
+* They just say something strange.
+* They give you a gift, or offer a trade.
+* They ask you to deliver something to someone in another world (an **errand**, paid on delivery).
+* They give you a buff, shrink you by accident, or decide to follow you and fight at your side for a minute.
+* They take offence and come after you, open a prank portal under your feet, or start dancing.
+
+Everyone nearby sees the speech bubbles.
+
+Every few minutes a **world event** hits a dimension:
+
+| Dimension | Events |
+| --- | --- |
+| Suburbia | Block Party, Alien Invasion |
+| Meatlands | Meat Rain, Blob Swarm |
+| Bazaar | Flash Sale, Jelly Bloom |
+| Moon | Meteor Shower, Crab Migration |
+| Featherhold | Molting Season, Serpent Hunt |
 
 ## Dimensions
 
-| Dimension | Feel | Locals | Gravity |
-| --- | --- | --- | --- |
-| Suburbia Prime | Streets, houses, cars, mailboxes | Nosy neighbours | Normal |
-| The Meatlands | Flesh pillars, eye stalks, bone arches; a giant eye in the sky follows you | Meat blobs (hostile) | Normal |
-| Neon Bazaar | Glowing mushrooms, market stalls, a ringed planet | Sky jellies | Slightly low |
-| Lowgrav Moon | Craters, crystals, rovers, a planet overhead | Moon crabs (hostile) | Very low |
+| Dimension | Feel | Locals | Material | Landmarks |
+| --- | --- | --- | --- | --- |
+| Suburbia Prime | Streets, houses, cars | Neighbours, students | Scrap | Family House, Garage Lab, Harmony High, Horse Hospital, Unemployment Office |
+| The Meatlands | Flesh pillars, eye stalks, a giant eye in the sky | Flesh monks, meat blobs (hostile) | Meat Goo | Flesh Forge |
+| Neon Bazaar | Glowing mushrooms, market stalls, a ringed planet | Merchants, tourists, sky jellies | Neon Plasma | Bazaar Shipyard, Black Market |
+| Lowgrav Moon | Craters, crystals, rovers, very low gravity | Miners, moon crabs (hostile) | Moon Crystal | Crystal Refinery |
+| Featherhold | Golden cliffs, giant nests, totems, floating islands | Bird citizens, sky serpents (hostile) | Sky Feather | Aerie Temple |
 
-Every prop can be destroyed (a house takes a lot of punishment). Destroyed props drop scrap (crystals on the moon) and grow back after a minute. Monsters drop scrap and crystals. Scrap and crystals build gadgets: Gravity Grenades, Auto-Turrets, Shrink Ray shots, Jump Boots, the Mega Blaster and Portal Fluid. Wrecking things and beating other players earns **chaos points**, and a multiverse-wide leaderboard tracks the most chaotic variants.
+Every prop except the landmarks can be destroyed. Wrecking things and beating other players earns **chaos points** for the multiverse-wide leaderboard.
 
 ### Adding a dimension
 
-1. Add an entry to `MM.DIMS` in `shared/world.js`: name, seed, gravity, colours, which props, which monsters and how much loot.
-2. Add any new prop types to `MM.PROPS` (size and health) and give them a model in `MODELS` in `js/dims.js`.
-3. Optionally give it sky decorations in `skyDecor` and terrain colouring in `makeTerrain`.
+1. Add an entry to `MM.DIMS` in `shared/world.js`: name, seed, gravity, colours, props, locals and monsters, material and loot.
+2. Add new prop types to `MM.PROPS` and models to `MODELS` in `js/dims.js`; add locals to `MM.NPCS` and events to `MM.EVENTS`.
+3. Optionally add landmarks (`MM.LANDMARKS`), daily tasks (`MM.TASKS`) and recipes (`MM.RECIPES`) in `shared/rules.js`.
 
-The server, the kiosk, portals and bots pick it up automatically.
+The server, kiosk, portals, bots and journal pick it up automatically.
 
 ## Files
 

@@ -23,9 +23,9 @@
   };
   UI.save = function (key, v) { try { localStorage.setItem('mm.' + key, JSON.stringify(v)); } catch (_) {} };
 
-  const ARCH_COLORS = { genius: '#7fdcff', sidekick: '#ffd84d', joe: '#9be36b', birdfolk: '#ff9b4d', beanling: '#ffe066', mutant: '#ff7a8a' };
+  const ARCH_COLORS = { genius: '#7fdcff', sidekick: '#ffd84d', teen: '#ff8fd0', surgeon: '#b8f0d0', joe: '#9be36b', birdfolk: '#ff9b4d', beanling: '#ffe066', mutant: '#ff7a8a', trooper: '#ff6b5a', hive: '#c49bff' };
   UI.ARCH_COLORS = ARCH_COLORS;
-  const ARCH_ICONS = { genius: 'G', sidekick: 'S', joe: 'J', birdfolk: 'B', beanling: 'b', mutant: 'M' };
+  const ARCH_ICONS = { genius: 'G', sidekick: 'S', teen: 'T', surgeon: 'H', joe: 'J', birdfolk: 'B', beanling: 'b', mutant: 'M', trooper: 'F', hive: 'U' };
 
   const SKINS = ['#ffe0c8', '#f2d2b6', '#e0b08c', '#c68a62', '#a8724f', '#6b4630', '#9ad66b', '#7ec8e3', '#c49bff', '#ffd447', '#e07a85', '#b4b4c0'];
   const COLORS = ['#ffffff', '#f4f6f8', '#b9d4e0', '#9a9a9a', '#2a2a2a', '#7fb2d6', '#3c6fb5', '#2a3f8f', '#ffd447', '#f5a623', '#e2483d', '#a0303b', '#5fb848', '#2e7d32', '#b48aff', '#ff6fd0', '#6b4f2c', '#c9a77a'];
@@ -41,6 +41,10 @@
     { label: 'Bird Warrior', arch: 'birdfolk', look: { species: 'birdfolk', hair: 'mohawk', brow: 'angry', eyes: 'normal', mouth: 'flat', top: 'armor', acc: 'none', height: 1.25, width: 1.0, head: 1.0, skin: '#f0d0a0', hairColor: '#c9733a', topColor: '#6b4f2c', shirtColor: '#c9a77a', pantsColor: '#5a3a20', shoeColor: '#2a2a2a' } },
     { label: 'Bean Pal', arch: 'beanling', look: { species: 'beanling', hair: 'bald', brow: 'none', eyes: 'wide', mouth: 'grin', top: 'none', acc: 'tophat', height: 1.15, width: 1.0, head: 1.0, skin: '#ffd447', pantsColor: '#ffd447', shoeColor: '#2a2a2a', accColor: '#2a2a2a' } },
     { label: 'Meat Thing', arch: 'mutant', look: { species: 'blob', hair: 'bald', brow: 'none', eyes: 'three', mouth: 'open', top: 'none', acc: 'none', height: 1.15, width: 1.2, head: 0.9, skin: '#e07a85', pantsColor: '#a0303b', shoeColor: '#6b4630' } },
+    { label: 'Space-Bound Teen', arch: 'teen', look: { species: 'human', hair: 'ponytail', brow: 'normal', eyes: 'normal', mouth: 'flat', top: 'tshirt', acc: 'none', height: 1.02, width: 0.88, head: 1.15, skin: '#ffe0c8', hairColor: '#e2483d', topColor: '#ff6fd0', shirtColor: '#ffffff', pantsColor: '#ffffff', shoeColor: '#2a2a2a', portalColor: '#ff6fd0' } },
+    { label: 'Horse Surgeon', arch: 'surgeon', look: { species: 'human', hair: 'bowl', brow: 'normal', eyes: 'sleepy', mouth: 'flat', top: 'sweater', acc: 'none', height: 1.1, width: 0.9, head: 1.05, skin: '#f2d2b6', hairColor: '#f5d06a', topColor: '#c8504a', shirtColor: '#ffffff', pantsColor: '#2a3f8f', shoeColor: '#2a2a2a' } },
+    { label: 'Federation Trooper', arch: 'trooper', look: { species: 'alien', hair: 'bald', brow: 'angry', eyes: 'visor', mouth: 'frown', top: 'armor', acc: 'headband', height: 1.2, width: 1.1, head: 0.95, skin: '#7ec8e3', topColor: '#d8dde2', pantsColor: '#3c6fb5', shoeColor: '#2a2a2a', accColor: '#e2483d' } },
+    { label: 'Hive Mind', arch: 'hive', look: { species: 'alien', hair: 'afro', brow: 'none', eyes: 'wide', mouth: 'grin', top: 'vest', acc: 'antennae', height: 1.05, width: 0.9, head: 1.2, skin: '#c49bff', hairColor: '#7a2cbf', topColor: '#5fd6b0', shirtColor: '#2a2a2a', pantsColor: '#2a2a2a', accColor: '#ff6fd0' } },
     { label: 'Robo Me', arch: 'genius', look: { species: 'robot', hair: 'bald', brow: 'none', eyes: 'visor', mouth: 'flat', top: 'armor', acc: 'none', height: 1.1, width: 1.0, head: 1.0, skin: '#b4b4c0', topColor: '#3c6fb5', pantsColor: '#2a2a2a', shoeColor: '#2a2a2a', portalColor: '#5ff8ff' } },
     { label: 'Alien Tourist', arch: 'sidekick', look: { species: 'alien', hair: 'bald', brow: 'none', eyes: 'wide', mouth: 'grin', top: 'tshirt', acc: 'cap', height: 1.0, width: 0.9, head: 1.2, skin: '#9ad66b', topColor: '#ff6fd0', pantsColor: '#2a3f8f', shoeColor: '#ffffff', accColor: '#f5a623' } },
   ];
@@ -60,14 +64,17 @@
       const A = MM.ARCHETYPES[profile.arch];
       const info = $('archInfo');
       info.textContent = '';
+      const st = MM.statsOf(profile.arch, MM.newProgress(profile.arch).up);
       info.append(el('p', { text: A.blurb }), el('p', null, el('b', { text: 'Lore limits: ' }), A.perk),
+        el('p', null, el('b', { text: 'Your life: ' }), A.life.normal + ' in ' + MM.DIM_BY_ID[A.home].name + ' (' + A.life.daily.map(t => MM.TASKS[t].name.toLowerCase()).join(', ') + '). ',
+          el('b', { text: 'Break out: ' }), A.steps.length + ' steps to become ' + A.life.breakout + '.'),
         el('div', { class: 'stats' },
           el('span', { class: 'stat', text: 'Health ' + A.hp }),
           el('span', { class: 'stat', text: 'Speed ' + A.speed }),
           el('span', { class: 'stat', text: A.portal ? 'Portal gun ×' + A.portal.charges : 'No portal gun' }),
           el('span', { class: 'stat', text: A.fly ? 'Flies' : 'Walks' }),
-          el('span', { class: 'stat', text: 'Weapon: ' + A.weapon }),
-          el('span', { class: 'stat', text: A.craft.length ? 'Builds: ' + A.craft.map(g => MM.GADGETS[g].name).join(', ') : 'Builds nothing' })));
+          el('span', { class: 'stat', text: st.ship ? 'Has a ship' : 'No ship' }),
+          el('span', { class: 'stat', text: A.knows === '*' ? 'Builds anything' : 'Knows ' + A.knows.length + ' recipes' })));
     };
 
     const TABS = {
@@ -137,9 +144,11 @@
       const add = (k, d) => keys.append(el('span', null, ...k.split(' ').map(x => el('kbd', { text: x }))), el('span', { text: d }));
       add('W A S D', 'Move'); add('Mouse', 'Look (click the game to capture the mouse)'); add('Click', 'Fire / attack'); add('Space', 'Jump (hold to fly as a Birdfolk)');
       add('Q', 'Archetype ability'); add('E', 'Portal gun: open a portal to another dimension'); add('F', 'Use the Portal Kiosk (when standing at it)');
-      add('1 2 3', 'Throw a grenade / deploy a turret / fire the shrink ray'); add('C', 'Craft gadgets from scrap ⚙ and crystals ◆'); add('Enter', 'Chat with the whole multiverse');
+      add('F', 'Talk to locals, do daily tasks at buildings, use the kiosk'); add('J', 'Journal: your life, your path, errands');
+      add('B', 'Board or leave your ship (Space up, Shift down)');
+      add('1 2 3', 'Throw a grenade / deploy a turret / fire the shrink ray'); add('C', 'Workbench: build gadgets and upgrades'); add('Enter', 'Chat with the whole multiverse');
       add('Tab', 'Players, leaderboard and mute'); add('V', 'Emote (wave)'); add('Esc', 'Menu and settings');
-      box.append(el('p', { text: 'Smash props, beat up monsters and other players, collect scrap and crystals, build gadgets, and hop between dimensions. Every dimension holds up to 64 players at once; when it fills up, a fresh copy opens.' }), keys,
+      box.append(el('p', { text: 'Live your character\'s life, or break out of it. Do daily tasks at buildings, talk to locals (they do strange things), and follow your path in the journal (J). Every world has its own material, and the big upgrades (your body, a portal gun, a ship) are built at stations in different worlds. Every dimension holds up to 64 players.' }), keys,
         el('p', { class: 'note', text: 'On a phone: left stick to move, drag the right side to look, and use the round buttons.' }));
     });
   };
@@ -150,6 +159,17 @@
     $('toasts').append(d);
     while ($('toasts').children.length > 3) $('toasts').firstChild.remove();
     setTimeout(() => d.remove(), ms || 2600);
+  };
+
+  // A big centred announcement (world events, path steps, daily tasks).
+  UI.banner = function (title, text) {
+    const b = $('banner');
+    b.textContent = '';
+    b.append(el('b', { text: title }), el('span', { text: text || '' }));
+    b.hidden = false;
+    b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+    clearTimeout(UI.bannerT);
+    UI.bannerT = setTimeout(() => { b.hidden = true; }, 5200);
   };
 
   UI.feed = function (parts, mine) {

@@ -11,13 +11,15 @@
   const int = (v, lo, hi) => num(v, lo, hi) && Math.floor(v) === v;
   const str = (v, max) => typeof v === 'string' && v.length <= max;
   const B = 400; // generous coordinate bound; the server clamps to the real world edge
+  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
   // Client -> server. Each entry returns a clean copy of the message or null.
   MM.CLIENT_MSGS = {
     // First message: who I am.
+    // tok = the random save token this browser keeps, so progress survives a reload.
     hello: m => (int(m.v, 0, 1e6) && str(m.name, 64) && str(m.home || '', 16) && typeof m.look === 'object' && m.look !== null &&
-      typeof m.arch === 'string' && MM.ARCHETYPES[m.arch] && (m.dim === undefined || MM.DIM_BY_ID[m.dim]))
-      ? { v: m.v, name: m.name, home: m.home || '', look: m.look, arch: m.arch, dim: m.dim } : null,
+      typeof m.arch === 'string' && own(MM.ARCHETYPES, m.arch) && (m.dim === undefined || own(MM.DIM_BY_ID, m.dim)) && (m.tok === undefined || str(m.tok, 40)))
+      ? { v: m.v, name: m.name, home: m.home || '', look: m.look, arch: m.arch, dim: m.dim, tok: m.tok } : null,
     // Where I am (15 times a second). ep = travel epoch, so stale positions from the
     // previous dimension are ignored.
     st: m => (num(m.x, -B, B) && num(m.y, -200, 600) && num(m.z, -B, B) && num(m.r, -10, 10) && int(m.a, 0, 9) && int(m.ep, 0, 1e9))
@@ -25,10 +27,15 @@
     // Fire the main weapon along an aim direction (unit vector).
     f: m => aim(m) ? { dx: m.dx, dy: m.dy, dz: m.dz } : null,
     ab: () => ({}),                                     // archetype ability
-    po: m => (str(m.d, 16) && MM.DIM_BY_ID[m.d]) ? { d: m.d } : null,   // open a portal
-    ki: m => (str(m.d, 16) && MM.DIM_BY_ID[m.d]) ? { d: m.d } : null,   // use the public kiosk
-    cr: m => (str(m.g, 16) && MM.GADGETS[m.g]) ? { g: m.g } : null,     // craft a gadget
-    g: m => (str(m.g, 16) && MM.GADGETS[m.g] && aim(m)) ? { g: m.g, dx: m.dx, dy: m.dy, dz: m.dz } : null, // use a gadget
+    po: m => (str(m.d, 16) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null,   // open a portal
+    ki: m => (str(m.d, 16) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null,   // use the public kiosk
+    cr: m => (str(m.g, 16) && own(MM.RECIPES, m.g)) ? { g: m.g } : null,     // build a recipe
+    g: m => (str(m.g, 16) && MM.GADGET_IDS.includes(m.g) && aim(m)) ? { g: m.g, dx: m.dx, dy: m.dy, dz: m.dz } : null, // use a gadget
+    use: m => (str(m.l, 16) && own(MM.LANDMARK_BY_ID, m.l) && (m.task === undefined || (str(m.task, 16) && own(MM.TASKS, m.task)))) ? { l: m.l, task: m.task } : null, // daily task at a landmark
+    talk: m => int(m.n, 0, 1e12) ? { n: m.n } : null,  // talk to a local
+    ans: m => int(m.a, 0, 1) ? { a: m.a } : null,      // accept (1) or refuse (0) a local's offer
+    ship: m => typeof m.on === 'boolean' ? { on: m.on } : null,                // board or leave your ship
+    drive: m => (str(m.d, 16) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null, // dimension drive
     c: m => str(m.text, 300) ? { text: m.text } : null,  // chat
     em: m => int(m.e, 0, 5) ? { e: m.e } : null,       // emote
     rs: () => ({}),                                     // respawn
@@ -61,6 +68,7 @@
   MM.RATE = {
     all: [90, 45], st: [40, 20], f: [12, 6], c: [3, 0.5], cr: [6, 2], g: [6, 2],
     po: [3, 1], ki: [3, 1], ab: [4, 2], em: [4, 1], rs: [3, 1], pi: [5, 1], hello: [1, 0],
+    use: [4, 1], talk: [4, 1], ans: [4, 1], ship: [4, 1], drive: [3, 0.5],
   };
 
   // Animation states the client reports.

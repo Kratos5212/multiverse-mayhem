@@ -50,6 +50,13 @@ Every message is a JSON object with a `t` (type) field. Anything that is not on 
 | `em` | `e` | Emote |
 | `rs` | | Respawn (after the timer) |
 | `pi` | `c` | Ping |
+| `use` | `l`, `task` | Do a daily task at landmark `l` (must be standing there; cooldown) |
+| `talk` | `n` | Talk to local `n` (must be within 5 m) |
+| `ans` | `a` | Accept (1) or refuse (0) a local's trade offer |
+| `ship` | `on` | Board or leave your ship (must own one) |
+| `drive` | `d` | Dimension Drive to `d` (in your ship, with the drive, 15 s cooldown) |
+
+`hello` also carries `tok`, the random save token this browser was given (see **Saved progress**).
 
 **The travel epoch (`ep`).** Every time the server moves you (portal, kiosk, respawn, snap-back), it increments your epoch. Position reports carrying an old epoch are ignored. This avoids the classic bug where a late packet from your old position pulls you back after a teleport.
 
@@ -60,9 +67,10 @@ Every message is a JSON object with a `t` (type) field. Anything that is not on 
 | `hi` | Your player id, the server name, and your cleaned-up name |
 | `w` | Welcome to a dimension: everyone there, damaged props, pickups, monsters, portals, turrets, your position and epoch |
 | `s` | Snapshot: `p` players `[id,x,y,z,yaw,anim,hp%,effects]`, `n` monsters, `u` turret aim |
-| `ev` | A batch of events for this dimension copy: `join`, `leave`, `shot`, `hit`, `boom`, `mel`, `dmg`, `kill`, `prop`, `pk+`/`pk-` (pickups), `npc+`/`npc-`, `po+`/`po-` (portals), `tu+`/`tu-` (turrets), `ab`, `em`, `dodge`, `kiosk`, `bite`, `shrunk` |
-| `pv` | Private events: `tp` (you were moved), `kb` (knockback), `toast` |
-| `y` | Your private state: health, inventory, portal charges, cooldowns, score, death timer |
+| `ev` | A batch of events for this dimension copy: `join`, `leave`, `shot`, `hit`, `boom`, `mel`, `dmg`, `kill`, `prop`, `pk+`/`pk-` (pickups), `npc+`/`npc-`, `po+`/`po-` (portals), `tu+`/`tu-` (turrets), `ab`, `em`, `dodge`, `kiosk`, `bite`, `shrunk`, `say` (a local speaks), `world` (an event starts or ends), `title` (someone broke out of their life), `gear`, `ship`, `warp`, `nfree` |
+| `pv` | Private events: `tp` (you were moved), `kb` (knockback), `toast`, `built`, `task` (a daily task paid out), `step` (a path step completed), `offer` (a local's trade) |
+| `y` | Your private state: health, materials and gadgets, portal charges, cooldowns, score, death timer, ship |
+| `pg` | Your life: upgrades, path step, unlocks, counters, errands, daily-task cooldowns, title, and resulting stats |
 | `c` | A chat line: id, name, home code, dimension, text |
 | `pop` | Players per dimension and the top-10 chaos leaderboard |
 | `pong` | Reply to `pi` |
@@ -78,6 +86,14 @@ Projectiles are sent once as a `shot` (start point, velocity, gravity, lifetime)
 * **Movement checks.** Horizontal distance must fit your speed (with sprint, shrink and guilt effects, plus slack for lag). Rising must fit your jump or wings. You can never rise above jump height plus the tallest prop. Knockback grants a short allowance. Every failed check snaps you back; 25 recent failures disconnect you. With 64 bots fighting, knocking each other around and flying on the moon, no false kicks occurred.
 * **Cooldowns and ammo on the server.** Fire rate, ability cooldowns, kiosk cooldown, turret limits and gadget counts are all tracked server-side.
 * **Aim cannot cheat range.** A shot always starts from your server-side position, and the server flies it.
+
+### Saved progress
+* **No accounts.** The first time you play, the server makes a random 128-bit token and sends it to your browser, which keeps it. When you come back, the browser shows the token and gets your characters back. The token is a secret: anyone who has it is you, so it is never displayed or sent anywhere else.
+* **One session per token.** Joining from a second tab or device disconnects the first, so progress can't be duplicated.
+* **The server keeps the progress, not the browser.** A browser can't edit its upgrades or materials online. Saves are written atomically (temporary file, then rename) every 20 s and on shutdown, and the least recently played tokens are dropped beyond `MAX_SAVES`.
+* **Saves are cleaned on load.** Only known recipes, dimensions, tasks and materials are kept; numbers are clamped; anything else (including `__proto__` tricks) is dropped. The tests load a tampered save to check this.
+* **Offline play** keeps progress in the browser's own storage, through the same cleaning. It's your own single-player world there, so editing it only cheats yourself.
+* **Life rules on the server.** Recipe knowledge (character plus path unlocks), station location, costs, daily-task cooldowns (wall-clock time), step goals, errands and trades are all checked server-side. Talking to the same local twice counts once toward "talk to N locals".
 
 ### Abuse and flooding
 * **Per-type rate limits** (token buckets): 3 chat lines then 1 every 2 s, 12 shots burst, 40 position updates, 90 messages a second overall. Sustained flooding or 40 malformed messages disconnects you.
@@ -106,5 +122,5 @@ Projectiles are sent once as a `shot` (start point, velocity, gravity, lifetime)
 
 ## Measured
 
-* `npm test`: 9 tests covering the protocol, sanitizers, speed-hack rejection, rate limits, lore limits, portals and instance overflow, plus 64 bots fighting for a simulated minute (about 3 s of CPU) with no false kicks.
+* `npm test`: 16 tests. They cover the protocol, sanitizers, speed-hack rejection, rate limits, lore limits, portals and instance overflow, plus 64 bots fighting for a simulated minute (about 3.5 s of CPU) with no false kicks. They also cover station-only crafting, a teen's full path to Space Teen, an Average Joe locked out of ships, ship speed and the dimension drive, locals and cross-dimension errands, saved progress (including a tampered save) and world events.
 * `scripts/loadtest.js` over real WebSockets: 64 players in one dimension used about 0.7 of one CPU core and 100 MB of memory. 130 players split themselves into copies of 64, 64 and 2, and nobody was kicked.

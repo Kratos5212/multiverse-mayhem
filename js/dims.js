@@ -116,6 +116,116 @@
       s.add(P.hemi, '#e8e8f0', [0, 7, 0.6], [1.9, 0, 0], [1.6, 0.6, 1.6]);
       s.add(P.sphereLo, '#ff3355', [0, 9.1, 0], null, [0.25, 0.25, 0.25], true);
     },
+    // ----- Featherhold -----
+    nest(s) {
+      for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; s.add(P.capsule, i % 2 ? '#8a6233' : '#a37840', [Math.cos(a) * 2.4, 1.2, Math.sin(a) * 2.4], [0.3, -a, 1.3], [0.22, 1.6, 0.22]); }
+      s.add(P.cyl, '#6e4a26', [0, 0.6, 0], null, [2.6, 1.2, 2.6]);
+      for (let i = 0; i < 3; i++) s.add(P.sphere, '#f4efe4', [Math.cos(i * 2.1) * 0.8, 1.5, Math.sin(i * 2.1) * 0.8], null, [0.5, 0.65, 0.5]);
+    },
+    totem(s) {
+      const cols = ['#c9733a', '#3c6fb5', '#e2483d', '#ffd84d'];
+      for (let i = 0; i < 4; i++) {
+        s.add(P.cyl, cols[i], [0, 0.8 + i * 1.5, 0], null, [0.75, 1.5, 0.75]);
+        s.add(P.cone, '#f2a12c', [0, 0.9 + i * 1.5, 0.75], [Math.PI / 2, 0, 0], [0.25, 0.6, 0.2]);
+        s.add(P.sphereLo, '#fff', [0.3, 1.2 + i * 1.5, 0.65], null, [0.14, 0.14, 0.1]);
+        s.add(P.sphereLo, '#fff', [-0.3, 1.2 + i * 1.5, 0.65], null, [0.14, 0.14, 0.1]);
+      }
+      s.add(P.sphere, '#ffd84d', [1.0, 6.4, 0], [0, 0, -0.4], [1.0, 0.2, 0.4]);
+      s.add(P.sphere, '#ffd84d', [-1.0, 6.4, 0], [0, 0, 0.4], [1.0, 0.2, 0.4]);
+    },
+    featherplant(s) {
+      s.add(P.cylLo, '#7a5a2a', [0, 2.2, 0], [0.15, 0, 0], [0.06, 4.4, 0.06]);
+      s.add(P.sphere, '#ffcf4d', [0, 3.2, 0.25], [0.15, 0, 0], [0.55, 2.0, 0.12]);
+      s.add(P.sphere, '#ff8a3a', [0, 4.6, 0.45], [0.15, 0, 0], [0.35, 0.7, 0.1]);
+    },
+    rockspire(s) {
+      s.add(P.cone, '#b98c4e', [0, 6, 0], null, [2.6, 12, 2.4]);
+      s.add(P.dodeca, '#a27a42', [0.6, 1.2, 0.4], null, [2.4, 1.6, 2.2]);
+      s.add(P.cyl, '#8fae4a', [0, 9.5, 0], null, [1.0, 0.25, 1.0]);
+    },
+    // ----- Landmarks -----
+    lm_home(s) {
+      s.add(P.box, '#f3e4c4', [0, 3.2, 0], null, [12, 6.4, 10]);
+      const roof = new T.ConeGeometry(9.2, 4.2, 4, 1); roof.rotateY(Math.PI / 4);
+      s.add(roof, '#5a6f96', [0, 8.5, 0], null, [1, 1, 0.84]); roof.dispose();
+      s.add(P.box, '#8a5a2a', [0, 1.5, 5.02], null, [1.8, 3, 0.1]);
+      for (const x of [-3.6, 3.6]) s.add(P.box, '#ffe9a8', [x, 3.6, 5.02], null, [2, 1.6, 0.1], true);
+      s.add(P.box, '#d0c0a0', [0, 0.15, 6.2], null, [3, 0.3, 2.4]);
+      s.add(P.box, '#a33a30', [3.6, 9.6, -1.5], null, [1, 2.4, 1]);
+    },
+    lm_garage(s) {
+      s.add(P.box, '#d8d2c4', [0, 2.6, 0], null, [9, 5.2, 8]);
+      s.add(P.box, '#6b7280', [0, 5.4, 0], null, [9.6, 0.5, 8.6]);
+      s.add(P.box, '#3a3f4a', [0, 2.0, 4.02], null, [6, 4, 0.1]);
+      for (let i = 0; i < 4; i++) s.add(P.box, '#59606e', [0, 0.6 + i * 1.0, 4.08], null, [6, 0.08, 0.05]);
+      s.add(P.box, '#39ff6a', [0, 4.6, 4.1], null, [3.2, 0.6, 0.05], true);
+      s.add(P.cyl, '#39ff6a', [3.6, 6.2, 2], null, [0.15, 1.2, 0.15], true);
+      s.add(P.sphere, '#39ff6a', [3.6, 6.9, 2], null, [0.3, 0.3, 0.3], true);
+    },
+    lm_school(s) {
+      s.add(P.box, '#c8504a', [0, 3.5, 0], null, [18, 7, 9]);
+      s.add(P.box, '#e9e2d0', [0, 7.2, 0], null, [18.6, 0.5, 9.6]);
+      for (let i = -3; i <= 3; i++) for (const y of [2, 5]) s.add(P.box, '#bfe6ff', [i * 2.4, y, 4.52], null, [1.5, 1.4, 0.1]);
+      s.add(P.box, '#e9e2d0', [0, 1.6, 4.6], null, [3, 3.2, 0.3]);
+      s.add(P.cylLo, '#cccccc', [7, 6, 6.5], null, [0.08, 12, 0.08]);
+      s.add(P.box, '#3c6fb5', [7.9, 11, 6.5], null, [1.8, 1.0, 0.05]);
+    },
+    lm_hospital(s) {
+      s.add(P.box, '#f4f6f8', [0, 3.8, 0], null, [14, 7.6, 10]);
+      s.add(P.box, '#e2483d', [0, 6.2, 5.05], null, [3, 0.9, 0.08], true);
+      s.add(P.box, '#e2483d', [0, 6.2, 5.05], null, [0.9, 3, 0.08], true);
+      s.add(P.box, '#9fd6ff', [0, 1.6, 5.02], null, [3.4, 3.2, 0.1]);
+      // A horse statue out front, in honour of the patients.
+      s.add(P.capsule, '#a0703f', [4.5, 1.6, 7], [0, 0, Math.PI / 2], [0.5, 1.6, 0.5]);
+      for (const x of [3.7, 5.3]) for (const z of [6.7, 7.3]) s.add(P.cylLo, '#a0703f', [x, 0.6, z], null, [0.12, 1.2, 0.12]);
+      s.add(P.capsule, '#a0703f', [5.6, 2.4, 7], [0, 0, -0.6], [0.3, 0.9, 0.35]);
+      s.add(P.box, '#3a2a1a', [5.4, 2.6, 7], [0, 0, -0.6], [0.15, 1.0, 0.1]);
+    },
+    lm_office(s) {
+      s.add(P.box, '#9aa3ab', [0, 3.5, 0], null, [11, 7, 8]);
+      for (let i = -2; i <= 2; i++) s.add(P.box, '#6b7280', [i * 2, 4.5, 4.02], null, [1.4, 3.5, 0.1]);
+      s.add(P.box, '#59606e', [0, 1.4, 4.02], null, [2.2, 2.8, 0.1]);
+      for (let i = 0; i < 5; i++) s.add(P.box, '#c9c9c9', [-3 + i * 1.5, 0.2, 6 + i * 0.1], null, [0.5, 0.4, 0.5]);
+    },
+    lm_forge(s) {
+      s.add(P.sphere, '#b84a5d', [0, 2.6, 0], null, [6, 4, 5.5]);
+      for (let i = 0; i < 6; i++) { const a = i * 1.05; s.add(P.sphereLo, '#d9677a', [Math.cos(a) * 4.5, 1.2, Math.sin(a) * 4.2], null, [1.6, 1.3, 1.6]); }
+      s.add(P.sphere, '#ffb03a', [0, 2.2, 5.0], null, [2.2, 1.8, 0.8], true);
+      s.add(P.cyl, '#7c1e34', [2.5, 6.5, -1], null, [0.8, 3, 0.8]);
+      s.add(P.sphere, '#fff2e0', [-2.5, 6.4, 2.5], null, [1.0, 1.0, 1.0]);
+      s.add(P.sphereLo, '#111', [-2.5, 6.4, 3.4], null, [0.35, 0.35, 0.2]);
+    },
+    lm_shipyard(s) {
+      s.add(P.cyl, '#2b1b47', [0, 0.4, 0], null, [8, 0.8, 8]);
+      s.add(P.cyl, '#5ff8ff', [0, 0.82, 0], null, [8.05, 0.05, 8.05], true);
+      for (const x of [-6, 6]) s.add(P.box, '#5e3d8f', [x, 4.5, -4], null, [0.7, 9, 0.7]);
+      s.add(P.box, '#5e3d8f', [0, 8.8, -4], null, [13, 0.7, 0.7]);
+      s.add(P.cylLo, '#888', [2, 6.5, -4], null, [0.05, 4, 0.05]);
+      // A saucer under construction.
+      s.add(P.sphere, '#c9cfd6', [0, 2.2, 0], null, [4.5, 0.9, 4.5]);
+      s.add(P.hemi, '#7fdcff', [0, 2.6, 0], null, [1.8, 1.4, 1.8], true);
+      s.add(P.torus, '#ff6fd0', [0, 1.9, 0], [Math.PI / 2, 0, 0], [4.2, 4.2, 0.6], true);
+    },
+    lm_market(s) {
+      s.add(P.cone, '#2b1b47', [0, 3.2, 0], null, [6, 6.4, 6]);
+      s.add(P.cyl, '#1a1030', [0, 1, 0], null, [5, 2, 5]);
+      s.add(P.box, '#ff6fd0', [0, 2.4, 5], null, [3, 0.5, 0.1], true);
+      for (let i = 0; i < 5; i++) s.add(P.octa, ['#ffe066', '#6dff8a', '#ff7a5a', '#7ab8ff', '#ff6fd0'][i], [-2 + i, 1.2, 4.6], null, [0.25, 0.35, 0.25], true);
+    },
+    lm_refinery(s) {
+      s.add(P.hemi, '#d8dde2', [0, 0, 0], null, [7, 6, 7]);
+      s.add(P.cyl, '#7affea', [0, 6.5, 0], null, [0.7, 3, 0.7], true);
+      s.add(P.octa, '#7affea', [0, 8.6, 0], null, [1, 1.6, 1], true);
+      for (const a of [0, 2.1, 4.2]) s.add(P.cyl, '#9aa3ab', [Math.cos(a) * 6, 2, Math.sin(a) * 6], null, [1, 4, 1]);
+      s.add(P.box, '#3a3f4a', [0, 1.4, 6.6], null, [2.6, 2.8, 0.6]);
+    },
+    lm_aerie(s) {
+      s.add(P.cyl, '#c9a25a', [0, 1, 0], null, [7, 2, 7]);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.cyl, '#e8d6a8', [Math.cos(a) * 5.5, 6, Math.sin(a) * 5.5], null, [0.6, 10, 0.6]); }
+      s.add(P.cyl, '#b98c4e', [0, 11.4, 0], null, [7.2, 0.8, 7.2]);
+      s.add(P.cone, '#e2483d', [0, 13.5, 0], null, [5, 3.5, 5]);
+      for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; s.add(P.sphere, '#ffd84d', [Math.cos(a) * 3, 15.5, Math.sin(a) * 3], [0, -a, 0.6], [1.6, 0.25, 0.5]); }
+    },
   };
 
   const modelCache = {};
@@ -179,6 +289,21 @@
       ring.position.set(-250, 210, -330); ring.rotation.set(1.2, 0.3, 0);
       group.add(ring);
       group.add(stars(900, 560, '#ffffff', 2));
+    } else if (dim.id === 'featherhold') {
+      for (let i = 0; i < 9; i++) {
+        const s = new C.Shape();
+        s.add(P.cone, '#b98c4e', [0, -14, 0], [Math.PI, 0, 0], [14, 26, 14], true);
+        s.add(P.cyl, '#8fae4a', [0, 0, 0], null, [14, 2, 14], true);
+        s.add(P.sphereLo, '#3f9a3a', [4, 4, 2], null, [5, 4, 5], true);
+        const a = i / 9 * Math.PI * 2, d = 280 + (i % 3) * 70;
+        add(s, [Math.cos(a) * d, 90 + (i % 4) * 30, Math.sin(a) * d]);
+      }
+      for (let i = 0; i < 10; i++) {
+        const s = new C.Shape();
+        for (let j = 0; j < 4; j++) s.add(P.sphereLo, '#fff6e0', [j * 9 - 13, Math.sin(j * 2) * 2, (j % 2) * 4], null, [9, 5, 7], true);
+        const a = i / 10 * Math.PI * 2 + 0.3;
+        add(s, [Math.cos(a) * 340, 150 + (i % 3) * 20, Math.sin(a) * 340]);
+      }
     } else if (dim.id === 'moon') {
       const s = new C.Shape();
       s.add(P.sphere, '#2f6fd8', [0, 0, 0], null, [80, 80, 80], true);
@@ -221,6 +346,8 @@
         if ((gx > 3.85 || gz > 3.85) && Math.hypot(x, z) < 60) tmp.set('#5ff8ff');
       }
       if (dim.id === 'moon') { const d = y / 10; tmp.multiplyScalar(1 + Math.max(-0.35, Math.min(0.15, d * 0.3))); }
+      if (dim.id === 'featherhold') { const sl = Math.abs(MM.heightAt(dim.id, x + 1.5, z) - y) + Math.abs(MM.heightAt(dim.id, x, z + 1.5) - y); if (sl > 1.4) tmp.set(sl > 2.4 ? '#a27a42' : '#b98c4e'); else if (y > 6) tmp.lerp(new T.Color('#8fae4a'), 0.6); }
+      for (const l of MM.LANDMARKS) if (l.dim === dim.id) { const d = Math.hypot(x - l.x, z - l.z); if (d < l.r + 3.5) tmp.copy(side).lerp(new T.Color(dim.ground[1]), 0.35); }
       cols[i * 3] = tmp.r; cols[i * 3 + 1] = tmp.g; cols[i * 3 + 2] = tmp.b;
     }
     g.setAttribute('color', new T.BufferAttribute(cols, 3));
@@ -280,11 +407,28 @@
 
   // ---------- NPC models ----------
   const npcCache = {};
-  C.npcModel = function (type) {
-    if (type === 'neighbor') {
-      const look = MM.randomLook('joe');
-      look.species = 'human'; look.top = ['polo', 'sweater', 'tshirt'][Math.floor(Math.random() * 3)];
-      const av = C.buildAvatar(look, 'joe');
+  // A local's look comes from the seed the server sends, so everyone sees the same person.
+  const SKINS = { human: ['#ffe0c8', '#f2d2b6', '#e0b08c', '#c68a62', '#a8724f', '#6b4630'], alien: ['#9ad66b', '#7ec8e3', '#c49bff', '#5fd6b0', '#ff9bd2'],
+    blob: ['#e07a85', '#d9677a', '#c4505f'], robot: ['#b4b4c0', '#9aa3ab', '#d8c060'], birdfolk: ['#f0d0a0', '#e8c49a', '#d9b98a'], beanling: ['#ffd447', '#ff9bd2', '#7ec8e3'] };
+  C.npcLook = function (type, seed) {
+    const H = MM.NPCS[type].human, r = MM.rng(seed >>> 0);
+    const pk = a => a[Math.floor(r() * a.length)];
+    const col = () => '#' + Math.floor(r() * 0xffffff).toString(16).padStart(6, '0');
+    const look = MM.defaultLook();
+    look.species = pk(H.species);
+    look.top = pk(H.top); look.acc = pk(H.acc);
+    look.eyes = H.eyes ? pk(H.eyes) : pk(['normal', 'normal', 'wide', 'sleepy']);
+    look.hair = pk(MM.LOOK.hair); look.brow = pk(MM.LOOK.brow); look.mouth = pk(MM.LOOK.mouth);
+    look.skin = pk(SKINS[look.species] || SKINS.human);
+    for (const k of ['hairColor', 'topColor', 'shirtColor', 'pantsColor', 'shoeColor', 'accColor']) look[k] = col();
+    const hr = H.height || [0.9, 1.2];
+    look.height = hr[0] + r() * (hr[1] - hr[0]); look.width = 0.85 + r() * 0.4; look.head = 0.9 + r() * 0.35;
+    return look;
+  };
+  C.npcModel = function (type, seed) {
+    if (MM.NPCS[type].human) {
+      const look = C.npcLook(type, seed || 1);
+      const av = C.buildAvatar(look, type === 'invader' ? 'trooper' : type === 'birdcitizen' ? 'birdfolk' : 'joe');
       return { root: av.root, av };
     }
     if (!npcCache[type]) {
@@ -301,6 +445,13 @@
         s.add(P.sphereLo, '#ff8af0', [0, 0.95, 0], null, [0.35, 0.3, 0.35], true);
         for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; C.capsuleAt(s, '#5ad8ff', 0.06, 1.3, [Math.cos(a) * 0.55, -0.55, Math.sin(a) * 0.55], null, true); }
         s.add(P.sphereLo, '#111', [0.25, 1.0, 0.75], null, [0.08, 0.08, 0.05]); s.add(P.sphereLo, '#111', [-0.25, 1.0, 0.75], null, [0.08, 0.08, 0.05]);
+      } else if (type === 'skyserpent') {
+        for (let i = 0; i < 7; i++) s.add(P.sphere, i % 2 ? '#3fb6a8' : '#2a8f86', [0, 0.6 + Math.sin(i * 0.9) * 0.3, -i * 0.55], null, [0.45 - i * 0.04, 0.42 - i * 0.04, 0.5]);
+        s.add(P.sphere, '#3fb6a8', [0, 0.75, 0.55], null, [0.55, 0.45, 0.65]);
+        s.add(P.cone, '#ffd84d', [0, 1.15, 0.3], [-0.4, 0, 0], [0.12, 0.5, 0.12]);
+        s.add(P.sphereLo, '#fff', [0.25, 0.9, 0.95], null, [0.12, 0.12, 0.08]); s.add(P.sphereLo, '#fff', [-0.25, 0.9, 0.95], null, [0.12, 0.12, 0.08]);
+        s.add(P.sphereLo, '#111', [0.25, 0.9, 1.02], null, [0.05, 0.05, 0.03]); s.add(P.sphereLo, '#111', [-0.25, 0.9, 1.02], null, [0.05, 0.05, 0.03]);
+        s.add(P.sphere, '#ffcf4d', [0.6, 0.8, 0.1], [0, 0, -0.5], [0.6, 0.1, 0.3]); s.add(P.sphere, '#ffcf4d', [-0.6, 0.8, 0.1], [0, 0, 0.5], [0.6, 0.1, 0.3]);
       } else if (type === 'mooncrab') {
         s.add(P.sphere, '#c9c9d6', [0, 0.55, 0], null, [0.85, 0.35, 0.7]);
         for (const sx of [-1, 1]) {
@@ -331,10 +482,19 @@
       s.add(P.cylLo, '#ffd84d', [0, 0, 0], [Math.PI / 2, 0, 0], [0.12, 0.14, 0.12], true);
       const c = new C.Shape();
       c.add(P.octa, '#7affea', [0, 0, 0], null, [0.3, 0.5, 0.3], true);
-      pickupModels = { s: s.build(), c: c.build() };
+      const g = new C.Shape();
+      g.add(P.sphere, '#ff7a8a', [0, 0, 0], null, [0.38, 0.32, 0.38]);
+      g.add(P.sphereLo, '#ffb0ba', [0.12, 0.15, 0.2], null, [0.1, 0.08, 0.08], true);
+      const pl = new C.Shape();
+      pl.add(P.octa, '#ff6fd0', [0, 0, 0], null, [0.42, 0.42, 0.18], true);
+      pl.add(P.octa, '#ffd0f4', [0, 0, 0], [0, 0, Math.PI / 4], [0.3, 0.3, 0.2], true);
+      const f = new C.Shape();
+      f.add(P.sphere, '#ffcf4d', [0, 0, 0], [0, 0, 0.4], [0.16, 0.55, 0.05]);
+      f.add(P.cylLo, '#8a6233', [0.12, -0.45, 0], [0, 0, 0.4], [0.02, 0.4, 0.02]);
+      pickupModels = { s: s.build(), c: c.build(), g: g.build(), p: pl.build(), f: f.build() };
     }
     const g = new T.Group();
-    const m = C.meshOf(pickupModels[kind], 0.03);
+    const m = C.meshOf(pickupModels[kind] || pickupModels.s, 0.03);
     g.add(m);
     g.userData.spin = m;
     return g;
@@ -404,6 +564,16 @@
       for (const im of meshes) { im.instanceMatrix.needsUpdate = true; im.frustumCulled = false; group.add(im); }
     }
     const zero = new T.Matrix4().makeScale(0, 0, 0);
+
+    // Name signs over the landmarks.
+    for (const l of MM.LANDMARKS) {
+      if (l.dim !== dimId) continue;
+      const tag = C.makeTag(l.name, '', '', '#ffd84d');
+      tag.draw(-1);
+      tag.sprite.scale.set(6, 1.5, 1);
+      tag.sprite.position.set(l.x, MM.heightAt(dimId, l.x, l.z) + l.h + 2.2, l.z);
+      group.add(tag.sprite);
+    }
 
     const kiosk = makeKiosk(dim);
     kiosk.position.set(MM.KIOSK.x, MM.heightAt(dimId, MM.KIOSK.x, MM.KIOSK.z), MM.KIOSK.z);

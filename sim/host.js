@@ -1,9 +1,10 @@
 // Multiverse Mayhem: the authoritative game host.
 //
-// It owns everything that matters: health, damage, inventories, crafting, portals,
-// pickups and who is where. Clients only send what they want to do and where they
-// are walking; the host checks every message (shared/protocol.js), rate-limits it,
-// and validates movement against each archetype's speed before accepting it.
+// It owns everything that matters: health, damage, inventories, crafting, life
+// progress, portals, ships, pickups, locals and who is where. Clients only send
+// what they want to do and where they are walking; the host checks every message
+// (shared/protocol.js), rate-limits it, and validates movement against each
+// character's speed, jump, wings and ship before accepting it.
 //
 // It has no networking of its own. A "conn" is anything with send(string) and
 // close(code, reason). server/server.js plugs in WebSockets; the browser plugs in
@@ -14,6 +15,8 @@
 
   const r2 = v => Math.round(v * 100) / 100;
   const dist2 = (ax, az, bx, bz) => (ax - bx) * (ax - bx) + (az - bz) * (az - bz);
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const ri = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
 
   // Squared distance from point (px,py,pz) to segment a->b.
   function segDist2(ax, ay, az, bx, by, bz, px, py, pz) {
@@ -37,6 +40,39 @@
     }
   }
 
+  // Rebuild saved progress from whatever storage returned, keeping only valid values.
+  function cleanProgress(arch, raw) {
+    const p = MM.newProgress(arch);
+    if (!raw || typeof raw !== 'object') return p;
+    const num = (v, hi) => (typeof v === 'number' && Number.isFinite(v)) ? Math.max(0, Math.min(hi, Math.floor(v))) : 0;
+    if (raw.up && typeof raw.up === 'object') for (const k in raw.up) if (MM.RECIPES[k] && MM.RECIPES[k].cat !== 'gadget' && raw.up[k]) p.up[k] = 1;
+    p.step = num(raw.step, MM.ARCHETYPES[arch].steps.length);
+    if (Array.isArray(raw.grants)) p.grants = raw.grants.filter(g => MM.RECIPES[g]).slice(0, 40);
+    if (typeof raw.title === 'string' && raw.title === MM.ARCHETYPES[arch].life.breakout) p.title = raw.title;
+    const c = raw.cnt || {};
+    if (c.use && typeof c.use === 'object') for (const k in c.use) if (MM.TASKS[k]) p.cnt.use[k] = num(c.use[k], 1e6);
+    if (Array.isArray(c.dims)) p.cnt.dims = c.dims.filter(d => MM.DIM_BY_ID[d]).slice(0, 20);
+    if (Array.isArray(c.crafted)) p.cnt.crafted = c.crafted.filter(r => MM.RECIPES[r]).slice(0, 40);
+    if (Array.isArray(c.at)) p.cnt.at = c.at.filter(l => MM.LANDMARK_BY_ID[l]).slice(0, 20);
+    if (c.kill && typeof c.kill === 'object') for (const k in c.kill) if (MM.NPCS[k]) p.cnt.kill[k] = num(c.kill[k], 1e6);
+    for (const k of ['kills', 'ko', 'talk', 'smash', 'errand']) p.cnt[k] = num(c[k], 1e7);
+    if (Array.isArray(raw.errands)) p.errands = raw.errands.filter(e => e && MM.DIM_BY_ID[e.dim] && MM.NPCS[e.npc] && MM.MATERIALS[e.m] && e.rew && typeof e.rew === 'object')
+      .slice(0, 3).map(e => ({ id: num(e.id, 1e9), dim: e.dim, npc: e.npc, m: e.m, n: Math.max(1, num(e.n, 20)), from: String(e.from || '').slice(0, 30), rew: cleanMats(e.rew) }));
+    if (raw.tasks && typeof raw.tasks === 'object') for (const k in raw.tasks) if (MM.TASKS[k]) p.tasks[k] = num(raw.tasks[k], 1e15);
+    if (raw.inv && typeof raw.inv === 'object') {
+      for (const k of MM.MAT_IDS) p.inv[k] = num(raw.inv[k], 9999);
+      for (const g of MM.GADGET_IDS) p.inv[g] = Math.min(MM.RECIPES[g].max, num(raw.inv[g], 99));
+    }
+    p.chaos = num(raw.chaos, 1e9);
+    return p;
+  }
+  function cleanMats(m) {
+    const out = {};
+    for (const k of MM.MAT_IDS) if (typeof m[k] === 'number' && m[k] > 0) out[k] = Math.min(99, Math.floor(m[k]));
+    return out;
+  }
+  const matText = m => Object.keys(m).map(k => m[k] + ' ' + MM.MATERIALS[k].name).join(', ');
+
   // ---------------------------------------------------------------- Instance
   // One copy of one dimension with up to `cap` players. Busy dimensions get more.
   class Instance {
@@ -55,28 +91,32 @@
       this.projs = [];
       this.out = [];
       this.emptySince = host.time;
+      this.event = null;
+      this.nextEvent = host.time + 60 + Math.random() * 90;
       for (const [type, count] of this.dim.npc) for (let i = 0; i < count; i++) this.spawnNpc(type, false);
-      for (let i = 0; i < this.dim.pickups.s; i++) this.spawnPickup('s', false);
-      for (let i = 0; i < this.dim.pickups.c; i++) this.spawnPickup('c', false);
+      for (const k in this.dim.pickups) for (let i = 0; i < this.dim.pickups[k]; i++) this.spawnPickup(k, false);
     }
 
     ev(e) { this.out.push(e); }
 
-
     // ----- Spawning -----
-    spawnNpc(type, announce) {
-      const t = MM.NPCS[type];
-      const s = MM.randomSpot(this.dimId, Math.random, 25, 140);
-      const n = { id: this.host.ent(), type, T: t, x: s.x, y: s.y + (t.fly || 0), z: s.z, r: Math.random() * 6.28, hp: t.hp,
-        tx: s.x, tz: s.z, wait: 0, cd: 0, flee: 0, target: 0, home: s };
+    spawnNpc(type, announce, opts) {
+      opts = opts || {};
+      const T = MM.NPCS[type];
+      const s = opts.at ? { x: opts.at.x, z: opts.at.z, y: MM.heightAt(this.dimId, opts.at.x, opts.at.z) } : MM.randomSpot(this.dimId, Math.random, 25, 140);
+      const n = { id: this.host.ent(), type, T, x: s.x, y: s.y + (T.fly || 0), z: s.z, r: Math.random() * 6.28, hp: T.hp,
+        tx: s.x, tz: s.z, wait: 0, cd: 0, flee: 0, target: 0, home: s, seed: Math.floor(Math.random() * 1e9),
+        name: T.names ? pick(T.names) : T.name, temp: opts.until || 0, talkedBy: new Set(),
+        owner: 0, ownerUntil: 0, angry: 0, angryUntil: 0, stun: 0, dance: 0 };
       this.npcs.set(n.id, n);
       if (announce) this.ev({ k: 'npc+', n: this.npcRow(n) });
+      return n;
     }
-    npcRow(n) { return [n.id, n.type, r2(n.x), r2(n.y), r2(n.z), r2(n.r), Math.round(n.hp / n.T.hp * 100)]; }
+    npcRow(n) { return [n.id, n.type, r2(n.x), r2(n.y), r2(n.z), r2(n.r), Math.round(n.hp / n.T.hp * 100), n.seed, n.name]; }
 
     spawnPickup(kind, announce, at, count) {
       const s = at || MM.randomSpot(this.dimId, Math.random, 12, 140);
-      const pk = { id: this.host.ent(), c: kind, n: count || 1, x: s.x, y: MM.heightAt(this.dimId, s.x, s.z), z: s.z, drop: !!at };
+      const pk = { id: this.host.ent(), c: kind, n: count || 1, x: s.x, y: MM.heightAt(this.dimId, s.x, s.z), z: s.z, drop: !!at, born: this.host.time };
       this.pickups.set(pk.id, pk);
       if (announce) this.ev({ k: 'pk+', p: [pk.id, pk.c, r2(pk.x), r2(pk.y), r2(pk.z), pk.n] });
     }
@@ -93,6 +133,7 @@
         npcs: [...this.npcs.values()].map(n => this.npcRow(n)),
         portals: [...this.portals.values()].map(po => this.portalRow(po)),
         turrets: [...this.turrets.values()].map(t => [t.id, t.owner, r2(t.x), r2(t.y), r2(t.z)]),
+        event: this.event ? { name: this.event.E.name, text: this.event.E.text, left: r2(this.event.until - this.host.time) } : null,
       };
     }
     portalRow(po) { return { id: po.id, x: r2(po.x), y: r2(po.y), z: r2(po.z), r: r2(po.r), d: po.destDim, col: po.col, ttl: r2(po.until - this.host.time) }; }
@@ -104,6 +145,7 @@
       this.tickNpcs(dt, now);
       this.tickTurrets(dt, now);
       this.tickPortals(now);
+      if (this.players.size) this.tickEvents(now);
       // Props grow back a minute after they are destroyed.
       this.props.forEach((p, i) => {
         if (p.hp <= 0 && p.deadUntil && now >= p.deadUntil) {
@@ -114,15 +156,55 @@
           this.ev({ k: 'prop', id: i, hp: p.hp });
         }
       });
-      // Keep the world stocked with scrap and crystals.
       if (this.host.tickN % 30 === 0) {
-        let s = 0, c = 0;
-        for (const pk of this.pickups.values()) if (!pk.drop) { if (pk.c === 's') s++; else c++; }
-        if (s < this.dim.pickups.s) this.spawnPickup('s', true);
-        if (c < this.dim.pickups.c) this.spawnPickup('c', true);
-        for (const pk of this.pickups.values()) if (pk.drop && now - (pk.born || (pk.born = now)) > 90) { this.pickups.delete(pk.id); this.ev({ k: 'pk-', id: pk.id }); }
+        // Keep the world stocked with this dimension's materials.
+        const have = {};
+        for (const pk of this.pickups.values()) if (!pk.drop) have[pk.c] = (have[pk.c] || 0) + 1;
+        for (const k in this.dim.pickups) if ((have[k] || 0) < this.dim.pickups[k]) this.spawnPickup(k, true);
+        for (const pk of [...this.pickups.values()]) if (pk.drop && now - pk.born > 90) { this.pickups.delete(pk.id); this.ev({ k: 'pk-', id: pk.id }); }
+        // Event visitors leave when their time is up.
+        for (const n of [...this.npcs.values()]) if (n.temp && now > n.temp) { this.npcs.delete(n.id); this.ev({ k: 'npc-', id: n.id }); }
       }
     }
+
+    // ----- World events -----
+    tickEvents(now) {
+      const ev = this.event;
+      if (ev) {
+        if (now >= ev.until) {
+          this.ev({ k: 'world', end: 1, name: ev.E.name });
+          this.event = null;
+          this.nextEvent = now + 150 + Math.random() * 150;
+        } else if (ev.booms > 0 && now >= ev.nextBoom) {
+          ev.booms--; ev.nextBoom = now + ev.E.dur / (ev.E.booms + 1);
+          const p = pick([...this.players.values()]);
+          if (p) {
+            const a = Math.random() * 6.28, d = 6 + Math.random() * 20;
+            const x = p.x + Math.cos(a) * d, z = p.z + Math.sin(a) * d;
+            this.explode(x, MM.heightAt(this.dimId, x, z), z, 5, 15, null, 'meteor', { propDmg: 60 });
+            this.spawnPickup(this.dim.mat, true, { x: x + 1, z }, 2);
+          }
+        }
+        return;
+      }
+      if (now < this.nextEvent) return;
+      const list = MM.EVENTS[this.dimId];
+      if (!list) return;
+      const E = pick(list);
+      this.event = { E, until: now + E.dur, booms: E.booms || 0, nextBoom: now + 2 };
+      this.ev({ k: 'world', name: E.name, text: E.text, left: E.dur });
+      const players = [...this.players.values()];
+      if (E.spawn) for (const [type, n] of E.spawn) for (let i = 0; i < n; i++) {
+        const p = pick(players), a = Math.random() * 6.28, d = 14 + Math.random() * 16;
+        const x = Math.max(-150, Math.min(150, p.x + Math.cos(a) * d)), z = Math.max(-150, Math.min(150, p.z + Math.sin(a) * d));
+        this.spawnNpc(type, true, { at: { x, z }, until: now + E.dur + 20 });
+      }
+      if (E.loot) for (let i = 0; i < E.loot[1]; i++) {
+        const p = pick(players), a = Math.random() * 6.28, d = 4 + Math.random() * 26;
+        this.spawnPickup(E.loot[0], true, { x: p.x + Math.cos(a) * d, z: p.z + Math.sin(a) * d }, ri(1, 2));
+      }
+    }
+    boosted() { return this.event && this.event.E.talkBoost; }
 
     tickProjectiles(dt, now) {
       const keep = [];
@@ -132,14 +214,14 @@
         pr.x += pr.vx * dt; pr.y += pr.vy * dt; pr.z += pr.vz * dt;
         pr.life -= dt;
         let hit = null;
-        // Players
         for (const p of this.players.values()) {
           if (p.dead || p.id === pr.owner) continue;
           const s = this.host.scaleOf(p);
-          const rr = 0.85 * s + (pr.rad || 0.15);
-          if (segDist2(ox, oy, oz, pr.x, pr.y, pr.z, p.x, p.y + 1.0 * s, p.z) < rr * rr) { hit = { p }; break; }
+          const rr = (p.ship ? 1.8 : 0.85 * s) + (pr.rad || 0.15);
+          if (segDist2(ox, oy, oz, pr.x, pr.y, pr.z, p.x, p.y + (p.ship ? 0.8 : 1.0 * s), p.z) < rr * rr) { hit = { p }; break; }
         }
         if (!hit) for (const n of this.npcs.values()) {
+          if (n.owner === pr.owner && n.ownerUntil > now) continue;
           const rr = n.T.r + (pr.rad || 0.15);
           if (segDist2(ox, oy, oz, pr.x, pr.y, pr.z, n.x, n.y + n.T.h / 2, n.z) < rr * rr) { hit = { n }; break; }
         }
@@ -162,7 +244,6 @@
         if (!hit && pr.y < ground) hit = { ground: true };
         if (!hit && pr.life <= 0) { if (pr.kind === 'gren') hit = { fuse: true }; else continue; }
         if (!hit) { keep.push(pr); continue; }
-        // Impact
         const owner = this.host.players.get(pr.owner) || null;
         this.ev({ k: 'hit', id: pr.id, x: r2(pr.x), y: r2(Math.max(pr.y, ground)), z: r2(pr.z) });
         if (pr.kind === 'gren') { this.explode(pr.x, Math.max(pr.y, ground), pr.z, 6.5, 35, owner, 'grenade'); continue; }
@@ -187,12 +268,13 @@
         const f = 1 - d / rad;
         const self = owner && p.id === owner.id;
         if (!self || opts.selfDamage) this.host.hurtPlayer(this, p, Math.round(dmg * (0.4 + 0.6 * f)), owner, how);
-        if (opts.noSelfKnock && self) continue;
+        if ((opts.noSelfKnock && self) || p.ship) continue;
         const kx = p.x - x, kz = p.z - z, kl = Math.hypot(kx, kz) || 1;
         const power = (opts.knock || 14) * (0.5 + f);
         this.host.knock(p, kx / kl * power, 6 + power * 0.5, kz / kl * power);
       }
       for (const n of [...this.npcs.values()]) {
+        if (owner && n.owner === owner.id && n.ownerUntil > this.host.time) continue;
         const d = Math.hypot(n.x - x, n.z - z);
         if (d < rad + n.T.r) this.hurtNpc(n, Math.round(dmg * (1 - d / (rad + n.T.r) * 0.6)), owner);
       }
@@ -208,20 +290,18 @@
 
     hurtProp(i, dmg, owner) {
       const st = this.props[i];
-      if (st.hp <= 0) return;
+      const p = MM.genProps(this.dimId)[i];
+      const T = MM.PROPS[p.type];
+      if (st.hp <= 0 || T.fixed) return;
       st.hp = Math.max(0, st.hp - dmg);
       if (st.hp === 0) {
         st.deadUntil = this.host.time + 60;
-        const p = MM.genProps(this.dimId)[i];
-        const T = MM.PROPS[p.type];
-        // Scrap (and crystals) spill out around the wreck.
-        const drops = [['s', T.scrap], ['c', T.crystal || 0]];
-        for (const [c, n] of drops) {
-          if (!n) continue;
+        // Materials spill out around the wreck.
+        for (const k in T.drop) {
           const a = Math.random() * 6.28;
-          this.spawnPickup(c, true, { x: p.x + Math.cos(a) * (p.r + 1.2), z: p.z + Math.sin(a) * (p.r + 1.2) }, n);
+          this.spawnPickup(k, true, { x: p.x + Math.cos(a) * (p.r + 1.2), z: p.z + Math.sin(a) * (p.r + 1.2) }, T.drop[k]);
         }
-        if (owner) { owner.chaos += p.type === 'house' ? 5 : 1; this.host.dirty(owner); }
+        if (owner) { owner.prog.chaos += p.type === 'house' ? 5 : 1; this.host.progress(owner, 'smash'); }
       }
       this.ev({ k: 'prop', id: i, hp: st.hp });
     }
@@ -230,16 +310,22 @@
       if (!this.npcs.has(n.id)) return;
       n.hp -= dmg;
       n.flee = this.host.time + 4;
-      if (owner) n.target = owner.id;
+      if (owner) {
+        n.target = owner.id;
+        // Locals you hit hit back (if they are the fighting kind).
+        if (!n.T.hostile && n.T.human && Math.random() < 0.5) { n.angry = owner.id; n.angryUntil = this.host.time + 15; }
+      }
       this.ev({ k: 'dmg', n: n.id, d: dmg });
       if (n.hp > 0) return;
       this.npcs.delete(n.id);
       this.ev({ k: 'npc-', id: n.id, die: 1 });
-      if (n.T.drop.s) this.spawnPickup('s', true, { x: n.x + 0.8, z: n.z }, n.T.drop.s);
-      if (n.T.drop.c) this.spawnPickup('c', true, { x: n.x - 0.8, z: n.z }, n.T.drop.c);
-      if (owner) { owner.chaos += 2; this.host.dirty(owner); }
-      const type = n.type;
-      this.host.later(25, () => { if (this.host.instances.get(this.key) === this) this.spawnNpc(type, true); });
+      let i = 0;
+      for (const k in n.T.drop) this.spawnPickup(k, true, { x: n.x + (i++ - 0.5) * 1.4, z: n.z }, n.T.drop[k]);
+      if (owner) { owner.prog.chaos += 2; this.host.progress(owner, 'kill', n.type); }
+      if (!n.temp) {
+        const type = n.type;
+        this.host.later(25, () => { if (this.host.instances.get(this.key) === this) this.spawnNpc(type, true); });
+      }
     }
 
     hurtTurret(t, dmg) {
@@ -248,24 +334,52 @@
     }
 
     // ----- NPCs -----
+    // Players a monster can see (Average Joes, sobbing and protected players are beneath notice).
+    visible(p, now) { return !p.dead && p.arch !== 'joe' && now >= p.fx.sob && now >= p.fx.prot; }
+
     tickNpcs(dt, now) {
       for (const n of this.npcs.values()) {
         const T = n.T;
         let goal = null, speed = T.speed;
-        if (T.hostile) {
-          // Chase the nearest player in range. Average Joes are beneath notice.
-          let best = null, bd = 22 * 22;
+        const owner = n.owner && now < n.ownerUntil ? this.host.players.get(n.owner) : null;
+        if (n.owner && !owner) { n.owner = 0; this.ev({ k: 'nfree', n: n.id }); }
+        if (now < n.stun || now < n.dance) { n.y = MM.heightAt(this.dimId, n.x, n.z) + (T.fly || 0); continue; }
+        if (owner && owner.inst === this) {
+          // A follower: fight whatever is near its friend, otherwise tag along.
+          let best = null, bd = 12 * 12, isNpc = true;
+          for (const m of this.npcs.values()) {
+            if (m === n || !m.T.hostile || (m.owner && now < m.ownerUntil)) continue;
+            const d = dist2(m.x, m.z, n.x, n.z);
+            if (d < bd) { bd = d; best = m; }
+          }
           for (const p of this.players.values()) {
-            if (p.dead || p.arch === 'joe' || now < p.fx.sob || now < p.fx.prot) continue;
+            if (p === owner || !this.visible(p, now)) continue;
+            const d = dist2(p.x, p.z, n.x, n.z);
+            if (d < Math.min(bd, 7 * 7)) { bd = d; best = p; isNpc = false; }
+          }
+          if (best) {
+            goal = best; speed *= 1.5;
+            if (bd < (T.r + 1.3) ** 2 && now >= n.cd) {
+              n.cd = now + 1.0;
+              this.ev({ k: 'bite', n: n.id });
+              if (isNpc) this.hurtNpc(best, 8, owner); else this.host.hurtPlayer(this, best, 6, owner, 'follower');
+            }
+          } else if (dist2(owner.x, owner.z, n.x, n.z) > 9) { goal = { x: owner.x - Math.sin(owner.r) * 2, z: owner.z - Math.cos(owner.r) * 2 }; speed = Math.max(speed, owner.st.speed); }
+        } else if (T.hostile || (n.angry && now < n.angryUntil)) {
+          // Chase the nearest player in range (or the one who made a local angry).
+          let best = null, bd = 22 * 22;
+          if (n.angry && now < n.angryUntil) { const p = this.host.players.get(n.angry); if (p && p.inst === this && !p.dead) best = p, bd = dist2(p.x, p.z, n.x, n.z); }
+          else for (const p of this.players.values()) {
+            if (!this.visible(p, now)) continue;
             const d = dist2(p.x, p.z, n.x, n.z);
             if (d < bd) { bd = d; best = p; }
           }
           if (best) {
             goal = best; speed *= 1.15;
-            if (bd < (T.r + 1.1) * (T.r + 1.1) && now >= n.cd) {
+            if (bd < (T.r + 1.1) * (T.r + 1.1) && now >= n.cd && Math.abs(best.y - n.y) < 3) {
               n.cd = now + 1.2;
               this.ev({ k: 'bite', n: n.id });
-              this.host.hurtPlayer(this, best, T.dmg, null, n.type);
+              this.host.hurtPlayer(this, best, T.dmg || 6, null, n.type);
             }
           }
         } else if (now < n.flee) {
@@ -303,7 +417,7 @@
         if (now < t.cd) continue;
         let best = null, bd = 26 * 26, isNpc = false;
         for (const p of this.players.values()) {
-          if (p.dead || p.id === t.owner || p.arch === 'joe' || now < p.fx.sob || now < p.fx.prot) continue;
+          if (p.id === t.owner || !this.visible(p, now)) continue;
           const d = dist2(p.x, p.z, t.x, t.z);
           if (d < bd) { bd = d; best = p; isNpc = false; }
         }
@@ -328,7 +442,7 @@
         if (now >= po.until) { this.portals.delete(po.id); this.ev({ k: 'po-', id: po.id }); continue; }
         for (const p of [...this.players.values()]) {
           if (p.dead || now < p.portalCool) continue;
-          if (dist2(p.x, p.z, po.x, po.z) < MM.PORTAL_RADIUS * MM.PORTAL_RADIUS && p.y < po.y + 3.5 && p.y > po.y - 1.5) {
+          if (dist2(p.x, p.z, po.x, po.z) < (MM.PORTAL_RADIUS + (p.ship ? 1.2 : 0)) ** 2 && p.y < po.y + 3.5 && p.y > po.y - 1.5) {
             const dest = this.host.instances.get(po.destKey);
             const exit = dest && dest.portals.get(po.link);
             const at = exit ? { x: exit.x + Math.sin(exit.r) * 2.6, z: exit.z + Math.cos(exit.r) * 2.6 } : null;
@@ -344,7 +458,7 @@
       const ps = [];
       for (const p of this.players.values()) ps.push([p.id, r2(p.x), r2(p.y), r2(p.z), r2(p.r), p.dead ? MM.ANIM.dead : p.a, Math.max(0, Math.round(p.hp / p.maxHp * 100)), this.host.fxBits(p, now)]);
       const ns = [];
-      for (const n of this.npcs.values()) ns.push([n.id, r2(n.x), r2(n.y), r2(n.z), r2(n.r), Math.max(0, Math.round(n.hp / n.T.hp * 100))]);
+      for (const n of this.npcs.values()) ns.push([n.id, r2(n.x), r2(n.y), r2(n.z), r2(n.r), Math.max(0, Math.round(n.hp / n.T.hp * 100)), (now < n.ownerUntil ? 1 : 0) | (now < n.angryUntil ? 2 : 0) | (now < n.dance ? 4 : 0) | (now < n.stun ? 8 : 0)]);
       const ts = [];
       for (const t of this.turrets.values()) ts.push([t.id, r2(t.aim || 0)]);
       return JSON.stringify({ t: 's', tm: r2(now), p: ps, n: ns, u: ts });
@@ -353,15 +467,21 @@
 
   // ---------------------------------------------------------------- Host
   class Host {
+    // opts.store: { load(token, arch) -> saved progress or null, save(token, arch, progress) }
+    // opts.newToken: () -> 32 hex characters. opts.wall: () -> wall-clock ms (for daily cooldowns).
     constructor(opts) {
       opts = opts || {};
       this.name = opts.name || 'Multiverse Mayhem';
       this.cap = opts.cap || MM.INSTANCE_CAP;
       this.maxPlayers = opts.maxPlayers || 2000;
       this.log = opts.log || function () {};
+      this.store = opts.store || null;
+      this.newToken = opts.newToken || (() => Array.from({ length: 32 }, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join(''));
+      this.wall = opts.wall || (() => Date.now());
       this.instances = new Map();
       this.players = new Map();
       this.clients = new Map();       // conn -> client record
+      this.tokens = new Map();        // save token -> player playing with it
       this.time = 0;
       this.tickN = 0;
       this.nextId = 1;
@@ -403,13 +523,15 @@
       this.clients.delete(conn);
       const p = c.player;
       if (!p) return;
+      this.save(p);
+      if (p.token && this.tokens.get(p.token) === p) this.tokens.delete(p.token);
       if (p.inst) { p.inst.players.delete(p.id); p.inst.ev({ k: 'leave', id: p.id }); p.inst.emptySince = this.time; }
       this.players.delete(p.id);
       this.log(`leave ${p.name} (${p.id})`);
     }
 
     kick(c, why) {
-      this.log(`kick ${c.player ? c.player.name : '?'}: ${why}`);
+      this.log(`kicked ${c.player ? c.player.name : '?'}: ${why}`);
       try { c.conn.send(JSON.stringify({ t: 'err', msg: why })); } catch (_) {}
       try { c.conn.close(4000, why); } catch (_) {}
       this.close(c.conn);
@@ -446,6 +568,11 @@
         case 'em': if (!p.dead) p.inst.ev({ k: 'em', id: p.id, e: m.e }); break;
         case 'rs': this.onRespawn(p); break;
         case 'pi': this.send(p, { t: 'pong', c: m.c }); break;
+        case 'use': this.onUse(p, m.l, m.task); break;
+        case 'talk': this.onTalk(p, m.n); break;
+        case 'ans': this.onAnswer(p, m.a); break;
+        case 'ship': this.onShip(p, m.on); break;
+        case 'drive': this.onDrive(p, m.d); break;
       }
     }
 
@@ -453,27 +580,102 @@
       if (m.v !== MM.VERSION) { this.kick(c, 'This server runs a different version. Refresh the page.'); return; }
       if (this.players.size >= this.maxPlayers) { this.kick(c, 'Server is full'); return; }
       const A = MM.ARCHETYPES[m.arch];
+      // Saved progress: the token is a random secret the client keeps. One session per token.
+      let token = null;
+      if (!c.bot) {
+        token = typeof m.tok === 'string' && /^[0-9a-f]{32}$/.test(m.tok) ? m.tok : this.newToken();
+        const old = this.tokens.get(token);
+        if (old) { const oc = this.clients.get(old.conn); if (oc) this.kick(oc, 'You joined from another tab or device.'); }
+      }
+      let saved = null;
+      if (token && this.store) { try { saved = this.store.load(token, m.arch); } catch (_) { saved = null; } }
+      const prog = cleanProgress(m.arch, saved);
+      if (prog.inv.grenade === undefined || (!saved && !prog.inv.grenade)) prog.inv.grenade = 1;
+      for (const g of MM.GADGET_IDS) if (!prog.inv[g]) prog.inv[g] = prog.inv[g] || 0;
       const p = {
-        id: this.nextId++, conn: c.conn, bot: c.bot,
+        id: this.nextId++, conn: c.conn, bot: c.bot, token,
         name: MM.sanitizeName(m.name), home: MM.sanitizeHome(m.home), look: MM.sanitizeLook(m.look), arch: m.arch, A,
+        prog, inv: prog.inv, st: null,
         inst: null, ep: 0, x: 0, y: 0, z: 0, r: 0, a: 0, lastSt: this.time, strikes: 0,
-        hp: A.hp, maxHp: A.hp, dead: false, respawnAt: 0,
-        inv: { s: 0, c: 0, grenade: 1, turret: 0, shrink: 0 }, boots: false, mega: false,
-        charges: A.portal ? A.portal.charges : 0, chargeAt: 0,
-        cdFire: 0, cdAb: 0, cdKiosk: 0, chatAt: 0,
-        fx: { shield: 0, sprint: 0, sob: 0, shrink: 0, guilt: 0, prot: 0 },
-        kbUntil: 0, portalCool: 0, chaos: 0, kills: 0, deaths: 0, dirtyFlag: true,
+        hp: A.hp, maxHp: A.hp, dead: false, respawnAt: 0, ship: false,
+        charges: 0, chargeAt: 0,
+        cdFire: 0, cdAb: 0, cdKiosk: 0, cdTalk: 0, cdDrive: 0, cdUse: 0, offer: null,
+        fx: { shield: 0, sprint: 0, sob: 0, shrink: 0, guilt: 0, prot: 0, daze: 0, cuff: 0 },
+        kbUntil: 0, portalCool: 0, kills: 0, deaths: 0, dirtyFlag: true, progDirty: true, saveDirty: false,
       };
+      this.restat(p);
+      p.hp = p.maxHp;
+      p.charges = p.st.gun ? p.st.gun.charges : 0;
       c.player = p;
       this.players.set(p.id, p);
-      this.send(p, { t: 'hi', id: p.id, name: this.name, cap: this.cap, dims: MM.DIM_IDS, you: { name: p.name, home: p.home, arch: p.arch } });
-      this.log(`join ${p.name} (${p.id}) as ${p.arch}${p.bot ? ' [bot]' : ''}`);
-      this.travel(p, m.dim && MM.DIM_BY_ID[m.dim] ? m.dim : 'suburbia', null, null, true);
+      if (token) this.tokens.set(token, p);
+      this.send(p, { t: 'hi', id: p.id, name: this.name, cap: this.cap, dims: MM.DIM_IDS, tok: token, you: { name: p.name, home: p.home, arch: p.arch } });
+      this.log(`join ${p.name} (${p.id}) as ${p.arch}${p.bot ? ' [bot]' : ''}${saved ? ' (saved progress)' : ''}`);
+      this.travel(p, m.dim && MM.DIM_BY_ID[m.dim] ? m.dim : A.home, null, null, true);
     }
 
-    info(p) { return { id: p.id, name: p.name, home: p.home, look: p.look, arch: p.arch, bot: p.bot, chaos: p.chaos }; }
+    restat(p) {
+      const old = p.maxHp;
+      p.st = MM.statsOf(p.arch, p.prog.up);
+      p.maxHp = p.st.maxHp;
+      if (old && p.maxHp > old && !p.dead) p.hp += p.maxHp - old;
+      p.hp = Math.min(p.hp, p.maxHp);
+      const max = p.st.gun ? p.st.gun.charges : 0;
+      if (p.charges > max) p.charges = max;
+      if (!p.st.ship) p.ship = false;
+    }
 
-    // Move a player into a dimension (a portal, the kiosk, or joining).
+    info(p) {
+      const up = p.prog.up;
+      return { id: p.id, name: p.name, home: p.home, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '',
+        gear: { wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers } };
+    }
+
+    // ----- Life progress -----
+    progress(p, kind, val) {
+      const c = p.prog.cnt;
+      switch (kind) {
+        case 'use': c.use[val] = (c.use[val] || 0) + 1; break;
+        case 'at': if (!(c.at || (c.at = [])).includes(val)) c.at.push(val); else return; break;
+        case 'dim': if (!c.dims.includes(val)) c.dims.push(val); else return; break;
+        case 'craft': if (!c.crafted.includes(val)) c.crafted.push(val); break;
+        case 'kill': c.kills++; c.kill[val] = (c.kill[val] || 0) + 1; break;
+        case 'ko': c.ko++; break;
+        case 'talk': c.talk++; break;
+        case 'smash': c.smash++; break;
+        case 'errand': c.errand++; break;
+      }
+      p.progDirty = true;
+      this.dirty(p);
+    }
+
+    // Complete as many path steps as are done, in order.
+    checkSteps(p) {
+      const steps = p.A.steps, prog = p.prog;
+      let changed = false;
+      while (prog.step < steps.length) {
+        const S = steps[prog.step];
+        const pr = MM.stepProgress(prog, S.goal, p.inv);
+        if (pr.now < pr.need) break;
+        prog.step++;
+        changed = true;
+        for (const g of S.grants || []) if (!prog.grants.includes(g)) prog.grants.push(g);
+        if (S.title) {
+          prog.title = p.A.life.breakout;
+          p.inst.ev({ k: 'title', id: p.id, title: prog.title });
+          this.priv(p, { k: 'step', name: S.name, title: prog.title, grants: S.grants || [] });
+        } else this.priv(p, { k: 'step', name: S.name, grants: S.grants || [] });
+      }
+      if (changed) p.progDirty = true;
+    }
+
+    save(p) {
+      if (!this.store || !p.token || p.bot) return;
+      try { this.store.save(p.token, p.arch, p.prog); } catch (e) { this.log('save failed: ' + e.message); }
+      p.saveDirty = false;
+    }
+
+    // Move a player into a dimension (a portal, the kiosk, a ship, or joining).
     travel(p, dimId, at, preferInst, first) {
       const from = p.inst;
       if (from) {
@@ -484,16 +686,18 @@
       const inst = this.instanceWithRoom(dimId, preferInst);
       const spot = at ? { x: at.x, z: at.z, y: MM.heightAt(dimId, at.x, at.z) } : MM.spawnPoint(dimId);
       p.inst = inst;
-      p.x = spot.x; p.y = spot.y + 0.1; p.z = spot.z; p.a = 0;
+      p.x = spot.x; p.y = spot.y + (p.ship ? 3 : 0.1); p.z = spot.z; p.a = 0;
       p.ep++;
       p.lastSt = this.time;
       p.portalCool = this.time + 2;
+      p.offer = null;
       p.fx.prot = Math.max(p.fx.prot, this.time + (first ? MM.SPAWN_PROTECT : 1.5));
       inst.ev({ k: 'join', p: this.info(p), via: from ? from.dimId : null });
       inst.players.set(p.id, p);
       const w = inst.welcomeState();
-      w.t = 'w'; w.ep = p.ep; w.x = r2(p.x); w.y = r2(p.y); w.z = r2(p.z); w.tm = r2(this.time);
+      w.t = 'w'; w.ep = p.ep; w.x = r2(p.x); w.y = r2(p.y); w.z = r2(p.z); w.tm = r2(this.time); w.ship = p.ship;
       this.send(p, w);
+      this.progress(p, 'dim', dimId);
       this.dirty(p);
     }
 
@@ -503,7 +707,8 @@
     }
 
     priv(p, e) { (p.pv || (p.pv = [])).push(e); }
-    dirty(p) { p.dirtyFlag = true; }
+    dirty(p) { p.dirtyFlag = true; p.saveDirty = true; }
+    toast(p, text) { this.priv(p, { k: 'toast', text }); }
     knock(p, vx, vy, vz) { p.kbUntil = this.time + 1.5; this.priv(p, { k: 'kb', vx: r2(vx), vy: r2(vy), vz: r2(vz) }); }
 
     scaleOf(p) { return this.time < p.fx.shrink ? 0.5 : 1; }
@@ -516,14 +721,18 @@
       if (now < p.fx.shrink) b |= 8;
       if (now < p.fx.guilt) b |= 16;
       if (now < p.fx.prot) b |= 32;
-      if (p.mega) b |= 64;
-      if (p.boots) b |= 128;
+      if (now < p.fx.daze) b |= 256;
+      if (p.ship) b |= 512;
+      if (now < p.fx.cuff) b |= 1024;
       return b;
     }
 
+    // Top speed right now. The client uses the same factors (js/game.js).
     speedOf(p) {
       const now = this.time;
-      return p.A.speed * (now < p.fx.sprint ? 1.8 : 1) * (now < p.fx.shrink ? 0.75 : 1) * (now < p.fx.guilt ? 0.6 : 1) * (p.A.fly ? 1.35 : 1);
+      if (now < p.fx.cuff) return 1;
+      const base = p.ship ? p.st.ship.speed : p.st.speed * (p.st.fly ? 1.35 : 1);
+      return base * (now < p.fx.sprint ? 1.8 : 1) * (now < p.fx.shrink ? 0.75 : 1) * (now < p.fx.guilt ? 0.6 : 1) * (now < p.fx.daze ? 0.5 : 1);
     }
 
     // ----- Movement validation -----
@@ -538,14 +747,14 @@
       const moved = Math.hypot(x - p.x, z - p.z);
       const ground = MM.heightAt(p.inst.dimId, x, z);
       const g = p.inst.dim.gravity;
-      const jv = p.A.jump * (p.boots ? 1.5 : 1);
-      // Vertical: you can only rise as fast as your jump (or wings, or a blast) allows,
-      // and never above jump height plus the tallest prop. Falling is always fine.
-      const reach = p.A.fly ? 70 : jv * jv / (2 * g) + 14;
+      const jv = p.st.jump;
+      // Vertical: you can only rise as fast as your jump (or wings, jetpack, ship, a blast)
+      // allows, and never above your reach. Falling is always fine.
+      const reach = p.ship ? 120 : p.st.fly === 'wings' ? 70 : jv * jv / (2 * g) + 14 + (p.st.fly === 'jet' ? 20 : 0);
       let y = m.y;
       if (y < ground - 1.5) y = ground;
       const rise = y - p.y;
-      const maxRise = (p.A.fly ? 14 : jv) * dt * 1.6 + 1.2 + (kb ? 30 * dt + 3 : 0);
+      const maxRise = (p.ship ? 26 : p.st.fly ? 14 : jv) * dt * 1.6 + 1.2 + (kb ? 30 * dt + 3 : 0);
       if (moved > allowed || rise > maxRise || (y > ground + reach && rise > 0.3)) {
         p.strikes += 1;
         if (p.strikes > 25) { this.kick(c, 'Movement check failed'); return; }
@@ -559,11 +768,13 @@
       for (const pk of p.inst.pickups.values()) {
         if (dist2(pk.x, pk.z, p.x, p.z) < MM.PICKUP_RADIUS * MM.PICKUP_RADIUS && Math.abs(pk.y - p.y) < 3) {
           p.inst.pickups.delete(pk.id);
-          p.inv[pk.c] = Math.min(999, p.inv[pk.c] + pk.n);
+          p.inv[pk.c] = Math.min(9999, (p.inv[pk.c] || 0) + pk.n);
           p.inst.ev({ k: 'pk-', id: pk.id, by: p.id });
           this.dirty(p);
         }
       }
+      // Walking into a landmark counts for "go there" steps.
+      if (now >= (p.lmT || 0)) for (const l of (p.lmT = now + 0.25, MM.LANDMARKS)) if (l.dim === p.inst.dimId && dist2(l.x, l.z, p.x, p.z) < (l.r + MM.USE_RADIUS) ** 2) this.progress(p, 'at', l.id);
     }
 
     fireProjectile(inst, o) {
@@ -575,21 +786,28 @@
       return pr;
     }
 
-    dmgMult(p) { return (p.mega ? 2 : 1) * (this.time < p.fx.shrink ? 0.5 : 1); }
+    dmgMult(p) { return p.st.dmg * (this.time < p.fx.shrink ? 0.5 : 1); }
+
+    // The weapon in use: ship lasers in a ship that has them, a pea shooter in one that doesn't.
+    weaponOf(p) {
+      if (p.ship) return p.st.ship.lasers ? 'lasers' : 'blaster';
+      return p.A.weapon;
+    }
 
     onFire(p, m) {
       const now = this.time;
       if (p.dead || now < p.cdFire || now < p.fx.sob) return;
-      const w = MM.WEAPONS[p.A.weapon];
+      const wid = this.weaponOf(p), w = MM.WEAPONS[wid];
       p.cdFire = now + w.cd * 0.9;
       p.fx.prot = 0;
       const s = this.scaleOf(p);
-      if (w.melee) { this.melee(p, m, w); return; }
-      this.fireProjectile(p.inst, { owner: p.id, kind: p.A.weapon, x: p.x + m.dx * 0.7, y: p.y + 1.35 * s + m.dy * 0.7, z: p.z + m.dz * 0.7,
+      if (w.melee) { this.melee(p, m, w, wid); return; }
+      const oy = p.ship ? 1.2 : 1.35 * s;
+      this.fireProjectile(p.inst, { owner: p.id, kind: wid, x: p.x + m.dx * (p.ship ? 2 : 0.7), y: p.y + oy + m.dy * 0.7, z: p.z + m.dz * (p.ship ? 2 : 0.7),
         dx: m.dx, dy: m.dy, dz: m.dz, speed: w.speed, range: w.range, dmg: Math.round(w.dmg * this.dmgMult(p)) });
     }
 
-    melee(p, m, w) {
+    melee(p, m, w, wid) {
       const inst = p.inst;
       inst.ev({ k: 'mel', id: p.id });
       const reach = w.melee * this.scaleOf(p);
@@ -602,10 +820,10 @@
       const dmg = Math.round(w.dmg * this.dmgMult(p));
       for (const o of [...inst.players.values()]) {
         if (o === p || o.dead || Math.abs(o.y - p.y) > 2.5 || !inFront(o.x, o.z, 0.5)) continue;
-        this.hurtPlayer(inst, o, dmg, p, p.A.weapon);
-        if (w.knock) { const dx = o.x - p.x, dz = o.z - p.z, l = Math.hypot(dx, dz) || 1; this.knock(o, dx / l * w.knock, 5, dz / l * w.knock); }
+        this.hurtPlayer(inst, o, dmg, p, wid);
+        if (w.knock && !o.ship) { const dx = o.x - p.x, dz = o.z - p.z, l = Math.hypot(dx, dz) || 1; this.knock(o, dx / l * w.knock, 5, dz / l * w.knock); }
       }
-      for (const n of [...inst.npcs.values()]) if (inFront(n.x, n.z, n.T.r)) inst.hurtNpc(n, dmg, p);
+      for (const n of [...inst.npcs.values()]) if (!(n.owner === p.id && n.ownerUntil > this.time) && Math.abs(n.y - p.y) < 4 && inFront(n.x, n.z, n.T.r)) inst.hurtNpc(n, dmg, p);
       for (const t of [...inst.turrets.values()]) if (t.owner !== p.id && inFront(t.x, t.z, 0.8)) inst.hurtTurret(t, dmg);
       MM.genProps(inst.dimId).forEach((pr, i) => { if (inst.props[i].hp > 0 && p.y < pr.y + pr.h && inFront(pr.x, pr.z, pr.r)) inst.hurtProp(i, dmg, p); });
     }
@@ -615,6 +833,7 @@
       if (p.dead || now < p.fx.prot || now < p.fx.sob || amt <= 0) return;
       if (p.arch === 'sidekick' && Math.random() < 0.2) { inst.ev({ k: 'dodge', id: p.id }); return; }
       if (now < p.fx.shield) amt *= 0.3;
+      if (p.ship) amt *= 0.6;
       amt = Math.max(1, Math.round(amt));
       p.hp -= amt;
       inst.ev({ k: 'dmg', p: p.id, d: amt, by: src ? src.id : 0 });
@@ -625,12 +844,13 @@
     kill(inst, p, src, how) {
       p.hp = 0; p.dead = true; p.deaths++;
       p.respawnAt = this.time + MM.RESPAWN_TIME;
-      p.boots = false; p.mega = false;
+      if (p.ship) { p.ship = false; inst.ev({ k: 'ship', id: p.id, on: false }); }
       const lost = Math.floor(p.inv.s / 2);
       if (lost > 0) { p.inv.s -= lost; inst.spawnPickup('s', true, { x: p.x, z: p.z }, lost); }
       if (src && src !== p) {
-        src.kills++; src.chaos += 5; this.dirty(src);
-        if (p.arch === 'beanling') { src.fx.guilt = this.time + 10; this.priv(src, { k: 'toast', text: 'You feel terrible about that.' }); }
+        src.kills++; src.prog.chaos += 5;
+        this.progress(src, 'ko');
+        if (p.arch === 'beanling') { src.fx.guilt = this.time + 10; this.toast(src, 'You feel terrible about that.'); }
       }
       inst.ev({ k: 'kill', v: p.id, by: src ? src.id : 0, w: how || '' });
       this.dirty(p);
@@ -639,7 +859,7 @@
     onRespawn(p) {
       if (!p.dead || this.time < p.respawnAt) return;
       p.dead = false; p.hp = p.maxHp;
-      p.fx = { shield: 0, sprint: 0, sob: 0, shrink: 0, guilt: 0, prot: this.time + MM.SPAWN_PROTECT };
+      p.fx = { shield: 0, sprint: 0, sob: 0, shrink: 0, guilt: 0, prot: this.time + MM.SPAWN_PROTECT, daze: 0, cuff: 0 };
       const s = MM.spawnPoint(p.inst.dimId);
       this.teleport(p, s.x, s.y + 0.1, s.z);
       p.inst.ev({ k: 'resp', id: p.id });
@@ -651,6 +871,8 @@
       if (p.dead || now < p.cdAb) return;
       p.cdAb = now + ab.cd;
       inst.ev({ k: 'ab', id: p.id, a: ab.id });
+      const near = (r, fn) => { for (const o of [...inst.players.values()]) if (o !== p && !o.dead && dist2(o.x, o.z, p.x, p.z) < r * r) fn(o); };
+      const nearNpc = (r, fn) => { for (const n of [...inst.npcs.values()]) if (dist2(n.x, n.z, p.x, p.z) < r * r) fn(n); };
       switch (ab.id) {
         case 'shield': p.fx.shield = now + ab.dur; break;
         case 'sprint': p.fx.sprint = now + ab.dur; break;
@@ -658,20 +880,42 @@
         case 'dive': inst.explode(p.x, p.y, p.z, 5.5, 32, p, 'dive', { knock: 12, noSelfKnock: true, propDmg: 70 }); break;
         case 'slam': inst.explode(p.x, p.y, p.z, 6.5, 18, p, 'slam', { knock: 20, noSelfKnock: true, propDmg: 50 }); break;
         case 'cheer':
-          for (const o of inst.players.values()) {
-            if (o.dead || dist2(o.x, o.z, p.x, p.z) > 100) continue;
-            o.hp = Math.min(o.maxHp, o.hp + 30); this.dirty(o);
-          }
+          p.hp = Math.min(p.maxHp, p.hp + 30);
+          near(10, o => { o.hp = Math.min(o.maxHp, o.hp + 30); this.dirty(o); });
           break;
+        case 'patch':
+          p.hp = Math.min(p.maxHp, p.hp + 40);
+          near(8, o => { o.hp = Math.min(o.maxHp, o.hp + 20); this.dirty(o); });
+          break;
+        case 'flash':
+          near(8, o => { o.fx.daze = now + 3; this.dirty(o); });
+          nearNpc(8, n => { n.stun = now + 3; });
+          break;
+        case 'cuff': {
+          const fx = Math.sin(p.r), fz = Math.cos(p.r);
+          near(6, o => { const dx = o.x - p.x, dz = o.z - p.z, d = Math.hypot(dx, dz) || 1; if ((dx * fx + dz * fz) / d > 0.5) { o.fx.cuff = now + 2.5; this.dirty(o); } });
+          nearNpc(6, n => { n.stun = now + 4; });
+          break;
+        }
+        case 'assimilate': {
+          let k = 0;
+          nearNpc(10, n => {
+            if (k >= 4 || n.T.hostile || (n.owner && n.ownerUntil > now)) return;
+            n.owner = p.id; n.ownerUntil = now + 30; n.angry = 0; k++;
+            inst.ev({ k: 'say', n: n.id, by: p.id, text: 'We are one. We are ' + p.name + '.' });
+          });
+          if (!k) this.toast(p, 'No locals close enough to assimilate.');
+          break;
+        }
       }
       this.dirty(p);
     }
 
     onPortal(p, d) {
-      const A = p.A, now = this.time;
-      if (!A.portal || p.dead || p.charges <= 0 || d === p.inst.dimId) return;
+      const now = this.time;
+      if (!p.st.gun || p.dead || p.charges <= 0 || d === p.inst.dimId) return;
       p.charges--;
-      if (!p.chargeAt) p.chargeAt = now + A.portal.recharge;
+      if (!p.chargeAt) p.chargeAt = now + p.st.gun.recharge;
       const fx = Math.sin(p.r), fz = Math.cos(p.r);
       let x = p.x + fx * 3.2, z = p.z + fz * 3.2;
       [x, z] = MM.collideProps(p.inst.dimId, x, z, 1.2, null);
@@ -700,23 +944,53 @@
       this.travel(p, d, { x: MM.KIOSK.x + (Math.random() - 0.5) * 6, z: MM.KIOSK.z + 5 + Math.random() * 3 });
     }
 
-    onCraft(p, g) {
-      const A = p.A, G = MM.GADGETS[g];
-      if (p.dead || !A.craft.includes(g)) return;
-      const cost = MM.gadgetCost(p.arch, g);
-      if (p.inv.s < cost.s || p.inv.c < cost.c) return;
-      if (g === 'boots') { if (p.boots) return; p.boots = true; }
-      else if (g === 'mega') { if (p.mega) return; p.mega = true; }
-      else if (g === 'fluid') { if (!A.portal || p.charges >= A.portal.charges) return; p.charges++; if (p.charges >= A.portal.charges) p.chargeAt = 0; }
-      else { if (p.inv[g] >= G.max) return; p.inv[g]++; }
-      p.inv.s -= cost.s; p.inv.c -= cost.c;
-      this.priv(p, { k: 'toast', text: 'Built: ' + G.name });
+    // ----- Ship -----
+    onShip(p, on) {
+      if (p.dead || !p.st.ship || p.ship === on) return;
+      p.ship = on;
+      p.kbUntil = this.time + 1;     // stepping out mid-air: let the fall happen
+      p.inst.ev({ k: 'ship', id: p.id, on });
       this.dirty(p);
+    }
+    onDrive(p, d) {
+      const now = this.time;
+      if (p.dead || !p.ship || !p.st.ship.drive || d === p.inst.dimId || now < p.cdDrive) return;
+      p.cdDrive = now + 15;
+      p.inst.ev({ k: 'warp', id: p.id });
+      this.travel(p, d, null);
+    }
+
+    // ----- Crafting -----
+    // Recipes are checked here, not on the client: lore, path unlocks, cost, and place.
+    onCraft(p, id) {
+      const R = MM.RECIPES[id];
+      if (p.dead || !R) return;
+      const why = MM.canKnow(p.arch, p.prog, id);
+      if (why) { this.toast(p, why); return; }
+      if (R.at) {
+        const l = MM.LANDMARK_BY_ID[R.at];
+        if (p.inst.dimId !== l.dim || dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2) { this.toast(p, 'Build this at the ' + l.name + ' in ' + MM.DIM_BY_ID[l.dim].name + '.'); return; }
+      }
+      const cost = MM.recipeCost(p.arch, id);
+      for (const k in cost) if ((p.inv[k] || 0) < cost[k]) { this.toast(p, 'Not enough ' + MM.MATERIALS[k].name + '.'); return; }
+      if (R.cat === 'gadget') {
+        if (id === 'fluid') { if (!p.st.gun || p.charges >= p.st.gun.charges) return; p.charges++; if (p.charges >= p.st.gun.charges) p.chargeAt = 0; }
+        else { if ((p.inv[id] || 0) >= R.max) return; p.inv[id] = (p.inv[id] || 0) + 1; }
+      } else {
+        p.prog.up[id] = 1;
+        this.restat(p);
+        if (id === 'gunbuild') { p.charges = p.st.gun.charges; this.toast(p, 'You built a portal gun! Press E to use it.'); }
+        if (id === 'hull') this.toast(p, 'Your ship is ready. Press B to board it.');
+        if (['wings', 'jetpack', 'engine', 'lasers', 'hull'].includes(id)) p.inst.ev({ k: 'gear', id: p.id, gear: this.info(p).gear });
+      }
+      for (const k in cost) p.inv[k] -= cost[k];
+      this.priv(p, { k: 'built', r: id });
+      this.progress(p, 'craft', id);
     }
 
     onGadget(p, m) {
       const inst = p.inst, g = m.g;
-      if (p.dead || this.time < p.fx.sob || !(p.inv[g] > 0)) return;
+      if (p.dead || p.ship || this.time < p.fx.sob || !(p.inv[g] > 0)) return;
       if (g === 'grenade') {
         this.fireProjectile(inst, { owner: p.id, kind: 'gren', x: p.x + m.dx, y: p.y + 1.5, z: p.z + m.dz, dx: m.dx, dy: m.dy, dz: m.dz, speed: 20, up: 6, gravity: true, life: 1.8, dmg: 0, rad: 0.3 });
       } else if (g === 'shrink') {
@@ -736,6 +1010,137 @@
       this.dirty(p);
     }
 
+    // ----- Daily life at landmarks -----
+    onUse(p, lid, taskId) {
+      const l = MM.LANDMARK_BY_ID[lid];
+      if (p.dead || !l || l.dim !== p.inst.dimId || this.time < p.cdUse) return;
+      if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2) return;
+      p.cdUse = this.time + 1;
+      const mine = p.A.life.daily.filter(t => MM.TASKS[t].at === lid);
+      const id = taskId && mine.includes(taskId) ? taskId : mine[0];
+      if (!id) { this.toast(p, 'Nothing for you to do at the ' + l.name + '. You could still build things here (C).'); return; }
+      const T = MM.TASKS[id], wall = this.wall();
+      if ((p.prog.tasks[id] || 0) > wall) { this.toast(p, T.name + ': come back in ' + Math.ceil((p.prog.tasks[id] - wall) / 1000) + ' s.'); return; }
+      p.prog.tasks[id] = wall + T.cd * 1000;
+      const mult = p.arch === 'teen' ? 2 : 1;
+      for (const k in T.give) p.inv[k] = (p.inv[k] || 0) + T.give[k] * mult;
+      if (T.heal) p.hp = p.maxHp;
+      this.priv(p, { k: 'task', id, text: T.text, give: T.give, mult });
+      p.inst.ev({ k: 'em', id: p.id, e: 0 });
+      this.progress(p, 'use', id);
+    }
+
+    // ----- Talking to locals -----
+    onTalk(p, nid) {
+      const inst = p.inst, now = this.time;
+      const n = inst.npcs.get(nid);
+      if (p.dead || !n || now < p.cdTalk || dist2(n.x, n.z, p.x, p.z) > 5 * 5) return;
+      p.cdTalk = now + 1.2;
+      const T = n.T;
+      const say = (text) => inst.ev({ k: 'say', n: n.id, by: p.id, text });
+      if (T.hostile) { say(pick(['GRAAAH!', '*hisses*', '*snaps at you*', '...food?'])); return; }
+      if (n.owner === p.id && n.ownerUntil > now) { say(pick(['We are with you.', 'Yes, friend?', 'Point us at someone.'])); return; }
+      if (n.angry === p.id && n.angryUntil > now) { say(pick(['Oh, NOW you want to talk?', 'Get away from me!', 'I am still mad at you.'])); return; }
+      if (!n.talkedBy.has(p.id)) { n.talkedBy.add(p.id); this.progress(p, 'talk'); }
+      // Errands: hand over the goods if this local is the one waiting for them.
+      for (const e of p.prog.errands) {
+        if (e.dim === inst.dimId && e.npc === n.type && (p.inv[e.m] || 0) >= e.n) {
+          p.inv[e.m] -= e.n;
+          for (const k in e.rew) p.inv[k] = (p.inv[k] || 0) + e.rew[k];
+          p.prog.errands = p.prog.errands.filter(x => x !== e);
+          say('Is that from ' + e.from + '? Finally! Here, for your trouble.');
+          this.priv(p, { k: 'toast', text: 'Errand done: got ' + matText(e.rew) });
+          this.progress(p, 'errand');
+          return;
+        }
+      }
+      // Otherwise something random happens. Locals are like that.
+      const w = Object.assign({}, T.moods);
+      if (inst.boosted()) { w.gift = (w.gift || 0) * 2.5; w.trade = (w.trade || 0) * 1.5; }
+      if (p.prog.errands.length >= 3) w.errand = 0;
+      if (p.ship) w.prank = 0;
+      let total = 0;
+      for (const k in w) total += w[k];
+      let r = Math.random() * total, mood = 'line';
+      for (const k in w) { r -= w[k]; if (r <= 0) { mood = k; break; } }
+      const line = T.talk ? pick(T.talk) : '...';
+      const mat = inst.dim.mat;
+      switch (mood) {
+        case 'gift': {
+          const k = Math.random() < 0.7 ? mat : 's', amt = ri(1, 3);
+          p.inv[k] = (p.inv[k] || 0) + amt;
+          say(pick(['You look like you need this.', 'Take it, I have too many.', 'A gift! Do not ask where it came from.']));
+          this.toast(p, n.name + ' gave you ' + amt + ' ' + MM.MATERIALS[k].name);
+          this.dirty(p);
+          break;
+        }
+        case 'trade': {
+          const others = MM.MAT_IDS.filter(k => k !== mat);
+          const owned = others.filter(k => (p.inv[k] || 0) >= 2);
+          const want = owned.length ? pick(owned) : pick(others);
+          const wn = ri(2, 4), gn = wn + ri(1, 3);
+          p.offer = { n: n.id, want: { [want]: wn }, get: { [mat]: gn }, until: now + 25 };
+          say('I will give you ' + gn + ' ' + MM.MATERIALS[mat].name + ' for ' + wn + ' ' + MM.MATERIALS[want].name + '. Deal?');
+          this.priv(p, { k: 'offer', n: n.id, name: n.name, want: p.offer.want, get: p.offer.get });
+          break;
+        }
+        case 'errand': {
+          const dims = MM.DIMS.filter(d => d.id !== inst.dimId);
+          const D = pick(dims);
+          const locals = D.npc.map(x => x[0]).filter(t => !MM.NPCS[t].hostile && MM.NPCS[t].talk);
+          if (!locals.length) { say(line); break; }
+          const who = pick(locals), amt = ri(2, 4);
+          const e = { id: this.ent(), dim: D.id, npc: who, m: mat, n: amt, from: n.name, rew: { [D.mat]: amt + 2, s: 3 } };
+          p.prog.errands.push(e);
+          say('Could you take ' + amt + ' ' + MM.MATERIALS[mat].name + ' to any ' + MM.NPCS[who].name + ' in ' + D.name + '? They will pay you.');
+          this.toast(p, 'New errand (J): ' + amt + ' ' + MM.MATERIALS[mat].name + ' to a ' + MM.NPCS[who].name + ' in ' + D.name);
+          p.progDirty = true;
+          break;
+        }
+        case 'buff': {
+          const b = pick(['sprint', 'shield', 'heal', 'shrink']);
+          if (b === 'sprint') p.fx.sprint = now + 8;
+          if (b === 'shield') p.fx.shield = now + 6;
+          if (b === 'heal') p.hp = p.maxHp;
+          if (b === 'shrink') p.fx.shrink = now + 6;
+          say({ sprint: 'Drink this. It is mostly coffee.', shield: 'Here, a lucky charm. It hums.', heal: 'You look terrible. Let me fix that.', shrink: 'Oops. I sneezed on you. You will be fine in a bit.' }[b]);
+          this.dirty(p);
+          break;
+        }
+        case 'angry':
+          n.angry = p.id; n.angryUntil = now + 20;
+          say(pick(['Did you just look at me funny?', 'You! You are the one who blew up my mailbox!', 'That is it, I am calling the multiverse police. After I punch you.', 'How DARE you.']));
+          break;
+        case 'follow':
+          n.owner = p.id; n.ownerUntil = now + 60;
+          say(pick(['Adventure? I am in!', 'I will follow you anywhere. For a minute.', 'Finally, something interesting!']));
+          break;
+        case 'prank': {
+          const d = pick(MM.DIM_IDS.filter(x => x !== inst.dimId));
+          say(pick(['Want to see a magic trick?', 'Hold still. This will tickle.', 'Surprise!']));
+          inst.ev({ k: 'kiosk', id: p.id });
+          this.later(0.6, () => { if (this.players.get(p.id) === p && p.inst === inst && !p.dead) { this.toast(p, n.name + ' pranked you into ' + MM.DIM_BY_ID[d].name + '!'); this.travel(p, d, null); } });
+          break;
+        }
+        case 'dance':
+          n.dance = now + 6;
+          say(pick(['This calls for a dance!', '*starts dancing for no reason*', 'Music only I can hear!']));
+          break;
+        default: say(line);
+      }
+    }
+
+    onAnswer(p, a) {
+      const o = p.offer;
+      p.offer = null;
+      if (!o || this.time > o.until || !a) return;
+      for (const k in o.want) if ((p.inv[k] || 0) < o.want[k]) { this.toast(p, 'You do not have enough ' + MM.MATERIALS[k].name + '.'); return; }
+      for (const k in o.want) p.inv[k] -= o.want[k];
+      for (const k in o.get) p.inv[k] = (p.inv[k] || 0) + o.get[k];
+      this.toast(p, 'Traded for ' + matText(o.get));
+      this.dirty(p);
+    }
+
     onChat(p, text) {
       const clean = MM.sanitizeChat(text);
       if (!clean) return;
@@ -744,11 +1149,18 @@
     }
 
     youState(p) {
-      const now = this.time, A = p.A;
-      return { t: 'y', hp: Math.max(0, Math.round(p.hp)), max: p.maxHp, inv: p.inv, boots: p.boots, mega: p.mega,
-        ch: p.charges, chMax: A.portal ? A.portal.charges : 0, chIn: p.chargeAt ? r2(p.chargeAt - now) : 0,
-        ab: r2(Math.max(0, p.cdAb - now)), chaos: p.chaos, kills: p.kills, deaths: p.deaths, dead: p.dead,
-        rsIn: p.dead ? r2(Math.max(0, p.respawnAt - now)) : 0, fx: this.fxBits(p, now) };
+      const now = this.time;
+      return { t: 'y', hp: Math.max(0, Math.round(p.hp)), max: p.maxHp, inv: p.inv,
+        ch: p.charges, chMax: p.st.gun ? p.st.gun.charges : 0, chIn: p.chargeAt ? r2(p.chargeAt - now) : 0,
+        ab: r2(Math.max(0, p.cdAb - now)), chaos: p.prog.chaos, kills: p.kills, deaths: p.deaths, dead: p.dead,
+        rsIn: p.dead ? r2(Math.max(0, p.respawnAt - now)) : 0, fx: this.fxBits(p, now), ship: p.ship };
+    }
+
+    // Your life path, upgrades and errands (sent when they change).
+    progState(p) {
+      const pr = p.prog, wall = this.wall(), tasks = {};
+      for (const t of p.A.life.daily) tasks[t] = Math.max(0, Math.ceil(((pr.tasks[t] || 0) - wall) / 1000));
+      return { t: 'pg', up: pr.up, step: pr.step, grants: pr.grants, cnt: pr.cnt, errands: pr.errands, tasks, title: pr.title || '', st: p.st };
     }
 
     // ----- The main loop -----
@@ -761,10 +1173,9 @@
         if (due.length) { this.timers = this.timers.filter(t => t.at > now); for (const t of due) t.fn(); }
       }
       for (const p of this.players.values()) {
-        const A = p.A;
-        if (A.portal && p.chargeAt && now >= p.chargeAt) {
-          p.charges = Math.min(A.portal.charges, p.charges + 1);
-          p.chargeAt = p.charges < A.portal.charges ? now + A.portal.recharge : 0;
+        if (p.st.gun && p.chargeAt && now >= p.chargeAt) {
+          p.charges = Math.min(p.st.gun.charges, p.charges + 1);
+          p.chargeAt = p.charges < p.st.gun.charges ? now + p.st.gun.recharge : 0;
           this.dirty(p);
         }
         if (p.arch === 'mutant' && !p.dead && p.hp < p.maxHp && this.tickN % 10 === 0) { p.hp = Math.min(p.maxHp, p.hp + 1); this.dirty(p); }
@@ -787,11 +1198,16 @@
         }
       }
       for (const p of this.players.values()) {
+        if (p.dirtyFlag && p.inst) this.checkSteps(p);
         if (p.pv && p.pv.length) { this.send(p, { t: 'pv', l: p.pv }); p.pv = []; }
         if (p.dirtyFlag || (snap && this.tickN % 15 === 0)) { p.dirtyFlag = false; this.send(p, this.youState(p)); }
+        if (p.progDirty || this.tickN % 150 === 0) { p.progDirty = false; this.send(p, this.progState(p)); }
       }
       if (this.tickN % 150 === 0) this.broadcastPop();
+      if (this.tickN % 300 === 0) for (const p of this.players.values()) if (p.saveDirty) this.save(p);
     }
+
+    saveAll() { for (const p of this.players.values()) this.save(p); }
 
     // Who is where, plus the multiverse-wide chaos leaderboard.
     broadcastPop() {
@@ -799,8 +1215,8 @@
       for (const p of this.players.values()) this.send(p, msg);
     }
     top() {
-      return [...this.players.values()].sort((a, b) => b.chaos - a.chaos).slice(0, 10)
-        .map(p => [p.name, p.home, p.chaos, p.kills, p.inst ? p.inst.dimId : '', p.bot ? 1 : 0]);
+      return [...this.players.values()].sort((a, b) => b.prog.chaos - a.prog.chaos).slice(0, 10)
+        .map(p => [p.name, p.home, p.prog.chaos, p.kills, p.inst ? p.inst.dimId : '', p.bot ? 1 : 0, p.prog.title || MM.ARCHETYPES[p.arch].name]);
     }
     stats() {
       const d = {};
@@ -812,5 +1228,6 @@
   }
 
   MM.Host = Host;
+  MM.cleanProgress = cleanProgress;
   if (typeof module !== 'undefined' && module.exports) module.exports = MM;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

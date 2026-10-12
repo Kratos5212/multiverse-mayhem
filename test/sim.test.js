@@ -138,8 +138,148 @@ test('64 bots play for a minute without errors', () => {
   for (const b of bots) if (b.closed) kicked++;
   const ms = Date.now() - t0;
   let kills = 0, chaos = 0;
-  for (const p of host.players.values()) { kills += p.kills; chaos += p.chaos; }
+  for (const p of host.players.values()) { kills += p.kills; chaos += p.prog.chaos; }
   console.log(`  64 bots, 60 s of game in ${ms} ms; kills ${kills}, chaos ${chaos}, instances ${host.instances.size}, kicked ${kicked}`);
   assert.strictEqual(kicked, 0, 'no bot tripped the cheat checks');
   assert.ok(chaos > 0);
+});
+
+// ---------- Life paths, cross-dimension crafting, locals, saves ----------
+const near = (host, c, p, lid) => {
+  const l = MM.LANDMARK_BY_ID[lid];
+  if (p.inst.dimId !== l.dim) { host.travel(p, l.dim, { x: l.x, z: l.z + l.r + 2 }); }
+  else host.teleport(p, l.x, MM.heightAt(l.dim, l.x, l.z + l.r + 2), l.z + l.r + 2);
+  p.z = l.z + l.r + 2; p.x = l.x;
+};
+
+test('big upgrades must be built at the right station in the right dimension', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius');
+  Object.assign(p.inv, { s: 50, c: 50, g: 50, p: 50, f: 50 });
+  host.message(c, '{"t":"cr","g":"armor1"}');
+  assert.ok(!p.prog.up.armor1, 'not in Suburbia');
+  near(host, c, p, 'forge');
+  run(host, 2.2);
+  host.message(c, '{"t":"cr","g":"armor1"}');
+  assert.ok(p.prog.up.armor1, 'built at the Flesh Forge');
+  assert.strictEqual(p.maxHp, 105);
+});
+
+test('a teen breaks out of daily life step by step and builds her own portal gun', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'teen');
+  assert.strictEqual(p.st.gun, null);
+  near(host, c, p, 'school');
+  run(host, 1.2);
+  host.message(c, '{"t":"use","l":"school"}');
+  run(host, 0.1);
+  assert.strictEqual(p.inv.s, 4, 'class pays double for teens');
+  assert.ok(p.prog.step >= 1);
+  host.message(c, '{"t":"use","l":"school"}');
+  run(host, 1.2);
+  assert.strictEqual(p.inv.s, 4, 'daily task has a cooldown');
+  near(host, c, p, 'garage');
+  host.message(c, JSON.stringify({ t: 'st', x: p.x, y: p.y, z: p.z, r: 0, a: 0, ep: p.ep }));
+  run(host, 0.3);
+  assert.ok(p.prog.grants.includes('blaster1'), 'sneaking into the lab unlocks weapon mods');
+  // Fast-forward the remaining goals.
+  p.prog.cnt.dims = ['suburbia', 'moon']; p.prog.cnt.kills = 5;
+  Object.assign(p.inv, { s: 40, c: 20, g: 20, p: 20, f: 20 });
+  host.dirty(p); run(host, 0.1);
+  assert.ok(p.prog.grants.includes('gunbuild'));
+  near(host, c, p, 'garage');
+  host.message(c, '{"t":"cr","g":"gunbuild"}');
+  run(host, 0.1);
+  assert.ok(p.st.gun, 'has a portal gun');
+  assert.strictEqual(p.prog.title, 'Space Teen');
+  assert.strictEqual(p.charges, 2);
+});
+
+test('an Average Joe cannot build a ship until his path allows it', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'joe');
+  Object.assign(p.inv, { s: 50, c: 50, g: 50, p: 50, f: 50 });
+  near(host, c, p, 'shipyard');
+  run(host, 2.2);
+  host.message(c, '{"t":"cr","g":"hull"}');
+  assert.ok(!p.prog.up.hull);
+});
+
+test('ship: boarding lifts the speed limit, and the dimension drive travels', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'trooper');
+  assert.ok(p.st.ship, 'troopers start with a ship');
+  run(host, 0.5);
+  const x0 = p.x;
+  host.message(c, JSON.stringify({ t: 'st', x: x0 + 12, y: p.y, z: p.z, r: 0, a: 1, ep: p.ep }));
+  assert.ok(p.x < x0 + 1, 'too fast on foot');
+  host.message(c, '{"t":"ship","on":true}');
+  run(host, 0.2);
+  run(host, 0.3);
+  host.message(c, JSON.stringify({ t: 'st', x: p.x + 12, y: p.y + 3, z: p.z, r: 0, a: 3, ep: p.ep }));
+  assert.ok(p.ship);
+  assert.ok(Math.abs(p.x - (x0 + 12)) < 1.5, 'fast in the ship');
+  host.message(c, '{"t":"drive","d":"moon"}');
+  assert.strictEqual(p.inst.dimId, 'bazaar', 'no drive yet');
+  p.prog.up.engine = 1; p.prog.up.drive = 1; host.restat(p);
+  host.message(c, '{"t":"drive","d":"moon"}');
+  assert.strictEqual(p.inst.dimId, 'moon');
+});
+
+test('locals react, and errands pay when delivered in another dimension', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'beanling');
+  const inst = p.inst;
+  const n = [...inst.npcs.values()].find(x => x.type === 'neighbor');
+  n.x = p.x + 1; n.z = p.z; n.stun = host.time + 100;
+  let said = 0;
+  for (let i = 0; i < 6; i++) { host.message(c, JSON.stringify({ t: 'talk', n: n.id })); run(host, 1.3); }
+  said = c.sent.filter(m => m.t === 'ev').flatMap(m => m.l).filter(e => e.k === 'say').length;
+  assert.ok(said >= 1, 'the local answered');
+  assert.strictEqual(p.prog.cnt.talk, 1, 'one local counts once');
+  // A hand-made errand: 2 scrap to a Miner on the moon.
+  p.prog.errands = [{ id: 1, dim: 'moon', npc: 'moonminer', m: 's', n: 2, from: 'Gary', rew: { c: 6, s: 3 } }];
+  p.inv.s = 2; p.inv.c = 0;
+  host.travel(p, 'moon', null);
+  const miner = [...p.inst.npcs.values()].find(x => x.type === 'moonminer');
+  miner.x = p.x + 1; miner.z = p.z; miner.stun = host.time + 100;
+  run(host, 1.3);
+  host.message(c, JSON.stringify({ t: 'talk', n: miner.id }));
+  assert.strictEqual(p.prog.errands.length, 0);
+  assert.strictEqual(p.inv.c, 6);
+  assert.strictEqual(p.prog.cnt.errand, 1);
+});
+
+test('progress is saved by token and comes back on the next visit', () => {
+  const db = {};
+  const store = { load: (t, a) => db[t + a] ? JSON.parse(db[t + a]) : null, save: (t, a, p) => { db[t + a] = JSON.stringify(p); } };
+  const host = new MM.Host({ store });
+  const { c, p } = join(host, 'surgeon');
+  const tok = c.sent.find(m => m.t === 'hi').tok;
+  assert.match(tok, /^[0-9a-f]{32}$/);
+  p.prog.up.armor1 = 1; p.inv.g = 7;
+  host.close(c);
+  const host2 = new MM.Host({ store });
+  const again = join(host2, 'surgeon', { tok });
+  assert.ok(again.p.prog.up.armor1);
+  assert.strictEqual(again.p.inv.g, 7);
+  assert.strictEqual(again.p.maxHp, 125);
+  // A tampered save is cleaned up instead of trusted blindly.
+  db[tok + 'surgeon'] = JSON.stringify({ up: { armor1: 1, '__proto__': 1, hacks: 1 }, inv: { s: 1e12, g: 'lots' }, step: 999 });
+  const third = join(new MM.Host({ store }), 'surgeon', { tok });
+  assert.strictEqual(third.p.inv.s, 9999);
+  assert.strictEqual(third.p.inv.g, 0);
+  assert.strictEqual(third.p.prog.step, MM.ARCHETYPES.surgeon.steps.length);
+  assert.ok(!third.p.prog.up.hacks);
+});
+
+test('world events start and bring visitors', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius');
+  p.inst.nextEvent = host.time;
+  const before = p.inst.npcs.size;
+  run(host, 0.2);
+  const ev = c.sent.filter(m => m.t === 'ev').flatMap(m => m.l).find(e => e.k === 'world');
+  assert.ok(ev && ev.name, 'event announced');
+  assert.ok(p.inst.npcs.size >= before);
 });

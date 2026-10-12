@@ -32,7 +32,8 @@
 
   C.connectOffline = function (h, opts) {
     opts = opts || {};
-    const host = new MM.Host({ name: 'Offline multiverse', cap: MM.INSTANCE_CAP });
+    const host = new MM.Host({ name: 'Offline multiverse', cap: MM.INSTANCE_CAP, store: opts.store,
+      newToken: () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('') });
     const bots = [];
     const botCount = opts.bots === undefined ? 18 : opts.bots;
     for (let i = 0; i < botCount; i++) {
@@ -62,7 +63,7 @@
     return {
       kind: 'offline', host,
       send(o) { if (!closed) host.message(me, JSON.stringify(o)); },
-      close() { closed = true; host.close(me); },
+      close() { closed = true; host.saveAll(); host.close(me); },
       // Run the host at its fixed rate from the game loop.
       pump(dt) {
         if (closed) return;

@@ -106,9 +106,19 @@
       if (!you || !this.dim) return;
       if (you.dead) { if (you.rsIn <= 0) this.send({ t: 'rs' }); return; }
       // Craft whenever it can afford something it knows.
-      for (const g of this.A.craft) {
-        const c = MM.gadgetCost(this.arch, g);
-        if (you.inv.s >= c.s && you.inv.c >= c.c && Math.random() < 0.3) { this.send({ t: 'cr', g }); break; }
+      // Craft a gadget now and then (the host refuses what this character can't build).
+      if (Math.random() < 0.1) {
+        const g = pick(MM.GADGET_IDS), c = MM.recipeCost(this.arch, g);
+        let ok = true;
+        for (const k in c) if ((you.inv[k] || 0) < c[k]) ok = false;
+        if (ok && (you.inv[g] || 0) < MM.RECIPES[g].max) this.send({ t: 'cr', g });
+      }
+      // Chat with a local nearby; sometimes they react in strange ways.
+      if (Math.random() < 0.06) {
+        for (const [id, n] of this.npcs) {
+          const T = MM.NPCS[n.type];
+          if (!T.hostile && (n.x - this.x) ** 2 + (n.z - this.z) ** 2 < 16) { this.send({ t: 'talk', n: id }); break; }
+        }
       }
       // Pick a fight now and then.
       if (!this.target || Math.random() < 0.1) {
@@ -117,7 +127,7 @@
         if (r < 0.45) {
           for (const [id, o] of this.others) { if (o.dead || (o.fx & 32)) continue; const d = (o.x - this.x) ** 2 + (o.z - this.z) ** 2; if (d < bd) { bd = d; best = { kind: 'p', id }; } }
         } else if (r < 0.75) {
-          for (const [id, n] of this.npcs) { const d = (n.x - this.x) ** 2 + (n.z - this.z) ** 2; if (d < bd) { bd = d; best = { kind: 'n', id }; } }
+          for (const [id, n] of this.npcs) { if (!MM.NPCS[n.type].hostile && Math.random() < 0.7) continue; const d = (n.x - this.x) ** 2 + (n.z - this.z) ** 2; if (d < bd) { bd = d; best = { kind: 'n', id }; } }
         } else if (r < 0.95) {
           const props = MM.genProps(this.dim);
           for (const p of props) { if (this.deadProps.has(p.id)) continue; const d = (p.x - this.x) ** 2 + (p.z - this.z) ** 2; if (d < bd) { bd = d; best = { kind: 'prop', id: p.id }; } }
@@ -134,7 +144,7 @@
       if (this.t > this.travelT) {
         this.travelT = this.t + 50 + Math.random() * 100;
         const others = MM.DIM_IDS.filter(d => d !== this.dim);
-        if (this.A.portal && you.ch > 0) { this.send({ t: 'po', d: pick(others) }); this.goal = { x: this.x + Math.sin(this.yaw) * 4, z: this.z + Math.cos(this.yaw) * 4, portal: true }; }
+        if (you.chMax > 0 && you.ch > 0) { this.send({ t: 'po', d: pick(others) }); this.goal = { x: this.x + Math.sin(this.yaw) * 4, z: this.z + Math.cos(this.yaw) * 4, portal: true }; }
         else this.goal = { x: MM.KIOSK.x, z: MM.KIOSK.z, kiosk: pick(others) };
       }
       for (const po of this.portals.values()) {

@@ -304,6 +304,7 @@
         if (av.tag) { av.tag.material.map.dispose(); av.tag.material.dispose(); }
       },
     };
+    av.shoulderY = shoulderY;
     av.headY = neckY + headR * 2.2 + (L.acc === 'tophat' || L.hair === 'afro' ? headR * 0.9 : 0);
     if (bean) av.headY = neckY + headR * 2;
     return av;
@@ -343,6 +344,8 @@
       p.wingL.rotation.y = fly ? 0 : 0.6; p.wingR.rotation.y = fly ? 0 : -0.6;
     }
     p.head.rotation.y = emote ? Math.sin(av.t * 6) * 0.3 : 0;
+    if (av.jet) { av.jet.flame.visible = fly; av.jet.flame.scale.y = 0.8 + Math.random() * 0.4; }
+    if (av.inShip) { p.legL.rotation.x = p.legR.rotation.x = 0; tilt = 0; bob = Math.sin(av.t * 3) * 0.05; if (av.ship) av.ship.rotation.y += 0.02; }
     if (dead) av.deadT = Math.min(1, av.deadT + dt * 3); else av.deadT = Math.max(0, av.deadT - dt * 4);
     av.body.rotation.x = lerp(av.body.rotation.x, tilt, f) * (1 - av.deadT) - av.deadT * 1.45;
     av.body.position.y = lerp(av.body.position.y, bob, f) * (1 - av.deadT) + av.deadT * 0.25;
@@ -363,6 +366,81 @@
     } else if (av.shield) av.shield.visible = false;
     if (fx & 4) { p.head.rotation.x = 0.4 + Math.sin(av.t * 20) * 0.05; } else p.head.rotation.x = 0;
   }
+
+  // ---------- Gear: built wings, jetpack, ship ----------
+  function wingPart(av, side, color) {
+    const s = new C.Shape();
+    s.add(P.sphere, color, [side * 0.45, 0, 0], [0, 0, side * 0.2], [0.5, 0.12, 0.3]);
+    for (let i = 0; i < 4; i++) s.add(P.sphereLo, shade(color, 0.85), [side * (0.55 + i * 0.13), -0.12 - i * 0.04, -0.05], null, [0.12, 0.22, 0.06]);
+    const g = C.meshOf(s.build(), 0.035);
+    const pivot = new T.Group();
+    pivot.add(g);
+    pivot.position.set(side * 0.12, av.shoulderY, -0.2);
+    av.body.add(pivot);
+    return pivot;
+  }
+  C.setGear = function (av, gear) {
+    gear = gear || {};
+    if (gear.wings && !av.parts.wingL) { av.parts.wingL = wingPart(av, -1, '#fff3d6'); av.parts.wingR = wingPart(av, 1, '#fff3d6'); }
+    if (gear.jet && !av.jet) {
+      const s = new C.Shape();
+      for (const x of [-0.14, 0.14]) {
+        s.add(P.cyl, '#9aa3ab', [x, 0, 0], null, [0.11, 0.5, 0.11]);
+        s.add(P.cone, '#59606e', [x, -0.32, 0], [Math.PI, 0, 0], [0.1, 0.15, 0.1]);
+      }
+      const jet = C.meshOf(s.build(), 0.03);
+      jet.position.set(0, av.shoulderY - 0.25, -0.3);
+      const f = new C.Shape();
+      for (const x of [-0.14, 0.14]) f.add(P.cone, '#ffb03a', [x, -0.62, 0], [Math.PI, 0, 0], [0.09, 0.45, 0.09], true);
+      const flame = C.meshOf(f.build(), 0);
+      jet.add(flame);
+      av.body.add(jet);
+      av.jet = { jet, flame };
+    }
+    av.gear = gear;
+  };
+  // A cartoon flying saucer around the character's legs.
+  C.setShip = function (av, on, gear) {
+    if (on && !av.ship) {
+      const s = new C.Shape();
+      s.add(P.sphere, '#c9cfd6', [0, 0.45, 0], null, [2.2, 0.45, 2.2]);
+      s.add(P.cyl, '#8f97a0', [0, 0.25, 0], null, [1.2, 0.3, 1.2]);
+      s.add(P.torus, '#59606e', [0, 0.85, 0], [Math.PI / 2, 0, 0], [1.0, 1.0, 0.5]);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.sphereLo, i % 2 ? '#ff6fd0' : '#5ff8ff', [Math.cos(a) * 1.85, 0.5, Math.sin(a) * 1.85], null, [0.14, 0.1, 0.14], true); }
+      if (gear && gear.lasers) for (const x of [-1.2, 1.2]) s.add(P.cyl, '#3a3f4a', [x, 0.55, 1.3], [Math.PI / 2, 0, 0], [0.09, 0.9, 0.09]);
+      if (gear && gear.engine) s.add(P.cyl, '#ffb03a', [0, 0.05, 0], null, [0.9, 0.12, 0.9], true);
+      av.ship = C.meshOf(s.build(), 0.05);
+      av.ship.position.y = -0.1;
+      av.root.add(av.ship);
+    }
+    if (av.ship) av.ship.visible = !!on;
+    av.inShip = !!on;
+  };
+
+  // ---------- Speech bubbles ----------
+  // Cartoon bubble with the text wrapped to a few lines (drawn on a canvas, never as HTML).
+  C.makeBubble = function (text) {
+    const cv = document.createElement('canvas'); cv.width = 512; cv.height = 256;
+    const g = cv.getContext('2d');
+    g.font = '600 30px "Fredoka", "Trebuchet MS", sans-serif';
+    const words = String(text).split(' '), lines = [];
+    let line = '';
+    for (const w of words) { const t = line ? line + ' ' + w : w; if (g.measureText(t).width > 440 && line) { lines.push(line); line = w; } else line = t; }
+    if (line) lines.push(line);
+    lines.length = Math.min(lines.length, 5);
+    const h = 30 + lines.length * 36, top = 200 - h;
+    g.fillStyle = '#ffffff'; g.strokeStyle = '#111'; g.lineWidth = 6;
+    g.beginPath(); g.roundRect ? g.roundRect(12, top, 488, h, 28) : g.rect(12, top, 488, h); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(230, top + h - 3); g.lineTo(256, 246); g.lineTo(282, top + h - 3); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = '#ffffff'; g.fillRect(232, top + h - 8, 48, 8);
+    g.fillStyle = '#1b1b1b'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    lines.forEach((l, i) => g.fillText(l, 256, top + 33 + i * 36));
+    const tex = new T.CanvasTexture(cv);
+    const sp = new T.Sprite(new T.SpriteMaterial({ map: tex, depthWrite: false, transparent: true, fog: false }));
+    sp.scale.set(4, 2, 1);
+    sp.renderOrder = 11;
+    return { sprite: sp };
+  };
 
   // ---------- Name tags ----------
   C.makeTag = function (name, home, sub, color) {

@@ -9,6 +9,7 @@ COPY shared ./shared
 COPY sim ./sim
 COPY js ./js
 COPY server/server.js ./server/
+RUN mkdir -p server/data && chown node:node server/data
 ENV PORT=8790 NODE_ENV=production
 EXPOSE 8790
 USER node

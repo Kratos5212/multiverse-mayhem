@@ -14,7 +14,7 @@
   if (!MM.ARCHETYPES[profile.arch]) profile.arch = 'genius';
   profile.look = profile.look ? MM.sanitizeLook(profile.look) : Object.assign(MM.defaultLook(), UI.PRESETS[0].look);
   if (!profile.home) profile.home = 'ABDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random() * 23)] + '-' + Math.floor(Math.random() * 999 + 1);
-  if (!MM.DIM_BY_ID[profile.startDim]) profile.startDim = 'suburbia';
+  if (profile.startDim && !MM.DIM_BY_ID[profile.startDim]) profile.startDim = '';
   C.setVolume(settings.volume);
 
   // ---------- Renderer ----------
@@ -94,6 +94,7 @@
   function initMenu() {
     $('name').value = profile.name;
     $('home').value = profile.home;
+    $('startDim').append(el('option', { value: '', text: 'My home world' }));
     for (const d of MM.DIMS) $('startDim').append(el('option', { value: d.id, text: d.name }));
     $('startDim').value = profile.startDim;
     const httpHosted = /^https?:$/.test(location.protocol) && !/claude|artifact/.test(location.hostname);
@@ -124,6 +125,16 @@
   };
   C.G = G; // for debugging from the console
 
+  // ---------- Saved progress ----------
+  // The server gives this browser a random token; showing it again brings your progress back.
+  // Online the server keeps the progress; offline it lives in this browser.
+  function tokenFor(net) { try { const t = localStorage.getItem('mm.' + net.key); return /^[0-9a-f]{32}$/.test(t || '') ? t : undefined; } catch (_) { return undefined; } }
+  function keepToken(tok) { try { if (G.net && /^[0-9a-f]{32}$/.test(tok || '')) localStorage.setItem('mm.' + G.net.key, tok); } catch (_) {} }
+  const offlineStore = {
+    load(tok, arch) { try { return JSON.parse(localStorage.getItem('mm.save.' + tok + '.' + arch)); } catch (_) { return null; } },
+    save(tok, arch, prog) { try { localStorage.setItem('mm.save.' + tok + '.' + arch, JSON.stringify(prog)); } catch (_) {} },
+  };
+
   // ---------- Starting and leaving ----------
   function start(kind) {
     C.audioUnlock();
@@ -141,7 +152,7 @@
     $('loading').hidden = false;
     $('loading').textContent = kind === 'online' ? 'Connecting to ' + (profile.server || location.host) + '…' : 'Opening a portal…';
     const h = {
-      open: () => G.net.send({ t: 'hello', v: MM.VERSION, name: profile.name, home: profile.home, look: profile.look, arch: profile.arch, dim: profile.startDim }),
+      open: () => G.net.send({ t: 'hello', v: MM.VERSION, name: profile.name, home: profile.home, look: profile.look, arch: profile.arch, dim: profile.startDim || undefined, tok: tokenFor(G.net) }),
       message: onMessage,
       close: reason => leave(reason),
     };
@@ -149,7 +160,7 @@
     // ?bots=N sets how many bots share the offline multiverse (0-40).
     const qb = Number(new URLSearchParams(location.search).get('bots'));
     const bots = Number.isFinite(qb) && new URLSearchParams(location.search).has('bots') ? Math.max(0, Math.min(40, Math.floor(qb))) : undefined;
-    setTimeout(() => { G.net = kind === 'online' ? C.connectOnline(url, h) : C.connectOffline(h, { bots }); }, 30);
+    setTimeout(() => { G.net = kind === 'online' ? C.connectOnline(url, h) : C.connectOffline(h, { bots, store: offlineStore }); G.net.key = kind === 'online' ? 'tok.' + url : 'tok.offline'; }, 30);
     G.mode = 'connecting';
   }
 
@@ -165,10 +176,11 @@
   }
 
   // ---------- Entities ----------
-  function archLabel(info) { return (info.bot ? 'bot · ' : '') + MM.ARCHETYPES[info.arch].name; }
+  function archLabel(info) { return (info.bot ? 'bot · ' : '') + (info.title || MM.ARCHETYPES[info.arch].name); }
   function addPlayer(info) {
     if (info.id === G.myId || G.players.has(info.id)) return;
     const av = C.buildAvatar(info.look, info.arch);
+    C.setGear(av, info.gear);
     const tag = C.makeTag(info.name, info.home, archLabel(info), UI.ARCH_COLORS[info.arch]);
     tag.sprite.position.y = av.headY + 0.55;
     av.root.add(tag.sprite);
@@ -184,12 +196,22 @@
     G.players.delete(id);
   }
   function addNpc(row) {
-    const [id, type, x, y, z, r, hp] = row;
+    const [id, type, x, y, z, r, hp, seed, name] = row;
     if (G.npcs.has(id)) return;
-    const m = C.npcModel(type);
+    const m = C.npcModel(type, seed);
     m.root.position.set(x, y, z); m.root.rotation.y = r;
+    const NT = MM.NPCS[type];
+    // Locals you can talk to wear a small name tag; monsters don't.
+    let tag = null;
+    if (!NT.hostile && NT.talk) {
+      tag = C.makeTag(name || NT.name, '', NT.name, '#d6e4ff');
+      tag.draw(-1);
+      tag.sprite.scale.set(2.2, 0.55, 1);
+      tag.sprite.position.y = (m.av ? m.av.headY : NT.h) + 0.5;
+      m.root.add(tag.sprite);
+    }
     scene.add(m.root);
-    G.npcs.set(id, { id, type, m, snaps: [{ t: -1, x, y, z, r }], x, y, z, r, hp, px: x, pz: z, speed: 0, t: Math.random() * 6 });
+    G.npcs.set(id, { id, type, name: name || NT.name, m, tag, snaps: [{ t: -1, x, y, z, r }], x, y, z, r, hp, px: x, pz: z, speed: 0, t: Math.random() * 6, flags: 0, bubble: null });
   }
   function removeNpc(id, die) {
     const n = G.npcs.get(id);
@@ -197,6 +219,8 @@
     if (die) { fx.puff(n.x, n.y + 0.5, n.z, n.type === 'jelly' ? '#7ffcff' : n.type === 'mooncrab' ? '#c9c9d6' : '#d9677a', 10, 1.5, 1.6, 0.9); fx.burst(n.x, n.y + 0.8, n.z, '#ffffff', 10, 6, 0.6, 0.5); }
     scene.remove(n.m.root);
     if (n.m.av) n.m.av.dispose();
+    if (n.tag) n.tag.sprite.material.map.dispose();
+    if (n.bubble) n.bubble.sprite.material.map.dispose();
     G.npcs.delete(id);
   }
   function addPickup(row) {
@@ -285,6 +309,9 @@
       G.meAv = C.buildAvatar(profile.look, profile.arch);
       scene.add(G.meAv.root);
     }
+    if (G.prog) C.setGear(G.meAv, myGear());
+    C.setShip(G.meAv, !!w.ship, myGear());
+    if (w.event) { UI.banner(w.event.name, w.event.text); }
     G.offset = null;
     const dim = MM.DIM_BY_ID[w.dim];
     $('dimName').textContent = dim.name;
@@ -325,7 +352,8 @@
 
   function onMessage(m) {
     switch (m.t) {
-      case 'hi': G.myId = m.id; profile.name = m.you.name; profile.home = m.you.home; break;
+      case 'hi': G.myId = m.id; profile.name = m.you.name; profile.home = m.you.home; keepToken(m.tok); break;
+      case 'pg': onProgress(m); break;
       case 'w': enterDimension(m); break;
       case 's': onSnap(m); break;
       case 'ev': for (const e of m.l) onEvent(e); break;
@@ -356,7 +384,7 @@
       if (!e) continue;
       e.snaps.push({ t: m.tm, x: n[1], y: n[2], z: n[3], r: n[4] });
       if (e.snaps.length > 12) e.snaps.shift();
-      e.hp = n[5];
+      e.hp = n[5]; e.flags = n[6] || 0;
     }
     for (const u of m.u) { const tu = G.turrets.get(u[0]); if (tu) tu.aim = u[1]; }
   }
@@ -453,6 +481,37 @@
       case 'kiosk': { const p = posOf(e.id); if (p) fx.burst(p.x, p.y + 1, p.z, '#ffd84d', 25, 6, 0.6, 0.5, 2); break; }
       case 'bite': { const n = G.npcs.get(e.n); if (n) sfxAt('bite', n.x, n.z); break; }
       case 'shrunk': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1, p.z, '#b48aff', 20, 4, 0.5, 0.6, 0); sfxAt('shrink', p.x, p.z); } break; }
+      case 'say': {
+        const n = G.npcs.get(e.n);
+        if (!n) break;
+        speech(n, e.text);
+        if (e.by === G.myId) UI.chatLine('', '', n.name + ': "' + e.text + '"', true);
+        break;
+      }
+      case 'world':
+        if (e.end) { UI.toast(e.name + ' is over'); break; }
+        UI.banner(e.name, e.text);
+        UI.chatLine('', '', e.name + ' ' + e.text, true);
+        C.sfx('portal', 0.6);
+        break;
+      case 'title': {
+        const p = G.players.get(e.id);
+        if (p) { p.info.title = e.title; removePlayer(e.id); addPlayer(p.info); }
+        else if (e.id !== G.myId) break;
+        if (e.id !== G.myId) UI.feed([{ t: nameOf(e.id), c: '#ffd84d' }, ' became a ', { t: e.title, c: '#39ff6a' }]);
+        break;
+      }
+      case 'gear': {
+        const p = G.players.get(e.id);
+        if (p) { p.info.gear = e.gear; C.setGear(p.av, e.gear); collectOutlines(p.av); }
+        break;
+      }
+      case 'ship': {
+        const p = G.players.get(e.id);
+        if (p) { C.setShip(p.av, e.on, p.info.gear); collectOutlines(p.av); sfxAt('jump', p.x, p.z); }
+        break;
+      }
+      case 'warp': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1, p.z, '#5ff8ff', 40, 10, 0.8, 0.6, 0); sfxAt('warp', p.x, p.z); } break; }
     }
   }
   function playerPortalColor(id) {
@@ -468,7 +527,20 @@
     const me = G.me;
     if (e.k === 'tp') { me.x = e.x; me.y = e.y; me.z = e.z; me.vx = me.vy = me.vz = 0; G.ep = e.ep; }
     else if (e.k === 'kb') { me.vx += e.vx; me.vz += e.vz; me.vy = Math.max(me.vy, e.vy); me.grounded = false; me.kbT = 0.7; }
-    else if (e.k === 'toast') { UI.toast(e.text); if (/^Built/.test(e.text)) C.sfx('craft'); }
+    else if (e.k === 'toast') UI.toast(e.text, 3500);
+    else if (e.k === 'built') { C.sfx('craft'); UI.toast('Built: ' + MM.RECIPES[e.r].name); if (G.modal === 'craft') setTimeout(openCraft, 50); }
+    else if (e.k === 'task') {
+      const got = Object.keys(e.give).map(k => '+' + e.give[k] * e.mult + ' ' + MM.MATERIALS[k].icon).join(' ');
+      UI.banner(MM.TASKS[e.id].name, e.text + (got ? '  ' + got : ''));
+      C.sfx('craft');
+    }
+    else if (e.k === 'step') {
+      const un = (e.grants || []).map(r => MM.RECIPES[r].name);
+      UI.banner(e.title ? 'You are now a ' + e.title + '!' : 'Path step done: ' + e.name, un.length ? 'Unlocked: ' + un.join(', ') : 'Open your journal (J) for the next step.');
+      C.sfx('cheer');
+      if (e.title) fx.burst(me.x, me.y + 1.5, me.z, '#ffd84d', 80, 10, 0.9, 1.2, 2);
+    }
+    else if (e.k === 'offer') openOffer(e);
   }
 
   function onYou(y) {
@@ -478,9 +550,9 @@
     $('hpFill').style.transform = 'scaleX(' + Math.max(0, y.hp / y.max) + ')';
     $('hpFill').style.background = y.hp / y.max > 0.5 ? 'var(--portal)' : y.hp / y.max > 0.25 ? 'var(--gold)' : 'var(--red)';
     $('hpText').textContent = Math.max(0, y.hp) + ' / ' + y.max;
-    $('scrap').textContent = y.inv.s;
-    $('crys').textContent = y.inv.c;
-    $('charges').textContent = A.portal ? 'Portal ' + '●'.repeat(y.ch) + '○'.repeat(Math.max(0, y.chMax - y.ch)) : 'No portal gun';
+    for (const k of MM.MAT_IDS) $('mat-' + k).textContent = y.inv[k] || 0;
+    $('charges').textContent = y.chMax ? 'Portal ' + '●'.repeat(y.ch) + '○'.repeat(Math.max(0, y.chMax - y.ch)) : 'No portal gun';
+    if (G.meAv && !!y.ship !== !!G.meAv.inShip) { C.setShip(G.meAv, y.ship, myGear()); if (y.ship) { G.me.vy = 0; G.me.grounded = false; } }
     $('chaos').textContent = y.chaos;
     $('kos').textContent = y.kills;
     G.abReadyAt = now() + y.ab;
@@ -489,7 +561,59 @@
     if (!y.dead && prev && prev.dead) $('dead').hidden = true;
     if (!y.dead) $('dead').hidden = true;
     updateHotbar();
-    if (G.modal === 'craft') openCraft();
+    const invKey = JSON.stringify(y.inv) + y.ch;
+    if (invKey !== G.invKey) updateTracker();
+    if (G.modal === 'craft' && invKey !== G.invKey) openCraft();
+    G.invKey = invKey;
+  }
+
+  // ---------- Life progress ----------
+  function onProgress(m) {
+    const first = !G.prog;
+    G.prog = m; G.st = m.st;
+    if (G.meAv) C.setGear(G.meAv, myGear());
+    $('flyBar').hidden = !G.st.fly;
+    updateTracker();
+    updateHotbar();
+    if (G.modal === 'journal') openJournal();
+    if (first && G.entered) buildHotbar();
+  }
+  function myGear() { const up = G.prog ? G.prog.up : {}; return { wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers }; }
+  // The next step of your path, always on screen.
+  function updateTracker() {
+    const A = MM.ARCHETYPES[profile.arch], pg = G.prog;
+    if (!pg) return;
+    const box = $('tracker');
+    box.textContent = '';
+    const title = pg.title || A.life.normal;
+    box.append(el('b', { text: title }));
+    const S = A.steps[pg.step];
+    if (S) {
+      const pr = MM.stepProgress(pg, S.goal, G.you ? G.you.inv : {});
+      box.append(el('span', { text: S.name + ': ' + S.desc + (pr.need > 1 ? ' (' + pr.now + '/' + pr.need + ')' : '') }));
+    } else box.append(el('span', { text: 'Path complete. The multiverse is yours.' }));
+    const ready = A.life.daily.filter(t => !pg.tasks[t]);
+    if (ready.length) box.append(el('small', { text: 'Ready: ' + ready.map(t => MM.TASKS[t].name + ' (' + MM.LANDMARK_BY_ID[MM.TASKS[t].at].name + ')').join(' · ') }));
+    if (pg.errands.length) box.append(el('small', { text: pg.errands.length + ' errand' + (pg.errands.length > 1 ? 's' : '') + ' (J)' }));
+  }
+
+  // Speech bubble over a local for a few seconds.
+  function speech(n, text) {
+    if (n.bubble) { n.m.root.remove(n.bubble.sprite); n.bubble.sprite.material.map.dispose(); }
+    const b = C.makeBubble(text);
+    b.sprite.position.y = (n.m.av ? n.m.av.headY : MM.NPCS[n.type].h) + 1.4;
+    n.m.root.add(b.sprite);
+    n.bubble = b; n.bubbleT = 5;
+  }
+
+  function openOffer(e) {
+    const fmt = m => Object.keys(m).map(k => m[k] + ' ' + MM.MATERIALS[k].icon + ' ' + MM.MATERIALS[k].name).join(', ');
+    openModal('offer', e.name + ' wants to trade', box => {
+      box.append(el('p', { text: 'You give: ' + fmt(e.want) }), el('p', { text: 'You get: ' + fmt(e.get) }),
+        el('div', { class: 'chips' },
+          el('button', { class: 'btn go', onclick: () => { send({ t: 'ans', a: 1 }); UI.closeModal(); } }, 'Deal'),
+          el('button', { class: 'btn', onclick: () => { send({ t: 'ans', a: 0 }); UI.closeModal(); } }, 'No thanks')));
+    });
   }
 
   function onChat(m) {
@@ -514,10 +638,12 @@
     mk('grenade', '1', 'Grenade', () => useGadget('grenade'));
     mk('turret', '2', 'Turret', () => useGadget('turret'));
     mk('shrink', '3', 'Shrink', () => useGadget('shrink'));
-    mk('craft', 'C', 'Craft', () => openCraft());
-    mk('portal', 'E', A.portal ? 'Portal' : 'Kiosk', () => portalAction());
+    mk('craft', 'C', 'Build', () => openCraft());
+    mk('journal', 'J', 'Journal', () => openJournal());
+    mk('portal', 'E', 'Portal', () => portalAction());
+    mk('ship', 'B', 'Ship', () => toggleShip());
     mk('ab', 'Q', A.ability.name, () => ability());
-    $('flyBar').hidden = !A.fly;
+    $('flyBar').hidden = !(G.st && G.st.fly);
     updateHotbar();
   }
   function updateHotbar() {
@@ -527,19 +653,26 @@
       slots[g].querySelector('.n').textContent = y.inv[g] || '';
       slots[g].classList.toggle('off', !(y.inv[g] > 0));
     }
-    const A = MM.ARCHETYPES[profile.arch];
-    slots.portal.querySelector('.n').textContent = A.portal ? String(y.ch) : '';
-    slots.portal.classList.toggle('off', A.portal ? y.ch <= 0 : !nearKiosk());
-    slots.craft.classList.toggle('off', !A.craft.length);
+    const st = G.st;
+    slots.portal.querySelector('.n').textContent = y.chMax ? String(y.ch) : '';
+    slots.portal.classList.toggle('off', !(y.chMax && y.ch > 0) && !nearKiosk() && !(y.ship && st && st.ship && st.ship.drive));
+    slots.ship.hidden = !(st && st.ship);
+    slots.ship.querySelector('span:nth-child(2)').textContent = y.ship ? 'Land' : 'Ship';
+    $('tShip').hidden = !(st && st.ship);
+    $('tShip').textContent = y.ship ? 'LAND' : 'SHIP';
   }
 
   // ---------- Actions ----------
   const send = o => { if (G.net) G.net.send(o); };
   function canAct() { return G.mode === 'play' && G.you && !G.you.dead; }
 
+  // The weapon in use (mirrors Host.weaponOf): ship guns while flying.
+  function weaponId() {
+    if (G.you && G.you.ship) return G.st && G.st.ship && G.st.ship.lasers ? 'lasers' : 'blaster';
+    return MM.ARCHETYPES[profile.arch].weapon;
+  }
   function aimDir() {
-    const A = MM.ARCHETYPES[profile.arch];
-    if (MM.WEAPONS[A.weapon].melee) return { dx: Math.sin(G.camYaw), dy: 0, dz: Math.cos(G.camYaw) };
+    if (MM.WEAPONS[weaponId()].melee) return { dx: Math.sin(G.camYaw), dy: 0, dz: Math.cos(G.camYaw) };
     const o = camera.position, d = new T.Vector3();
     camera.getWorldDirection(d);
     let best = 90;
@@ -563,7 +696,7 @@
   function fire() {
     if (!canAct() || (G.you.fx & 4)) return;
     const t = now();
-    const A = MM.ARCHETYPES[profile.arch], W = MM.WEAPONS[A.weapon];
+    const wid = weaponId(), W = MM.WEAPONS[wid];
     if (t < G.fireT) return;
     G.fireT = t + W.cd;
     const a = aimDir();
@@ -571,11 +704,12 @@
     G.me.aimT = 1.0;
     G.me.yaw = G.camYaw;
     if (G.meAv) G.meAv.attackT = W.melee ? 0.3 : 0.2;
-    C.sfx(W.melee ? 'melee' : A.weapon, 0.7);
+    C.sfx(W.melee ? 'melee' : wid === 'lasers' || wid === 'rifle' ? 'plasma' : wid, 0.7);
   }
   function useGadget(g) {
     if (!canAct()) return;
-    if (!(G.you.inv[g] > 0)) { UI.toast('No ' + MM.GADGETS[g].name + '. Craft one with C.'); return; }
+    if (G.you.ship) { UI.toast('Land first (B) to use gadgets.'); return; }
+    if (!(G.you.inv[g] > 0)) { UI.toast('No ' + MM.RECIPES[g].name + '. Build one with C.'); return; }
     const a = g === 'turret' ? { dx: Math.sin(G.camYaw), dy: 0, dz: Math.cos(G.camYaw) } : aimDir();
     if (g === 'grenade') { const l = Math.hypot(a.dx, a.dz) || 1; a.dx /= l; a.dz /= l; a.dy = 0; }
     G.me.yaw = G.camYaw; G.me.aimT = 1;
@@ -592,11 +726,56 @@
   function nearKiosk() { return G.dimId && Math.hypot(G.me.x - MM.KIOSK.x, G.me.z - MM.KIOSK.z) < MM.KIOSK_RADIUS; }
   function portalAction() {
     if (!canAct()) return;
-    const A = MM.ARCHETYPES[profile.arch];
+    if (G.you.ship && G.st.ship && G.st.ship.drive) return openDims('drive');
     if (nearKiosk()) return openDims('kiosk');
-    if (!A.portal) { UI.toast('No portal gun in your lore. Use the kiosk in the middle, or jump into someone\'s portal.', 4000); return; }
+    if (!G.you.chMax) { UI.toast('No portal gun in your life (yet). Use the kiosk in the middle, jump into someone\'s portal, or follow your path (J).', 4500); return; }
     if (G.you.ch <= 0) { UI.toast('Portal gun is recharging'); return; }
     openDims('gun');
+  }
+  function toggleShip() {
+    if (!canAct()) return;
+    if (!G.st || !G.st.ship) { UI.toast('You don\'t have a ship. Build a Ship Hull at the Bazaar Shipyard, if your path allows it (J).', 4000); return; }
+    send({ t: 'ship', on: !G.you.ship });
+  }
+  // What F does here: talk to a local, then a landmark, then the kiosk.
+  function nearestLocal() {
+    let best = null, bd = 4.2 * 4.2;
+    for (const n of G.npcs.values()) {
+      const T = MM.NPCS[n.type];
+      if (T.hostile || !T.talk) continue;
+      const d = (n.x - G.me.x) ** 2 + (n.z - G.me.z) ** 2;
+      if (d < bd) { bd = d; best = n; }
+    }
+    return best;
+  }
+  function nearLandmark() {
+    for (const l of MM.LANDMARKS) if (l.dim === G.dimId && Math.hypot(l.x - G.me.x, l.z - G.me.z) < l.r + MM.USE_RADIUS) return l;
+    return null;
+  }
+  function interact() {
+    if (!canAct()) return;
+    const n = nearestLocal();
+    if (n) { send({ t: 'talk', n: n.id }); return; }
+    const l = nearLandmark();
+    if (l) { openLandmark(l); return; }
+    if (nearKiosk()) openDims('kiosk');
+  }
+  function openLandmark(l) {
+    const A = MM.ARCHETYPES[profile.arch];
+    const tasks = A.life.daily.filter(t => MM.TASKS[t].at === l.id);
+    const builds = MM.RECIPE_IDS.filter(r => MM.RECIPES[r].at === l.id);
+    openModal('landmark', l.name, box => {
+      const list = el('div', { class: 'list' });
+      for (const t of tasks) {
+        const T = MM.TASKS[t], wait = G.prog ? G.prog.tasks[t] : 0;
+        const gives = Object.keys(T.give).map(k => T.give[k] * (profile.arch === 'teen' ? 2 : 1) + ' ' + MM.MATERIALS[k].icon).join(' ');
+        list.append(el('div', { class: 'row' }, el('div', { class: 't' }, el('b', { text: T.name }), el('small', { text: (gives || '') + (T.heal ? ' · heals you' : '') + (wait ? ' · ready in ' + wait + ' s' : '') })),
+          el('button', { class: 'btn go', disabled: wait ? '' : null, onclick: () => { send({ t: 'use', l: l.id, task: t }); UI.closeModal(); } }, 'Do it')));
+      }
+      if (!tasks.length) list.append(el('p', { class: 'note', text: 'This place is not part of your daily life.' }));
+      box.append(list);
+      if (builds.length) box.append(el('p', { class: 'note', text: 'Built here: ' + builds.map(r => MM.RECIPES[r].name).join(', ') + '.' }), el('button', { class: 'btn gold', onclick: () => openCraft() }, 'Open workbench'));
+    });
   }
   function emote() { if (!canAct()) return; send({ t: 'em', e: 0 }); G.me.emoteT = 2; }
 
@@ -608,7 +787,7 @@
   }
   function openDims(mode) {
     G.modalMode = mode;
-    openModal('dims', mode === 'kiosk' ? 'Portal Kiosk' : 'Portal gun', box => {
+    openModal('dims', mode === 'kiosk' ? 'Portal Kiosk' : mode === 'drive' ? 'Dimension Drive' : 'Portal gun', box => {
       const list = el('div', { class: 'list' });
       for (const d of MM.DIMS) {
         if (d.id === G.dimId) continue;
@@ -616,32 +795,89 @@
         list.append(el('div', { class: 'row dim' },
           el('div', { class: 't' }, el('b', { text: d.name + '  ' + d.code }), el('small', { text: d.blurb + ' · ' + n + ' here' })),
           el('button', { class: 'btn go', onclick: () => {
-            if (mode === 'kiosk') send({ t: 'ki', d: d.id }); else { send({ t: 'po', d: d.id }); UI.toast('Portal open. Walk through it!'); }
+            if (mode === 'kiosk') send({ t: 'ki', d: d.id });
+            else if (mode === 'drive') send({ t: 'drive', d: d.id });
+            else { send({ t: 'po', d: d.id }); UI.toast('Portal open. Walk through it!'); }
             UI.closeModal();
-          } }, mode === 'kiosk' ? 'Go' : 'Open')));
+          } }, mode === 'gun' ? 'Open' : 'Go')));
       }
-      box.append(el('p', { class: 'note', text: mode === 'kiosk' ? 'The kiosk sends you straight there.' : 'Opens a portal in front of you for ' + MM.PORTAL_TTL + ' s. Anyone can walk through it, including your enemies.' }), list);
+      box.append(el('p', { class: 'note', text: mode === 'kiosk' ? 'The kiosk sends you straight there.' : mode === 'drive' ? 'Your ship jumps straight there (15 s cooldown).' : 'Opens a portal in front of you for ' + MM.PORTAL_TTL + ' s. Anyone can walk through it, including your enemies.' }), list);
     });
   }
+  // The workbench: everything you could ever build, and exactly why you can or can't yet.
   function openCraft() {
+    const y = G.you, pg = G.prog;
+    if (!y || !pg) return;
     const A = MM.ARCHETYPES[profile.arch];
-    const y = G.you;
-    if (!y) return;
+    const here = nearLandmark();
     openModal('craft', 'Workbench', box => {
-      box.append(el('p', { class: 'note', text: 'You have ⚙ ' + y.inv.s + ' scrap and ◆ ' + y.inv.c + ' crystals. Smash props and monsters for more.' }));
-      const list = el('div', { class: 'list' });
-      for (const g of MM.GADGET_IDS) {
-        const G2 = MM.GADGETS[g];
-        const known = A.craft.includes(g);
-        const cost = MM.gadgetCost(profile.arch, g);
-        const owned = g === 'boots' ? (y.boots ? 1 : 0) : g === 'mega' ? (y.mega ? 1 : 0) : g === 'fluid' ? 0 : y.inv[g];
-        const full = g === 'fluid' ? (!A.portal || y.ch >= y.chMax) : owned >= G2.max;
-        const afford = y.inv.s >= cost.s && y.inv.c >= cost.c;
-        list.append(el('div', { class: 'row' },
-          el('div', { class: 't' }, el('b', { text: G2.name + (owned ? '  (' + owned + ')' : '') }), el('small', { text: known ? G2.desc + ' · ⚙ ' + cost.s + '  ◆ ' + cost.c : 'A ' + A.name + ' would never build this.' })),
-          el('button', { class: 'btn go', disabled: (!known || full || !afford) ? '' : null, onclick: () => send({ t: 'cr', g }) }, full && known ? 'Full' : 'Build')));
+      const mats = el('div', { class: 'chips' });
+      for (const k of MM.MAT_IDS) mats.append(el('span', { class: 'chip', style: 'color:' + MM.MATERIALS[k].color, title: MM.MATERIALS[k].name + ': ' + MM.MATERIALS[k].from }, MM.MATERIALS[k].icon + ' ' + (y.inv[k] || 0) + ' ' + MM.MATERIALS[k].name));
+      box.append(mats, el('p', { class: 'note', text: here ? 'You are at the ' + here.name + '.' : 'Big upgrades have to be built at a particular place in a particular dimension.' }));
+      for (const cat in MM.CATS) {
+        box.append(el('h3', { text: MM.CATS[cat] }));
+        const list = el('div', { class: 'list' });
+        for (const id of MM.RECIPE_IDS) {
+          const R = MM.RECIPES[id];
+          if (R.cat !== cat) continue;
+          const why = MM.canKnow(profile.arch, pg, id);
+          const cost = MM.recipeCost(profile.arch, id);
+          const afford = Object.keys(cost).every(k => (y.inv[k] || 0) >= cost[k]);
+          const L = R.at ? MM.LANDMARK_BY_ID[R.at] : null;
+          const atPlace = !L || (here && here.id === L.id);
+          const owned = cat === 'gadget' ? (id === 'fluid' ? 0 : y.inv[id] || 0) : pg.up[id] ? 1 : 0;
+          const full = cat === 'gadget' && (id === 'fluid' ? y.ch >= y.chMax : owned >= R.max);
+          const costText = Object.keys(cost).map(k => cost[k] + MM.MATERIALS[k].icon).join(' ');
+          const where = L ? L.name + ', ' + MM.DIM_BY_ID[L.dim].name : 'anywhere';
+          let label = 'Build', ok = !why && afford && atPlace && !full;
+          if (pg.up[id] && cat !== 'gadget') label = 'Owned';
+          else if (full) label = 'Full';
+          else if (why) label = 'Locked';
+          else if (!atPlace) label = 'Go there';
+          const sub = (why && !pg.up[id] ? why + ' · ' : '') + R.desc + ' · ' + costText + ' · ' + where;
+          list.append(el('div', { class: 'row' + (why && !pg.up[id] ? ' locked' : '') },
+            el('div', { class: 't' }, el('b', { text: R.name + (cat === 'gadget' && owned ? ' (' + owned + ')' : '') }), el('small', { text: sub })),
+            el('button', { class: 'btn ' + (ok ? 'go' : ''), disabled: ok ? null : '', onclick: () => send({ t: 'cr', g: id }) }, label)));
+        }
+        box.append(list);
       }
-      box.append(list);
+      if (A.discount) box.append(el('p', { class: 'note', text: 'Genius discount applied: everything costs a third less.' }));
+    });
+  }
+
+  // Your life: who you are now, your daily routine, your path out, and errands.
+  function openJournal() {
+    const pg = G.prog;
+    if (!pg) return;
+    const A = MM.ARCHETYPES[profile.arch];
+    openModal('journal', 'Journal', box => {
+      box.append(el('p', null, el('b', { text: profile.name + ', ' + (pg.title || A.life.normal) }), ' · ' + A.name + ' from ' + MM.DIM_BY_ID[A.home].name));
+      box.append(el('p', { class: 'note', text: 'Live your normal life, or break out of it by following your path. Nothing forces you either way.' }));
+      box.append(el('h3', { text: 'Daily life' }));
+      const daily = el('div', { class: 'list' });
+      for (const t of A.life.daily) {
+        const T = MM.TASKS[t], L = MM.LANDMARK_BY_ID[T.at], wait = pg.tasks[t];
+        daily.append(el('div', { class: 'row' }, el('div', { class: 't' }, el('b', { text: T.name }), el('small', { text: L.name + ' in ' + MM.DIM_BY_ID[L.dim].name + ' · press F there' })),
+          el('span', { class: 'chip', text: wait ? 'in ' + wait + ' s' : 'ready' })));
+      }
+      box.append(daily, el('h3', { text: 'Your path: ' + A.life.normal + ' → ' + A.life.breakout }));
+      const steps = el('div', { class: 'list' });
+      A.steps.forEach((S, i) => {
+        const done = i < pg.step, cur = i === pg.step;
+        const pr = MM.stepProgress(pg, S.goal, G.you ? G.you.inv : {});
+        const un = (S.grants || []).map(r => MM.RECIPES[r].name).join(', ');
+        steps.append(el('div', { class: 'row' + (done ? ' done' : cur ? ' cur' : ' later') },
+          el('div', { class: 't' }, el('b', { text: (done ? '✓ ' : '') + S.name }), el('small', { text: S.desc + (un ? ' · Unlocks: ' + un : '') + (S.title ? ' · Become ' + A.life.breakout : '') })),
+          el('span', { class: 'chip', text: done ? 'done' : cur ? pr.now + '/' + pr.need : '…' })));
+      });
+      box.append(steps);
+      box.append(el('h3', { text: 'Errands' }));
+      if (!pg.errands.length) box.append(el('p', { class: 'note', text: 'None. Talk to locals (F) and some will ask for favours.' }));
+      for (const e of pg.errands) box.append(el('div', { class: 'row' }, el('div', { class: 't' }, el('b', { text: e.n + ' ' + MM.MATERIALS[e.m].name + ' → any ' + MM.NPCS[e.npc].name + ' in ' + MM.DIM_BY_ID[e.dim].name }),
+        el('small', { text: 'From ' + e.from + '. Reward: ' + Object.keys(e.rew).map(k => e.rew[k] + ' ' + MM.MATERIALS[k].name).join(', ') }))));
+      const st = G.st;
+      box.append(el('h3', { text: 'You' }), el('p', { class: 'note', text: 'Health ' + st.maxHp + ' · speed ' + st.speed.toFixed(1) + ' · damage ×' + st.dmg.toFixed(2) +
+        (st.fly ? ' · ' + (st.fly === 'jet' ? 'jetpack' : 'wings') : '') + (st.gun ? ' · portal gun ×' + st.gun.charges : '') + (st.ship ? ' · ship' + (st.ship.drive ? ' with dimension drive' : '') : '') }));
     });
   }
   function openBoard() {
@@ -710,8 +946,10 @@
       case 'Enter': case 'KeyT': e.preventDefault(); openChat(); break;
       case 'Escape': openMenu(); break;
       case 'KeyE': portalAction(); break;
-      case 'KeyF': if (nearKiosk()) openDims('kiosk'); break;
+      case 'KeyF': interact(); break;
       case 'KeyC': openCraft(); break;
+      case 'KeyJ': openJournal(); break;
+      case 'KeyB': toggleShip(); break;
       case 'KeyQ': ability(); break;
       case 'Digit1': useGadget('grenade'); break;
       case 'Digit2': useGadget('turret'); break;
@@ -783,6 +1021,11 @@
   hold('tFire', 'fire'); hold('tJump', 'jump');
   $('tAb').addEventListener('pointerdown', () => ability());
   $('tPortal').addEventListener('pointerdown', () => portalAction());
+  $('tTalk').addEventListener('pointerdown', () => interact());
+  $('tShip').addEventListener('pointerdown', () => toggleShip());
+  $('bJournal').onclick = () => openJournal();
+  // Offline progress lives in this browser: save it when the page goes away.
+  window.addEventListener('pagehide', () => { if (G.net && G.net.host) G.net.host.saveAll(); });
   $('tGadget').addEventListener('pointerdown', () => { const y = G.you; if (!y) return; const g = ['grenade', 'turret', 'shrink'].find(k => y.inv[k] > 0); if (g) useGadget(g); else openCraft(); });
 
   $('respawn').onclick = () => { if (G.you && G.you.dead && now() >= G.rsAt) send({ t: 'rs' }); };
@@ -831,34 +1074,45 @@
     if (il > 1) { ix /= il; iz /= il; }
     if (dead) { ix = iz = 0; }
     const fxb = y ? y.fx : 0;
-    const speed = A.speed * (fxb & 2 ? 1.8 : 1) * (fxb & 8 ? 0.75 : 1) * (fxb & 16 ? 0.6 : 1) * (A.fly && !me.grounded ? 1.3 : 1);
+    const st = G.st || MM.statsOf(profile.arch, {});
+    const inShip = !!(y && y.ship && st.ship);
+    // Same speed rules as the server (Host.speedOf), so you never get snapped back.
+    const mult = (fxb & 2 ? 1.8 : 1) * (fxb & 8 ? 0.75 : 1) * (fxb & 16 ? 0.6 : 1) * (fxb & 256 ? 0.5 : 1) * (fxb & 1024 ? 0.12 : 1);
+    const speed = inShip ? st.ship.speed * mult : st.speed * mult * (st.fly && !me.grounded ? 1.3 : 1);
     const sy = Math.sin(G.camYaw), cy = Math.cos(G.camYaw);
     const wx = (sy * iz - cy * ix) * speed, wz = (cy * iz + sy * ix) * speed;
-    const accel = me.kbT > 0 ? 2 : me.grounded ? 40 : 10;
+    const accel = me.kbT > 0 ? 2 : inShip ? 5 : me.grounded ? 40 : 10;
     const k = Math.min(1, accel * dt);
     me.vx += (wx - me.vx) * k; me.vz += (wz - me.vz) * k;
     me.kbT = Math.max(0, me.kbT - dt);
-    // Jump, fly, gravity.
     const jumpHeld = !chatOpen() && !UI.modalOpen() && (keys.has('Space') || touch.jump) && !dead;
+    const downHeld = !chatOpen() && !UI.modalOpen() && (keys.has('ShiftLeft') || keys.has('ShiftRight') || keys.has('ControlLeft'));
     me.flying = false;
-    if (jumpHeld && me.grounded) {
-      me.vy = A.jump * (y && y.boots ? 1.5 : 1);
+    if (inShip) {
+      // Ship: fly where you look. Space climbs, Shift dives.
+      const climb = (jumpHeld ? 1 : 0) - (downHeld ? 1 : 0) + (iz > 0 ? -Math.sin(G.camPitch) * iz * 0.8 : 0);
+      me.vy += (climb * 12 - me.vy) * Math.min(1, dt * 4);
+      me.grounded = false;
+    } else if (jumpHeld && me.grounded) {
+      me.vy = st.jump;
       me.grounded = false;
       me.jumpLock = 0.25;
       C.sfx('jump', 0.4);
-    } else if (A.fly && jumpHeld && !me.grounded && (me.jumpLock -= dt) <= 0 && me.fly > 0) {
+    } else if (st.fly && jumpHeld && !me.grounded && (me.jumpLock -= dt) <= 0 && me.fly > 0) {
       me.vy += (7 - me.vy) * Math.min(1, dt * 5);
       me.fly = Math.max(0, me.fly - dt);
       me.flying = true;
+      if (st.fly === 'jet' && Math.random() < 0.5) fx.glow.emit(me.x, me.y + 0.5, me.z, 0, -4, 0, '#ffb03a', 0.4, 0.3, 0);
     }
-    if (me.grounded) me.fly = Math.min(6, me.fly + dt * 1.5);
-    me.vy -= dim.gravity * dt * (me.flying ? 0.2 : 1);
+    if (me.grounded) me.fly = Math.min(st.flyTime || 6, me.fly + dt * 1.5);
+    if (!inShip) me.vy -= dim.gravity * dt * (me.flying ? 0.2 : 1);
     let nx = me.x + me.vx * dt, nz = me.z + me.vz * dt, ny = me.y + me.vy * dt;
-    [nx, nz] = pushOut(nx, nz, ny, 0.45);
+    [nx, nz] = pushOut(nx, nz, ny, inShip ? 1.6 : 0.45);
     const lim = MM.WORLD_HALF - 1;
     nx = Math.max(-lim, Math.min(lim, nx)); nz = Math.max(-lim, Math.min(lim, nz));
-    const g = groundAt(nx, nz, Math.max(ny, me.y));
-    if (ny <= g) {
+    const g = groundAt(nx, nz, Math.max(ny, me.y)) + (inShip ? 0.4 : 0);
+    if (inShip) { if (ny < g) { ny = g; me.vy = Math.max(0, me.vy); } ny = Math.min(ny, g + 90); }
+    else if (ny <= g) {
       if (!me.grounded && me.vy < -14) fx.puff(nx, g, nz, '#ddd', 6, 1, 1, 0.5);
       ny = g; me.vy = 0; me.grounded = true;
     } else if (ny > g + 0.15) me.grounded = false;
@@ -870,13 +1124,13 @@
     const hs = Math.hypot(me.vx, me.vz);
     if (me.aimT > 0 || mouseDown || touch.fire) me.yaw = G.camYaw;
     else if (hs > 0.5) me.yaw += wrap(Math.atan2(me.vx, me.vz) - me.yaw) * Math.min(1, dt * 12);
-    me.anim = dead ? MM.ANIM.dead : me.flying ? MM.ANIM.fly : !me.grounded ? MM.ANIM.air : me.emoteT > 0 ? MM.ANIM.emote : hs > 0.6 ? MM.ANIM.run : MM.ANIM.idle;
+    me.anim = dead ? MM.ANIM.dead : inShip ? MM.ANIM.idle : me.flying ? MM.ANIM.fly : !me.grounded ? MM.ANIM.air : me.emoteT > 0 ? MM.ANIM.emote : hs > 0.6 ? MM.ANIM.run : MM.ANIM.idle;
     if (G.meAv) {
       G.meAv.root.position.set(me.x, me.y, me.z);
       G.meAv.root.rotation.y = me.yaw;
       G.meAv.animate(dt, { speed: me.grounded ? hs : 0, anim: me.anim, fx: fxb });
     }
-    if (A.fly) $('flyFill').style.transform = 'scaleX(' + me.fly / 6 + ')';
+    if (st.fly) $('flyFill').style.transform = 'scaleX(' + me.fly / (st.flyTime || 6) + ')';
     // Hold to fire.
     if ((mouseDown && document.pointerLockElement === canvas) || (mouseDown && !document.pointerLockElement) || touch.fire) fire();
     // Tell the host where we are.
@@ -884,13 +1138,22 @@
       G.stT = 1 / 15;
       send({ t: 'st', x: r2(me.x), y: r2(me.y), z: r2(me.z), r: r2(wrap(me.yaw)), a: me.anim, ep: G.ep });
     }
-    // Prompt at the kiosk.
-    const nk = nearKiosk();
-    if (nk !== G.wasNearKiosk) {
-      G.wasNearKiosk = nk;
-      $('prompt').hidden = !nk;
-      if (nk) { $('prompt').textContent = ''; $('prompt').append(el('b', { text: isTouch ? 'PORTAL' : 'F' }), ' Portal Kiosk: travel to any dimension'); }
-      updateHotbar();
+    // What F would do right here.
+    if ((G.promptT -= dt) <= 0) {
+      G.promptT = 0.2;
+      const n = nearestLocal(), l = n ? null : nearLandmark(), nk = !n && !l && nearKiosk();
+      const key = n ? 'n' + n.id : l ? 'l' + l.id : nk ? 'k' : '';
+      if (key !== G.promptKey) {
+        G.promptKey = key;
+        $('prompt').hidden = !key;
+        $('tTalk').hidden = !key;
+        $('prompt').textContent = '';
+        const b = el('b', { text: isTouch ? 'TALK' : 'F' });
+        if (n) { $('prompt').append(b, ' Talk to ' + n.name); $('tTalk').textContent = 'TALK'; }
+        else if (l) { $('prompt').append(b, ' ' + l.name); $('tTalk').textContent = 'USE'; }
+        else if (nk) { $('prompt').append(b, ' Portal Kiosk: travel to any dimension'); $('tTalk').textContent = 'KIOSK'; }
+        updateHotbar();
+      }
     }
     // Cooldown shading on the ability slot.
     if (slots.ab && G.abReadyAt !== undefined) {
@@ -935,6 +1198,8 @@
       if (!p.av.root.visible) continue;
       p.av.root.position.set(p.x, p.y, p.z);
       p.av.root.rotation.y = p.r;
+      const inShip = !!(s.fx & 512);
+      if (inShip !== !!p.av.inShip) { C.setShip(p.av, inShip, p.info.gear); collectOutlines(p.av); }
       const anim = s.a === MM.ANIM.dead ? s.a : p.emoteT > 0 ? MM.ANIM.emote : s.a;
       p.av.animate(dt, { speed: s.a === MM.ANIM.run ? Math.max(p.speed, 3) : p.speed * 0.3, anim, fx: s.fx });
       const near = d < 40;
@@ -950,13 +1215,21 @@
       const root = n.m.root;
       root.position.set(n.x, n.y, n.z);
       root.rotation.y = n.r;
-      if (n.m.av) n.m.av.animate(dt, { speed: n.speed, anim: n.speed > 0.4 ? 1 : 0 });
+      if (n.m.av) n.m.av.animate(dt, { speed: n.speed, anim: (n.flags & 4) ? MM.ANIM.emote : n.speed > 0.4 ? 1 : 0 });
       else {
         const md = root.userData.model;
         if (n.type === 'meatblob') { const s = 1 + Math.sin(n.t * (3 + n.speed)) * 0.08; md.scale.set(1 / s, s, 1 / s); }
         else if (n.type === 'jelly') { const s = 1 + Math.sin(n.t * 2) * 0.1; md.scale.set(s, 1 / s, s); }
         else if (n.type === 'mooncrab') md.position.y = Math.abs(Math.sin(n.t * 12)) * 0.08 * Math.min(1, n.speed);
+        else if (n.type === 'skyserpent') { md.rotation.z = Math.sin(n.t * 4) * 0.25; md.rotation.x = Math.sin(n.t * 2) * 0.15; }
       }
+      // Following you: green sparkles. Angry: red. Stunned: yellow. Dancing: pink.
+      if (n.flags && Math.random() < 0.15) {
+        const c = (n.flags & 8) ? '#ffd84d' : (n.flags & 2) ? '#ff5a5a' : (n.flags & 1) ? '#7dff9a' : '#ff6fd0';
+        fx.glow.emit(n.x + (Math.random() - 0.5), n.y + 2.2, n.z + (Math.random() - 0.5), 0, 1, 0, c, 0.35, 0.6, 0);
+      }
+      if (n.bubble && (n.bubbleT -= dt) <= 0) { n.m.root.remove(n.bubble.sprite); n.bubble.sprite.material.map.dispose(); n.bubble = null; }
+      if (n.tag) n.tag.sprite.visible = Math.hypot(n.x - G.me.x, n.z - G.me.z) < 25;
     }
     const t = now();
     for (const po of G.portals.values()) {
