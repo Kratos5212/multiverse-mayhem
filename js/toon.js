@@ -50,13 +50,15 @@
     constructor(opts) {
       this.lit = { p: [], n: [], c: [] }; this.glow = { p: [], n: [], c: [] };
       this.smooth = opts && opts.smooth !== undefined ? !!opts.smooth : C.shapeSmooth !== false;
+      this.lo = !!(opts && opts.lo) || C.shapeLo === true;
+      this.mid = C.shapeMid === true;   // smooth boxes, but the plain primitives (characters)
     }
     // Add a geometry with a transform and a colour. opts: glow (unlit), pos, rot, scl.
     add(geo, color, pos, rot, scl, glow) {
       if (this.smooth) {
         if (geo === P.box && scl) { const rb = roundedBox(Math.abs(scl[0]), Math.abs(scl[1]), Math.abs(scl[2])); if (rb) { geo = rb; scl = null; } }
-        else geo = HI.get(geo) || geo;
-      }
+        else geo = (this.mid ? MID.get(geo) : HI.get(geo)) || geo;
+      } else if (this.lo) geo = LO.get(geo) || geo;
       const g = geo.index ? geo.toNonIndexed() : geo;
       tmpM.compose(
         tmpV.set(pos ? pos[0] : 0, pos ? pos[1] : 0, pos ? pos[2] : 0),
@@ -155,6 +157,23 @@
   HI.set(P.dodeca, new T.IcosahedronGeometry(1, 2));
   HI.set(P.hemi, closedHemi(30, 12));
   C.primHi = HI;
+  // Medium stand-ins for characters up close (there can be a crowd of them).
+  const MID = new Map();
+  MID.set(P.sphere, new T.SphereGeometry(1, 12, 8));
+  MID.set(P.sphereLo, new T.SphereGeometry(1, 8, 6));
+  MID.set(P.capsule, new T.CapsuleGeometry(1, 1, 3, 8));
+  MID.set(P.torus, new T.TorusGeometry(1, 0.25, 6, 18));
+  MID.set(P.cyl, new T.CylinderGeometry(1, 1, 1, 12));
+  // Coarse stand-ins for far-away props.
+  const LO = new Map();
+  LO.set(P.sphere, new T.SphereGeometry(1, 8, 6));
+  LO.set(P.sphereLo, new T.SphereGeometry(1, 6, 4));
+  LO.set(P.cyl, new T.CylinderGeometry(1, 1, 1, 8));
+  LO.set(P.cylLo, new T.CylinderGeometry(1, 1, 1, 5));
+  LO.set(P.cone, new T.ConeGeometry(1, 1, 7));
+  LO.set(P.capsule, new T.CapsuleGeometry(1, 1, 2, 7));
+  LO.set(P.torus, new T.TorusGeometry(1, 0.25, 4, 12));
+  LO.set(P.hemi, closedHemi(8, 4));
 
   // A box of the given size with rounded edges and corners (k segments per bevel).
   // Each face is a grid whose outer rows are pushed onto quarter circles, so the
@@ -242,7 +261,7 @@
   // A capsule of radius r and total length len, with its base at the origin, pointing up.
   C.capsuleAt = function (shape, color, r, len, pos, rot, glow) {
     const mid = Math.max(0.001, len - 2 * r);
-    const cap = shape.smooth ? new T.CapsuleGeometry(r, mid, 6, 16) : new T.CapsuleGeometry(r, mid, 4, 10);
+    const cap = shape.lo ? new T.CapsuleGeometry(r, mid, 2, 6) : shape.smooth && !shape.mid ? new T.CapsuleGeometry(r, mid, 6, 16) : new T.CapsuleGeometry(r, mid, 3, 9);
     cap.translate(0, len / 2, 0);
     shape.add(cap, color, pos, rot, null, glow);
     cap.dispose();

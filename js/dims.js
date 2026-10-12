@@ -1695,7 +1695,12 @@
   function propModel(type, far) {
     const key = far ? type + ':far' : type;
     if (modelCache[key]) return modelCache[key];
-    const s = new C.Shape({ smooth: !far });
+    // Far: coarse primitives (seen small, through fog). Near: smooth, with high-detail
+    // primitives only for landmarks; everyday props (trees, cars, houses) use medium ones.
+    const mid = !far && !type.startsWith('lm_');
+    C.shapeMid = mid;
+    let s;
+    try { s = new C.Shape({ smooth: !far, lo: far }); } finally { C.shapeMid = false; }
     MODELS[type](s);
     return (modelCache[key] = s.build());
   }
@@ -1889,7 +1894,7 @@
   // Asphalt roads on a 44 m grid, sidewalks with curbs between the intersections, corner
   // squares, and a driveway plus a front path for every house.
   function makeStreets(dim, props) {
-    const S = dim.streets, G = S.grid, E = S.extent, s = new C.Shape();
+    const S = dim.streets, G = S.grid, E = S.extent, s = new C.Shape({ smooth: false });   // flat slabs: no rounded edges needed
     const ROAD = '#5d6168', WALK = '#d8d3c7', CURB = '#bcb6a9', DRIVE = '#c8c2b5';
     for (let k = -3; k <= 3; k++) {
       const c = k * G;
@@ -2430,7 +2435,7 @@
     const props = MM.genProps(dimId);
     const byType = {};
     for (const p of props) (byType[p.type] || (byType[p.type] = [])).push(p);
-    const slots = [];   // prop id -> { set, index, matrix, tint, x, z, r, alive, isNear }
+    const slots = [];   // prop id -> { set, index, matrix, tint, x, z, r, big, alive, state }
     const all = [], typeSets = [];
     const m4 = new T.Matrix4(), q = new T.Quaternion(), v = new T.Vector3(), sc = new T.Vector3(), up = new T.Vector3(0, 1, 0);
     const tint = new T.Color(), white = new T.Color(1, 1, 1);
@@ -2445,8 +2450,8 @@
         const meshes = [];
         for (const [geo, mat] of [[model.lit, C.toonMat], [model.glow, C.glowMat]]) {
           if (!geo) continue;
-          const im = new T.InstancedMesh(geo, mat, list.length);
-          const om = new T.InstancedMesh(geo, C.outlineMat(thick), list.length);
+          const im = new T.InstancedMesh(geo, mat, list.length); im.userData.type = type + ':' + lod + ' ';
+          const om = new T.InstancedMesh(geo, C.outlineMat(thick), list.length); om.userData.type = type + ':' + lod + ' ';
           meshes.push(im, om);
         }
         meshes.lit = !!model.lit;
@@ -2465,45 +2470,53 @@
         m4.compose(v.set(p.x, p.y - 0.05, p.z), q, sc.set(p.s, p.s, p.s));
         for (const lod of ['near', 'far']) {
           const meshes = sets[lod];
-          for (const im of meshes) im.setMatrixAt(i, lod === 'far' ? m4 : zero);
+          for (const im of meshes) im.setMatrixAt(i, zero);
           for (let k = 0; k < meshes.length; k += 2) meshes[k].setColorAt(i, k === 0 && meshes.lit ? tints[i] : white);
         }
-        const R = (MM.PROPS[type] ? MM.PROPS[type].r : 8) * p.s;
-        const slot = { set: sets, index: i, matrix: m4.clone(), tint: tints[i], x: p.x, z: p.z, r: R, alive: true, isNear: false };
+        const R = (MM.PROPS[type] ? MM.PROPS[type].r : 8) * p.s, H = (MM.PROPS[type] ? MM.PROPS[type].h : 8) * p.s;
+        // state: 'near' (detailed model), 'far' (simple model) or 'off' (in the fog or behind you).
+        const slot = { set: sets, index: i, matrix: m4.clone(), tint: tints[i], x: p.x, z: p.z, r: R, big: R > 6 || H > 14, alive: true, state: 'off' };
         slots[p.id] = slot; all.push(slot); sets.slots.push(slot);
       });
-      for (const im of sets.near) im.count = 0;
+      for (const lod of ['near', 'far']) for (const im of sets[lod]) im.count = 0;
       for (const lod of ['near', 'far']) for (const im of sets[lod]) { im.instanceMatrix.needsUpdate = true; im.frustumCulled = false; group.add(im); }
       typeSets.push(sets);
     }
     // Swap props between their near and far models as the camera moves.
-    const nearDist = quality === 'low' ? 38 : 60;
+    const nearDist = quality === 'low' ? 28 : 40;
     // Far models keep one instance per prop (hidden when near or destroyed). Near models
     // are packed: only the props close to the camera are in the list at all, so the
     // detailed geometry costs nothing for the rest of the world.
-    function place(sl) {
-      for (const im of sl.set.far) { im.setMatrixAt(sl.index, sl.alive && !sl.isNear ? sl.matrix : zero); im.instanceMatrix.needsUpdate = true; }
-      sl.set.dirty = true;
-    }
+    // Both models are packed lists: only the props that are close (detailed), or in sight
+    // and inside the fog (simple), are drawn at all. Everything else costs nothing.
     function pack(sets) {
       sets.dirty = false;
-      let n = 0;
-      for (const sl of sets.slots) {
-        if (!sl.alive || !sl.isNear) continue;
-        for (let k = 0; k < sets.near.length; k++) {
-          sets.near[k].setMatrixAt(n, sl.matrix);
-          if (k % 2 === 0) sets.near[k].setColorAt(n, k === 0 && sets.near.lit ? sl.tint : white);
+      for (const lod of ['near', 'far']) {
+        const meshes = sets[lod];
+        let n = 0;
+        for (const sl of sets.slots) {
+          if (!sl.alive || sl.state !== lod) continue;
+          for (let k = 0; k < meshes.length; k++) {
+            meshes[k].setMatrixAt(n, sl.matrix);
+            if (k % 2 === 0) meshes[k].setColorAt(n, k === 0 && meshes.lit ? sl.tint : white);
+          }
+          n++;
         }
-        n++;
+        for (const im of meshes) { im.count = n; im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; }
       }
-      for (const im of sets.near) { im.count = n; im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; }
     }
     let lodT = 0;
+    const drawDist = dim.interior ? 1e9 : (dim.fogFar || 230) + 25;
+    const fwd = new T.Vector3();
     function updateLod(camPos) {
+      if (C.camera) { C.camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize(); } else fwd.set(0, 0, 0);
       for (const sl of all) {
-        const d = Math.hypot(sl.x - camPos.x, sl.z - camPos.z) - sl.r;
-        const near = d < (sl.isNear ? nearDist + 6 : nearDist);
-        if (near !== sl.isNear) { sl.isNear = near; place(sl); }
+        const dx = sl.x - camPos.x, dz = sl.z - camPos.z, dist = Math.hypot(dx, dz), d = dist - sl.r;
+        let st = d < (sl.state === 'near' ? nearDist + 6 : nearDist) ? 'near' : d < drawDist || sl.big && d < drawDist * 1.6 ? 'far' : 'off';
+        // Behind the camera (with room to turn): skip. Close things always draw (shadows of
+        // big buildings at the edge of the screen, quick turns).
+        if (st !== 'off' && d > 18 && (dx * fwd.x + dz * fwd.z) / (dist || 1) < -0.35) st = 'off';
+        if (st !== sl.state) { sl.state = st; sl.set.dirty = true; }
       }
       for (const sets of typeSets) if (sets.dirty) pack(sets);
     }
@@ -2545,11 +2558,10 @@
         const s = slots[id];
         if (!s) return;
         s.alive = alive;
-        place(s);
         pack(s.set);
       },
       update(dt, t, camPos) {
-        if (camPos && (lodT -= dt) <= 0) { lodT = 0.25; updateLod(camPos); }
+        if (camPos && (lodT -= dt) <= 0) { lodT = 0.1; updateLod(camPos); }
         kiosk.userData.ring.userData.tick(dt);
         kiosk.userData.ring.rotation.y = Math.sin(t * 0.5) * 0.3;
         if (group.userData.eye && camPos) group.userData.eye.lookAt(camPos);

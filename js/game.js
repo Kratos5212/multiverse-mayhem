@@ -26,6 +26,7 @@
   applyQuality();
   renderer.setClearColor('#0b0f1e');
   const camera = new T.PerspectiveCamera(62, 1, 0.1, 1500);
+  C.camera = camera;
   // First person: your own arm and gun live in a tiny scene drawn on top of the world,
   // so they never poke through walls.
   const vmScene = new T.Scene();
@@ -37,6 +38,7 @@
   const vm = { root: null, arm: null, src: null, bob: 0, swayX: 0, swayY: 0, pose: { x: 0.3, y: -0.3, z: 0.1, pitch: -0.22, yaw: 0.28, roll: 0, size: 0.92 },
     fistPose: { x: 0.3, y: -0.32, z: 0.1, pitch: -0.5, yaw: 0.4, roll: 0, size: 0.8 } };
   const scene = new T.Scene();
+  C.scene = scene;   // debug hooks (profiling scripts)
   const fx = new C.FX(scene);
   function resize() {
     const w = window.innerWidth, h = window.innerHeight;
@@ -1477,7 +1479,7 @@
       const anim = s.a === MM.ANIM.dead ? s.a : p.emoteT > 0 ? MM.ANIM.emote : s.a;
       p.av.animate(dt, { speed: s.a === MM.ANIM.run ? Math.max(p.speed, 3) : p.speed * 0.3, anim, fx: s.fx });
       if (d < 40) ongoingFx(p, s.fx, p.speed, dt);
-      p.av.setDetail(nearCam(p.x, p.z));
+      wantDetail(p.av, p.x, p.z);
       const near = d < 40;
       for (const o of p.av.outlines) o.visible = near || settings.quality === 'high';
       p.tag.sprite.visible = d < 45 && s.a !== MM.ANIM.dead;
@@ -1491,7 +1493,7 @@
       const root = n.m.root;
       root.position.set(n.x, n.y, n.z);
       root.rotation.y = n.r;
-      if (n.m.av) { n.m.av.animate(dt, { speed: n.speed, anim: (n.flags & 4) ? MM.ANIM.emote : n.speed > 0.4 ? 1 : 0 }); n.m.av.setDetail(nearCam(n.x, n.z)); }
+      if (n.m.av) { n.m.av.animate(dt, { speed: n.speed, anim: (n.flags & 4) ? MM.ANIM.emote : n.speed > 0.4 ? 1 : 0 }); wantDetail(n.m.av, n.x, n.z); }
       else {
         const md = root.userData.model;
         if (n.type === 'meatblob') { const s = 1 + Math.sin(n.t * (3 + n.speed)) * 0.08; md.scale.set(1 / s, s, 1 / s); }
@@ -1520,7 +1522,16 @@
   }
 
   // Characters within this distance of the camera get their smooth, detailed model.
-  function nearCam(x, z) { return (x - camWorld.x) ** 2 + (z - camWorld.z) ** 2 < (settings.quality === 'low' ? 16 * 16 : 26 * 26); }
+  function nearCam(x, z) { return (x - camWorld.x) ** 2 + (z - camWorld.z) ** 2 < (settings.quality === 'low' ? 14 * 14 : 20 * 20); }
+  // Only the closest few characters get the detailed model; a crowd costs no more than a few.
+  const detailQ = [];
+  function wantDetail(av, x, z) { detailQ.push([(x - camWorld.x) ** 2 + (z - camWorld.z) ** 2, av]); }
+  function flushDetail() {
+    detailQ.sort((a, b) => a[0] - b[0]);
+    const cap = settings.quality === 'low' ? 4 : 8, r2 = settings.quality === 'low' ? 14 * 14 : 20 * 20;
+    detailQ.forEach(([d2, av], i) => av.setDetail(i < cap && d2 < r2));
+    detailQ.length = 0;
+  }
 
   // ---------- Camera ----------
   function firstPerson() { return settings.view === 'first' || !!(vr && vr.on); }
@@ -1632,6 +1643,7 @@
     if (vr.on) vr.update(dt);
     for (let left = raw; left > 1e-4; left -= 0.05) updateMe(Math.min(0.05, left));
     updateOthers(dt);
+    flushDetail();
     if (!vr.on) updateCamera(dt);
     camera.getWorldPosition(camWorld);
     G.world.update(dt, clock.elapsedTime, camWorld);

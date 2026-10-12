@@ -11,7 +11,7 @@
   const WEAPON_COLORS = { plasma: '#5dff8a', blaster: '#ffd84d', toy: '#ff8fd0' };
 
   // A thin ring for inked eye rims (a torus whose tube is a few percent of its radius).
-  const RIM = new T.TorusGeometry(1, 0.075, 6, 36);
+  const RIM = new T.TorusGeometry(1, 0.075, 4, 22);
 
   // ---------- Heads ----------
   // opts.noBall: only the face and hat (beanlings wear their face on the body).
@@ -273,10 +273,12 @@
   // Every character is built twice: smooth for up close and plain for far away. Both sit
   // on the same joints, so one animation drives them; setDetail() shows one or the other.
   C.buildAvatar = function (look, arch, opts) {
-    const av = buildAvatarOnce(look, arch, opts);
-    C.shapeSmooth = false;
-    let lo;
-    try { lo = buildAvatarOnce(look, arch, opts); } finally { C.shapeSmooth = true; }
+    // Up close: smooth boxes on plain primitives (a few thousand triangles). Far: coarse.
+    let av, lo;
+    C.shapeMid = true;
+    try { av = buildAvatarOnce(look, arch, opts); } finally { C.shapeMid = false; }
+    C.shapeSmooth = false; C.shapeLo = true;
+    try { lo = buildAvatarOnce(look, arch, opts); } finally { C.shapeSmooth = true; C.shapeLo = false; }
     av.lodNear = []; av.lodFar = [];
     // Joints (knees, elbows) are pivots inside pivots: only meshes swap, never joints. The
     // far model has no knees or elbows (whole limbs), which keeps distant crowds cheap.
@@ -425,11 +427,7 @@
       shoulderY = legLen + torsoLen - 0.06; neckY = legLen + torsoLen + neckLen;
     }
     if (species === 'robot' && !bean) ts.add(P.cyl, '#22e6ff', [0, legLen + torsoLen * 0.6, torsoR * 0.95], [Math.PI / 2, 0, 0], [0.07, 0.03, 0.07], true);
-    if (species === 'insect') for (const sx of [-1, 1]) {
-      // Gromflomite wings: long, pale and veined, folded down the back.
-      ts.add(P.sphere, '#cfe4ee', [sx * torsoR * 0.45, legLen + torsoLen * 0.55, -torsoR * 1.05], [0.15, sx * 0.25, sx * 0.18], [torsoR * 0.42, torsoLen * 0.62, 0.025]);
-      ts.add(P.box, '#8fa8b8', [sx * torsoR * 0.45, legLen + torsoLen * 0.55, -torsoR * 1.08], [0.15, sx * 0.25, sx * 0.18], [0.02, torsoLen * 1.0, 0.02]);
-    }
+
     parts.torso = mk(ts, body);
 
     // Arms: sleeves follow the top.
@@ -489,8 +487,16 @@
       headTop += headR;
     }
 
+    // Gromflomite wings: long, pale and veined, hinged at the shoulders; folded down the back
+    // at rest, a buzzing blur in flight.
+    if (species === 'insect') for (const sx of [-1, 1]) {
+      const s = new C.Shape();
+      s.add(P.sphere, '#cfe4ee', [0, -torsoLen * 0.42, 0], null, [torsoR * 0.42, torsoLen * 0.5, 0.025]);
+      s.add(P.box, '#8fa8b8', [0, -torsoLen * 0.42, -0.02], null, [0.02, torsoLen * 0.9, 0.02]);
+      parts[sx < 0 ? 'bugWingL' : 'bugWingR'] = mk(s, body, [sx * torsoR * 0.35, shoulderY, -torsoR * 1.0]);
+    }
     // Wings for the winged
-    if (species === 'birdfolk' || A.fly) {
+    if (species === 'birdfolk' || (A.fly && species !== 'insect')) {
       for (const side of [-1, 1]) {
         const s = new C.Shape();
         const wc = species === 'birdfolk' ? L.hairColor : '#e9e4d8';
@@ -556,7 +562,7 @@
   // springy the step is. swing: arm swing. stride: leg swing. jitter: nervous fidgeting.
   // carry: elbow bend while holding a gun. march: stiff straight-armed walk.
   const GAITS = {
-    genius:     { slouch: 0.12, bounce: 0.7, swing: 0.55, stride: 0.85, jitter: 0, carry: 0.5, headDown: 0.12 },
+    genius:     { slouch: 0.02, bounce: 0.7, swing: 0.55, stride: 0.85, jitter: 0, carry: 0.5, headDown: 0.04 },
     sidekick:   { slouch: 0.07, bounce: 1.25, swing: 0.6, stride: 0.95, jitter: 1, carry: 0.7 },
     teen:       { slouch: 0, bounce: 1.1, swing: 0.75, stride: 1.0, jitter: 0, carry: 0.6 },
     surgeon:    { slouch: -0.02, bounce: 0.9, swing: 0.6, stride: 0.95, jitter: 0, carry: 0.6 },
@@ -647,6 +653,12 @@
       const o = av.wingOpen, flap = fly ? Math.sin(av.t * 14) * 0.8 : air ? Math.sin(av.t * 8) * 0.4 : Math.sin(av.t * 1.5) * 0.05;
       p.wingL.rotation.z = lerp(1.2, -0.2, o) + flap; p.wingR.rotation.z = lerp(-1.2, 0.2, o) - flap;
       p.wingL.rotation.y = lerp(-1.0, 0, o); p.wingR.rotation.y = lerp(1.0, 0, o);
+    }
+    if (p.bugWingL) {
+      const buzz = fly ? Math.sin(av.t * 60) * 0.5 : air ? Math.sin(av.t * 30) * 0.3 : 0;
+      const open = fly ? 1.3 : air ? 0.7 : 0.18;
+      p.bugWingL.rotation.z = -open + buzz; p.bugWingR.rotation.z = open - buzz;
+      p.bugWingL.rotation.x = p.bugWingR.rotation.x = fly ? -0.6 : 0.12;
     }
     p.head.rotation.y = lerp(p.head.rotation.y, headY - twist * 0.6, f);
     if (av.jet) { av.jet.flame.visible = fly; av.jet.flame.scale.y = 0.8 + Math.random() * 0.4; }

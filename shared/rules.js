@@ -222,7 +222,7 @@
       portal: { charges: 3, recharge: 14 }, knows: '*', discount: 2 / 3,
       ability: { id: 'shield', name: 'Science Shield', cd: 16, dur: 4 },
       blurb: 'Smartest being in any dimension. Owns a portal gun, builds anything, but is fragile and has a terrible attitude.',
-      perk: 'Knows every recipe and pays a third less. Portal gun with 3 charges.',
+      perk: 'Knows every recipe and pays a third less. Portal gun with 3 charges that can leave the Central Finite Curve.',
       life: { normal: 'Grandpa Rick', breakout: 'Rickest Rick', daily: ['tinker', 'dinner', 'council'] },
       steps: [
         { name: 'Tinker time', desc: "Tinker in Rick's Garage once.", goal: { type: 'use', task: 'tinker', n: 1 } },
@@ -343,12 +343,12 @@
       ],
     },
     trooper: {
-      name: 'Federation Officer', hp: 120, speed: 7, jump: 8.5, weapon: 'rifle', home: 'federation',
+      name: 'Federation Officer', hp: 120, speed: 7, jump: 8.5, weapon: 'rifle', fly: true, home: 'federation',   // Gromflomites fly on their insect wings
       temper: { fights: 'defend', hunts: ['genius', 'birdfolk', 'squanchy'] }, homes: ['federation'],
       portal: null, knows: ['grenade', 'turret', 'blaster1', 'engine', 'lasers'], start: ['hull'],
       ability: { id: 'cuff', name: 'Stun Cuffs', cd: 12 },
       blurb: 'Enforcer of an interplanetary bureaucracy. Comes with a patrol ship and a lot of paperwork.',
-      perk: 'Starts with a ship (B to board). Stun Cuffs freeze whoever is in front of you.',
+      perk: 'Flies on insect wings (hold Space) and starts with a ship (B to board). Stun Cuffs freeze whoever is in front of you.',
       life: { normal: 'Loyal Officer', breakout: 'Rogue Officer', daily: ['report', 'dock'] },
       steps: [
         { name: 'Paperwork', desc: 'File a patrol report at the Bazaar Shipyard.', goal: { type: 'use', task: 'report', n: 1 } },
@@ -500,8 +500,9 @@
       s.gun = { charges: base.charges + (up.guncap1 ? 1 : 0) + (up.guncap2 ? 1 : 0), recharge: base.recharge * (up.gunfast ? 0.65 : 1) };
     }
     if (up.hull) s.ship = { speed: up.engine ? 30 : 19, lasers: !!up.lasers, engine: !!up.engine, drive: !!up.drive };
-    // Evil Morty already escaped the Curve once; everyone else needs the golden fluid.
-    if (s.gun) s.gun.gold = arch === 'evilmorty' || !!up.curvebreaker;
+    // Rick helped build the Curve and can step outside it; Evil Morty broke out of it. Anyone
+    // else needs the golden fluid.
+    if (s.gun) s.gun.gold = arch === 'genius' || arch === 'evilmorty' || !!up.curvebreaker;
     return s;
   };
 
