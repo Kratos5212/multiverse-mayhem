@@ -208,7 +208,7 @@
   function archLabel(info) { return (info.bot ? 'bot · ' : '') + (info.title || MM.ARCHETYPES[info.arch].name); }
   function addPlayer(info) {
     if (info.id === G.myId || G.players.has(info.id)) return;
-    const av = C.buildAvatar(info.look, info.arch);
+    const av = C.buildAvatar(info.look, info.arch, { ratsuit: !!(info.gear && info.gear.ratsuit) });
     C.setGear(av, info.gear);
     const tag = C.makeTag(info.name, info.home, archLabel(info), UI.ARCH_COLORS[info.arch]);
     tag.sprite.position.y = av.headY + 0.55;
@@ -335,7 +335,7 @@
     const me = G.me;
     me.x = w.x; me.y = w.y; me.z = w.z; me.vx = me.vy = me.vz = 0;
     if (!G.meAv) {
-      G.meAv = C.buildAvatar(profile.look, profile.arch);
+      G.meAv = C.buildAvatar(profile.look, profile.arch, { ratsuit: !!(G.prog && G.prog.up.ratsuit) });
       scene.add(G.meAv.root);
     }
     if (G.prog) C.setGear(G.meAv, myGear());
@@ -683,7 +683,12 @@
       }
       case 'gear': {
         const p = G.players.get(e.id);
-        if (p) { p.info.gear = e.gear; C.setGear(p.av, e.gear); collectOutlines(p.av); }
+        if (p) {
+          const rebuild = p.info.arch === 'picklerick' && !!e.gear.ratsuit !== !!(p.info.gear && p.info.gear.ratsuit);
+          p.info.gear = e.gear;
+          if (rebuild) { const info = p.info; removePlayer(e.id); addPlayer(info); }
+          else { C.setGear(p.av, e.gear); collectOutlines(p.av); }
+        }
         break;
       }
       case 'ship': {
@@ -766,6 +771,14 @@
   function onProgress(m) {
     const first = !G.prog;
     G.prog = m; G.st = m.st;
+    // Pickle Rick just built his rat suit: a new body.
+    if (G.meAv && profile.arch === 'picklerick' && !!m.up.ratsuit !== !!G.meRat) {
+      scene.remove(G.meAv.root); G.meAv.dispose();
+      G.meAv = C.buildAvatar(profile.look, profile.arch, { ratsuit: !!m.up.ratsuit });
+      scene.add(G.meAv.root);
+      if (m.up.ratsuit) { UI.banner('Pickle Riiiick!', 'Rat legs, rat arms, and a lot of spite. Now you can fight.'); fx.puff(G.me.x, G.me.y + 0.5, G.me.z, '#8a7a6a', 14, 1.2, 1.2, 0.8); }
+    }
+    G.meRat = !!m.up.ratsuit;
     if (G.meAv) C.setGear(G.meAv, myGear());
     $('flyBar').hidden = !G.st.fly;
     updateTracker();
@@ -773,7 +786,7 @@
     if (G.modal === 'journal') openJournal();
     if (first && G.entered) buildHotbar();
   }
-  function myGear() { const up = G.prog ? G.prog.up : {}; return { wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers }; }
+  function myGear() { const up = G.prog ? G.prog.up : {}; return { wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs, ratsuit: !!up.ratsuit }; }
   // The next step of your path, always on screen.
   function updateTracker() {
     const A = MM.ARCHETYPES[profile.arch], pg = G.prog;
@@ -900,8 +913,9 @@
     return { dx: tx / l, dy: ty / l, dz: tz / l };
   }
 
+  const pickled = () => { if (MM.helpless(profile.arch, G.prog && G.prog.up)) { if (now() > (G.pickleT || 0)) { UI.toast(MM.HELPLESS_TEXT, 3500); G.pickleT = now() + 4; } return true; } return false; };
   function fire() {
-    if (!canAct() || (G.you.fx & 4)) return;
+    if (!canAct() || (G.you.fx & 4) || pickled()) return;
     const t = now();
     const wid = weaponId(), W = MM.WEAPONS[wid];
     if (t < G.fireT) return;
@@ -914,7 +928,7 @@
     C.sfx(W.melee ? 'melee' : wid === 'lasers' || wid === 'rifle' ? 'plasma' : wid, 0.7);
   }
   function useGadget(g) {
-    if (!canAct()) return;
+    if (!canAct() || pickled()) return;
     if (G.you.ship) { UI.toast('Land first (B) to use gadgets.'); return; }
     if (!(G.you.inv[g] > 0)) { UI.toast('No ' + MM.RECIPES[g].name + '. Build one with C.'); return; }
     const a = g === 'turret' || g === 'meeseeks' ? { dx: Math.sin(G.camYaw), dy: 0, dz: Math.cos(G.camYaw) } : aimDir();
@@ -946,7 +960,7 @@
       : mode === 'gun' ? { gold: !!(G.you.chMax && G.you.ch > 0 && st.gun && st.gun.gold) } : {};
   }
   function portalAction() {
-    if (!canAct()) return;
+    if (!canAct() || pickled()) return;
     const m = travelModes();
     if (m.length) return openDims(m[0]);
     if (G.you.chMax && G.you.ch <= 0) { UI.toast('Portal gun is recharging'); return; }
@@ -954,7 +968,7 @@
       : 'No portal gun. Step through someone else\'s portal, fly a ship, find a portal station (the Citadel), borrow Rick\'s gun from his workbench, or build your own (J).', 5000);
   }
   function toggleShip() {
-    if (!canAct()) return;
+    if (!canAct() || pickled()) return;
     if (!G.st || !G.st.ship) { UI.toast('You don\'t have a ship. Build a Ship Hull at the Bazaar Shipyard, if your path allows it (J).', 4000); return; }
     send({ t: 'ship', on: !G.you.ship });
   }

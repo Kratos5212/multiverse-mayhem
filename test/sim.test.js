@@ -525,3 +525,19 @@ test("Rick's body upgrades: only Ricks can build them, and they change his stats
   assert.ok(p.st.dmg > dmg * 1.3 && p.st.speed > speed * 1.2 && p.st.scanner);
   assert.ok(MM.canKnow('sidekick', p.prog, 'cyberarm'), 'Morty cannot');
 });
+
+test('Pickle Rick can only roll until he builds the rat suit', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'picklerick');
+  p.inv.grenade = 2;
+  host.message(c, '{"t":"g","g":"grenade","dx":0,"dy":0,"dz":1}');
+  assert.strictEqual(p.inv.grenade, 2, 'no gadgets as a pickle');
+  run(host, 0.5);
+  host.message(c, '{"t":"f","dx":0,"dy":0,"dz":1}');
+  assert.strictEqual(p.cdFire, 0, 'no attacking as a pickle');
+  Object.assign(p.inv, { g: 5, s: 5 });
+  host.message(c, '{"t":"cr","g":"ratsuit"}');
+  assert.ok(p.prog.up.ratsuit, 'built the rat suit anywhere');
+  host.message(c, '{"t":"g","g":"grenade","dx":0,"dy":0,"dz":1}');
+  assert.strictEqual(p.inv.grenade, 1, 'now he can use gadgets');
+});

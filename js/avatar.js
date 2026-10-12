@@ -322,14 +322,17 @@
 
     const pickle = species === 'pickle';
     const bean = species === 'beanling' || pickle, blob = species === 'blob';
+    // Pickle Rick: a bare pickle has no limbs at all (he rolls); the rat suit gives him rat legs
+    // and rat arms, wired on.
+    const rat = pickle && !!opts.ratsuit, limbless = pickle && !rat, RAT = '#8a7a6a';
     // Show proportions: long legs and noodle arms, so heads are about a fifth of a grown-up's
     // height (Morty, with his big head, is closer to a third).
-    const legLen = (pickle ? 0.24 : bean ? 0.55 : 0.84) * h;
-    const legR = (bean ? 0.045 : blob ? 0.15 : 0.1) * w;
+    const legLen = (pickle ? (rat ? 0.46 : 0.1) : bean ? 0.55 : 0.84) * h;
+    const legR = (rat ? 0.07 : bean ? 0.045 : blob ? 0.15 : 0.1) * w;
     const torsoLen = (blob ? 0.6 : 0.58) * h;
     const torsoR = (blob ? 0.42 : 0.22) * w;
-    const armR = (bean ? 0.04 : blob ? 0.12 : 0.065) * w;
-    const armLen = (bean ? 0.58 : 0.68) * h * (blob ? 1.1 : pickle ? 0.45 : 1);
+    const armR = (rat ? 0.055 : bean ? 0.04 : blob ? 0.12 : 0.065) * w;
+    const armLen = (bean ? 0.58 : 0.68) * h * (blob ? 1.1 : rat ? 0.85 : pickle ? 0.45 : 1);
     const pants = L.pantsColor, shoe = L.shoeColor, skin = L.skin;
     const top = L.top;
     const topC = top === 'none' ? skin : top === 'vest' ? L.shirtColor : (top === 'labcoat' ? L.shirtColor : L.topColor);
@@ -339,13 +342,15 @@
     const jointed = C.shapeSmooth !== false;
     const thighLen = legLen * 0.52;
     const shoeAt = (s, y) => {
-      if (bean) s.add(P.sphereLo, shoe, [0, y + 0.05, 0.05], null, [0.07, 0.05, 0.11]);
+      if (rat) { for (let i = -1; i <= 1; i++) s.add(P.cone, '#f0a8b0', [i * 0.035, y + 0.03, 0.09], [Math.PI / 2, 0, 0], [0.022, 0.12, 0.022]); s.add(P.sphereLo, RAT, [0, y + 0.04, 0.02], null, [0.07, 0.05, 0.1]); }
+      else if (bean) s.add(P.sphereLo, shoe, [0, y + 0.05, 0.05], null, [0.07, 0.05, 0.11]);
       else { s.add(P.sphere, shoe, [0, y + 0.06, 0.07], null, [legR * 1.25, 0.08, 0.17]); s.add(P.box, shade(shoe, 0.6), [0, y + 0.012, 0.06], null, [legR * 2.2, 0.025, 0.3]); }
     };
     for (const side of [-1, 1]) {
       const s = new C.Shape();
-      const legC = bean ? skin : pants;
+      const legC = rat ? RAT : bean ? skin : pants;
       const hip = [side * (bean ? 0.12 : 0.11) * w * (blob ? 1.6 : 1), legLen, 0];
+      if (limbless) { parts[side < 0 ? 'legL' : 'legR'] = mk(s, body, hip); continue; }
       if (jointed) {
         // Both halves end in a ball centred on the knee, so the leg bends without a seam.
         C.capsuleAt(s, legC, legR, thighLen + 2 * legR, [0, -thighLen - legR, 0]);
@@ -364,12 +369,13 @@
 
     // Torso
     const ts = new C.Shape();
-    let shoulderY, neckY, headR;
+    let shoulderY, neckY, headR, rollR = 0.3, rollLen = 1;
     if (bean) {
       // A tall bean: body and head are one shape, the face sits near the top.
       // Pickle Rick is a long cucumber: slimmer and taller than a bean person.
       const bh = (pickle ? 1.4 : 1.15) * h, br = (pickle ? 0.27 : 0.33) * w;
       C.capsuleAt(ts, skin, br, bh, [0, legLen - 0.15, 0]);
+      rollR = br; rollLen = bh;
       if (pickle) {
         // Warty bumps down the sides and back (never near the face), and a lighter belly.
         for (let i = 0; i < 26; i++) {
@@ -378,6 +384,15 @@
         }
         ts.add(P.sphere, shade(skin, 1.2), [0, legLen + bh * 0.3, br * 0.42], null, [br * 0.7, bh * 0.3, br * 0.62]);
         ts.add(P.sphere, shade(skin, 0.75), [0, legLen - 0.15 + bh - br * 0.15, 0], null, [br * 0.35, br * 0.15, br * 0.35]);   // the stem end
+        if (rat) {
+          // The rat suit: a pink tail, rat-pelt straps, wires to the limbs and a couple of bolts.
+          for (let i = 0; i < 6; i++) C.capsuleAt(ts, '#f0a8b0', 0.025, 0.2, [0, legLen - 0.05 + i * 0.03, -br - i * 0.15], [-1.2 + i * 0.15, 0, 0]);
+          for (const y of [0.16, 0.4]) ts.add(P.cyl, RAT, [0, legLen + bh * y, 0], null, [br * 1.04, 0.07, br * 1.04]);
+          for (const sx of [-1, 1]) {
+            C.capsuleAt(ts, '#2a2a2a', 0.012, bh * 0.5, [sx * br * 0.95, legLen + bh * 0.05, -br * 0.3], [0, 0, -sx * 0.1]);
+            ts.add(P.cyl, '#9aa3ab', [sx * br * 0.98, legLen + bh * 0.48, 0], [0, 0, Math.PI / 2], [0.04, 0.04, 0.04]);
+          }
+        }
       }
       shoulderY = legLen + bh * 0.48; neckY = legLen + bh * 0.62; headR = br;
       if (top !== 'none') ts.add(P.cyl, topC, [0, legLen + 0.08, 0], null, [0.335 * w, 0.18, 0.335 * w]);
@@ -436,7 +451,13 @@
     // Arms: an upper arm and, up close, a forearm on an elbow joint. The hand (and the gun)
     // ride on the forearm.
     const upLen = armLen * 0.5;
+    const limbC = rat ? RAT : skin;
     const hand = (s, y, side) => {
+      if (rat) {   // rat paws: little pink claws
+        s.add(P.sphereLo, RAT, [0, y - 0.02, 0], null, [armR * 1.4, armR * 1.4, armR * 1.2]);
+        for (let i = -1; i <= 1; i++) s.add(P.cone, '#f0a8b0', [i * armR * 0.6, y - armR * 1.6, armR * 0.3], [Math.PI - 0.3, 0, 0], [armR * 0.3, armR * 1.4, armR * 0.3]);
+        return;
+      }
       const hc = species === 'robot' ? shade(skin, 0.8) : skin;
       if (jointed && !bean && species !== 'robot') {
         // A cartoon hand: palm, three fingers and a thumb (the show draws four fingers).
@@ -451,21 +472,22 @@
     for (const side of [-1, 1]) {
       const s = new C.Shape();
       const px = side * (torsoR + armR * 1.2) * (bean ? 1.0 : 1);
+      if (limbless) { parts[side < 0 ? 'armL' : 'armR'] = mk(s, body, [px, shoulderY, 0]); continue; }
       if (jointed) {
         const sl = armLen * sleeveLen * 0.92;
         // Same trick at the elbow: both halves (and long sleeves) end in a ball on the joint.
         const sr = armR * 1.35, su = Math.min(sl, upLen);
-        C.capsuleAt(s, skin, armR, upLen + 2 * armR, [0, -upLen - armR, 0]);
+        C.capsuleAt(s, limbC, armR, upLen + 2 * armR, [0, -upLen - armR, 0]);
         if (sleeveLen > 0) C.capsuleAt(s, sleeveC, sr, su + 2 * sr, [0, -su - sr, 0]);
         const f = new C.Shape(), fl = armLen - upLen;
-        C.capsuleAt(f, skin, armR, fl + armR, [0, -fl, 0]);
+        C.capsuleAt(f, limbC, armR, fl + armR, [0, -fl, 0]);
         if (sl > upLen) C.capsuleAt(f, sleeveC, sr, sl - upLen + sr, [0, -(sl - upLen), 0]);
         hand(f, -fl, side);
         const sp = mk(s, body, [px, shoulderY, 0]);
         parts[side < 0 ? 'armL' : 'armR'] = sp;
         parts[side < 0 ? 'foreL' : 'foreR'] = mk(f, sp, [0, -upLen, 0]);
       } else {
-        C.capsuleAt(s, skin, armR, armLen, [0, -armLen, 0]);
+        C.capsuleAt(s, limbC, armR, armLen, [0, -armLen, 0]);
         if (sleeveLen > 0) C.capsuleAt(s, sleeveC, armR * 1.35, armLen * sleeveLen * 0.92, [0, -armLen * sleeveLen * 0.92, 0]);
         hand(s, -armLen, side);
         parts[side < 0 ? 'armL' : 'armR'] = mk(s, body, [px, shoulderY, 0]);
@@ -520,6 +542,8 @@
       },
     };
     av.shoulderY = shoulderY;
+    // A bare Pickle Rick rolls like a log when he moves.
+    if (limbless) { av.roller = true; av.rollR = rollR; av.rollLen = rollLen; av.rollBase = legLen - 0.15; }
     av.headY = neckY + headR * 2.2 + (L.acc === 'tophat' || L.hair === 'afro' ? headR * 0.9 : 0);
     if (bean) av.headY = neckY + headR * 2;
     // Where the eyes are, for the first-person camera.
@@ -669,6 +693,14 @@
     av.body.rotation.z = lerp(av.body.rotation.z, roll, f) * (1 - D);
     av.body.position.y = lerp(av.body.position.y, bob, f) * (1 - D) + D * 0.25;
     av.body.position.z = -D * 0.6;
+    if (av.roller) {
+      // Lie down along the left-right axis and roll forward; stand up again when stopped.
+      av.lie = lerp(av.lie || 0, ground && speed > 0.5 ? 1 : 0, Math.min(1, dt * 7));
+      av.rollA = (av.rollA || 0) + speed * dt / Math.max(0.1, av.rollR);
+      const L = av.lie;
+      av.body.rotation.set(av.rollA * (L > 0.5 ? 1 : 0), 0, L * Math.PI / 2);
+      av.body.position.set(L * (av.rollBase + av.rollLen / 2), L * av.rollR + (1 - L) * bob, 0);
+    }
     const sq = av.squash * 0.14 - av.stretch * 0.1;
     av.body.scale.set(1 + sq * 0.6, 1 - sq, 1 + sq * 0.6);
     // Effects

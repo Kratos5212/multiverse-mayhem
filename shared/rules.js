@@ -190,6 +190,8 @@
     timecrystal: { cat: 'gadget', name: 'Time Crystal', cost: { c: 5, m: 2 }, max: 1, desc: 'Press 5: freeze time around you for 4 s. Illegal for third-dimensional beings, so the Time Cops will come for you.' },
     meeseeks: { cat: 'gadget', name: 'Meeseeks Box', cost: { k: 3, s: 1 }, max: 2, desc: 'Press it (4): a Mr. Meeseeks pops out and fights for you for 30 s.' },
     // Rick's own body upgrades (only Ricks know how): robot limbs and a built-in scanner.
+    // Pickle Rick's rat suit, built from rat parts and scrap (in a sewer, anywhere really).
+    ratsuit:   { cat: 'self', name: 'Rat Suit', cost: { g: 3, s: 4 }, onlyFor: ['picklerick'], desc: 'Rat legs, rat arms, wires and spite. Now you can do more than roll.' },
     cyberarm:  { cat: 'self', name: 'Cybernetic Arm', cost: { c: 6, s: 8, p: 3 }, at: 'garage', onlyFor: ['genius'], desc: 'A robot arm: +35% damage, and your punches and shots hit harder.' },
     cyberlegs: { cat: 'self', name: 'Cybernetic Legs', cost: { c: 6, s: 8, g: 2 }, at: 'garage', onlyFor: ['genius'], needs: 'cyberarm', desc: 'Robot legs: run 25% faster and jump 35% higher.' },
     scanner:   { cat: 'self', name: 'Scanner Implant', cost: { c: 4, p: 2 }, at: 'garage', onlyFor: ['genius'], desc: 'Press X to scan whatever you look at: what it is, how dangerous, what it is made of.' },
@@ -433,14 +435,14 @@
     picklerick: {
       name: 'Pickle Rick', hp: 60, speed: 6, jump: 11, weapon: 'slap', home: 'suburbia',
       temper: { fights: 'often', chaos: 0.3 }, homes: ['suburbia'],
-      portal: null, knows: ['grenade', 'legs1', 'armor1', 'armor2', 'blaster1'], discount: 2 / 3,
+      portal: null, knows: ['ratsuit', 'grenade', 'legs1', 'armor1', 'armor2', 'blaster1'], discount: 2 / 3,
       ability: { id: 'roll', name: 'Pickle Roll', cd: 8, dur: 2.5 },
       blurb: 'A genius who turned himself into a pickle to get out of family therapy. Tiny, green, and furious.',
-      perk: 'Builds a third cheaper. Starts weak; rat-part upgrades (armor, legs) make him dangerous.',
+      perk: 'A pickle can only roll. Build the Rat Suit (C, anywhere, from goo and scrap) for rat legs and arms, and then fight dirty. Builds a third cheaper.',
       life: { normal: 'Pickle on the Floor', breakout: 'Pickle Rick!', daily: ['tinker'] },
       steps: [
-        { name: 'Roll for it', desc: 'Smash 15 props.', goal: { type: 'smash', n: 15 } },
-        { name: 'Rat parts', desc: 'Build Spring Legs at Rick\'s Garage.', goal: { type: 'craft', r: 'legs1' }, grants: ['jetpack', 'turret', 'blaster2'] },
+        { name: 'Rat parts', desc: 'Roll around, collect goo and scrap, and build the Rat Suit (C).', goal: { type: 'craft', r: 'ratsuit' }, grants: ['turret'] },
+        { name: 'Roll for it', desc: 'Smash 15 props.', goal: { type: 'smash', n: 15 }, grants: ['jetpack', 'blaster2'] },
         { name: 'Pickle Rick!', desc: 'Defeat 10 monsters.', goal: { type: 'kill', n: 10 }, grants: ['gunbuild', 'guncap1', 'fluid', 'hull', 'engine', 'lasers', 'drive'], title: true },
       ],
     },
@@ -472,6 +474,9 @@
 
   MM.hasGun = (arch, up) => !!(MM.ARCHETYPES[arch].portal || up.gunbuild);
 
+  // A Pickle Rick without his rat suit is a pickle: he can roll, talk, and build the suit.
+  MM.helpless = (arch, up) => arch === 'picklerick' && !(up && up.ratsuit);
+  MM.HELPLESS_TEXT = "You're a pickle. You can only roll around. Build the Rat Suit (C) from goo and scrap.";
   // Can this character build this recipe at all (lore + path), ignoring cost and place?
   // Returns null if yes, or the reason why not.
   MM.canKnow = function (arch, prog, id) {

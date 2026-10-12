@@ -655,7 +655,7 @@
     info(p) {
       const up = p.prog.up;
       return { id: p.id, name: p.name, home: p.home, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '',
-        gear: { wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs } };
+        gear: { ratsuit: !!up.ratsuit, wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs } };
     }
 
     // ----- Life progress -----
@@ -825,7 +825,7 @@
 
     onFire(p, m) {
       const now = this.time;
-      if (p.dead || now < p.cdFire || now < p.fx.sob) return;
+      if (p.dead || now < p.cdFire || now < p.fx.sob || MM.helpless(p.arch, p.prog.up)) return;
       const wid = this.weaponOf(p), w = MM.WEAPONS[wid];
       p.cdFire = now + w.cd * 0.9;
       p.fx.prot = 0;
@@ -1038,6 +1038,7 @@
     // (or took off someone you knocked out). Gold portals are the only way past the Curve.
     onPortal(p, d) {
       const now = this.time;
+      if (MM.helpless(p.arch, p.prog.up)) { this.toast(p, MM.HELPLESS_TEXT); return; }
       if (p.dead || !MM.DIM_BY_ID[d]) return;
       const own = p.st.gun && p.charges > 0;
       if (!own && !(p.borrow > 0)) { this.toast(p, 'You need a portal gun. Build one, or borrow (steal) Rick\'s.'); return; }
@@ -1085,6 +1086,7 @@
 
     // ----- Ship -----
     onShip(p, on) {
+      if (on && MM.helpless(p.arch, p.prog.up)) { this.toast(p, MM.HELPLESS_TEXT); return; }
       if (p.dead || !p.st.ship || p.ship === on) return;
       p.ship = on;
       p.kbUntil = this.time + 1;     // stepping out mid-air: let the fall happen
@@ -1111,6 +1113,7 @@
     onCraft(p, id) {
       const R = MM.RECIPES[id];
       if (p.dead || !R) return;
+      if (MM.helpless(p.arch, p.prog.up) && id !== 'ratsuit') { this.toast(p, MM.HELPLESS_TEXT); return; }
       const why = MM.canKnow(p.arch, p.prog, id);
       if (why) { this.toast(p, why); return; }
       if (R.at) {
@@ -1128,7 +1131,7 @@
         this.restat(p);
         if (id === 'gunbuild') { p.charges = p.st.gun.charges; this.toast(p, 'You built a portal gun! Press E to use it.'); }
         if (id === 'hull') this.toast(p, 'Your ship is ready. Press B to board it.');
-        if (['wings', 'jetpack', 'engine', 'lasers', 'hull', 'cyberarm', 'cyberlegs'].includes(id)) p.inst.ev({ k: 'gear', id: p.id, gear: this.info(p).gear });
+        if (['wings', 'jetpack', 'engine', 'lasers', 'hull', 'cyberarm', 'cyberlegs', 'ratsuit'].includes(id)) p.inst.ev({ k: 'gear', id: p.id, gear: this.info(p).gear });
       }
       for (const k in cost) p.inv[k] -= cost[k];
       this.priv(p, { k: 'built', r: id });
@@ -1136,6 +1139,7 @@
     }
 
     onGadget(p, m) {
+      if (MM.helpless(p.arch, p.prog.up)) { this.toast(p, MM.HELPLESS_TEXT); return; }
       const inst = p.inst, g = m.g;
       if (p.dead || p.ship || this.time < p.fx.sob || !(p.inv[g] > 0)) return;
       if (g === 'grenade') {
@@ -1176,6 +1180,7 @@
 
     // ----- Daily life at landmarks -----
     onUse(p, lid, taskId) {
+      if (MM.helpless(p.arch, p.prog.up)) { const l = MM.LANDMARK_BY_ID[lid]; if (l && l.door) this.onDoor(p, lid); else this.toast(p, MM.HELPLESS_TEXT); return; }
       const l = MM.LANDMARK_BY_ID[lid];
       if (p.dead || !l || l.dim !== p.inst.dimId || this.time < p.cdUse) return;
       if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2) return;
