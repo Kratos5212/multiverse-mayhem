@@ -53,6 +53,24 @@
         s.add(P.sphereLo, skin, [R * 0.97, 0, 0], null, [R * 0.13, R * 0.22, R * 0.12]);
         s.add(P.sphereLo, skin, [-R * 0.97, 0, 0], null, [R * 0.13, R * 0.22, R * 0.12]);
       }
+      if (species === 'teddy') {
+        // Teddy Universe: round fuzzy ears and a pale muzzle with a button nose.
+        for (const sx of [-1, 1]) {
+          s.add(P.sphere, skin, [sx * R * 0.72, R * tall * 0.78, -R * 0.05], null, [R * 0.34, R * 0.34, R * 0.2]);
+          s.add(P.sphereLo, shade(skin, 1.4), [sx * R * 0.72, R * tall * 0.78, R * 0.1], null, [R * 0.2, R * 0.2, R * 0.08]);
+        }
+        s.add(P.sphere, shade(skin, 1.45), [0, -R * 0.3, R * 0.7], null, [R * 0.46, R * 0.34, R * 0.36]);
+        s.add(P.sphereLo, '#2a1a12', [0, -R * 0.14, R * 1.02], null, [R * 0.13, R * 0.09, R * 0.08]);
+      }
+      if (species === 'shrimp') {
+        // Shrimp Universe: a pointed rostrum, long whiskery antennae and shell ridges.
+        s.add(P.cone, shade(skin, 0.85), [0, R * 0.55, R * 0.7], [1.1, 0, 0], [R * 0.12, R * 0.7, R * 0.1]);
+        for (const sx of [-1, 1]) {
+          s.add(P.cylLo, shade(skin, 0.8), [sx * R * 0.35, R * 1.15, R * 0.1], [-0.6, 0, -sx * 0.5], [R * 0.025, R * 1.4, R * 0.025]);
+          s.add(P.cylLo, shade(skin, 0.8), [sx * R * 0.55, R * 1.75, -R * 0.55], [-1.4, 0, -sx * 0.6], [R * 0.02, R * 1.2, R * 0.02]);
+        }
+        for (let i = 0; i < 4; i++) s.add(P.capsule, shade(skin, 0.88), [0, R * (0.75 - i * 0.12), -R * (0.35 + i * 0.18)], [0, 0, Math.PI / 2], [R * 0.08, R * (0.85 - i * 0.1), R * 0.08]);
+      }
       if (species === 'alien') {
         s.add(P.cone, skin, [R * 0.95, R * 0.25, 0], [0, 0, -1.2], [R * 0.12, R * 0.5, R * 0.1]);
         s.add(P.cone, skin, [-R * 0.95, R * 0.25, 0], [0, 0, 1.2], [R * 0.12, R * 0.5, R * 0.1]);

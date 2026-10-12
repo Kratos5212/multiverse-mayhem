@@ -1190,6 +1190,365 @@
       s.add(P.box, '#d8d2c4', [0, 0.05, 0], null, [1.6, 0.1, 0.8]);
       s.add(P.box, '#ffe066', [0.9, 0.4, 0.2], null, [0.35, 0.2, 0.02]);   // price tag
     },
+    // ----- Downtown -----
+    // Merpal's Mall: a long two-storey box with a glass atrium entrance, a sign band and
+    // planters out front. Front faces +z.
+    lm_mall(s) {
+      const W = 22, D = 14, H = 7.2;
+      s.add(P.box, '#4a443c', [0, 0.2, 0], null, [W + 0.3, 0.4, D + 0.3]);
+      s.add(P.box, '#e8dcc4', [0, 0.4 + H / 2, 0], null, [W, H, D]);
+      s.add(P.box, '#c8b898', [0, 0.4 + H + 0.25, 0], null, [W + 0.5, 0.5, D + 0.5]);
+      for (let y = 1.4; y < H; y += 1.6) s.add(P.box, shade('#e8dcc4', 0.9), [0, y, D / 2 + 0.01], null, [W, 0.05, 0.02]);
+      // Atrium: a glass box sticking out the front, taller than the building.
+      s.add(P.box, '#9fd0e8', [0, 4.6, D / 2 + 1.6], null, [7, 8.4, 3.2]);
+      for (const x of [-3.5, -1.75, 0, 1.75, 3.5]) s.add(P.box, '#f4f2ea', [x, 4.6, D / 2 + 3.22], null, [0.14, 8.4, 0.08]);
+      for (const y of [1.0, 3.2, 5.6, 8.0]) s.add(P.box, '#f4f2ea', [0, y, D / 2 + 3.22], null, [7, 0.14, 0.08]);
+      s.add(P.box, '#f4f2ea', [0, 8.85, D / 2 + 1.6], null, [7.4, 0.3, 3.6]);
+      s.add(P.box, '#3a4048', [0, 1.3, D / 2 + 3.24], null, [2.6, 2.2, 0.05]);
+      // Store windows either side, each with a coloured awning.
+      const cols = ['#e2483d', '#3c6fb5', '#4a9a6a', '#ffb43a'];
+      for (let i = 0; i < 4; i++) {
+        const x = (i < 2 ? -1 : 1) * (5.6 + (i % 2) * 4.2);
+        s.add(P.box, '#bfdcec', [x, 1.8, D / 2 + 0.04], null, [3.2, 2.4, 0.06]);
+        s.add(P.box, cols[i], [x, 3.3, D / 2 + 0.5], [0.4, 0, 0], [3.4, 0.08, 1.0]);
+      }
+      for (const x of [-9.5, -4.5, 4.5, 9.5]) {
+        s.add(P.box, '#8a7a62', [x, 0.5, D / 2 + 4.2], null, [1.6, 0.6, 1.6]);
+        s.add(P.sphere, '#5fae3e', [x, 1.3, D / 2 + 4.2], null, [0.8, 0.7, 0.8]);
+      }
+    },
+    // Shoney's: a low diner with a red roof band, a big front window and a breakfast-bar glow.
+    lm_shoneys(s) {
+      const W = 11, D = 8, H = 4.2;
+      s.add(P.box, '#4a443c', [0, 0.2, 0], null, [W + 0.3, 0.4, D + 0.3]);
+      s.add(P.box, '#c79a6a', [0, 0.4 + H / 2, 0], null, [W, H, D]);
+      for (let y = 0.7; y < H; y += 0.35) s.add(P.box, shade('#c79a6a', 0.85), [0, y, D / 2 + 0.01], null, [W, 0.04, 0.02]);
+      s.add(P.box, '#c8302a', [0, 0.4 + H + 0.35, 0], null, [W + 0.8, 0.7, D + 0.8]);
+      s.add(P.prism, '#8a2a20', [0, 0.4 + H + 0.7, 0], null, [W + 0.6, 1.2, D + 0.6]);
+      s.add(P.box, '#ffe4a0', [-1.4, 2.0, D / 2 + 0.04], null, [6.0, 2.0, 0.06], true);
+      for (const x of [-4.4, -2.4, -0.4, 1.6]) s.add(P.box, '#3a2a1a', [x, 2.0, D / 2 + 0.08], null, [0.1, 2.0, 0.04]);
+      s.add(P.box, '#5a3a20', [3.6, 1.5, D / 2 + 0.05], null, [1.4, 2.2, 0.06]);
+      s.add(P.box, '#ffffff', [0, 5.0, D / 2 + 0.06], null, [6.4, 1.1, 0.1]);
+      // A pole sign by the road.
+      s.add(P.cylLo, '#8a8a8a', [W / 2 + 1.2, 3.5, D / 2 + 1.5], null, [0.12, 7, 0.12]);
+      s.add(P.sphere, '#c8302a', [W / 2 + 1.2, 7.2, D / 2 + 1.5], null, [1.3, 0.9, 0.3]);
+      s.add(P.sphere, '#ffe066', [W / 2 + 1.2, 7.2, D / 2 + 1.58], null, [1.0, 0.6, 0.26], true);
+    },
+    // Needful Things: a dark, narrow antique shop with a bay window full of odd objects.
+    lm_needful(s) {
+      const W = 8, D = 8, H = 5.6;
+      s.add(P.box, '#3a2a20', [0, 0.2, 0], null, [W + 0.3, 0.4, D + 0.3]);
+      s.add(P.box, '#4a2f2a', [0, 0.4 + H / 2, 0], null, [W, H, D]);
+      s.add(P.box, '#2a1a14', [0, 0.4 + H + 0.2, 0], null, [W + 0.5, 0.4, D + 0.5]);
+      s.add(P.box, '#2a1a14', [0, 4.1, D / 2 + 0.05], null, [W, 1.0, 0.1]);
+      // Bay window with a lamp, a clock and a skull on the shelf.
+      s.add(P.box, '#3a2a20', [-1.5, 0.9, D / 2 + 0.5], null, [3.6, 1.0, 1.0]);
+      s.add(P.box, '#ffcf7a', [-1.5, 2.3, D / 2 + 0.95], null, [3.4, 1.8, 0.05], true);
+      s.add(P.box, '#3a2a20', [-1.5, 2.3, D / 2 + 1.0], null, [0.08, 1.8, 0.04]);
+      s.add(P.sphere, '#e8e2d0', [-2.3, 1.7, D / 2 + 0.7], null, [0.25, 0.25, 0.25]);
+      s.add(P.cyl, '#c8a040', [-0.8, 1.8, D / 2 + 0.7], [Math.PI / 2, 0, 0], [0.3, 0.1, 0.3]);
+      s.add(P.box, '#2a1a14', [2.4, 1.4, D / 2 + 0.05], null, [1.3, 2.2, 0.08]);
+      s.add(P.sphere, '#c8a040', [2.85, 1.4, D / 2 + 0.12], null, [0.08, 0.08, 0.06]);
+      // A small devilish weathervane.
+      s.add(P.cylLo, '#2a2a2a', [0, 7.0, 0], null, [0.05, 1.4, 0.05]);
+      s.add(P.cone, '#c8302a', [0.3, 7.5, 0], [0, 0, -Math.PI / 2], [0.16, 0.6, 0.06]);
+    },
+    // Dr. Wong's office: a calm, glassy mid-rise office building.
+    lm_wong(s) {
+      const W = 11, D = 9, H = 11;
+      s.add(P.box, '#4a443c', [0, 0.2, 0], null, [W + 0.3, 0.4, D + 0.3]);
+      s.add(P.box, '#d6d0c4', [0, 0.4 + H / 2, 0], null, [W, H, D]);
+      for (let y = 1.6; y < H; y += 2.4) {
+        s.add(P.box, '#8fb8d0', [0, y + 0.9, D / 2 + 0.03], null, [W - 1, 1.5, 0.06]);
+        s.add(P.box, '#8fb8d0', [W / 2 + 0.03, y + 0.9, 0], null, [0.06, 1.5, D - 1]);
+      }
+      s.add(P.box, '#bfb8aa', [0, 0.4 + H + 0.2, 0], null, [W + 0.4, 0.4, D + 0.4]);
+      s.add(P.box, '#3a4048', [0, 1.4, D / 2 + 0.05], null, [2.4, 2.4, 0.06]);
+      s.add(P.box, '#4a9a8a', [0, 3.0, D / 2 + 0.9], [-0.1, 0, 0], [4, 0.14, 1.8]);
+      for (const x of [-3.5, 3.5]) { s.add(P.box, '#8a7a62', [x, 0.45, D / 2 + 1.2], null, [1.2, 0.5, 1.2]); s.add(P.cone, '#4a8a3c', [x, 1.6, D / 2 + 1.2], null, [0.5, 1.8, 0.5]); }
+    },
+    // An electronics store: window wall full of TVs. They show normal Earth TV, until a Rick
+    // gets to them.
+    lm_tvstore(s) {
+      const W = 10, D = 8, H = 4.8;
+      s.add(P.box, '#4a443c', [0, 0.2, 0], null, [W + 0.3, 0.4, D + 0.3]);
+      s.add(P.box, '#3c4a5a', [0, 0.4 + H / 2, 0], null, [W, H, D]);
+      s.add(P.box, '#2a3440', [0, 0.4 + H + 0.2, 0], null, [W + 0.4, 0.4, D + 0.4]);
+      s.add(P.box, '#2a3440', [-1, 2.0, D / 2 + 0.03], null, [7.6, 3.0, 0.05]);
+      const tv = ['#6f8fa8', '#8aa0b0', '#7a98a0', '#90a8b8'];
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) {
+        const x = -4 + i * 2, y = 1.3 + j * 1.3;
+        s.add(P.box, '#1a1a1e', [x, y, D / 2 + 0.2], null, [1.6, 1.05, 0.3]);
+        s.add(P.box, tv[(i + j) % 4], [x, y, D / 2 + 0.36], null, [1.35, 0.8, 0.03], true);
+      }
+      s.add(P.box, '#59606e', [3.9, 1.5, D / 2 + 0.04], null, [1.3, 2.4, 0.06]);
+    },
+    // ----- Washington, D.C. -----
+    // The White House, south front: a long white facade with the curved columned portico.
+    lm_whitehouse(s) {
+      const W = 24, D = 11, H = 7.0, white = '#f6f4ee', trim = '#e4e0d4';
+      s.add(P.box, '#c8c2b4', [0, 0.3, 0], null, [W + 0.6, 0.6, D + 0.6]);
+      s.add(P.box, white, [0, 0.6 + H / 2, 0], null, [W, H, D]);
+      s.add(P.box, trim, [0, 0.6 + H + 0.25, 0], null, [W + 0.5, 0.5, D + 0.5]);
+      s.add(P.box, '#c8c8c4', [0, 0.6 + H + 0.9, 0], null, [W - 1, 0.8, D - 1]);   // low roof
+      for (let x = -11; x <= 11; x += 1) s.add(P.box, white, [x, 0.6 + H + 0.75, D / 2 + 0.15], null, [0.18, 0.5, 0.18]);  // balustrade
+      for (let i = -5; i <= 5; i++) {
+        if (Math.abs(i) <= 1) continue;
+        const x = i * 2;
+        win(s, x, 2.3, D / 2, 1.0, 1.6);
+        win(s, x, 5.4, D / 2, 1.0, 1.4);
+        s.add(P.prism, trim, [x, 3.45, D / 2 + 0.12], null, [1.4, 0.4, 0.2]);
+      }
+      // The curved south portico: six columns on a half-round porch with a balcony on top.
+      s.add(P.cyl, trim, [0, 0.9, D / 2], null, [4.2, 0.6, 4.2]);
+      for (let i = 0; i < 6; i++) {
+        const a = -Math.PI / 2 + (i + 0.5) / 6 * Math.PI;
+        s.add(P.cyl, white, [Math.sin(a) * 3.8, 4.0, D / 2 + Math.cos(a) * 3.8 * 0.9], null, [0.32, 6.0, 0.32]);
+      }
+      s.add(P.cyl, white, [0, 7.25, D / 2], null, [4.4, 0.6, 4.4]);
+      for (let i = 0; i < 12; i++) { const a = -Math.PI / 2 + (i + 0.5) / 12 * Math.PI; s.add(P.box, white, [Math.sin(a) * 4.2, 7.9, D / 2 + Math.cos(a) * 4.2], null, [0.16, 0.6, 0.16]); }
+      s.add(P.box, '#4a6a8a', [0, 2.4, D / 2 + 0.06], null, [1.8, 3.2, 0.06]);
+      // The flag on the roof.
+      s.add(P.cylLo, '#d8d8d8', [0, 0.6 + H + 2.8, 0], null, [0.06, 4, 0.06]);
+      s.add(P.box, '#f4f4f4', [0.8, 0.6 + H + 4.3, 0], null, [1.6, 1.0, 0.04]);
+      for (let i = 0; i < 4; i++) s.add(P.box, '#c8302a', [0.8, 0.6 + H + 3.88 + i * 0.26, 0.03], null, [1.6, 0.12, 0.02]);
+      s.add(P.box, '#2a4a8a', [0.35, 0.6 + H + 4.55, 0.04], null, [0.7, 0.5, 0.02]);
+      // The fountain on the south lawn.
+      s.add(P.cyl, '#d8d2c4', [0, 0.25, D / 2 + 12], null, [2.6, 0.5, 2.6]);
+      s.add(P.cyl, '#7fc4ff', [0, 0.45, D / 2 + 12], null, [2.3, 0.1, 2.3], true);
+      s.add(P.cyl, '#d8d2c4', [0, 1.0, D / 2 + 12], null, [0.3, 1.4, 0.3]);
+    },
+    // The Washington Monument: a tall white obelisk on a little hill, ringed with flags.
+    lm_obelisk(s) {
+      s.add(P.cyl, '#c8c2b4', [0, 0.25, 0], null, [3.2, 0.5, 3.2]);
+      s.add(P.box, '#f2eee4', [0, 13.5, 0], null, [2.2, 26, 2.2]);
+      s.add(P.box, '#e4dccc', [0, 12, 0], null, [2.24, 0.06, 2.24]);
+      s.add(P.cone, '#f2eee4', [0, 27.6, 0], [0, Math.PI / 4, 0], [1.56, 2.2, 1.56]);
+      for (let i = 0; i < 2; i++) s.add(P.box, '#3a3a3a', [0, 24.5, 1.11 - i * 2.22], null, [0.3, 0.5, 0.02]);
+    },
+    // The Capitol: a wide neoclassical front with a columned centre and the big dome.
+    lm_capitol(s) {
+      const W = 30, D = 14, H = 7, white = '#f6f4ee', trim = '#e4e0d4';
+      s.add(P.box, '#c8c2b4', [0, 0.5, 0], null, [W + 1, 1.0, D + 1]);
+      s.add(P.box, white, [0, 1.0 + H / 2, 0], null, [W, H, D]);
+      s.add(P.box, trim, [0, 1.0 + H + 0.25, 0], null, [W + 0.5, 0.5, D + 0.5]);
+      for (let i = -6; i <= 6; i++) { if (Math.abs(i) <= 2) continue; win(s, i * 2.1, 3.0, D / 2, 0.9, 1.5); win(s, i * 2.1, 6.0, D / 2, 0.9, 1.2); }
+      // Portico with eight columns and a pediment, and steps.
+      for (let i = 0; i < 8; i++) s.add(P.cyl, white, [-4.9 + i * 1.4, 4.5, D / 2 + 1.6], null, [0.32, 7.0, 0.32]);
+      s.add(P.box, trim, [0, 8.2, D / 2 + 1.6], null, [11.6, 0.6, 3.6]);
+      s.add(P.prism, white, [0, 9.2, D / 2 + 1.6], null, [11.8, 1.5, 3.4]);
+      for (let k = 0; k < 4; k++) s.add(P.box, '#d8d2c4', [0, 0.2 + k * 0.3, D / 2 + 5.6 - k * 0.8], null, [10 - k * 0.6, 0.3, 1.0]);
+      // The dome: drum with columns, the dome, the lantern and the statue on top.
+      s.add(P.cyl, white, [0, 10.5, 0], null, [5.5, 3.0, 5.5]);
+      for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; s.add(P.cyl, trim, [Math.sin(a) * 5.6, 10.5, Math.cos(a) * 5.6], null, [0.18, 3.0, 0.18]); }
+      s.add(P.cyl, trim, [0, 12.2, 0], null, [5.8, 0.4, 5.8]);
+      s.add(P.hemi, white, [0, 12.3, 0], null, [5.0, 5.8, 5.0]);
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; s.add(P.box, trim, [Math.sin(a) * 3.6, 15.4, Math.cos(a) * 3.6], [0, a, -0.0], [0.12, 4.4, 0.12]); }
+      s.add(P.cyl, white, [0, 18.6, 0], null, [1.0, 1.6, 1.0]);
+      s.add(P.cone, white, [0, 19.8, 0], null, [1.1, 1.0, 1.1]);
+      s.add(P.capsule, '#6a7a6a', [0, 20.8, 0], null, [0.25, 0.6, 0.25]);
+    },
+    // The Pentagon: five low wings around a courtyard.
+    lm_pentagon(s) {
+      const R = 16, Ri = 9, H = 5.0;
+      for (let i = 0; i < 5; i++) {
+        const a = i / 5 * Math.PI * 2 + Math.PI / 5, b = (i + 1) / 5 * Math.PI * 2 + Math.PI / 5;
+        const mx = (Math.sin(a) + Math.sin(b)) / 2, mz = (Math.cos(a) + Math.cos(b)) / 2;
+        const rm = (R + Ri) / 2, len = 2 * R * Math.sin(Math.PI / 5) * 0.8, rot = Math.atan2(mx, mz);
+        s.add(P.box, '#c8c0aa', [mx * rm, H / 2, mz * rm], [0, rot, 0], [len, H, R - Ri]);
+        s.add(P.box, '#a8a090', [mx * rm, H + 0.2, mz * rm], [0, rot, 0], [len + 0.4, 0.4, R - Ri + 0.4]);
+        for (let k = -3; k <= 3; k++) for (const y of [1.4, 3.2]) {
+          const ox = Math.cos(rot) * k * len / 8, oz = -Math.sin(rot) * k * len / 8;
+          s.add(P.box, '#5a6a7a', [mx * (R - 0.02) + ox, y, mz * (R - 0.02) + oz], [0, rot, 0], [len / 12, 0.7, 0.06]);
+        }
+      }
+      // Corner blocks to close the joins, and the green courtyard.
+      for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + Math.PI / 5; s.add(P.box, '#c8c0aa', [Math.sin(a) * (R + Ri) / 2 * 0.95, H / 2, Math.cos(a) * (R + Ri) / 2 * 0.95], [0, a, 0], [R - Ri, H, R - Ri]); }
+      s.add(P.cyl, '#5fa83e', [0, 0.05, 0], null, [Ri * 0.85, 0.1, Ri * 0.85]);
+    },
+    // ----- Area 51 -----
+    // The sonic stage from "Get Schwifty": a big stage with speaker stacks under a lighting
+    // truss, and a giant Cromulon head watching from the sky.
+    lm_sonicstage(s) {
+      s.add(P.box, '#2a2a30', [0, 0.8, 0], null, [18, 1.6, 10]);
+      s.add(P.box, '#3a3a44', [0, 1.65, 0], null, [17.6, 0.1, 9.6]);
+      for (const sx of [-1, 1]) {
+        for (let k = 0; k < 3; k++) {
+          s.add(P.box, '#1a1a1e', [sx * 7.6, 2.9 + k * 2.1, -1], null, [2.4, 2.0, 2.0]);
+          for (const y of [-0.45, 0.45]) s.add(P.cyl, '#4a4a52', [sx * 7.6, 2.9 + k * 2.1 + y, 0.02], [Math.PI / 2, 0, 0], [0.6, 0.06, 0.6]);
+        }
+        s.add(P.box, '#8a8a92', [sx * 8.8, 5.5, 3.5], null, [0.3, 8, 0.3]);
+        s.add(P.box, '#8a8a92', [sx * 8.8, 5.5, -3.5], null, [0.3, 8, 0.3]);
+      }
+      s.add(P.box, '#8a8a92', [0, 9.5, 3.5], null, [17.9, 0.4, 0.4]);
+      s.add(P.box, '#8a8a92', [0, 9.5, -3.5], null, [17.9, 0.4, 0.4]);
+      for (let i = -3; i <= 3; i++) s.add(P.cyl, ['#ff4d6a', '#ffd84d', '#5ff8ff'][(i + 3) % 3], [i * 2.2, 9.0, 3.5], [0.4, 0, 0], [0.3, 0.5, 0.3], true);
+      s.add(P.capsule, '#59606e', [0, 2.4, 2.4], null, [0.06, 0.8, 0.06]);   // the microphone
+      // The Cromulon: a huge floating head high above the stage.
+      const y = 36, k = 6;
+      s.add(P.sphere, '#f2c8a0', [0, y, -20], null, [k, k * 1.25, k * 0.95]);
+      for (const sx of [-1, 1]) {
+        s.add(P.sphere, '#ffffff', [sx * k * 0.35, y + k * 0.25, -20 + k * 0.8], null, [k * 0.28, k * 0.32, k * 0.15]);
+        s.add(P.sphere, '#1b1b1b', [sx * k * 0.33, y + k * 0.22, -20 + k * 0.92], null, [k * 0.09, k * 0.09, k * 0.05]);
+        s.add(P.sphere, '#f2c8a0', [sx * k * 0.98, y, -20], null, [k * 0.18, k * 0.3, k * 0.15]);
+      }
+      s.add(P.capsule, '#e8b890', [0, y - k * 0.05, -20 + k * 0.98], [1.2, 0, 0], [k * 0.12, k * 0.2, k * 0.1]);
+      s.add(P.sphere, '#5a1a1a', [0, y - k * 0.55, -20 + k * 0.72], null, [k * 0.35, k * 0.18, k * 0.15]);
+    },
+    // A Quonset hangar: half a barrel on its side, with big doors at the front.
+    hangar(s) {
+      s.add(P.cyl, '#a8aca8', [0, 0, 0], [Math.PI / 2, 0, 0], [7.5, 18, 7.5]);
+      for (let z = -8; z <= 8; z += 2) s.add(P.cyl, '#8a8e8a', [0, 0, z], [Math.PI / 2, 0, 0], [7.6, 0.2, 7.6]);
+      s.add(P.box, '#6a6e6a', [0, 3.0, 9.02], null, [9, 6, 0.1]);
+      s.add(P.box, '#4a4e4a', [0, 3.0, 9.08], null, [0.1, 6, 0.04]);
+      s.add(P.box, '#ffd84d', [0, 6.6, 9.06], null, [4, 0.6, 0.06]);
+    },
+    lm_hangar(s) {
+      MODELS.hangar(s);
+      s.add(P.box, '#c8302a', [-3, 0.6, 10.5], null, [0.4, 1.2, 0.4]);
+      s.add(P.box, '#c8302a', [3, 0.6, 10.5], null, [0.4, 1.2, 0.4]);
+      s.add(P.box, '#f4f4f4', [0, 1.1, 10.5], null, [6.4, 0.2, 0.15]);
+    },
+    radar(s) {
+      s.add(P.box, '#8a8e8a', [0, 1.5, 0], null, [1.6, 3, 1.6]);
+      s.add(P.cylLo, '#6a6e6a', [0, 3.8, 0], null, [0.3, 1.6, 0.3]);
+      s.add(P.hemi, '#e8e8e4', [0, 6.2, 0.4], [-2.3, 0, 0], [2.8, 1.2, 2.8]);
+      s.add(P.cylLo, '#6a6e6a', [0, 6.4, 1.6], [0.8, 0, 0], [0.06, 1.8, 0.06]);
+      s.add(P.sphereLo, '#c8302a', [0, 7.0, 2.2], null, [0.18, 0.18, 0.18], true);
+    },
+    jeep(s) {
+      s.add(P.box, '#5a6a3a', [0, 0.95, 0], null, [1.9, 0.9, 3.6]);
+      s.add(P.box, '#4a5632', [0, 1.55, -0.6], null, [1.8, 0.4, 1.8]);
+      s.add(P.box, '#9fc4d0', [0, 1.8, 0.6], [-0.3, 0, 0], [1.7, 0.7, 0.06]);
+      for (const sx of [-1, 1]) for (const z of [-1.2, 1.2]) s.add(P.cyl, '#1e1e1e', [sx * 0.95, 0.45, z], [0, 0, Math.PI / 2], [0.45, 0.35, 0.45]);
+      s.add(P.cylLo, '#3a3a3a', [0, 1.3, -1.9], [Math.PI / 2, 0, 0], [0.4, 0.2, 0.4]);
+    },
+    watchtower(s) {
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) s.add(P.box, '#6a5a44', [sx * 1.2, 3.2, sz * 1.2], [sz * 0.06, 0, -sx * 0.06], [0.22, 6.4, 0.22]);
+      s.add(P.box, '#7a6a52', [0, 6.5, 0], null, [3.2, 0.25, 3.2]);
+      s.add(P.box, '#8a7a62', [0, 7.2, 1.55], null, [3.2, 1.2, 0.1]);
+      s.add(P.box, '#8a7a62', [0, 7.2, -1.55], null, [3.2, 1.2, 0.1]);
+      s.add(P.box, '#8a7a62', [1.55, 7.2, 0], null, [0.1, 1.2, 3.2]);
+      s.add(P.box, '#8a7a62', [-1.55, 7.2, 0], null, [0.1, 1.2, 3.2]);
+      s.add(P.prism, '#5a4a38', [0, 8.6, 0], null, [3.6, 1.2, 3.6]);
+      s.add(P.cylLo, '#ffe8a0', [1.4, 8.0, 1.4], [0.6, 0, 0], [0.18, 0.4, 0.18], true);
+    },
+    // Highway on-ramp: a green gantry sign over a stretch of road.
+    lm_highway(s) {
+      s.add(P.box, '#4a4a50', [0, 0.06, 0], null, [8, 0.12, 9]);
+      for (const z of [-3, 0, 3]) s.add(P.box, '#f4f0e0', [0, 0.13, z], null, [0.2, 0.02, 1.4]);
+      for (const sx of [-1, 1]) { s.add(P.cylLo, '#9a9ea4', [sx * 4.6, 3.4, 0], null, [0.2, 6.8, 0.2]); s.add(P.box, '#c8302a', [sx * 4.6, 0.3, 0.5], null, [0.4, 0.6, 0.12]); }
+      s.add(P.box, '#9a9ea4', [0, 6.7, 0], null, [9.6, 0.3, 0.3]);
+      s.add(P.box, '#1f7a46', [0, 6.1, 0.18], null, [7.4, 1.7, 0.12]);
+      s.add(P.box, '#f4f4f4', [0, 6.1, 0.24], null, [7.2, 1.5, 0.01]);
+      s.add(P.box, '#1f7a46', [0, 6.1, 0.25], null, [7.0, 1.3, 0.01]);
+    },
+    // ----- Downtown towers and D.C. buildings -----
+    skyscraper(s) {
+      const W = 11, H = 32, col = '#7a9ab0', frame = '#d8dde2';
+      s.add(P.box, '#4a4e54', [0, 0.25, 0], null, [W + 0.4, 0.5, W + 0.4]);
+      s.add(P.box, col, [0, 0.5 + H / 2, 0], null, [W, H, W]);
+      for (let y = 3.5; y < H; y += 3.2) s.add(P.box, frame, [0, y, 0], null, [W + 0.08, 0.35, W + 0.08]);
+      for (const x of [-W / 2, -W / 6, W / 6, W / 2]) for (const z of [-1, 1]) {
+        s.add(P.box, frame, [x, 0.5 + H / 2, z * W / 2], null, [0.3, H, 0.1]);
+        s.add(P.box, frame, [z * W / 2, 0.5 + H / 2, x], null, [0.1, H, 0.3]);
+      }
+      s.add(P.box, frame, [0, H + 1.2, 0], null, [W - 3, 1.4, W - 3]);
+      s.add(P.cylLo, '#9a9ea4', [2, H + 3.5, 2], null, [0.08, 3.6, 0.08]);
+      s.add(P.sphereLo, '#ff4d4d', [2, H + 5.3, 2], null, [0.16, 0.16, 0.16], true);
+      s.add(P.box, '#3a4048', [0, 1.8, W / 2 + 0.05], null, [3, 2.6, 0.06]);
+    },
+    apartment(s) {
+      const W = 10, D = 10, H = 15, brick = '#a8644a';
+      s.add(P.box, '#4a443c', [0, 0.2, 0], null, [W + 0.3, 0.4, D + 0.3]);
+      s.add(P.box, brick, [0, 0.4 + H / 2, 0], null, [W, H, D]);
+      s.add(P.box, '#d8d2c4', [0, 0.4 + H + 0.2, 0], null, [W + 0.4, 0.4, D + 0.4]);
+      for (let y = 2.0; y < H - 1; y += 2.6) for (const x of [-3, 0, 3]) {
+        s.add(P.box, '#e8e2d4', [x, y, D / 2 + 0.03], null, [1.5, 1.6, 0.06]);
+        s.add(P.box, '#9fc4d8', [x, y, D / 2 + 0.07], null, [1.2, 1.3, 0.04]);
+      }
+      // Fire escape down the front.
+      for (let y = 4.5; y < H; y += 2.6) s.add(P.box, '#2a2a2a', [3, y - 1.1, D / 2 + 0.6], null, [2.6, 0.08, 1.1]);
+      s.add(P.box, '#3a2a1a', [-3, 1.4, D / 2 + 0.05], null, [1.4, 2.2, 0.06]);
+    },
+    officeblock(s) {
+      const W = 15, D = 11, H = 10, stone = '#e8e2d4';
+      s.add(P.box, '#c8c2b4', [0, 0.3, 0], null, [W + 0.6, 0.6, D + 0.6]);
+      s.add(P.box, stone, [0, 0.6 + H / 2, 0], null, [W, H, D]);
+      s.add(P.box, '#d8d2c4', [0, 0.6 + H + 0.3, 0], null, [W + 0.6, 0.6, D + 0.6]);
+      for (let i = 0; i < 8; i++) s.add(P.cyl, '#f6f2ea', [-5.6 + i * 1.6, 4.5, D / 2 + 0.6], null, [0.3, 7.8, 0.3]);
+      s.add(P.box, '#d8d2c4', [0, 8.6, D / 2 + 0.6], null, [13, 0.6, 1.4]);
+      for (let i = 0; i < 7; i++) for (const y of [2.6, 6.0]) s.add(P.box, '#7a8a9a', [-4.8 + i * 1.6, y, D / 2 + 0.03], null, [0.8, 1.6, 0.05]);
+      for (let k = 0; k < 3; k++) s.add(P.box, '#d8d2c4', [0, 0.15 + k * 0.2, D / 2 + 2.2 - k * 0.4], null, [6 - k * 0.4, 0.2, 0.8]);
+    },
+    flagpole(s) {
+      s.add(P.cyl, '#c8c2b4', [0, 0.2, 0], null, [0.5, 0.4, 0.5]);
+      s.add(P.cylLo, '#e4e4e4', [0, 4.6, 0], null, [0.07, 8.8, 0.07]);
+      s.add(P.box, '#f4f4f4', [0.85, 8.1, 0], null, [1.7, 1.1, 0.04]);
+      for (let i = 0; i < 4; i++) s.add(P.box, '#c8302a', [0.85, 7.66 + i * 0.28, 0.03], null, [1.7, 0.13, 0.02]);
+      s.add(P.box, '#2a4a8a', [0.38, 8.38, 0.04], null, [0.76, 0.55, 0.02]);
+    },
+    cherrytree(s) {
+      s.add(P.cylLo, '#6a4a3a', [0, 1.4, 0], [0, 0, 0.08], [0.22, 2.8, 0.22]);
+      s.add(P.sphere, '#f4b8cc', [0, 3.6, 0], null, [2.2, 1.6, 2.2]);
+      s.add(P.sphere, '#f8c8d8', [0.9, 4.2, 0.4], null, [1.3, 1.0, 1.3]);
+      s.add(P.sphere, '#eaa4bc', [-0.8, 4.0, -0.6], null, [1.3, 1.0, 1.3]);
+    },
+    // ----- Alternate Earths -----
+    // A regime banner on a pole: charcoal with red edges and a gold spiral (no real-world symbols).
+    banner(s) {
+      s.add(P.cylLo, '#2a2a2a', [0, 3.2, 0], null, [0.08, 6.4, 0.08]);
+      s.add(P.box, '#2a2a2a', [0, 6.3, 0], null, [1.8, 0.1, 0.1]);
+      s.add(P.box, '#b5243c', [0, 4.4, 0.06], null, [1.6, 3.6, 0.05]);
+      s.add(P.box, '#3a3a40', [0, 4.4, 0.09], null, [1.2, 3.3, 0.02]);
+      const ring = new T.TorusGeometry(0.38, 0.07, 6, 20, Math.PI * 1.6);
+      s.add(ring, '#d8b040', [0, 5.1, 0.11], null, null);
+      ring.dispose();
+      s.add(P.sphereLo, '#d8b040', [0, 5.1, 0.11], null, [0.12, 0.12, 0.03]);
+      s.add(P.box, '#d8b040', [0, 3.5, 0.11], null, [0.9, 0.12, 0.02]);
+    },
+    shrimpstatue(s) {
+      s.add(P.box, '#c8c2b4', [0, 0.6, 0], null, [2.6, 1.2, 2.6]);
+      const k = '#ff8a6a';
+      for (let i = 0; i < 6; i++) { const a = 0.3 + i * 0.42; s.add(P.sphere, shade(k, 1 - i * 0.04), [0, 1.8 + Math.sin(a) * 1.6, Math.cos(a) * 1.6 - 0.4], [a, 0, 0], [0.85 - i * 0.09, 0.55, 0.6]); }
+      s.add(P.cone, '#ff9d7d', [0, 1.6, -1.2], [-1.6, 0, 0], [0.7, 0.9, 0.3]);
+      for (const sx of [-1, 1]) {
+        s.add(P.sphere, '#1b1b1b', [sx * 0.35, 3.8, 1.1], null, [0.16, 0.16, 0.16]);
+        s.add(P.cylLo, '#e86a4a', [sx * 0.3, 4.4, 1.0], [-0.4, 0, -sx * 0.4], [0.04, 1.8, 0.04]);
+      }
+    },
+    teddystatue(s) {
+      s.add(P.box, '#c8c2b4', [0, 0.6, 0], null, [2.4, 1.2, 2.4]);
+      const fur = '#b07a4a';
+      s.add(P.sphere, fur, [0, 2.2, 0], null, [1.0, 1.1, 0.9]);
+      s.add(P.sphere, shade(fur, 1.4), [0, 2.1, 0.55], null, [0.6, 0.7, 0.4]);
+      s.add(P.sphere, fur, [0, 3.7, 0], null, [0.8, 0.75, 0.75]);
+      for (const sx of [-1, 1]) {
+        s.add(P.sphere, fur, [sx * 0.6, 4.35, 0], null, [0.3, 0.3, 0.2]);
+        s.add(P.capsule, fur, [sx * 1.0, 2.5, 0.1], [0, 0, sx * 0.6], [0.28, 0.5, 0.28]);
+        s.add(P.capsule, fur, [sx * 0.45, 1.35, 0.3], null, [0.3, 0.3, 0.34]);
+        s.add(P.sphere, '#1b1b1b', [sx * 0.28, 3.85, 0.68], null, [0.09, 0.09, 0.05]);
+      }
+      s.add(P.sphere, shade(fur, 1.45), [0, 3.5, 0.62], null, [0.35, 0.25, 0.25]);
+      s.add(P.sphere, '#2a1a12', [0, 3.6, 0.85], null, [0.12, 0.08, 0.06]);
+      s.add(P.cone, '#2a2a2a', [0, 3.9, 0.9], [0, 0, Math.PI / 2], [0.06, 0.25, 0.06]);   // a tiny cocktail stick
+    },
+    honeypot(s) {
+      s.add(P.sphere, '#c8803a', [0, 0.6, 0], null, [0.65, 0.6, 0.65]);
+      s.add(P.cyl, '#b0703a', [0, 1.15, 0], null, [0.45, 0.2, 0.45]);
+      s.add(P.cyl, '#ffc84a', [0, 1.26, 0], null, [0.4, 0.05, 0.4], true);
+      s.add(P.box, '#f4ead4', [0, 0.65, 0.6], null, [0.5, 0.35, 0.03]);
+    },
+    // C-500A: a billboard for the latest Jerry Smith movie.
+    moviesign(s) {
+      for (const sx of [-1, 1]) s.add(P.box, '#59606e', [sx * 2.2, 2.4, 0], null, [0.25, 4.8, 0.25]);
+      s.add(P.box, '#1a1a24', [0, 5.2, 0], null, [6.4, 3.2, 0.3]);
+      s.add(P.box, '#ffd84d', [0, 6.3, 0.17], null, [5.6, 0.6, 0.02], true);
+      s.add(P.box, '#e8c49a', [-1.6, 4.9, 0.17], null, [1.6, 2.0, 0.02]);
+      s.add(P.box, '#7a4a26', [-1.6, 5.75, 0.18], null, [1.4, 0.4, 0.02]);
+      s.add(P.box, '#c8302a', [1.2, 4.9, 0.17], null, [2.6, 0.5, 0.02], true);
+      s.add(P.box, '#f4f4f4', [1.2, 4.2, 0.17], null, [2.2, 0.3, 0.02]);
+    },
     // Ruben lies in a striped event tent; Anatomy Park's gate is a sign over his tummy.
     lm_anatomytent(s) {
       for (let i = 0; i < 12; i++) {
@@ -1552,6 +1911,7 @@
     party: { road: '#4a2a7a', edge: '#ffd84d', glow: true },
     carpet: { road: '#3a1a5a', edge: '#ff6fd0', glow: true },
     gold: { road: '#3a2e18', edge: '#ffd84d', glow: true },
+    gravel: { road: '#ddd5c0', edge: '#bdb5a0' },
   };
   function makePaths(dim, layout) {
     const s = new C.Shape({ smooth: false });
@@ -1724,7 +2084,8 @@
   const npcCache = {};
   // A local's look comes from the seed the server sends, so everyone sees the same person.
   const SKINS = { human: ['#ffe0c8', '#f2d2b6', '#e0b08c', '#c68a62', '#a8724f', '#6b4630'], alien: ['#9ad66b', '#7ec8e3', '#c49bff', '#5fd6b0', '#ff9bd2'],
-    blob: ['#e07a85', '#d9677a', '#c4505f'], robot: ['#b4b4c0', '#9aa3ab', '#d8c060'], birdfolk: ['#f0d0a0', '#e8c49a', '#d9b98a'], beanling: ['#ffd447', '#ff9bd2', '#7ec8e3'] };
+    blob: ['#e07a85', '#d9677a', '#c4505f'], robot: ['#b4b4c0', '#9aa3ab', '#d8c060'], birdfolk: ['#f0d0a0', '#e8c49a', '#d9b98a'], beanling: ['#ffd447', '#ff9bd2', '#7ec8e3'],
+    teddy: ['#b07a4a', '#c88a52', '#8a5a34', '#d8a870'], shrimp: ['#ff8a6a', '#f47a5a', '#ff9d7d', '#ee6e50'] };
   C.npcLook = function (type, seed) {
     const H = MM.NPCS[type].human, r = MM.rng(seed >>> 0);
     if (H.fixed) return MM.canonLook(H.fixed);
@@ -1742,6 +2103,7 @@
     look.height = hr[0] + r() * (hr[1] - hr[0]); look.width = 0.85 + r() * 0.4; look.head = 0.9 + r() * 0.35;
     if (H.skin) look.skin = H.skin;                    // species that all look alike (Gromflomites, Unity's hosts)
     if (H.colors) Object.assign(look, H.colors);
+    if (H.look) Object.assign(look, H.look);           // one particular person (President Curtis)
     return look;
   };
   C.npcModel = function (type, seed) {
@@ -1903,6 +2265,27 @@
           s.add(P.sphereLo, '#1a1a1a', [sx * 0.1, 0.66, 0.46], null, [0.04, 0.045, 0.03]);
           s.add(P.sphereLo, '#ffbfd0', [sx * 0.08, 0.2, 0.36], null, [0.05, 0.03, 0.06]);
           s.add(P.sphereLo, '#ffbfd0', [sx * 0.2, 0.05, -0.15], null, [0.06, 0.03, 0.08]);
+        }
+      } else if (type === 'timecop') {
+        // Shleemypants: a floating red, veiny, faceless lump that is mostly mouth, in a
+        // torn tan robe with a satchel, and long three-fingered arms.
+        const flesh = '#c8424a';
+        s.add(P.sphere, flesh, [0, 1.2, 0], null, [0.85, 1.0, 0.8]);
+        for (let i = 0; i < 9; i++) { const a = i * 0.7; C.capsuleAt(s, '#8a2230', 0.025, 0.7, [Math.sin(a) * 0.72, 1.0 + (i % 3) * 0.3, Math.cos(a) * 0.6], [0.3 * (i % 2 ? 1 : -1), a, 0.4]); }
+        s.add(P.sphere, '#3a0a10', [0, 1.05, 0.62], null, [0.62, 0.42, 0.25]);
+        for (let i = 0; i < 9; i++) {
+          const x = -0.5 + i * 0.125;
+          s.add(P.box, '#f0d860', [x, 1.32 - Math.abs(x) * 0.25, 0.8 - Math.abs(x) * 0.3], [0, 0, (i % 2 ? 0.2 : -0.15)], [0.1, 0.2 + (i % 3) * 0.05, 0.07]);
+          s.add(P.box, '#e6c84a', [x + 0.06, 0.78 + Math.abs(x) * 0.25, 0.78 - Math.abs(x) * 0.3], [0, 0, (i % 2 ? -0.2 : 0.15)], [0.1, 0.18, 0.07]);
+        }
+        // The robe hangs from the shoulders down past where legs would be, ragged at the hem.
+        s.add(P.cone, '#c8a878', [0, 0.35, -0.05], [Math.PI, 0, 0], [0.95, 1.1, 0.85]);
+        for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.cone, '#b89868', [Math.sin(a) * 0.75, -0.25, Math.cos(a) * 0.65], [Math.PI, 0, 0], [0.18, 0.35, 0.12]); }
+        s.add(P.box, '#7a5030', [0.55, 0.65, 0.2], [0, 0, -0.5], [0.08, 1.4, 0.06]);
+        s.add(P.box, '#6a4428', [0.75, 0.15, 0.35], null, [0.5, 0.4, 0.2]);
+        for (const sx of [-1, 1]) {
+          C.capsuleAt(s, flesh, 0.09, 1.1, [sx * 0.75, 1.3, 0.1], [0.5, 0, sx * 2.3]);
+          for (let f = -1; f <= 1; f++) C.capsuleAt(s, flesh, 0.035, 0.28, [sx * 1.55, 0.72, 0.5 + f * 0.06], [0.6 + f * 0.3, 0, sx * 2.6]);
         }
       } else if (type === 'blamph') {
         // A Blamph: a big soft purple lump with two long rubbing arms and a small face.

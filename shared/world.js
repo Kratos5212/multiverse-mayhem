@@ -39,7 +39,7 @@
   // props: [type, count]. npc: [type, count]. Colors are for the client renderer.
   MM.DIMS = [
     {
-      id: 'suburbia', name: 'Earth C-137', code: 'C-137', seed: 1137, gravity: 24, amp: 2.5, scale: 0.012,
+      id: 'suburbia', flat: 172, name: 'Earth C-137', code: 'C-137', seed: 1137, gravity: 24, amp: 2.5, scale: 0.012,
       blurb: 'The Smith family suburb. Lawns, a garage full of science, and a high school nobody wants to go to.',
       sky: ['#5fb4ff', '#d9f3ff'], fog: '#cdeaff', fogFar: 230, sun: '#fff4dc', ambient: '#9fc6ff',
       ground: ['#5fae3e', '#78c24b', '#4c9636'], accent: '#ffffff',
@@ -47,8 +47,8 @@
       npc: [['neighbor', 9], ['schoolkid', 4]], pickups: { s: 18, c: 2 }, mat: 's',
     },
     {
-      id: 'meatlands', flat: 140, name: 'Cronenberg World', code: 'C-131', seed: 4242, gravity: 24, amp: 9, scale: 0.02,
-      blurb: 'A love potion went very wrong here. Everything is meat now. It is warm. It is watching.',
+      id: 'meatlands', flat: 140, name: 'Cronenberged Earth', code: 'PRIME', seed: 4242, gravity: 24, amp: 9, scale: 0.02,
+      blurb: 'The Prime Dimension: Rick\'s love potion turned everyone into Cronenbergs, so he and Morty moved to a replacement Earth. Everything is meat now. It is warm. It is watching.',
       sky: ['#3d0a1c', '#c4485f'], fog: '#7a2236', fogFar: 170, sun: '#ffc2b0', ambient: '#b05068',
       ground: ['#c9576b', '#e07a85', '#9c3a4e'], accent: '#fff2c8',
       props: [['fleshpillar', 40], ['eyestalk', 45], ['bonearch', 12], ['pustule', 40]],
@@ -217,6 +217,60 @@
       ground: ['#a87a9a', '#b88aaa', '#8a6a8a'], accent: '#f4a0b8',
       props: [], npc: [['blamph', 10], ['plumbusworker', 6]], pickups: { g: 10, s: 8 }, mat: 'g',
     },
+    // ----- The rest of Earth (same planet as the Smiths: drive there on the highway) -----
+    {
+      id: 'downtown', region: 'earth', flat: 172, name: 'Earth: Downtown', code: 'C-137', seed: 1139, gravity: 24, amp: 1.2, scale: 0.01,
+      blurb: "The city just outside Seattle where the Smiths live. Merpal's Mall, Shoney's, Needful Things and Dr. Wong's office.",
+      sky: ['#6fb8f0', '#e2f2ff'], fog: '#d4e6f4', fogFar: 240, sun: '#fff4dc', ambient: '#a8c4e0',
+      ground: ['#8a9a7a', '#96a684', '#7e8e70'], accent: '#ffffff',
+      props: [], spawn: { x: 0, z: 8, spread: 6 },
+      npc: [['neighbor', 12], ['schoolkid', 3], ['cop', 4]], pickups: { s: 20, k: 3 }, mat: 's',
+    },
+    {
+      id: 'dc', region: 'earth', flat: 172, name: 'Earth: Washington, D.C.', code: 'C-137', seed: 1776, gravity: 24, amp: 1, scale: 0.01,
+      blurb: 'The National Mall, the White House and President Curtis, the Pentagon, and a lot of men in dark suits.',
+      sky: ['#6fb0ec', '#e4f2ff'], fog: '#d8e8f6', fogFar: 250, sun: '#fff6e4', ambient: '#a8c4e0',
+      ground: ['#5fa83e', '#6cb848', '#549a36'], accent: '#ffffff',
+      props: [], spawn: { x: 0, z: 30, spread: 6 },
+      npc: [['president', 1, 0, -38], ['secretservice', 6], ['secretservice', 2, 6, -30], ['marine', 4], ['neighbor', 8]], pickups: { s: 14, k: 4 }, mat: 'k',
+    },
+    {
+      id: 'area51', region: 'earth', flat: 172, name: 'Earth: Area 51', code: 'C-137', seed: 5151, gravity: 24, amp: 2, scale: 0.012,
+      blurb: 'A secret base in the Nevada desert, with hangars full of things that are not weather balloons and the sonic stage where Earth got Schwifty.',
+      sky: ['#7ec0f0', '#fff0d8'], fog: '#f4e2c4', fogFar: 260, sun: '#fff0d0', ambient: '#e0c8a0',
+      ground: ['#d8b27a', '#e2c08a', '#c9a06a'], accent: '#ffd84d',
+      props: [], spawn: { x: 0, z: 30, spread: 6 },
+      npc: [['marine', 8], ['labtech', 4]], pickups: { s: 12, c: 4 }, mat: 'c',
+    },
+    // ----- The same Earth in other dimensions: the Smith street, but not quite -----
+    {
+      id: 'fascistearth', variantOf: 'suburbia', name: 'Fascist Earth', code: 'F-17',
+      blurb: 'Same street, same houses, but everything is an order. Red banners, grey skies, and a Rick in a robe running the show.',
+      sky: ['#6a6e78', '#b8b0a8'], fog: '#a8a49e', fogFar: 200, sun: '#ffe4c8', ambient: '#a09890',
+      ground: ['#5a6a4a', '#647454', '#506040'], accent: '#e23b3b',
+      extra: [['banner', 30], ['watchtower', 6]], npc: [['fascistsoldier', 9], ['neighbor', 5]], pickups: { s: 16, p: 3 }, mat: 'p',
+    },
+    {
+      id: 'shrimpearth', variantOf: 'suburbia', name: 'Shrimp Earth', code: 'SH-1',
+      blurb: 'Everyone here evolved from shrimp, dogs included. Friendly-looking. Do not mention cocktail sauce.',
+      sky: ['#ff9f86', '#ffe2d4'], fog: '#ffd2c0', fogFar: 220, sun: '#fff0e0', ambient: '#ffb8a0',
+      ground: ['#6aae5e', '#78bc6a', '#5c9c52'], accent: '#ff7a5a',
+      extra: [['shrimpstatue', 6], ['banner', 10]], npc: [['shrimpfolk', 12]], pickups: { s: 16, g: 3 }, mat: 'g',
+    },
+    {
+      id: 'teddyearth', variantOf: 'suburbia', name: 'Teddy Earth', code: 'TB-7',
+      blurb: 'A world of teddy bear people. The Rick here is a short bear with spiky hair who drinks martinis.',
+      sky: ['#9fd0ff', '#fff4e4'], fog: '#f4e4d0', fogFar: 220, sun: '#fff4dc', ambient: '#d8c4a8',
+      ground: ['#7aae4e', '#86bc5a', '#6c9c44'], accent: '#c88a4a',
+      extra: [['teddystatue', 6], ['honeypot', 14]], npc: [['teddyfolk', 12]], pickups: { s: 16, f: 3 }, mat: 'f',
+    },
+    {
+      id: 'c500a', variantOf: 'suburbia', name: 'Earth C-500A', code: 'C-500A',
+      blurb: 'Beth and Jerry never married. Jerry is a movie star, Beth is a lonely heart surgeon with a lot of birds, and the Smith kids were never born.',
+      sky: ['#5fb4ff', '#f4f0ff'], fog: '#e4e0f4', fogFar: 230, sun: '#fff4dc', ambient: '#b0b8e0',
+      ground: ['#5fae3e', '#78c24b', '#4c9636'], accent: '#ffd84d',
+      extra: [['moviesign', 4]], npc: [['neighbor', 10], ['paparazzi', 4]], pickups: { s: 18, k: 2 }, mat: 'k',
+    },
     // ----- Rick's garage and what's under it: small indoor dimensions -----
     {
       id: 'rickgarage', name: "Rick's Garage", code: 'C-137', seed: 137, gravity: 24, interior: true, hidden: true, bound: 7.9,
@@ -249,6 +303,18 @@
   ];
   MM.DIM_BY_ID = {};
   for (const d of MM.DIMS) MM.DIM_BY_ID[d.id] = d;
+  // Alternate Earths share the home street plan (same seed, same streets) with their own twist.
+  for (const d of MM.DIMS) if (d.variantOf) {
+    const B = MM.DIM_BY_ID[d.variantOf];
+    for (const k of ['seed', 'gravity', 'amp', 'scale', 'streets', 'spawn', 'flat']) if (d[k] === undefined) d[k] = B[k];
+    d.props = (B.props || []).concat(d.extra || []);
+    // The same buildings stand here too (minus the doors into this Earth's garage and the
+    // highways): the Smith house, the school, the hospital. Tasks there work the same.
+    for (const l of MM.LANDMARKS.slice()) if (l.dim === d.variantOf && !l.door) {
+      const c = Object.assign({}, l, { id: d.id + '_' + l.id, alias: l.id, dim: d.id });
+      MM.LANDMARKS.push(c); MM.LANDMARK_BY_ID[c.id] = c;
+    }
+  }
   MM.DIM_IDS = MM.DIMS.map(d => d.id);
   // Dimensions you can portal or kiosk to (the garage and its rooms are reached through doors).
   MM.WORLD_IDS = MM.DIMS.filter(d => !d.hidden).map(d => d.id);
@@ -259,8 +325,8 @@
   // and its moon). pocket: only reachable through its entrance (a door, a battery, a man).
   // Everything else is another dimension: portal guns, the Dimension Drive, the Citadel's
   // portal station or Federation customs. Outside the Central Finite Curve: gold portals only.
-  const SPACE = { suburbia: 'c137', moon: 'c137', featherhold: 'c137', gazorp: 'c137', squanch: 'c137', purge: 'c137', gearworld: 'c137', unityworld: 'c137', federation: 'c137', blips: 'c137', bazaar: 'c137' };
-  const NEAR = { suburbia: 1, moon: 1 };
+  const SPACE = { suburbia: 'c137', downtown: 'c137', dc: 'c137', area51: 'c137', moon: 'c137', featherhold: 'c137', gazorp: 'c137', squanch: 'c137', purge: 'c137', gearworld: 'c137', unityworld: 'c137', federation: 'c137', blips: 'c137', bazaar: 'c137' };
+  const NEAR = { suburbia: 1, downtown: 1, dc: 1, area51: 1, moon: 1 };
   const POCKET = { microverse: 1, anatomy: 1, froopy: 1 };
   for (const d of MM.DIMS) { if (SPACE[d.id]) d.space = SPACE[d.id]; if (NEAR[d.id]) d.near = true; if (POCKET[d.id]) d.pocket = true; }
   // Public interdimensional stations, only where they exist in the lore.
@@ -378,6 +444,21 @@
     voidcrystal: { r: 0.8, h: 3.5, hp: 60, drop: { c: 2 } },
     curvepillar: { r: 1.3, h: 12, hp: 300, drop: { c: 2, s: 2 } },
     storefront:  { r: 5.0, h: 6.5, hp: 220, drop: { s: 4, k: 1 } },
+    // The rest of Earth and the alternate Earths
+    skyscraper:  { r: 6.5, h: 34, hp: 700, drop: { s: 6, c: 1 } },
+    apartment:   { r: 6.0, h: 16, hp: 420, drop: { s: 5 } },
+    officeblock: { r: 8.0, h: 12, hp: 450, drop: { s: 5, k: 1 } },
+    flagpole:    { r: 0.3, h: 9, hp: 40, drop: { s: 1 } },
+    cherrytree:  { r: 2.4, h: 6, hp: 70, drop: { f: 1 } },
+    hangar:      { r: 9.5, h: 9, hp: 520, drop: { s: 6, c: 1 } },
+    radar:       { r: 2.2, h: 8, hp: 140, drop: { c: 1, s: 1 } },
+    jeep:        { r: 2.2, h: 2, hp: 90, drop: { s: 3 } },
+    banner:      { r: 0.4, h: 6.5, hp: 30, drop: { s: 1 } },
+    watchtower:  { r: 2.0, h: 9, hp: 160, drop: { s: 3, p: 1 } },
+    shrimpstatue:{ r: 1.6, h: 5.5, hp: 220, drop: { g: 2 } },
+    teddystatue: { r: 1.6, h: 5, hp: 220, drop: { f: 2 } },
+    honeypot:    { r: 0.8, h: 1.4, hp: 30, drop: { f: 1 } },
+    moviesign:   { r: 3.2, h: 7, hp: 140, drop: { k: 1, s: 2 } },
     tvscreen:    { r: 1.6, h: 7.5, hp: 120, drop: { s: 2, c: 1 } },
     doorframe:   { r: 0.8, h: 2.6, hp: 30, drop: { s: 1 } },
     humanhouse:  { r: 3.2, h: 6, hp: 200, drop: { g: 2, f: 2 } },
@@ -497,6 +578,58 @@
       human: { variant: 'squanchy' }, names: ['Squanchelo', 'Squanchelle', 'Big Squanch', 'Lil Squanchy', 'Squanch Doe'],
       talk: ['Hey, you squanching for the party tonight?', 'I squanched my squanch, if you know what I squanch.', 'Squanchy is a hero around here.', 'Do not squanch the Federation. They squanched us bad.', 'Squaaanch!'],
       moods: { line: 45, gift: 12, trade: 10, errand: 10, buff: 8, angry: 4, follow: 6, dance: 5 } },
+    // ----- The rest of Earth -----
+    // guard: when someone hurts a person near them, every guard in the area goes after them.
+    cop: { name: 'Police Officer', hp: 55, speed: 3.6, hostile: false, guard: true, dmg: 8, drop: { s: 2, k: 1 }, r: 0.6, h: 1.85,
+      human: { species: ['human'], top: ['polo'], acc: ['cap'], colors: { topColor: '#2a3a6a', shirtColor: '#2a3a6a', pantsColor: '#1e2a4a', accColor: '#1e2a4a' } },
+      names: ['Officer Reyes', 'Officer Kowalski', 'Sergeant Park', 'Officer Daniels'],
+      talk: ['Move along. Nothing to see. Was that a portal?', 'We got a call about a man burping lasers.', 'Do not make me write you up, kid.', 'If you see a pickle with tiny arms, call it in.'],
+      moods: { line: 55, gift: 6, trade: 6, errand: 14, buff: 6, angry: 8, follow: 5 } },
+    president: { name: 'President Curtis', hp: 220, speed: 3.2, hostile: false, guard: true, dmg: 16, drop: { k: 12, s: 4 }, r: 0.7, h: 2.1,
+      human: { species: ['human'], top: ['polo'], acc: ['none'], look: { hair: 'slick', brow: 'angry', mouth: 'flat', face: 'long', height: 1.3, width: 1.05, head: 1.0,
+        skin: '#6b4630', hairColor: '#1a1210', topColor: '#22252e', shirtColor: '#c8303a', pantsColor: '#22252e', shoeColor: '#111111' } },
+      names: ['President Andre Curtis'],
+      talk: ['I am the President of the United States. Act like it.', 'Smith. Tell Sanchez I need him. And no, you cannot have a selfie.', 'My approval rating is not a number, it is a feeling.',
+        'There is a monster in the Kennedy tunnels and only one man is crazy enough to go down there.', 'You are standing on the White House lawn. That is a federal crime, son.', 'Get Schwifty? I did it once. For the planet. Never again.'],
+      moods: { line: 55, gift: 14, trade: 4, errand: 18, buff: 6, angry: 3 } },
+    secretservice: { name: 'Secret Service Agent', hp: 70, speed: 4.2, hostile: false, guard: true, dmg: 11, drop: { k: 2, s: 2 }, r: 0.6, h: 1.95,
+      human: { species: ['human'], top: ['polo'], acc: ['goggles'], colors: { topColor: '#1e2028', shirtColor: '#f0f0f0', pantsColor: '#1e2028', accColor: '#0a0a0a', hairColor: '#2a2018' } },
+      names: ['Agent Steve', 'Agent Ramirez', 'Agent Holt', 'Agent Kim', 'Agent Brooks'],
+      talk: ['Sir, step away from the President.', 'Copy that. Visual on a Morty.', 'The tunnels are off limits.', 'I have been told not to ask about the portals.'],
+      moods: { line: 60, gift: 4, trade: 4, errand: 10, buff: 4, angry: 10 } },
+    marine: { name: 'Marine', hp: 80, speed: 4.4, hostile: false, guard: true, dmg: 12, drop: { s: 3, p: 1 }, r: 0.6, h: 1.9,
+      human: { species: ['human'], top: ['armor'], acc: ['cap'], colors: { topColor: '#5a6a3a', shirtColor: '#5a6a3a', pantsColor: '#4a5632', accColor: '#4a5632' } },
+      names: ['Private Diaz', 'Corporal Webb', 'Sergeant Hayes', 'Private Okafor'],
+      talk: ['Hoo-rah.', 'We trained for aliens. We did not train for whatever you are.', 'The big heads in the sky made us sing once. We do not talk about it.', 'Restricted area. Turn around.'],
+      moods: { line: 55, gift: 6, trade: 6, errand: 12, buff: 6, angry: 8 } },
+    labtech: { name: 'Base Scientist', hp: 30, speed: 2.6, hostile: false, dmg: 0, drop: { c: 2 }, r: 0.6, h: 1.8,
+      human: { species: ['human'], top: ['labcoat'], acc: ['goggles', 'none'] }, names: ['Dr. Fenn', 'Dr. Ostrowski', 'Dr. Lau', 'Dr. Mbeki'],
+      talk: ['Hangar 4? Weather balloon. All of them are weather balloons.', 'We reverse-engineered a toaster from Gazorpazorp. It judges you.', 'Do you know a Rick? Asking for the government.'],
+      moods: { line: 50, gift: 14, trade: 12, errand: 12, buff: 6 } },
+    // ----- Alternate Earths -----
+    fascistsoldier: { name: 'Fascist Trooper', hp: 60, speed: 4.2, hostile: true, dmg: 10, drop: { p: 2, s: 2 }, r: 0.6, h: 1.9,
+      human: { species: ['human'], top: ['armor'], acc: ['cap'], colors: { topColor: '#3a3a40', shirtColor: '#3a3a40', pantsColor: '#2a2a30', accColor: '#b5243c' } } },
+    shrimpfolk: { name: 'Shrimp Person', hp: 35, speed: 2.8, hostile: false, dmg: 0, drop: { g: 2, s: 1 }, r: 0.6, h: 1.8,
+      human: { species: ['shrimp'], top: ['polo', 'sweater', 'tshirt', 'vest'], acc: ['none', 'none', 'cap'], look: { hair: 'bald' } },
+      names: ['Shrimply Gary', 'Krill Brenda', 'Prawnald', 'Scampi', 'Doug Langostino'],
+      talk: ['Lovely day. Lovely, lovely day. Do not look at the flags.', 'You have a very... land-based look.', 'Our dogs are shrimp too. Who is a good shrimp?', 'Cocktail sauce is a hate symbol here.'],
+      moods: { line: 50, gift: 12, trade: 10, errand: 12, buff: 6, angry: 6, follow: 4 } },
+    teddyfolk: { name: 'Teddy Person', hp: 35, speed: 2.8, hostile: false, dmg: 0, drop: { f: 2, s: 1 }, r: 0.6, h: 1.6,
+      human: { species: ['teddy'], top: ['sweater', 'vest', 'polo'], acc: ['none', 'none', 'tophat'], height: [0.75, 0.95], look: { hair: 'bald' } },
+      names: ['Barnaby', 'Mrs. Fluff', 'Teddy Gary', 'Cuddles', 'Professor Plush'],
+      talk: ['Have you met our Rick? Short, spiky, very fond of martinis.', 'Stuffing comes out when you shout. Please do not shout.', 'Honey is legal tender here.', 'Guten Tag. Sorry, habit.'],
+      moods: { line: 50, gift: 14, trade: 10, errand: 12, buff: 8, follow: 4 } },
+    paparazzi: { name: 'Paparazzo', hp: 25, speed: 3.6, hostile: false, dmg: 0, drop: { k: 2 }, r: 0.6, h: 1.8,
+      human: { species: ['human'], top: ['vest', 'tshirt'], acc: ['cap', 'goggles'] }, names: ['Flash', 'Snapz', 'Vinnie Lens'],
+      talk: ['Have you seen Jerry Smith? THE Jerry Smith? From the movies?', 'He did not marry some horse doctor, thank God. Look at that career!', 'Smile! Nobody cares who you are, but smile!'],
+      moods: { line: 55, gift: 8, trade: 8, errand: 14, buff: 4, follow: 8, dance: 3 } },
+    // Shleemypants, a fourth-dimensional Time Cop. Third-dimensional beings may not mess
+    // with time. He turns up when somebody does, and he does not leave quietly.
+    timecop: { name: 'Shleemypants', hp: 260, speed: 4.8, hostile: false, guard: false, dmg: 18, fly: 1.2, drop: { c: 6, m: 3 }, r: 0.8, h: 2.2,
+      names: ['Shleemypants', 'Time Cop Shleemypants'],
+      talk: ['You broke time, you third-dimensional ass. Time Prison. Forever.', 'Do you know how many timelines I had to stitch up today?', 'Get your timeline straight before I put a collar on it.',
+        'Time Court is in session. You lose.', 'Ass. Ass ass ass. Time-ass.'],
+      moods: { line: 70, angry: 20, buff: 5, gift: 5 } },
     gazorpian: { name: 'Gazorpian', hp: 90, speed: 4.2, hostile: true, dmg: 14, drop: { g: 3, s: 2 }, r: 1.2, h: 2.6 },
     froopy: { name: 'Froopy', hp: 30, speed: 2.8, hostile: false, dmg: 0, drop: { f: 2 }, r: 0.7, h: 1.4,
       names: ['Fluffle', 'Snoob', 'Mister Wobbs', 'Bloop', 'Gentle Toot'],

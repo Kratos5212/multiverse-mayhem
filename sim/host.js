@@ -93,7 +93,8 @@
       this.emptySince = host.time;
       this.event = null;
       this.nextEvent = host.time + 60 + Math.random() * 90;
-      for (const [type, count] of this.dim.npc) for (let i = 0; i < count; i++) this.spawnNpc(type, false);
+      // [type, count] or [type, count, x, z] for someone who lives at a particular spot.
+      for (const [type, count, x, z] of this.dim.npc) for (let i = 0; i < count; i++) this.spawnNpc(type, false, x !== undefined ? { at: { x: x + (Math.random() - 0.5) * 6, z: z + (Math.random() - 0.5) * 6 } } : null);
       for (const k in this.dim.pickups) for (let i = 0; i < this.dim.pickups[k]; i++) this.spawnPickup(k, false);
     }
 
@@ -317,6 +318,10 @@
         // Locals you hit hit back (if they are the fighting kind).
         if (!n.T.hostile && n.T.human && Math.random() < 0.5) { n.angry = owner.id; n.angryUntil = this.host.time + 15; }
         if (n.T.hostile) { n.angry = owner.id; n.angryUntil = this.host.time + 12; }
+        // Police, Secret Service and Marines protect people (and each other).
+        if (!n.T.hostile && (n.T.human || n.T.guard)) for (const g of this.npcs.values()) {
+          if (g.T.guard && !(g.owner && g.ownerUntil > this.host.time) && dist2(g.x, g.z, n.x, n.z) < 40 * 40) { g.angry = owner.id; g.angryUntil = this.host.time + 25; }
+        }
       }
       this.ev({ k: 'dmg', n: n.id, d: dmg });
       if (n.hp > 0) return;
@@ -1132,6 +1137,21 @@
         this.fireProjectile(inst, { owner: p.id, kind: 'shrink', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 65, range: 70, dmg: 5, rad: 0.35 });
       } else if (g === 'meeseeks') {
         this.summonMeeseeks(p, 1, 30);
+      } else if (g === 'timecrystal') {
+        // Everything near you stops. Then a Time Cop shows up, very annoyed, to take you in.
+        const now = this.time;
+        for (const o of inst.players.values()) if (o !== p && !o.dead && dist2(o.x, o.z, p.x, p.z) < 14 * 14 && this.canHurt(p, o)) { o.fx.cuff = now + 4; this.dirty(o); }
+        for (const n of inst.npcs.values()) if (dist2(n.x, n.z, p.x, p.z) < 14 * 14) n.stun = now + 4;
+        inst.ev({ k: 'timestop', id: p.id });
+        this.later(2.5, () => {
+          if (this.players.get(p.id) !== p || p.inst !== inst || p.dead) return;
+          let x = p.x + Math.sin(p.r + 2.5) * 5, z = p.z + Math.cos(p.r + 2.5) * 5;
+          [x, z] = MM.collideProps(inst.dimId, x, z, 0.8, null);
+          const n = inst.spawnNpc('timecop', true, { at: { x, z }, until: now + 70 });
+          n.angry = p.id; n.angryUntil = now + 65;
+          inst.ev({ k: 'say', n: n.id, by: p.id, text: pick(['Freezing time? You? You third-dimensional ass!', 'Time Cops! You are under arrest for messing with time.', 'Time Prison. Forever. Let us go.']) });
+          this.toast(p, 'A Time Cop is after you. Run, or fight a fourth-dimensional being.');
+        });
       } else if (g === 'turret') {
         let mine = 0;
         for (const t of inst.turrets.values()) if (t.owner === p.id) mine++;
@@ -1153,7 +1173,7 @@
       if (p.dead || !l || l.dim !== p.inst.dimId || this.time < p.cdUse) return;
       if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2) return;
       p.cdUse = this.time + 1;
-      const mine = Object.keys(MM.TASKS).filter(t => MM.TASKS[t].at === lid && (MM.TASKS[t].any || p.A.life.daily.includes(t)) && !(MM.TASKS[t].notFor || []).includes(p.arch));
+      const mine = Object.keys(MM.TASKS).filter(t => MM.isAt(l, MM.TASKS[t].at) && MM.taskFor(t, p.arch));
       const id = taskId && mine.includes(taskId) ? taskId : mine[0];
       if (!id) { if (l.door) this.onDoor(p, lid); else this.toast(p, 'Nothing for you to do at the ' + l.name + '. You could still build things here (C).'); return; }
       const T = MM.TASKS[id], wall = this.wall();
@@ -1164,7 +1184,15 @@
       if (T.heal) p.hp = p.maxHp;
       if (T.summon) this.summonMeeseeks(p, 1, 45);
       if (T.effect === 'borrowgun') { p.borrow = 2; this.dirty(p); }   // Rick's gun: two charges, no recharging
-      this.priv(p, { k: 'task', id, text: T.text, give: T.give, mult });
+      let text = T.text;
+      // Earth TVs are normal until a Rick "fixes" them with Xanthenite (for this copy of the world).
+      if (T.effect === 'fixtv') p.inst.cable = this.time + 600;
+      if (id === 'watchtv' && p.inst.cable > this.time) text = pick(['Interdimensional cable! Ball Fondlers, then Real Fake Doors, then a man who is also a pizza.', 'Two Brothers. The plot is a lot. You cannot look away.', 'Ants in my Eyes Johnson! He cannot see a thing. Prices so low.']);
+      if (T.effect === 'tunnels') {
+        const inst = p.inst;
+        this.later(1.5, () => { if (p.inst === inst && !p.dead) { const n = inst.spawnNpc('meatblob', true, { at: { x: p.x + 4, z: p.z + 4 }, until: this.time + 60 }); n.angry = p.id; n.angryUntil = this.time + 50; } });
+      }
+      this.priv(p, { k: 'task', id, text, give: T.give, mult });
       p.inst.ev({ k: 'em', id: p.id, e: 0 });
       this.progress(p, 'use', id);
     }

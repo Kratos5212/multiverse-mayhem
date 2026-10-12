@@ -505,6 +505,7 @@
       case 'em': { const p = G.players.get(e.id); if (p) p.emoteT = 2; break; }
       case 'dodge': { const p = posOf(e.id); if (p) { numAt(p.x, p.y + 2.4, p.z, 'DODGE!', '#5ff8ff', false); sfxAt('dodge', p.x, p.z); } break; }
       case 'kiosk': { const p = posOf(e.id); if (p) fx.burst(p.x, p.y + 1, p.z, '#ffd84d', 25, 6, 0.6, 0.5, 2); break; }
+      case 'timestop': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1.2, p.z, '#8fd8ff', 90, 14, 1.2, 1.4, 0); fx.burst(p.x, p.y + 1.2, p.z, '#ffffff', 30, 8, 0.8, 1.0, 0); } C.sfx('ability'); if (e.id === G.myId) UI.toast('Time stopped. Someone will have noticed.', 3000); break; }
       case 'bite': { const n = G.npcs.get(e.n); if (n) sfxAt('bite', n.x, n.z); break; }
       case 'shrunk': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1, p.z, '#b48aff', 20, 4, 0.5, 0.6, 0); sfxAt('shrink', p.x, p.z); } break; }
       case 'say': {
@@ -680,6 +681,7 @@
     mk('turret', '2', 'Turret', () => useGadget('turret'));
     mk('shrink', '3', 'Shrink', () => useGadget('shrink'));
     mk('meeseeks', '4', 'Meeseeks', () => useGadget('meeseeks'));
+    mk('timecrystal', '5', 'Time', () => useGadget('timecrystal'));
     mk('craft', 'C', 'Build', () => openCraft());
     mk('journal', 'J', 'Journal', () => openJournal());
     mk('portal', 'E', 'Portal', () => portalAction());
@@ -695,6 +697,8 @@
       slots[g].querySelector('.n').textContent = y.inv[g] || '';
       slots[g].classList.toggle('off', !(y.inv[g] > 0));
     }
+    // Only Ricks and Evil Morty know how to make a Time Crystal: no slot for everyone else.
+    slots.timecrystal.hidden = !(y.inv.timecrystal > 0) && !!(G.prog && MM.canKnow(profile.arch, G.prog, 'timecrystal'));
     const st = G.st;
     slots.portal.querySelector('.n').textContent = y.chMax ? String(y.ch) : y.bor ? String(y.bor) : '';
     slots.portal.classList.toggle('off', !(y.chMax && y.ch > 0) && !(y.bor > 0) && !nearKiosk() && !y.ship);
@@ -819,8 +823,7 @@
   }
   // Daily tasks you can do at a landmark: your own life's, plus the ones anyone can do.
   function tasksAt(l) {
-    const A = MM.ARCHETYPES[profile.arch];
-    return Object.keys(MM.TASKS).filter(t => MM.TASKS[t].at === l.id && (MM.TASKS[t].any || A.life.daily.includes(t)) && !(MM.TASKS[t].notFor || []).includes(profile.arch));
+    return Object.keys(MM.TASKS).filter(t => MM.isAt(l, MM.TASKS[t].at) && MM.taskFor(t, profile.arch));
   }
   function openLandmark(l) {
     const A = MM.ARCHETYPES[profile.arch];
@@ -861,7 +864,7 @@
     const ids = MM.WORLD_IDS.filter(id => !MM.DIM_BY_ID[id].outsideCurve);
     const out = MM.WORLD_IDS.filter(id => MM.DIM_BY_ID[id].outsideCurve);
     const spots = [];
-    const rings = [[0.88, 0.85, 7], [0.74, 0.7, 6], [0.6, 0.5, 6]];
+    const rings = [[0.9, 0.88, 10], [0.77, 0.78, 9], [0.64, 0.66, 8], [0.5, 0.5, 6]];
     let k = 0;
     for (const [f, span, n] of rings) for (let i = 0; i < n && k < ids.length; i++, k++) {
       const t = n === 1 ? 0 : -span + (2 * span * i) / (n - 1);
@@ -1105,6 +1108,7 @@
       case 'Digit2': useGadget('turret'); break;
       case 'Digit3': useGadget('shrink'); break;
       case 'Digit4': useGadget('meeseeks'); break;
+      case 'Digit5': useGadget('timecrystal'); break;
       case 'KeyV': toggleView(); break;
       case 'KeyG': emote(); break;
       case 'Space': e.preventDefault(); if (G.you && G.you.dead && now() >= G.rsAt) send({ t: 'rs' }); break;

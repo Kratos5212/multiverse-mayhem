@@ -48,10 +48,10 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | F | TALK / USE | Talk to locals, daily tasks at buildings, doors, portal stations |
 | J | Journal button | Your life, your path, errands |
 | B | SHIP | Board or leave your ship (Space up, Shift down) |
-| 1 2 3 4 | GADGET | Grenade, turret, shrink ray, Meeseeks Box |
+| 1 2 3 4 5 | GADGET | Grenade, turret, shrink ray, Meeseeks Box, Time Crystal (Ricks and Evil Morty) |
 | C | Build slot | Workbench |
 | Enter | Chat button | Chat with the whole multiverse |
-| Tab | Chart button | Leaderboard, players here, mute |
+| Tab | Chart button | Leaderboard, players here, invite to your team, mute |
 | V or mouse wheel | Eye button | Switch between first and third person |
 | G |  | Wave |
 | Esc | Menu button | Settings and leave |
@@ -89,12 +89,12 @@ You never have to break out: you can play a normal life and still travel the way
 
 ## Crafting across dimensions
 
-Every world has its own material: **Scrap** (everywhere), **Moon Crystals** (Lowgrav Moon), **Meat Goo** (Cronenberg World), **Neon Plasma** (Alien Bazaar), **Sky Feathers** (Bird World), **Schmeckles** (Citadel of Ricks) and **Mega Seeds** (Mega Seed World, rare). Gadgets can be built anywhere; big upgrades must be built at a particular station in a particular world, from materials gathered in others.
+Every world has its own material: **Scrap** (everywhere), **Moon Crystals** (Lowgrav Moon), **Meat Goo** (Cronenberged Earth), **Neon Plasma** (Alien Bazaar), **Sky Feathers** (Bird World), **Schmeckles** (Citadel of Ricks) and **Mega Seeds** (Mega Seed World, rare). Gadgets can be built anywhere; big upgrades must be built at a particular station in a particular world, from materials gathered in others.
 
 | What | Built at | Needs |
 | --- | --- | --- |
 | Gravity Grenade, Auto-Turret, Shrink Ray, Portal Fluid | Anywhere | Scrap, crystals |
-| Bio-Armor I–III (+80 health) | Flesh Forge, Cronenberg World | Goo, crystals, plasma |
+| Bio-Armor I–III (+80 health) | Flesh Forge, Cronenberged Earth | Goo, crystals, plasma |
 | Spring Legs, Crystal Tendons (speed, jump) | Rick's Garage, Earth / Refinery, Moon | Scrap, crystals, plasma |
 | Jetpack → Feather Wings (hover → fly) | Bazaar Shipyard / Aerie Temple, Bird World | Plasma, feathers, goo |
 | Weapon Mod, Overcharged Core (+30%, +40% damage) | Black Market, Bazaar | Plasma, crystals, goo |
@@ -110,7 +110,7 @@ Press **B** to board (phone: SHIP). Fly where you look: **W** forward, **Space**
 
 ## Locals and random events
 
-Every world has locals who walk around with names, faces and opinions: neighbours and students on Earth C-137, flesh monks in Cronenberg World, merchants and tourists in the Bazaar, miners on the moon, bird citizens in Bird World. Walk up and press **F** to talk. Anything can happen:
+Every world has locals who walk around with names, faces and opinions: neighbours and students on Earth C-137, flesh monks in Cronenberged Earth, merchants and tourists in the Bazaar, miners on the moon, bird citizens in Bird World. Walk up and press **F** to talk. Anything can happen:
 
 * They just say something strange.
 * They give you a gift, or offer a trade.
@@ -125,7 +125,7 @@ Every few minutes a **world event** hits a dimension:
 | Dimension | Events |
 | --- | --- |
 | Earth C-137 | Block Party, Alien Invasion |
-| Cronenberg World | Meat Rain, Blob Swarm |
+| Cronenberged Earth | Meat Rain, Blob Swarm |
 | Bazaar | Flash Sale, Jelly Bloom |
 | Moon | Meteor Shower, Crab Migration |
 | Bird World | Molting Season, Serpent Hunt |
@@ -133,13 +133,20 @@ Every few minutes a **world event** hits a dimension:
 
 ## Dimensions
 
-Every world is laid out like a real place (`shared/layouts.js`): roads and squares first, buildings lining the streets with their fronts to the road, lamps and benches along the sidewalks, fields and villages where they belong, and wild things only out in the countryside. Cronenberg World is the Smith neighbourhood after the love potion; the Bazaar is a ring of market streets; the Citadel is a white city of towers around a central square; Snowball's palace sits at the end of an avenue of dog statues.
+Every world is laid out like a real place (`shared/layouts.js`): roads and squares first, buildings lining the streets with their fronts to the road, lamps and benches along the sidewalks, fields and villages where they belong, and wild things only out in the countryside. Cronenberged Earth is the Smith neighbourhood after the love potion; the Bazaar is a ring of market streets; the Citadel is a white city of towers around a central square; Snowball's palace sits at the end of an avenue of dog statues.
 
 
 | Dimension | Feel | Locals | Material | Landmarks |
 | --- | --- | --- | --- | --- |
-| Earth C-137 | Streets, houses, cars | Neighbours, students | Scrap | Smith House, Rick's Garage, Harry Herpson High, Horse Hospital, Unemployment Office |
-| Cronenberg World | Flesh pillars, eye stalks, a giant eye in the sky | Flesh monks, meat blobs (hostile) | Meat Goo | Flesh Forge |
+| Earth C-137 | Streets, houses, cars | Neighbours, students | Scrap | Smith House, Rick's Garage, Harry Herpson High, Horse Hospital, Unemployment Office, Ruben's tent (Anatomy Park), the chalk door (Froopyland) |
+| Earth: Downtown | A city grid of towers, apartments and shops | Neighbours, police | Scrap | Merpal's Mall, Shoney's, Needful Things, Dr. Wong's office, the electronics store |
+| Earth: Washington, D.C. | The National Mall with cherry trees and federal buildings | President Curtis, Secret Service, Marines | Schmeckles | The White House (and the Kennedy tunnels), Washington Monument, the Capitol, the Pentagon |
+| Earth: Area 51 | Desert base with hangars, radar dishes and watchtowers | Marines, base scientists | Moon Crystal | The Sonic Stage (Get Schwifty), Hangar 18 |
+| Fascist Earth | The Smith street under a regime: grey skies, banners, watchtowers | Fascist troopers (hostile), neighbours | Neon Plasma | Same buildings as home |
+| Shrimp Earth | The Smith street, everyone evolved from shrimp | Shrimp people | Meat Goo | Same buildings as home |
+| Teddy Earth | The Smith street, everyone a teddy bear | Teddy people | Sky Feather | Same buildings as home |
+| Earth C-500A | Beth and Jerry never married; Jerry is a movie star | Neighbours, paparazzi | Schmeckles | Same buildings as home |
+| Cronenberged Earth (Prime) | Flesh pillars, eye stalks, a giant eye in the sky | Flesh monks, meat blobs (hostile) | Meat Goo | Flesh Forge |
 | Alien Bazaar | Glowing mushrooms, market stalls, a ringed planet | Merchants, tourists, sky jellies | Neon Plasma | Bazaar Shipyard, Black Market |
 | Lowgrav Moon | Craters, crystals, rovers, very low gravity | Miners, moon crabs (hostile) | Moon Crystal | Crystal Refinery |
 | Bird World | Golden cliffs, giant nests, totems, floating islands | Bird citizens, sky serpents (hostile) | Sky Feather | Aerie Temple |
@@ -163,6 +170,14 @@ Every world is laid out like a real place (`shared/layouts.js`): roads and squar
 | **Interdimensional Cable** | A commercial strip of stores and giant TVs; *outside the Curve* | Pitchmen from the ads | Schmeckles | Real Fake Doors, Ants in my Eyes Johnson's |
 | **Hamster-in-Butt World** | A village of seated people who are also houses; *outside the Curve* | Hamsters | Sky Feather | |
 | **Plumbubo Prime 51b** | The plumbus works: factory halls, production lines, fleeb vats; *outside the Curve* | Blamphs, plumbus workers | Meat Goo | Plumbus Production Line |
+
+**One Earth, several places.** The Smith neighbourhood, Downtown, Washington, D.C. and Area 51 are the same planet: drive between them on the highways along the north edge of each (your team comes too), or hop between them in a ship. **The same Earth in other dimensions** (Fascist, Shrimp, Teddy, C-500A and the Cronenberged Prime Earth) has the same street plan and buildings with its own people; reach those by portal.
+
+**TVs.** Earth TVs show normal Earth TV. Rick's own TV in the Smith house always has interdimensional cable, and a Rick can "fix" the TVs in the Downtown electronics store so they pick up every channel in the multiverse for a while.
+
+**The Time Cops.** Ricks and Evil Morty can make a **Time Crystal** (key 5): it freezes everyone around you for 4 seconds. Third-dimensional beings aren't allowed to mess with time, so **Shleemypants**, a fourth-dimensional Time Cop, shows up a moment later to arrest you.
+
+**Guards.** Police, the Secret Service and Marines protect people: hurt someone near them and they all come for you.
 
 Every prop except the landmarks can be destroyed. Wrecking things and beating other players earns **chaos points** for the multiverse-wide leaderboard.
 

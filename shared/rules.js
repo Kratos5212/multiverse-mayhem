@@ -75,16 +75,60 @@
     { id: 'mindblowers', dim: 'ricklab', name: 'Mind Blowers', x: -8.5, z: -6, r: 1.4, h: 2.4, model: 'lm_mindblowers' },
     { id: 'cellarexit', dim: 'cellar', name: 'Back to the garage', x: 0, z: 9.5, r: 1.4, h: 3.4, model: 'lm_cellardoor', door: { dim: 'rickgarage', x: -6, z: -3.4 } },
     { id: 'winerack', dim: 'cellar', name: "Rick's private stash", x: 0, z: -8.5, r: 2.0, h: 3, model: 'lm_winerack' },
+    // ----- Downtown (just outside Seattle) -----
+    { id: 'mall', dim: 'downtown', name: "Merpal's Mall", x: -66, z: -22, r: 12, h: 9, model: 'lm_mall', rot: Math.PI / 2, sign: { text: "MERPAL'S MALL", y: 7.4, z: 8.1, w: 10 } },
+    { id: 'shoneys', dim: 'downtown', name: "Shoney's", x: 22, z: 22, r: 6.5, h: 6, model: 'lm_shoneys', rot: Math.PI, sign: { text: "SHONEY'S", y: 5.0, z: 4.6, w: 6 } },
+    { id: 'needful', dim: 'downtown', name: 'Needful Things', x: -22, z: 22, r: 5.5, h: 6, model: 'lm_needful', rot: Math.PI, sign: { text: 'NEEDFUL THINGS', y: 4.6, z: 3.9, w: 6 } },
+    { id: 'wong', dim: 'downtown', name: "Dr. Wong's Office", x: 22, z: -22, r: 6, h: 12, model: 'lm_wong', rot: 0, sign: { text: 'DR. WONG · FAMILY THERAPY', y: 3.6, z: 4.4, w: 7 } },
+    { id: 'tvstore', dim: 'downtown', name: 'Electronics Store', x: -22, z: -22, r: 6, h: 6, model: 'lm_tvstore', rot: 0, sign: { text: 'TV & ELECTRONICS', y: 4.9, z: 4.6, w: 7 } },
+    // ----- Washington, D.C. -----
+    { id: 'whitehouse', dim: 'dc', name: 'The White House', x: 0, z: -52, r: 14, h: 10, model: 'lm_whitehouse', rot: 0 },
+    { id: 'monument', dim: 'dc', name: 'Washington Monument', x: 0, z: 0, r: 3, h: 30, model: 'lm_obelisk' },
+    { id: 'capitol', dim: 'dc', name: 'The Capitol', x: 0, z: 110, r: 16, h: 18, model: 'lm_capitol', rot: Math.PI },
+    { id: 'pentagon', dim: 'dc', name: 'The Pentagon', x: 100, z: -40, r: 20, h: 7, model: 'lm_pentagon', rot: -Math.PI / 2 },
+    // ----- Area 51 -----
+    { id: 'sonicstage', dim: 'area51', name: 'The Sonic Stage', x: 0, z: -40, r: 12, h: 9, model: 'lm_sonicstage', rot: 0 },
+    { id: 'hangar51', dim: 'area51', name: 'Hangar 18', x: 60, z: 10, r: 13, h: 10, model: 'lm_hangar', rot: -Math.PI / 2, sign: { text: 'HANGAR 18', y: 8.2, z: 9.6, w: 6 } },
   ];
+  // Highways between the parts of Earth. Each part has an on-ramp to every other part,
+  // in a row on its north edge; you come out at the matching ramp at the other end.
+  const EARTH = [['suburbia', 'the Smith neighbourhood'], ['downtown', 'Downtown'], ['dc', 'Washington, D.C.'], ['area51', 'Area 51']];
+  const rampAt = (from, to) => { const others = EARTH.filter(e => e[0] !== from).map(e => e[0]); return { x: -64 + 64 * others.indexOf(to), z: -160 }; };
+  for (const [from] of EARTH) for (const [to, name] of EARTH) {
+    if (from === to) continue;
+    const a = rampAt(from, to), b = rampAt(to, from);
+    MM.LANDMARKS.push({ id: 'hw_' + from + '_' + to, dim: from, name: 'Highway to ' + name, x: a.x, z: a.z, r: 4.5, h: 7, model: 'lm_highway', rot: 0,
+      sign: { text: name.toUpperCase().replace(/^THE /, ''), y: 6.1, z: 0.4, w: 7 }, door: { dim: to, x: b.x, z: b.z + 10 } });
+  }
   MM.LANDMARK_BY_ID = {};
   for (const l of MM.LANDMARKS) MM.LANDMARK_BY_ID[l.id] = l;
   MM.USE_RADIUS = 4;   // how close to a landmark's wall you must be to use it
   // A landmark counts as a recipe's station if it is that station or stands in for it.
   MM.isAt = (l, at) => l.id === at || l.alias === at;
+  // Can this character do this task at all? Your own daily life, anything marked any,
+  // minus what your lore rules out (notFor) or only some people can do (onlyFor).
+  MM.taskFor = (t, arch) => {
+    const T = MM.TASKS[t];
+    return (T.any || MM.ARCHETYPES[arch].life.daily.includes(t)) && !(T.notFor || []).includes(arch) && (!T.onlyFor || T.onlyFor.includes(arch));
+  };
 
   // ---------- Daily life ----------
   // Things you do at a landmark. Each can be repeated after its cooldown (seconds).
   MM.TASKS = {
+    // Downtown, D.C. and Area 51: anyone can do these.
+    mall:    { at: 'mall', any: true, name: "Hang out at Merpal's Mall", cd: 150, give: { s: 2, k: 1 }, text: 'You walked a lap of the food court and found a coupon on the floor.' },
+    shoneys: { at: 'shoneys', any: true, name: "Eat at Shoney's", cd: 150, heal: 1, give: { s: 1 }, text: "The breakfast bar at Shoney's. Rick says it's the best restaurant on Earth, and for once he's not being sarcastic." },
+    needful: { at: 'needful', any: true, name: 'Buy a cursed antique', cd: 240, give: { m: 2 }, text: 'Mr. Needful sold you exactly what you wanted. There is a catch. You will find out what it is.' },
+    therapy: { at: 'wong', any: true, name: 'Family therapy with Dr. Wong', cd: 200, heal: 1, give: { m: 1 }, text: 'Dr. Wong listened. You talked about the pickle thing. It helped, annoyingly.' },
+    watchtv: { at: 'tvstore', any: true, name: 'Watch the TVs in the window', cd: 90, give: { s: 1 }, text: 'Regular Earth TV: the news, a cooking show and an ad for a mattress. Nothing weird at all.' },
+    fixtv:   { at: 'tvstore', any: true, onlyFor: ['genius'], name: "\"Fix\" the TVs", cd: 300, give: { c: 2 }, effect: 'fixtv', text: 'A little crystallised Xanthenite in every box. Now they get every channel in the multiverse. Two Brothers is on.' },
+    oval:    { at: 'whitehouse', any: true, name: 'See the President in the Oval Office', cd: 300, give: { k: 4 }, text: 'President Curtis needs a favour and would like you to know he does not need anyone. Also, no selfies.' },
+    tunnels: { at: 'whitehouse', any: true, name: 'Go down into the Kennedy tunnels', cd: 400, give: { g: 3, k: 2 }, effect: 'tunnels', text: 'Something lives down here. It has noticed you.' },
+    tour:    { at: 'monument', any: true, name: 'Ride up the Washington Monument', cd: 120, give: { s: 1 }, text: 'A very tall view of a very flat city. You spot three portals and a Secret Service agent pretending not to.' },
+    congress:{ at: 'capitol', any: true, name: 'Sit in on Congress', cd: 200, give: { k: 2 }, text: 'Four hours of shouting. One bill passed. It was about portals, and it was confusing.' },
+    warroom: { at: 'pentagon', any: true, name: 'Sit in the war room', cd: 240, give: { p: 2, k: 1 }, text: 'Generals pointing at a big screen. The big screen is pointing at your house.' },
+    schwifty:{ at: 'sonicstage', any: true, name: 'Get Schwifty for the Cromulons', cd: 300, give: { m: 2, k: 2 }, text: 'SHOW ME WHAT YOU GOT! You took off your pants and your panties and the giant heads in the sky approved.' },
+    hangar:  { at: 'hangar51', any: true, name: 'Look inside Hangar 18', cd: 200, give: { c: 3 }, text: 'Weather balloons. Lots of weather balloons. One of them waved.' },
     tinker:  { at: 'garage', name: 'Tinker in the garage', cd: 120, give: { s: 3, c: 1 }, text: 'You built something, took it apart, and kept the good bits.' },
     school:  { at: 'school', name: 'Sit through class', cd: 150, give: { s: 2 }, text: 'Algebra. Again. You pocketed some scrap from shop class.' },
     surgery: { at: 'hospital', name: 'Operate on a horse', cd: 150, give: { s: 3, c: 1 }, heal: 1, text: 'The horse will live. Probably. It looked grateful.' },
@@ -129,6 +173,7 @@
     turret:   { cat: 'gadget', name: 'Auto-Turret', cost: { s: 6, c: 1 }, max: 2, desc: 'A turret that shoots anyone near it for 45 s.' },
     shrink:   { cat: 'gadget', name: 'Shrink Ray Shot', cost: { s: 4, c: 2 }, max: 3, desc: 'One shot that shrinks the target to half size for 8 s.' },
     fluid:    { cat: 'gadget', name: 'Portal Fluid', cost: { c: 2 }, gun: true, desc: 'Refills one portal gun charge right away.' },
+    timecrystal: { cat: 'gadget', name: 'Time Crystal', cost: { c: 5, m: 2 }, max: 1, desc: 'Press 5: freeze time around you for 4 s. Illegal for third-dimensional beings, so the Time Cops will come for you.' },
     meeseeks: { cat: 'gadget', name: 'Meeseeks Box', cost: { k: 3, s: 1 }, max: 2, desc: 'Press it (4): a Mr. Meeseeks pops out and fights for you for 30 s.' },
     megabrain: { cat: 'self', name: 'Mega Seed Smarts', cost: { m: 4, c: 2 }, at: 'garage', desc: 'Abilities recharge 30% faster and you hit 10% harder.' },
     cloak:    { cat: 'self', name: 'Citadel Cloak', cost: { k: 8, p: 3 }, at: 'council', desc: 'Monsters and turrets lose track of you 3 s after you stop fighting.' },
@@ -152,7 +197,7 @@
     drive:    { cat: 'ship', name: 'Dimension Drive', cost: { c: 6, g: 4, p: 6, f: 4 }, at: 'shipyard', needs: 'engine', desc: 'Fly your ship straight into any dimension.' },
   };
   MM.RECIPE_IDS = Object.keys(MM.RECIPES);
-  MM.GADGET_IDS = ['grenade', 'turret', 'shrink', 'meeseeks'];
+  MM.GADGET_IDS = ['grenade', 'turret', 'shrink', 'meeseeks', 'timecrystal'];
   // Recipes everyone knows, whoever they are.
   MM.COMMON = ['meeseeks', 'megabrain'];
   MM.CATS = { gadget: 'Gadgets', self: 'You', gun: 'Portal gun', ship: 'Ship' };
@@ -355,7 +400,7 @@
     evilmorty: {
       name: 'Evil Morty', hp: 100, speed: 7.5, jump: 8.5, weapon: 'blaster', home: 'suburbia',
       temper: { fights: 'defend', hunts: ['genius'] }, homes: ['citadel'],
-      portal: { charges: 1, recharge: 30 }, knows: ['grenade', 'shrink', 'fluid', 'guncap1', 'gunfast', 'legs1'],
+      portal: { charges: 1, recharge: 30 }, knows: ['grenade', 'shrink', 'fluid', 'guncap1', 'gunfast', 'legs1', 'timecrystal'],
       ability: { id: 'scheme', name: 'Vanish', cd: 18, dur: 5 },
       blurb: 'A Morty with an eye patch and a plan. Quiet, patient, and always three steps ahead.',
       perk: 'Vanish: monsters and turrets lose track of you for 5 s. Starts with a golden portal gun that can leave the Central Finite Curve.',
@@ -487,7 +532,7 @@
   // How each body type looks to the character creator. Every option is an enum the
   // server checks, so nobody can send anything odd to other players.
   MM.LOOK = {
-    species: ['human', 'alien', 'birdfolk', 'robot', 'beanling', 'blob', 'cat', 'insect', 'pickle'],
+    species: ['human', 'alien', 'birdfolk', 'robot', 'beanling', 'blob', 'cat', 'insect', 'pickle', 'teddy', 'shrimp'],
     hair: ['rick', 'morty', 'bob', 'spiky', 'tuft', 'bowl', 'mohawk', 'afro', 'ponytail', 'slick', 'bald'],
     brow: ['uni', 'normal', 'angry', 'none'],
     eyes: ['normal', 'tired', 'wide', 'sleepy', 'dots', 'cyclops', 'three', 'visor'],

@@ -159,6 +159,55 @@
   const DIAG = [45 * DEG, 135 * DEG, 225 * DEG, 315 * DEG];  // x shaped spokes
 
   MM.LAYOUTS = {
+    // Downtown: a proper city grid. Towers in the middle blocks, shops and apartments
+    // further out, street lamps everywhere, and the landmarks in the blocks around the square.
+    downtown(L) {
+      const r = L.r;
+      L.plaza(0, 0, 14, 'stone');
+      L.grid({
+        spacing: 44, extent: 154, w: 8, style: 'asphalt',
+        lots: { setback: 11, spacing: 15, gap: 0.08, types: [['skyscraper', 3], ['apartment', 3], ['storefront', 3], ['officeblock', 1]] },
+        crossLots: { setback: 11, spacing: 16, gap: 0.2, types: [['storefront', 3], ['apartment', 2], ['car', 1]] },
+        lamps: { type: 'streetlamp', every: 22, offset: 5.2 },
+      });
+      for (const [x, z] of [[66, 66], [-110, 110]]) L.cluster(x, z, 14, [['tree', 3], ['citbench', 1]], 8);
+      L.scatter([['car', 2], ['hydrant', 1]], 30, { minR: 30, roadside: true });
+    },
+
+    // Washington, D.C.: the National Mall runs north-south from the White House past the
+    // Monument to the Capitol, lined with cherry trees and federal buildings; avenues out
+    // to the Pentagon and the rest of the city.
+    dc(L) {
+      L.plaza(0, 0, 13, 'stone');
+      L.road(0, -36, 0, 92, 10, 'gravel');
+      L.road(-150, 30, 150, 30, 9, 'asphalt');
+      L.road(-150, -80, 150, -80, 9, 'asphalt');
+      L.path([[14, -10], [70, -40], [78, -40]], 8, 'asphalt');
+      L.road(-60, -150, -60, 150, 9, 'asphalt');
+      L.road(60, 60, 60, 150, 9, 'asphalt');
+      L.street(0, 16, 0, 90, { setback: 9, spacing: 9, types: 'cherrytree', jitter: 1 });
+      L.street(0, 16, 0, 90, { setback: 26, spacing: 24, gap: 0.1, types: [['officeblock', 3], ['flagpole', 1]] });
+      L.street(-150, 30, 150, 30, { setback: 12, spacing: 20, gap: 0.3, start: 40, types: [['officeblock', 2], ['apartment', 1]], lamps: { type: 'streetlamp', every: 22, offset: 6 } });
+      L.street(-60, -150, -60, 150, { setback: 12, spacing: 18, gap: 0.25, types: [['apartment', 2], ['storefront', 2], ['officeblock', 1]], lamps: { type: 'streetlamp', every: 22, offset: 6 } });
+      L.ring(0, 0, 16, 12, 'flagpole', { roadside: true });
+      L.ring(0, -52, 22, 10, 'cherrytree', { a0: 0.2 });
+      L.scatter([['cherrytree', 3], ['tree', 3], ['citbench', 1]], 50, { minR: 40 });
+    },
+
+    // Area 51: a runway, hangars in a row, radar dishes, watchtowers on the fence line,
+    // and empty desert all the way to the mountains.
+    area51(L) {
+      L.plaza(0, 0, 14, 'metal');
+      L.road(-140, 60, 140, 60, 14, 'asphalt');
+      L.road(0, 14, 0, 60, 8, 'asphalt');
+      L.road(0, -14, 0, -26, 8, 'asphalt');
+      L.street(-130, 60, -10, 60, { setback: 20, spacing: 24, sides: [1], types: 'hangar' });
+      L.street(-130, 60, 130, 60, { setback: 11, spacing: 30, sides: [-1], gap: 0.3, types: [['jeep', 2], ['crate', 1]] });
+      L.rows(60, -50, 40, 0, 20, 1, 'radar', 0);
+      L.ring(0, 0, 120, 14, 'watchtower', { face: 'out' });
+      L.cluster(-60, -40, 16, [['crate', 3], ['jeep', 1]], 10);
+      L.scatter([['cactus', 3], ['rock', 2]], 60, { minR: 90 });
+    },
     // Cronenberg World: the Smith neighbourhood after the love potion. Same streets,
     // same houses, all of it overgrown with flesh.
     meatlands(L) {

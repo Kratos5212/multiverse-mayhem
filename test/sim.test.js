@@ -450,3 +450,23 @@ test('teams: invite, no friendly fire, and teammates come along through doors an
   host.message(b.c, JSON.stringify({ t: 'tm', op: 'leave' }));
   assert.ok(!a.p.team && !b.p.team);
 });
+
+test('Earth: highways between regions, the President is guarded, and freezing time brings a Time Cop', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'suburbia' });
+  near(host, c, p, 'hw_suburbia_dc'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"hw_suburbia_dc"}');
+  assert.strictEqual(p.inst.dimId, 'dc');
+  const pres = [...p.inst.npcs.values()].find(n => n.type === 'president');
+  assert.ok(pres && Math.hypot(pres.x, pres.z + 38) < 8, 'the President is at the White House');
+  p.inst.hurtNpc(pres, 5, p);
+  assert.ok([...p.inst.npcs.values()].some(n => n.T.guard && n !== pres && n.angry === p.id), 'his guards come for you');
+  // Alternate Earths share the street plan and the landmarks.
+  assert.ok(MM.LANDMARK_BY_ID.shrimpearth_home && MM.isAt(MM.LANDMARK_BY_ID.shrimpearth_home, 'home'));
+  // A Time Crystal stops time... and a Time Cop turns up.
+  p.inv.timecrystal = 1;
+  host.message(c, '{"t":"g","g":"timecrystal","dx":0,"dy":0,"dz":1}');
+  assert.strictEqual(p.inv.timecrystal, 0);
+  run(host, 3);
+  assert.ok([...p.inst.npcs.values()].some(n => n.type === 'timecop' && n.angry === p.id));
+});
