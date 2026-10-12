@@ -32,10 +32,11 @@
     constructor(send, opts) {
       opts = opts || {};
       this.sendRaw = send;
-      this.arch = opts.arch || pick(MM.ARCH_IDS);
-      this.name = opts.name || pick(NAMES) + (Math.random() < 0.5 ? '' : Math.floor(Math.random() * 99));
+      // Mostly Ricks and Mortys from other universes, plus the rest of the cast.
+      this.arch = opts.arch || pick(['genius', 'genius', 'genius', 'sidekick', 'sidekick', 'sidekick'].concat(MM.ARCH_IDS));
+      this.name = opts.name || (Math.random() < 0.8 ? MM.ARCHETYPES[this.arch].name : pick(NAMES));
       this.home = pick('ABCDEFGHJKLMNPQRSTUVWXYZ') + '-' + Math.floor(Math.random() * 999);
-      this.look = opts.look || MM.randomLook(this.arch);
+      this.look = opts.look || (Math.random() < 0.85 ? MM.variantLook(this.arch) : MM.randomLook(this.arch));
       this.chatty = opts.chatty !== undefined ? opts.chatty : 0.5;
       this.startDim = opts.dim;
       this.A = MM.ARCHETYPES[this.arch];

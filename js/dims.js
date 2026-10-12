@@ -412,6 +412,7 @@
     blob: ['#e07a85', '#d9677a', '#c4505f'], robot: ['#b4b4c0', '#9aa3ab', '#d8c060'], birdfolk: ['#f0d0a0', '#e8c49a', '#d9b98a'], beanling: ['#ffd447', '#ff9bd2', '#7ec8e3'] };
   C.npcLook = function (type, seed) {
     const H = MM.NPCS[type].human, r = MM.rng(seed >>> 0);
+    if (H.fixed) return MM.canonLook(H.fixed);
     const pk = a => a[Math.floor(r() * a.length)];
     const col = () => '#' + Math.floor(r() * 0xffffff).toString(16).padStart(6, '0');
     const look = MM.defaultLook();
@@ -428,7 +429,7 @@
   C.npcModel = function (type, seed) {
     if (MM.NPCS[type].human) {
       const look = C.npcLook(type, seed || 1);
-      const av = C.buildAvatar(look, type === 'invader' ? 'trooper' : type === 'birdcitizen' ? 'birdfolk' : 'joe');
+      const av = C.buildAvatar(look, type === 'invader' ? 'trooper' : type === 'birdcitizen' ? 'birdfolk' : type === 'meeseeks' ? 'meeseeks' : 'joe');
       return { root: av.root, av };
     }
     if (!npcCache[type]) {

@@ -12,7 +12,7 @@
   const settings = UI.load('settings', { sens: 1, invert: false, volume: 0.6, quality: isTouch ? 'low' : 'high', botChat: true });
   const profile = UI.load('profile', { name: '', home: '', arch: 'genius', look: null, server: '', startDim: 'suburbia' });
   if (!MM.ARCHETYPES[profile.arch]) profile.arch = 'genius';
-  profile.look = profile.look ? MM.sanitizeLook(profile.look) : Object.assign(MM.defaultLook(), UI.PRESETS[0].look);
+  profile.look = profile.look ? MM.sanitizeLook(profile.look) : MM.canonLook(profile.arch);
   if (!profile.home) profile.home = 'ABDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random() * 23)] + '-' + Math.floor(Math.random() * 999 + 1);
   if (profile.startDim && !MM.DIM_BY_ID[profile.startDim]) profile.startDim = '';
   C.setVolume(settings.volume);
@@ -37,8 +37,8 @@
 
   // ---------- Menu preview ----------
   const menuScene = new T.Scene();
-  menuScene.add(new T.HemisphereLight('#bcd6ff', '#40304a', 0.9));
-  const mSun = new T.DirectionalLight('#ffffff', 0.8); mSun.position.set(3, 6, 5); menuScene.add(mSun);
+  menuScene.add(new T.HemisphereLight('#bcd6ff', '#40304a', 0.6));
+  const mSun = new T.DirectionalLight('#ffffff', 0.55); mSun.position.set(3, 6, 5); menuScene.add(mSun);
   const pedestal = (() => {
     const s = new C.Shape();
     s.add(C.prim.cyl, '#2b3a7a', [0, -0.15, 0], null, [1.2, 0.3, 1.2]);
@@ -107,7 +107,7 @@
     // Pages that can't reach a game server (like a hosted preview) offer offline play only.
     if (window.MM_NO_ONLINE) {
       $('playOnline').hidden = true; $('server').closest('.grp').hidden = true;
-      $('menuNote').textContent = 'Offline preview with bots. For online play with friends, run the server from the repository. Original characters; not affiliated with any TV show or studio.';
+      $('menuNote').textContent = 'Offline preview with bots. For online play with friends, run the server from the repository. Unofficial free fan game, not affiliated with Adult Swim.';
     }
     $('playOffline').onclick = () => start('offline');
     $('playOnline').onclick = () => start('online');

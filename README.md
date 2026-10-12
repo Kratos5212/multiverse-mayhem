@@ -2,9 +2,9 @@
 
 Created by **Gabi** (Kratos5212).
 
-A cartoon 3D multiplayer game about infinite versions of yourself. Build your own variant, pick who you are in this universe, and live that life, or break out of it: craft across worlds, build a portal gun and a ship, talk to strange locals, and portal-hop across dimensions with everyone else online. It runs in the browser on PC and phones, with [three.js](https://threejs.org) for graphics and a small Node server for online play.
+An unofficial, free, non-commercial **Rick and Morty fan game** in cartoon 3D: be any Rick, Morty or anyone else, from any universe. Build your own variant, pick who you are in this universe, and live that life, or break out of it: craft across worlds, build a portal gun and a ship, talk to strange locals, and portal-hop across dimensions with everyone else online. It runs in the browser on PC and phones, with [three.js](https://threejs.org) for graphics and a small Node server for online play.
 
-It's an original game in the spirit of multiverse sci-fi comedies: original names, characters, dimensions and art, not affiliated with any show or studio.
+Rick and Morty and its characters belong to their creators and Adult Swim. This is a fan project, not affiliated with or endorsed by them, and it must stay free. All models are made in code in this repository (no ripped assets), in the show's style.
 
 ## Playing
 
@@ -61,31 +61,37 @@ Your look is completely free. Your **character** is your lore: it decides your s
 
 | Character | Starts as | Daily life | Can become | Lore |
 | --- | --- | --- | --- | --- |
-| Genius Scientist | Garage Genius | Tinker in the garage, family dinner | Multiverse Menace | Portal gun (3 charges), knows every recipe at a third off; fragile |
-| Reluctant Sidekick | Reluctant Sidekick | School, family dinner | Seasoned Adventurer | Borrowed gun (1 charge), dodges 20% of hits |
-| Rebellious Teen | Regular Teen | School, family dinner | **Space Teen** | Daily tasks pay double; breaks out to her own portal gun and ship |
-| Horse Surgeon | Horse Surgeon | Operate on horses, family dinner | **Space Surgeon** | Self-upgrades cost half; Field Surgery heals everyone near |
-| Average Joe | Average Joe | Look for a job, watch TV | Adventure Dad | The longest road out (7 steps). Monsters ignore him |
-| Birdfolk Warrior | Aerie Warrior (Featherhold) | Guard the Aerie, train with elders | Hero of Many Skies | Flies, strong talons, no gadgets; his own life in his own world |
-| Cheerful Beanling | Friendly Beanling | Visit old friends, TV | Beanling of Many Worlds | Heals everyone; makes friends; killers feel guilty |
-| Meat Mutant | Lurking Mutant (Meatlands) | Feed the Flesh Forge | Apex Abomination | Huge, slow, regenerates |
-| Federation Trooper | Loyal Trooper (Bazaar) | Patrol reports, ship repairs | Rogue Trooper | Starts with a ship; Stun Cuffs |
-| Hive Mind | Small Collective (Moon) | Refinery shifts, haggling | Planetary Hive | Assimilate turns locals into followers that fight for you |
+| Rick | Grandpa Rick | Tinker in the garage, family dinner | Rickest Rick | Portal gun (3 charges), knows every recipe at a third off; fragile |
+| Morty | Regular Morty | School, family dinner | Adventure Morty | Borrowed gun (1 charge), dodges 20% of hits |
+| Summer | Regular Summer | School, family dinner | **Space Summer** | Daily tasks pay double; breaks out to her own portal gun and ship |
+| Beth | Horse Surgeon Beth | Operate on horses, family dinner | **Space Beth** | Self-upgrades cost half; Field Surgery heals everyone near |
+| Jerry | Unemployed Jerry | Look for a job, watch TV | Adventure Jerry | The longest road out (7 steps). Monsters ignore him |
+| Birdperson | Bird World warrior | Guard the Aerie, train with elders | Hero of Many Skies | Flies, strong talons, no gadgets; his own life on Bird World |
+| Mr. Poopybutthole | Family Friend | Visit old friends, TV | Mr. Poopybutthole of Many Worlds | Heals everyone; killers feel guilty |
+| Cronenberg | Lurking Cronenberg | Feed the Flesh Forge | Apex Cronenberg | Huge, slow, regenerates |
+| Federation Officer | Loyal Officer | Patrol reports, ship repairs | Rogue Officer | Bug-headed officer; starts with a ship; Stun Cuffs |
+| Unity | Small Unity | Refinery shifts, haggling | Planetary Unity | Assimilate turns locals into followers |
+| Mr. Meeseeks | Task Meeseeks | Chores, TV | Meeseeks Who Stayed | "Look at me!" summons two more Meeseeks to fight for you |
+| Squanchy | Party Squanchy | Throw parties, haggle | Freedom Fighter | Squanch Out: huge and tough for 5 s |
+| Evil Morty | Quiet Morty | School, haggling | President Morty | Starts with a portal gun; Vanish hides him from monsters and turrets |
+| Pickle Rick | Pickle on the Floor | Tinker | Pickle Rick! | Starts tiny and weak; builds a third cheaper; rat-part upgrades |
+
+Picking a character puts them in their **canon look**. **Other universe** rolls an alternate version of the same character (different colours, outfit or accessories), and every option in the creator is still yours to change. Bots are alternate-universe Ricks, Mortys and the rest of the cast, each from their own home dimension.
 
 You never have to break out: you can play a normal life and still go anywhere by kiosk or by jumping through other people's portals. Your **journal (J)** shows your daily tasks, your next step, what each step unlocks, and your errands. Progress is saved per character.
 
 ## Crafting across dimensions
 
-Every world has its own material: **Scrap** (everywhere), **Moon Crystals** (Lowgrav Moon), **Meat Goo** (The Meatlands), **Neon Plasma** (Neon Bazaar) and **Sky Feathers** (Featherhold). Gadgets can be built anywhere; big upgrades must be built at a particular station in a particular world, from materials gathered in others.
+Every world has its own material: **Scrap** (everywhere), **Moon Crystals** (Lowgrav Moon), **Meat Goo** (Cronenberg World), **Neon Plasma** (Alien Bazaar) and **Sky Feathers** (Bird World). Gadgets can be built anywhere; big upgrades must be built at a particular station in a particular world, from materials gathered in others.
 
 | What | Built at | Needs |
 | --- | --- | --- |
 | Gravity Grenade, Auto-Turret, Shrink Ray, Portal Fluid | Anywhere | Scrap, crystals |
-| Bio-Armor I–III (+80 health) | Flesh Forge, Meatlands | Goo, crystals, plasma |
-| Spring Legs, Crystal Tendons (speed, jump) | Garage Lab, Suburbia / Refinery, Moon | Scrap, crystals, plasma |
-| Jetpack → Feather Wings (hover → fly) | Bazaar Shipyard / Aerie Temple, Featherhold | Plasma, feathers, goo |
+| Bio-Armor I–III (+80 health) | Flesh Forge, Cronenberg World | Goo, crystals, plasma |
+| Spring Legs, Crystal Tendons (speed, jump) | Rick's Garage, Earth / Refinery, Moon | Scrap, crystals, plasma |
+| Jetpack → Feather Wings (hover → fly) | Bazaar Shipyard / Aerie Temple, Bird World | Plasma, feathers, goo |
 | Weapon Mod, Overcharged Core (+30%, +40% damage) | Black Market, Bazaar | Plasma, crystals, goo |
-| **Build a Portal Gun** | Garage Lab | Material from **every** world |
+| **Build a Portal Gun** | Rick's Garage | Material from **every** world |
 | Fluid Tank, Twin Tank, Quick Mixer (portal gun) | Refinery / Black Market | Crystals, plasma, goo, feathers |
 | **Ship Hull** → Turbo Engine, Ship Lasers → **Dimension Drive** | Bazaar Shipyard / Black Market | All five materials for the drive |
 
@@ -97,7 +103,7 @@ Press **B** to board (phone: SHIP). Fly where you look: **W** forward, **Space**
 
 ## Locals and random events
 
-Every world has locals who walk around with names, faces and opinions: neighbours and students in Suburbia, flesh monks in the Meatlands, merchants and tourists in the Bazaar, miners on the moon, bird citizens in Featherhold. Walk up and press **F** to talk. Anything can happen:
+Every world has locals who walk around with names, faces and opinions: neighbours and students on Earth C-137, flesh monks in Cronenberg World, merchants and tourists in the Bazaar, miners on the moon, bird citizens in Bird World. Walk up and press **F** to talk. Anything can happen:
 
 * They just say something strange.
 * They give you a gift, or offer a trade.
@@ -111,21 +117,21 @@ Every few minutes a **world event** hits a dimension:
 
 | Dimension | Events |
 | --- | --- |
-| Suburbia | Block Party, Alien Invasion |
-| Meatlands | Meat Rain, Blob Swarm |
+| Earth C-137 | Block Party, Alien Invasion |
+| Cronenberg World | Meat Rain, Blob Swarm |
 | Bazaar | Flash Sale, Jelly Bloom |
 | Moon | Meteor Shower, Crab Migration |
-| Featherhold | Molting Season, Serpent Hunt |
+| Bird World | Molting Season, Serpent Hunt |
 
 ## Dimensions
 
 | Dimension | Feel | Locals | Material | Landmarks |
 | --- | --- | --- | --- | --- |
-| Suburbia Prime | Streets, houses, cars | Neighbours, students | Scrap | Family House, Garage Lab, Harmony High, Horse Hospital, Unemployment Office |
-| The Meatlands | Flesh pillars, eye stalks, a giant eye in the sky | Flesh monks, meat blobs (hostile) | Meat Goo | Flesh Forge |
-| Neon Bazaar | Glowing mushrooms, market stalls, a ringed planet | Merchants, tourists, sky jellies | Neon Plasma | Bazaar Shipyard, Black Market |
+| Earth C-137 | Streets, houses, cars | Neighbours, students | Scrap | Smith House, Rick's Garage, Harry Herpson High, Horse Hospital, Unemployment Office |
+| Cronenberg World | Flesh pillars, eye stalks, a giant eye in the sky | Flesh monks, meat blobs (hostile) | Meat Goo | Flesh Forge |
+| Alien Bazaar | Glowing mushrooms, market stalls, a ringed planet | Merchants, tourists, sky jellies | Neon Plasma | Bazaar Shipyard, Black Market |
 | Lowgrav Moon | Craters, crystals, rovers, very low gravity | Miners, moon crabs (hostile) | Moon Crystal | Crystal Refinery |
-| Featherhold | Golden cliffs, giant nests, totems, floating islands | Bird citizens, sky serpents (hostile) | Sky Feather | Aerie Temple |
+| Bird World | Golden cliffs, giant nests, totems, floating islands | Bird citizens, sky serpents (hostile) | Sky Feather | Aerie Temple |
 
 Every prop except the landmarks can be destroyed. Wrecking things and beating other players earns **chaos points** for the multiverse-wide leaderboard.
 

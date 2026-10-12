@@ -4,7 +4,7 @@
   'use strict';
   const MM = root.MM || (root.MM = {});
 
-  MM.VERSION = 2;               // protocol version; client and server must match
+  MM.VERSION = 3;               // protocol version; client and server must match
   MM.TICK = 1 / 30;             // server simulation step (seconds)
   MM.SNAP_EVERY = 2;            // a snapshot every 2 ticks = 15 per second
   MM.INSTANCE_CAP = 64;         // players per dimension instance (servers can raise it)
@@ -17,9 +17,9 @@
   MM.MATERIALS = {
     s: { name: 'Scrap', icon: '⚙', color: '#c9d1d9', from: 'everywhere (smash things)' },
     c: { name: 'Moon Crystal', icon: '◆', color: '#7affea', from: 'Lowgrav Moon' },
-    g: { name: 'Meat Goo', icon: '●', color: '#ff7a8a', from: 'The Meatlands' },
-    p: { name: 'Neon Plasma', icon: '✦', color: '#ff6fd0', from: 'Neon Bazaar' },
-    f: { name: 'Sky Feather', icon: '➶', color: '#ffd84d', from: 'Featherhold' },
+    g: { name: 'Meat Goo', icon: '●', color: '#ff7a8a', from: 'Cronenberg World' },
+    p: { name: 'Neon Plasma', icon: '✦', color: '#ff6fd0', from: 'Alien Bazaar' },
+    f: { name: 'Sky Feather', icon: '➶', color: '#ffd84d', from: 'Bird World' },
   };
   MM.MAT_IDS = Object.keys(MM.MATERIALS);
 
@@ -27,9 +27,9 @@
   // Each is a building in a dimension. Daily tasks happen there, and some recipes
   // can only be built at a particular one.
   MM.LANDMARKS = [
-    { id: 'home', dim: 'suburbia', name: 'Family House', x: -36, z: 24, r: 7, h: 9, model: 'lm_home' },
-    { id: 'garage', dim: 'suburbia', name: 'Garage Lab', x: -36, z: 0, r: 5.5, h: 6, model: 'lm_garage' },
-    { id: 'school', dim: 'suburbia', name: 'Harmony High', x: 40, z: 30, r: 8, h: 8, model: 'lm_school' },
+    { id: 'home', dim: 'suburbia', name: 'Smith House', x: -36, z: 24, r: 7, h: 9, model: 'lm_home' },
+    { id: 'garage', dim: 'suburbia', name: "Rick's Garage", x: -36, z: 0, r: 5.5, h: 6, model: 'lm_garage' },
+    { id: 'school', dim: 'suburbia', name: 'Harry Herpson High', x: 40, z: 30, r: 8, h: 8, model: 'lm_school' },
     { id: 'hospital', dim: 'suburbia', name: 'Horse Hospital', x: 40, z: -24, r: 7, h: 8, model: 'lm_hospital' },
     { id: 'office', dim: 'suburbia', name: 'Unemployment Office', x: -36, z: -30, r: 6, h: 7, model: 'lm_office' },
     { id: 'forge', dim: 'meatlands', name: 'Flesh Forge', x: 32, z: 22, r: 6, h: 7, model: 'lm_forge' },
@@ -58,6 +58,8 @@
     report:  { at: 'shipyard', name: 'File a patrol report', cd: 150, give: { p: 2, c: 1 }, text: 'Form 27-B, in triplicate. Your commander nodded once.' },
     shift:   { at: 'refinery', name: 'Work a refinery shift', cd: 120, give: { c: 3 }, text: 'Eight hours of crystal sorting in low gravity. Bouncy.' },
     patrol:  { at: 'aerie', name: 'Stand guard at the Aerie', cd: 120, give: { f: 3 }, text: 'Nothing attacked. You stood there magnificently anyway.' },
+    chore:   { at: 'home', name: 'Help someone with a chore', cd: 90, give: { s: 2 }, heal: 1, text: 'Ooh, can do! The chore is done. You feel a deep urge to stop existing. It passes.' },
+    party:   { at: 'market', name: 'Throw a party', cd: 150, give: { p: 2, s: 2 }, text: 'Everyone got squanched. Nobody remembers anything. Great party.' },
     train:   { at: 'aerie', name: 'Train with the elders', cd: 180, give: { f: 2, s: 2 }, text: 'The elders said "again" forty times. You are stronger now.' },
   };
 
@@ -102,71 +104,71 @@
   //           optionally of a type), ko (players), talk (to locals), smash (props), errand.
   MM.ARCHETYPES = {
     genius: {
-      name: 'Genius Scientist', hp: 80, speed: 7, jump: 8.5, weapon: 'plasma', home: 'suburbia',
+      name: 'Rick', hp: 80, speed: 7, jump: 8.5, weapon: 'plasma', home: 'suburbia',
       portal: { charges: 3, recharge: 14 }, knows: '*', discount: 2 / 3,
       ability: { id: 'shield', name: 'Science Shield', cd: 16, dur: 4 },
       blurb: 'Smartest being in any dimension. Owns a portal gun, builds anything, but is fragile and has a terrible attitude.',
       perk: 'Knows every recipe and pays a third less. Portal gun with 3 charges.',
-      life: { normal: 'Garage Genius', breakout: 'Multiverse Menace', daily: ['tinker', 'dinner'] },
+      life: { normal: 'Grandpa Rick', breakout: 'Rickest Rick', daily: ['tinker', 'dinner'] },
       steps: [
-        { name: 'Tinker time', desc: 'Tinker in the Garage Lab once.', goal: { type: 'use', task: 'tinker', n: 1 } },
+        { name: 'Tinker time', desc: "Tinker in Rick's Garage once.", goal: { type: 'use', task: 'tinker', n: 1 } },
         { name: 'Field research', desc: 'Visit 3 different dimensions.', goal: { type: 'dims', n: 3 } },
         { name: 'Wheels', desc: 'Build a Ship Hull at the Bazaar Shipyard.', goal: { type: 'craft', r: 'hull' } },
         { name: 'Unstoppable', desc: 'Build the Dimension Drive.', goal: { type: 'craft', r: 'drive' }, title: true },
       ],
     },
     sidekick: {
-      name: 'Reluctant Sidekick', hp: 100, speed: 7.5, jump: 8.5, weapon: 'blaster', home: 'suburbia',
+      name: 'Morty', hp: 100, speed: 7.5, jump: 8.5, weapon: 'blaster', home: 'suburbia',
       portal: { charges: 1, recharge: 35 }, knows: ['grenade', 'fluid', 'legs1', 'armor1'],
       ability: { id: 'sprint', name: 'Panic Sprint', cd: 11, dur: 3 },
       blurb: 'Dragged along on every adventure. Panics a lot, survives anyway.',
       perk: 'Dodges 20% of hits out of pure luck. Borrowed portal gun with 1 charge.',
-      life: { normal: 'Reluctant Sidekick', breakout: 'Seasoned Adventurer', daily: ['school', 'dinner'] },
+      life: { normal: 'Regular Morty', breakout: 'Adventure Morty', daily: ['school', 'dinner'] },
       steps: [
-        { name: 'Ugh, school', desc: 'Sit through class at Harmony High.', goal: { type: 'use', task: 'school', n: 1 } },
+        { name: 'Ugh, school', desc: 'Sit through class at Harry Herpson High.', goal: { type: 'use', task: 'school', n: 1 } },
         { name: 'Dragged along', desc: 'Visit 2 different dimensions.', goal: { type: 'dims', n: 2 }, grants: ['turret', 'blaster1'] },
         { name: 'Getting the hang of it', desc: 'Defeat 5 monsters.', goal: { type: 'kill', n: 5 }, grants: ['guncap1', 'gunfast', 'jetpack'] },
-        { name: 'Own two feet', desc: 'Build Spring Legs at the Garage Lab.', goal: { type: 'craft', r: 'legs1' }, grants: ['hull', 'shrink', 'armor2'] },
-        { name: 'Seasoned', desc: 'Build your own Ship Hull.', goal: { type: 'craft', r: 'hull' }, grants: ['engine', 'lasers', 'drive', 'guncap2', 'legs2', 'blaster2'], title: true },
+        { name: 'Own two feet', desc: "Build Spring Legs at Rick's Garage.", goal: { type: 'craft', r: 'legs1' }, grants: ['hull', 'shrink', 'armor2'] },
+        { name: 'Adventure Morty', desc: 'Build your own Ship Hull.', goal: { type: 'craft', r: 'hull' }, grants: ['engine', 'lasers', 'drive', 'guncap2', 'legs2', 'blaster2'], title: true },
       ],
     },
     teen: {
-      name: 'Rebellious Teen', hp: 90, speed: 7.8, jump: 9, weapon: 'toy', home: 'suburbia',
+      name: 'Summer', hp: 90, speed: 7.8, jump: 9, weapon: 'toy', home: 'suburbia',
       portal: null, knows: ['grenade', 'legs1'],
       ability: { id: 'flash', name: 'Selfie Flash', cd: 12 },
       blurb: 'Stuck in high school while the family goes on adventures. Bored, sharp, and secretly the most capable one.',
       perk: 'Daily tasks pay double. Can become a Space Teen with her own portal gun and ship.',
-      life: { normal: 'Regular Teen', breakout: 'Space Teen', daily: ['school', 'dinner'] },
+      life: { normal: 'Regular Summer', breakout: 'Space Summer', daily: ['school', 'dinner'] },
       steps: [
-        { name: 'School is a prison', desc: 'Sit through class at Harmony High.', goal: { type: 'use', task: 'school', n: 1 } },
-        { name: 'Sneak into the lab', desc: 'Go into the Garage Lab.', goal: { type: 'at', at: 'garage' }, grants: ['blaster1', 'armor1'] },
+        { name: 'School is a prison', desc: 'Sit through class at Harry Herpson High.', goal: { type: 'use', task: 'school', n: 1 } },
+        { name: 'Sneak into the lab', desc: "Go into Rick's Garage.", goal: { type: 'at', at: 'garage' }, grants: ['blaster1', 'armor1'] },
         { name: 'Take the kiosk', desc: 'Visit 2 different dimensions.', goal: { type: 'dims', n: 2 }, grants: ['turret', 'shrink'] },
         { name: 'Hold your own', desc: 'Defeat 5 monsters.', goal: { type: 'kill', n: 5 }, grants: ['jetpack', 'hull'] },
         { name: 'Collect the parts', desc: 'Carry 3 Meat Goo, 3 Neon Plasma and 3 Moon Crystals.', goal: { type: 'have', mats: { g: 3, p: 3, c: 3 } }, grants: ['gunbuild'] },
-        { name: 'Space Teen', desc: 'Build your own portal gun at the Garage Lab.', goal: { type: 'craft', r: 'gunbuild' }, grants: ['guncap1', 'gunfast', 'fluid', 'engine', 'lasers', 'drive', 'legs2', 'armor2', 'blaster2'], title: true },
+        { name: 'Space Summer', desc: "Build your own portal gun at Rick's Garage.", goal: { type: 'craft', r: 'gunbuild' }, grants: ['guncap1', 'gunfast', 'fluid', 'engine', 'lasers', 'drive', 'legs2', 'armor2', 'blaster2'], title: true },
       ],
     },
     surgeon: {
-      name: 'Horse Surgeon', hp: 100, speed: 7, jump: 8.5, weapon: 'scalpel', home: 'suburbia',
+      name: 'Beth', hp: 100, speed: 7, jump: 8.5, weapon: 'scalpel', home: 'suburbia',
       portal: null, knows: ['grenade', 'armor1', 'armor2', 'legs1'], selfDiscount: 0.5,
       ability: { id: 'patch', name: 'Field Surgery', cd: 14 },
       blurb: 'A brilliant surgeon (of horses) who wonders what life could have been. She could still go find out.',
       perk: 'Upgrades to yourself cost half. Field Surgery heals you and everyone nearby.',
-      life: { normal: 'Horse Surgeon', breakout: 'Space Surgeon', daily: ['surgery', 'dinner'] },
+      life: { normal: 'Horse Surgeon Beth', breakout: 'Space Beth', daily: ['surgery', 'dinner'] },
       steps: [
         { name: 'Another day, another horse', desc: 'Operate on a horse twice.', goal: { type: 'use', task: 'surgery', n: 2 }, grants: ['blaster1'] },
-        { name: 'Alien anatomy', desc: 'Visit The Meatlands.', goal: { type: 'dim', dim: 'meatlands' }, grants: ['armor3'] },
+        { name: 'Alien anatomy', desc: 'Visit Cronenberg World.', goal: { type: 'dim', dim: 'meatlands' }, grants: ['armor3'] },
         { name: 'Scalpel work', desc: 'Defeat 3 Meat Blobs.', goal: { type: 'kill', npc: 'meatblob', n: 3 }, grants: ['hull', 'jetpack'] },
-        { name: 'Space Surgeon', desc: 'Build a Ship Hull.', goal: { type: 'craft', r: 'hull' }, grants: ['engine', 'lasers', 'drive', 'gunbuild', 'guncap1', 'fluid', 'blaster2', 'legs2'], title: true },
+        { name: 'Space Beth', desc: 'Build a Ship Hull.', goal: { type: 'craft', r: 'hull' }, grants: ['engine', 'lasers', 'drive', 'gunbuild', 'guncap1', 'fluid', 'blaster2', 'legs2'], title: true },
       ],
     },
     joe: {
-      name: 'Average Joe', hp: 100, speed: 6.5, jump: 7.5, weapon: 'toy', home: 'suburbia',
+      name: 'Jerry', hp: 100, speed: 6.5, jump: 7.5, weapon: 'toy', home: 'suburbia',
       portal: null, knows: ['grenade'],
       ability: { id: 'sob', name: 'Sob Story', cd: 18, dur: 3 },
       blurb: 'Completely normal. No portal gun, no powers, no job. Breaking out of this life is possible, but it is a long road.',
       perk: 'So unremarkable that monsters and turrets ignore him.',
-      life: { normal: 'Average Joe', breakout: 'Adventure Dad', daily: ['jobhunt', 'tv'] },
+      life: { normal: 'Unemployed Jerry', breakout: 'Adventure Jerry', daily: ['jobhunt', 'tv'] },
       steps: [
         { name: 'Keep looking', desc: 'Look for a job 3 times.', goal: { type: 'use', task: 'jobhunt', n: 3 }, grants: ['legs1'] },
         { name: 'Out of the house', desc: 'Visit 3 different dimensions (try the kiosk).', goal: { type: 'dims', n: 3 }, grants: ['armor1'] },
@@ -174,14 +176,14 @@
         { name: 'Saving up', desc: 'Carry 30 scrap.', goal: { type: 'have', mats: { s: 30 } }, grants: ['hull'] },
         { name: 'Mid-life crisis', desc: 'Build a Ship Hull.', goal: { type: 'craft', r: 'hull' }, grants: ['engine', 'jetpack'] },
         { name: 'Wreck something', desc: 'Smash 40 props.', goal: { type: 'smash', n: 40 }, grants: ['gunbuild'] },
-        { name: 'Adventure Dad', desc: 'Build your own portal gun.', goal: { type: 'craft', r: 'gunbuild' }, grants: ['guncap1', 'fluid', 'lasers', 'drive', 'armor2'], title: true },
+        { name: 'Adventure Jerry', desc: 'Build your own portal gun.', goal: { type: 'craft', r: 'gunbuild' }, grants: ['guncap1', 'fluid', 'lasers', 'drive', 'armor2'], title: true },
       ],
     },
     birdfolk: {
-      name: 'Birdfolk Warrior', hp: 140, speed: 8, jump: 9, weapon: 'talon', fly: true, home: 'featherhold',
+      name: 'Birdperson', hp: 140, speed: 8, jump: 9, weapon: 'talon', fly: true, home: 'featherhold',
       portal: null, knows: ['armor1', 'armor2', 'armor3', 'blaster1', 'blaster2'],
       ability: { id: 'dive', name: 'Dive Strike', cd: 8 },
-      blurb: 'Proud warrior of the bird people, with a life, a people and duties of his own in Featherhold.',
+      blurb: 'Proud warrior of the bird people, with a life, a people and duties of his own on Bird World.',
       perk: 'Flies (hold Jump). Strong talons. Does not do gadgets.',
       life: { normal: 'Aerie Warrior', breakout: 'Hero of Many Skies', daily: ['patrol', 'train'] },
       steps: [
@@ -193,57 +195,112 @@
       ],
     },
     beanling: {
-      name: 'Cheerful Beanling', hp: 70, speed: 8.5, jump: 9, weapon: 'slap', home: 'suburbia',
+      name: 'Mr. Poopybutthole', hp: 70, speed: 8.5, jump: 9, weapon: 'slap', home: 'suburbia',
       portal: null, knows: ['grenade', 'legs1'],
       ability: { id: 'cheer', name: 'Cheer Up', cd: 13 },
       blurb: 'Tall, polite and always happy to see you. Nobody remembers meeting one, but everyone loves them.',
       perk: 'Heals everyone nearby. Whoever takes one down feels awful (slowed 10 s).',
-      life: { normal: 'Friendly Beanling', breakout: 'Beanling of Many Worlds', daily: ['hug', 'tv'] },
+      life: { normal: 'Family Friend', breakout: 'Mr. Poopybutthole of Many Worlds', daily: ['hug', 'tv'] },
       steps: [
         { name: 'Ooh, friends', desc: 'Chat with 8 locals.', goal: { type: 'talk', n: 8 }, grants: ['armor1'] },
         { name: 'Helping out', desc: 'Finish 2 errands for locals.', goal: { type: 'errand', n: 2 }, grants: ['jetpack', 'shrink'] },
         { name: 'New neighbours', desc: 'Visit 4 different dimensions.', goal: { type: 'dims', n: 4 }, grants: ['gunbuild'] },
-        { name: 'Beanling of Many Worlds', desc: 'Build your own portal gun.', goal: { type: 'craft', r: 'gunbuild' }, grants: ['guncap1', 'fluid', 'hull', 'engine'], title: true },
+        { name: 'Ooh-wee, the multiverse!', desc: 'Build your own portal gun.', goal: { type: 'craft', r: 'gunbuild' }, grants: ['guncap1', 'fluid', 'hull', 'engine'], title: true },
       ],
     },
     mutant: {
-      name: 'Meat Mutant', hp: 200, speed: 5.5, jump: 7, weapon: 'punch', home: 'meatlands',
+      name: 'Cronenberg', hp: 200, speed: 5.5, jump: 7, weapon: 'punch', home: 'meatlands',
       portal: null, knows: ['armor1', 'armor2', 'armor3'],
       ability: { id: 'slam', name: 'Body Slam', cd: 9 },
       blurb: 'A lab accident made flesh. Huge, slow, and very hard to kill.',
       perk: 'Regenerates 3 health per second. Body Slam knocks everyone back.',
-      life: { normal: 'Lurking Mutant', breakout: 'Apex Abomination', daily: ['forge'] },
+      life: { normal: 'Lurking Cronenberg', breakout: 'Apex Cronenberg', daily: ['forge'] },
       steps: [
         { name: 'Hungry', desc: 'Smash 30 props.', goal: { type: 'smash', n: 30 }, grants: ['legs1'] },
         { name: 'Out of the pit', desc: 'Visit 3 different dimensions.', goal: { type: 'dims', n: 3 }, grants: ['blaster1', 'jetpack'] },
-        { name: 'Apex Abomination', desc: 'Defeat 5 players.', goal: { type: 'ko', n: 5 }, grants: ['blaster2', 'legs2'], title: true },
+        { name: 'Apex Cronenberg', desc: 'Defeat 5 players.', goal: { type: 'ko', n: 5 }, grants: ['blaster2', 'legs2'], title: true },
       ],
     },
     trooper: {
-      name: 'Federation Trooper', hp: 120, speed: 7, jump: 8.5, weapon: 'rifle', home: 'bazaar',
+      name: 'Federation Officer', hp: 120, speed: 7, jump: 8.5, weapon: 'rifle', home: 'bazaar',
       portal: null, knows: ['grenade', 'turret', 'blaster1', 'engine', 'lasers'], start: ['hull'],
       ability: { id: 'cuff', name: 'Stun Cuffs', cd: 12 },
       blurb: 'Enforcer of an interplanetary bureaucracy. Comes with a patrol ship and a lot of paperwork.',
       perk: 'Starts with a ship (B to board). Stun Cuffs freeze whoever is in front of you.',
-      life: { normal: 'Loyal Trooper', breakout: 'Rogue Trooper', daily: ['report', 'dock'] },
+      life: { normal: 'Loyal Officer', breakout: 'Rogue Officer', daily: ['report', 'dock'] },
       steps: [
         { name: 'Paperwork', desc: 'File a patrol report at the Bazaar Shipyard.', goal: { type: 'use', task: 'report', n: 1 } },
         { name: 'Questioning', desc: 'Question 5 locals (talk to them).', goal: { type: 'talk', n: 5 }, grants: ['armor1', 'legs1'] },
         { name: 'Law and order', desc: 'Defeat 3 players.', goal: { type: 'ko', n: 3 }, grants: ['blaster2', 'armor2'] },
-        { name: 'Rogue Trooper', desc: 'Visit all 5 dimensions.', goal: { type: 'dims', n: 5 }, grants: ['drive', 'gunbuild', 'guncap1'], title: true },
+        { name: 'Rogue Officer', desc: 'Visit all 5 dimensions.', goal: { type: 'dims', n: 5 }, grants: ['drive', 'gunbuild', 'guncap1'], title: true },
       ],
     },
     hive: {
-      name: 'Hive Mind', hp: 90, speed: 7, jump: 8.5, weapon: 'slap', home: 'moon',
+      name: 'Unity', hp: 90, speed: 7, jump: 8.5, weapon: 'slap', home: 'moon',
       portal: null, knows: ['grenade', 'shrink'],
       ability: { id: 'assimilate', name: 'Assimilate', cd: 20 },
       blurb: 'One mind in many bodies. Charming, lonely, and very good at making friends do things.',
       perk: 'Assimilate turns nearby locals into followers that fight for you.',
-      life: { normal: 'Small Collective', breakout: 'Planetary Hive', daily: ['shift', 'haggle'] },
+      life: { normal: 'Small Unity', breakout: 'Planetary Unity', daily: ['shift', 'haggle'] },
       steps: [
         { name: 'Join us', desc: 'Talk to 8 locals.', goal: { type: 'talk', n: 8 }, grants: ['armor1', 'legs1'] },
         { name: 'Expansion', desc: 'Visit 3 different dimensions.', goal: { type: 'dims', n: 3 }, grants: ['hull', 'jetpack'] },
-        { name: 'Planetary Hive', desc: 'Build a Ship Hull.', goal: { type: 'craft', r: 'hull' }, grants: ['engine', 'drive', 'lasers', 'gunbuild'], title: true },
+        { name: 'Planetary Unity', desc: 'Build a Ship Hull.', goal: { type: 'craft', r: 'hull' }, grants: ['engine', 'drive', 'lasers', 'gunbuild'], title: true },
+      ],
+    },
+    meeseeks: {
+      name: 'Mr. Meeseeks', hp: 60, speed: 8, jump: 10, weapon: 'slap', home: 'suburbia',
+      portal: null, knows: ['grenade', 'legs1'],
+      ability: { id: 'summon', name: 'Look at me!', cd: 22 },
+      blurb: 'Pops into existence to help with one task, then really, really wants to stop existing. Very cheerful about it.',
+      perk: 'Summons two more Meeseeks who fight for you for 20 s.',
+      life: { normal: 'Task Meeseeks', breakout: 'Meeseeks Who Stayed', daily: ['chore', 'tv'] },
+      steps: [
+        { name: 'Ooh, can do!', desc: 'Help someone with a chore at the Smith House.', goal: { type: 'use', task: 'chore', n: 1 } },
+        { name: 'Find a task', desc: 'Talk to 6 locals.', goal: { type: 'talk', n: 6 }, grants: ['armor1', 'jetpack'] },
+        { name: 'Task complete', desc: 'Finish 2 errands for locals.', goal: { type: 'errand', n: 2 }, grants: ['blaster1', 'gunbuild'] },
+        { name: 'Meeseeks Who Stayed', desc: 'Visit 4 different dimensions.', goal: { type: 'dims', n: 4 }, grants: ['guncap1', 'fluid', 'hull'], title: true },
+      ],
+    },
+    squanchy: {
+      name: 'Squanchy', hp: 110, speed: 8, jump: 10, weapon: 'claws', home: 'bazaar',
+      portal: null, knows: ['grenade', 'turret', 'blaster1'],
+      ability: { id: 'rage', name: 'Squanch Out', cd: 15 },
+      blurb: 'Cat-like party animal and freedom fighter. Squanches when he is happy, squanches when he is angry.',
+      perk: 'Squanch Out: becomes huge and tough for 5 s (shield and speed).',
+      life: { normal: 'Party Squanchy', breakout: 'Freedom Fighter', daily: ['party', 'haggle'] },
+      steps: [
+        { name: 'Party time', desc: 'Throw a party at the Black Market.', goal: { type: 'use', task: 'party', n: 1 } },
+        { name: 'Old friends', desc: 'Visit Earth C-137.', goal: { type: 'dim', dim: 'suburbia' }, grants: ['armor1', 'legs1'] },
+        { name: 'The resistance', desc: 'Defeat 5 monsters.', goal: { type: 'kill', n: 5 }, grants: ['hull', 'jetpack', 'armor2'] },
+        { name: 'Freedom Fighter', desc: 'Defeat 3 players.', goal: { type: 'ko', n: 3 }, grants: ['engine', 'lasers', 'gunbuild'], title: true },
+      ],
+    },
+    evilmorty: {
+      name: 'Evil Morty', hp: 100, speed: 7.5, jump: 8.5, weapon: 'blaster', home: 'suburbia',
+      portal: { charges: 1, recharge: 30 }, knows: ['grenade', 'shrink', 'fluid', 'guncap1', 'gunfast', 'legs1'],
+      ability: { id: 'scheme', name: 'Vanish', cd: 18, dur: 5 },
+      blurb: 'A Morty with an eye patch and a plan. Quiet, patient, and always three steps ahead.',
+      perk: 'Vanish: monsters and turrets lose track of you for 5 s. Starts with a portal gun.',
+      life: { normal: 'Quiet Morty', breakout: 'President Morty', daily: ['school', 'haggle'] },
+      steps: [
+        { name: 'Blend in', desc: 'Sit through class at Harry Herpson High.', goal: { type: 'use', task: 'school', n: 1 } },
+        { name: 'Gather support', desc: 'Talk to 10 locals.', goal: { type: 'talk', n: 10 }, grants: ['armor1', 'blaster1', 'turret'] },
+        { name: 'Remove rivals', desc: 'Defeat 5 players.', goal: { type: 'ko', n: 5 }, grants: ['hull', 'engine', 'guncap2', 'blaster2'] },
+        { name: 'President Morty', desc: 'Build the Dimension Drive.', goal: { type: 'craft', r: 'drive' }, title: true },
+      ],
+    },
+    picklerick: {
+      name: 'Pickle Rick', hp: 60, speed: 6, jump: 11, weapon: 'slap', home: 'suburbia',
+      portal: null, knows: ['grenade', 'legs1', 'armor1', 'armor2', 'blaster1'], discount: 2 / 3,
+      ability: { id: 'roll', name: 'Pickle Roll', cd: 8, dur: 2.5 },
+      blurb: 'A genius who turned himself into a pickle to get out of family therapy. Tiny, green, and furious.',
+      perk: 'Builds a third cheaper. Starts weak; rat-part upgrades (armor, legs) make him dangerous.',
+      life: { normal: 'Pickle on the Floor', breakout: 'Pickle Rick!', daily: ['tinker'] },
+      steps: [
+        { name: 'Roll for it', desc: 'Smash 15 props.', goal: { type: 'smash', n: 15 } },
+        { name: 'Rat parts', desc: 'Build Spring Legs at Rick\'s Garage.', goal: { type: 'craft', r: 'legs1' }, grants: ['jetpack', 'turret', 'blaster2'] },
+        { name: 'Pickle Rick!', desc: 'Defeat 10 monsters.', goal: { type: 'kill', n: 10 }, grants: ['gunbuild', 'guncap1', 'fluid', 'hull', 'engine', 'lasers', 'drive'], title: true },
       ],
     },
   };
@@ -260,6 +317,7 @@
     scalpel: { dmg: 15, cd: 0.45, melee: 2.9 },
     slap:    { dmg: 7,  cd: 0.4,  melee: 2.8 },
     punch:   { dmg: 20, cd: 0.75, melee: 3.4, knock: 9 },
+    claws:   { dmg: 16, cd: 0.4,  melee: 3.0 },
   };
 
   // ---------- Progress helpers (shared so the client shows exactly what the server allows) ----------
@@ -347,12 +405,13 @@
   // How each body type looks to the character creator. Every option is an enum the
   // server checks, so nobody can send anything odd to other players.
   MM.LOOK = {
-    species: ['human', 'alien', 'birdfolk', 'robot', 'beanling', 'blob'],
-    hair: ['spiky', 'tuft', 'bowl', 'mohawk', 'afro', 'ponytail', 'slick', 'bald'],
+    species: ['human', 'alien', 'birdfolk', 'robot', 'beanling', 'blob', 'cat', 'insect', 'pickle'],
+    hair: ['rick', 'morty', 'bob', 'spiky', 'tuft', 'bowl', 'mohawk', 'afro', 'ponytail', 'slick', 'bald'],
     brow: ['uni', 'normal', 'angry', 'none'],
-    eyes: ['normal', 'wide', 'sleepy', 'cyclops', 'three', 'visor'],
+    eyes: ['normal', 'tired', 'wide', 'sleepy', 'dots', 'cyclops', 'three', 'visor'],
     mouth: ['flat', 'grin', 'frown', 'open', 'drool'],
-    top: ['labcoat', 'tshirt', 'polo', 'sweater', 'armor', 'vest', 'none'],
+    face: ['round', 'long', 'wide'],
+    top: ['labcoat', 'tshirt', 'tank', 'polo', 'sweater', 'armor', 'vest', 'none'],
     acc: ['none', 'goggles', 'antennae', 'tophat', 'headband', 'eyepatch', 'halo', 'crown', 'cap'],
     nums: { height: [0.8, 1.3], width: [0.75, 1.35], head: [0.8, 1.45] },
     colors: ['skin', 'hairColor', 'topColor', 'shirtColor', 'pantsColor', 'shoeColor', 'accColor', 'portalColor'],
@@ -360,11 +419,47 @@
 
   MM.defaultLook = function () {
     return {
-      species: 'human', hair: 'spiky', brow: 'uni', eyes: 'normal', mouth: 'flat', top: 'labcoat', acc: 'none',
+      species: 'human', hair: 'rick', brow: 'uni', eyes: 'tired', mouth: 'flat', face: 'long', top: 'labcoat', acc: 'none',
       height: 1.15, width: 0.95, head: 1.1,
       skin: '#f2d2b6', hairColor: '#b9d4e0', topColor: '#f4f6f8', shirtColor: '#7fb2d6', pantsColor: '#6b4f2c',
       shoeColor: '#3a2a1a', accColor: '#444444', portalColor: '#39ff6a',
     };
+  };
+
+  // How each character looks in the show's main universe. Picking a character starts
+  // from this; everything can still be changed ("any version from any universe").
+  MM.CANON = {
+    genius: { species: 'human', hair: 'rick', brow: 'uni', eyes: 'tired', mouth: 'drool', face: 'long', top: 'labcoat', acc: 'none', height: 1.25, width: 0.88, head: 1.12, skin: '#f2d7c0', hairColor: '#8fc0d6', topColor: '#f4f6f8', shirtColor: '#8ec5e0', pantsColor: '#7a5634', shoeColor: '#3a2a1a', accColor: '#444444', portalColor: '#39ff6a' },
+    sidekick: { species: 'human', hair: 'morty', brow: 'normal', eyes: 'wide', mouth: 'frown', face: 'round', top: 'tshirt', acc: 'none', height: 0.86, width: 0.92, head: 1.38, skin: '#fde1c8', hairColor: '#7a4a26', topColor: '#f6d34b', shirtColor: '#f6d34b', pantsColor: '#3a62a8', shoeColor: '#f4f6f8', accColor: '#444444', portalColor: '#39ff6a' },
+    teen: { species: 'human', hair: 'ponytail', brow: 'normal', eyes: 'normal', mouth: 'flat', face: 'round', top: 'tank', acc: 'none', height: 1.0, width: 0.84, head: 1.15, skin: '#fde1c8', hairColor: '#e8643a', topColor: '#ff7fb0', shirtColor: '#ff7fb0', pantsColor: '#f4f4f4', shoeColor: '#f4f4f4', accColor: '#444444', portalColor: '#ff6fd0' },
+    surgeon: { species: 'human', hair: 'bob', brow: 'normal', eyes: 'normal', mouth: 'flat', face: 'round', top: 'sweater', acc: 'none', height: 1.08, width: 0.86, head: 1.08, skin: '#f6dcc4', hairColor: '#f2d27a', topColor: '#b5243c', shirtColor: '#b5243c', pantsColor: '#f0ead8', shoeColor: '#5a3a20', accColor: '#444444', portalColor: '#5ff8ff' },
+    joe: { species: 'human', hair: 'slick', brow: 'normal', eyes: 'normal', mouth: 'flat', face: 'long', top: 'polo', acc: 'none', height: 1.12, width: 0.95, head: 1.05, skin: '#f6dcc4', hairColor: '#6b4a2b', topColor: '#5aa04a', shirtColor: '#4a8a3c', pantsColor: '#c8b47e', shoeColor: '#5a3a20', accColor: '#444444', portalColor: '#39ff6a' },
+    birdfolk: { species: 'birdfolk', hair: 'mohawk', brow: 'angry', eyes: 'normal', mouth: 'flat', face: 'long', top: 'armor', acc: 'none', height: 1.25, width: 1.0, head: 1.0, skin: '#e8c49a', hairColor: '#b8642e', topColor: '#6b4a2b', shirtColor: '#c9a77a', pantsColor: '#5a3a20', shoeColor: '#2a2a2a', accColor: '#444444', portalColor: '#ffd84d' },
+    beanling: { species: 'beanling', hair: 'bald', brow: 'none', eyes: 'wide', mouth: 'grin', face: 'round', top: 'none', acc: 'tophat', height: 1.15, width: 1.0, head: 1.0, skin: '#ffd447', hairColor: '#2a2a2a', topColor: '#ffd447', shirtColor: '#ffd447', pantsColor: '#ffd447', shoeColor: '#ffd447', accColor: '#2a2a2a', portalColor: '#39ff6a' },
+    mutant: { species: 'blob', hair: 'bald', brow: 'none', eyes: 'three', mouth: 'open', face: 'wide', top: 'none', acc: 'none', height: 1.15, width: 1.2, head: 0.9, skin: '#e07a85', hairColor: '#7a2a3a', topColor: '#e07a85', shirtColor: '#e07a85', pantsColor: '#a0303b', shoeColor: '#6b4630', accColor: '#444444', portalColor: '#ff5a3a' },
+    trooper: { species: 'insect', hair: 'bald', brow: 'none', eyes: 'normal', mouth: 'flat', face: 'long', top: 'armor', acc: 'none', height: 1.18, width: 1.0, head: 1.0, skin: '#6f8a5a', hairColor: '#2a2a2a', topColor: '#e4e8ee', shirtColor: '#e4e8ee', pantsColor: '#3a62a8', shoeColor: '#2a2a2a', accColor: '#e2483d', portalColor: '#5ff8ff' },
+    hive: { species: 'human', hair: 'bob', brow: 'normal', eyes: 'sleepy', mouth: 'grin', face: 'round', top: 'sweater', acc: 'none', height: 1.05, width: 0.86, head: 1.05, skin: '#f6dcc4', hairColor: '#f2e2a0', topColor: '#5fd6b0', shirtColor: '#5fd6b0', pantsColor: '#2a2a2a', shoeColor: '#2a2a2a', accColor: '#444444', portalColor: '#c49bff' },
+    meeseeks: { species: 'human', hair: 'bald', brow: 'none', eyes: 'dots', mouth: 'open', face: 'wide', top: 'none', acc: 'none', height: 1.25, width: 0.8, head: 1.3, skin: '#7ec8f0', hairColor: '#7ec8f0', topColor: '#7ec8f0', shirtColor: '#7ec8f0', pantsColor: '#7ec8f0', shoeColor: '#7ec8f0', accColor: '#444444', portalColor: '#5ff8ff' },
+    squanchy: { species: 'cat', hair: 'bald', brow: 'none', eyes: 'wide', mouth: 'grin', face: 'round', top: 'none', acc: 'none', height: 1.0, width: 1.05, head: 1.2, skin: '#c98a4a', hairColor: '#8a5a2a', topColor: '#c98a4a', shirtColor: '#c98a4a', pantsColor: '#c98a4a', shoeColor: '#8a5a2a', accColor: '#444444', portalColor: '#ffd84d' },
+    evilmorty: { species: 'human', hair: 'morty', brow: 'angry', eyes: 'normal', mouth: 'flat', face: 'round', top: 'tshirt', acc: 'eyepatch', height: 0.86, width: 0.92, head: 1.38, skin: '#fde1c8', hairColor: '#7a4a26', topColor: '#f6d34b', shirtColor: '#f6d34b', pantsColor: '#3a62a8', shoeColor: '#f4f6f8', accColor: '#111111', portalColor: '#ff5a3a' },
+    picklerick: { species: 'pickle', hair: 'bald', brow: 'uni', eyes: 'tired', mouth: 'grin', face: 'long', top: 'none', acc: 'none', height: 0.9, width: 0.9, head: 1.0, skin: '#7cbf3a', hairColor: '#4a7a22', topColor: '#7cbf3a', shirtColor: '#7cbf3a', pantsColor: '#7cbf3a', shoeColor: '#4a7a22', accColor: '#444444', portalColor: '#39ff6a' },
+  };
+  MM.canonLook = arch => Object.assign(MM.defaultLook(), MM.CANON[arch] || {});
+
+  // An alternate-universe version: same person, different choices. rand() in [0, 1).
+  MM.variantLook = function (arch, rand) {
+    const r = rand || Math.random, L = MM.canonLook(arch);
+    const col = () => '#' + Math.floor(r() * 0xffffff).toString(16).padStart(6, '0');
+    const pick = a => a[Math.floor(r() * a.length)];
+    if (r() < 0.5) L.hairColor = col();
+    if (r() < 0.5) L.topColor = col();
+    if (r() < 0.35) L.pantsColor = col();
+    if (r() < 0.3) L.acc = pick(['goggles', 'eyepatch', 'cap', 'headband', 'crown', 'halo', 'antennae', 'tophat']);
+    if (r() < 0.2 && L.species === 'human') L.skin = pick(['#9ad66b', '#7ec8e3', '#c49bff', '#e0b08c', '#a8724f']);
+    if (r() < 0.15) L.top = pick(['armor', 'vest', 'sweater', 'labcoat', 'tshirt']);
+    if (r() < 0.15) L.mouth = pick(MM.LOOK.mouth);
+    L.portalColor = col();
+    return L;
   };
 
   // Turn whatever a client sent into a safe look: unknown fields dropped, enums and
@@ -372,7 +467,7 @@
   MM.sanitizeLook = function (raw) {
     const out = MM.defaultLook();
     if (!raw || typeof raw !== 'object') return out;
-    for (const k of ['species', 'hair', 'brow', 'eyes', 'mouth', 'top', 'acc']) {
+    for (const k of ['species', 'hair', 'brow', 'eyes', 'mouth', 'face', 'top', 'acc']) {
       if (typeof raw[k] === 'string' && MM.LOOK[k].includes(raw[k])) out[k] = raw[k];
     }
     for (const k in MM.LOOK.nums) {
@@ -385,10 +480,10 @@
     return out;
   };
 
-  // Names: letters, digits, spaces and a little punctuation, 2-16 characters.
+  // Names: letters, digits, spaces and a little punctuation, 2-20 characters.
   MM.sanitizeName = function (raw) {
     let s = typeof raw === 'string' ? raw : '';
-    s = s.normalize('NFKC').replace(/[^\p{L}\p{N} _.\-']/gu, '').replace(/\s+/g, ' ').trim().slice(0, 16);
+    s = s.normalize('NFKC').replace(/[^\p{L}\p{N} _.\-']/gu, '').replace(/\s+/g, ' ').trim().slice(0, 20);
     if (s.length < 2) s = 'Variant' + Math.floor(Math.random() * 900 + 100);
     return s;
   };

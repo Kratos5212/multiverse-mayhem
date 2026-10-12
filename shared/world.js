@@ -39,23 +39,23 @@
   // props: [type, count]. npc: [type, count]. Colors are for the client renderer.
   MM.DIMS = [
     {
-      id: 'suburbia', name: 'Suburbia Prime', code: 'S-001', seed: 1137, gravity: 24, amp: 2.5, scale: 0.012,
-      blurb: 'A painfully normal suburb. Lawns, garages, and nobody suspects a thing.',
+      id: 'suburbia', name: 'Earth C-137', code: 'C-137', seed: 1137, gravity: 24, amp: 2.5, scale: 0.012,
+      blurb: 'The Smith family suburb. Lawns, a garage full of science, and a high school nobody wants to go to.',
       sky: ['#5fb4ff', '#d9f3ff'], fog: '#cdeaff', fogFar: 230, sun: '#fff4dc', ambient: '#9fc6ff',
       ground: ['#5fae3e', '#78c24b', '#4c9636'], accent: '#ffffff',
       props: [['house', 0], ['tree', 70], ['car', 22], ['mailbox', 18], ['hedge', 30]],
       npc: [['neighbor', 9], ['schoolkid', 4]], pickups: { s: 18, c: 2 }, mat: 's',
     },
     {
-      id: 'meatlands', name: 'The Meatlands', code: 'M-666', seed: 4242, gravity: 24, amp: 9, scale: 0.02,
-      blurb: 'Everything here is made of meat. Everything. It is warm. It is watching.',
+      id: 'meatlands', name: 'Cronenberg World', code: 'C-131', seed: 4242, gravity: 24, amp: 9, scale: 0.02,
+      blurb: 'A love potion went very wrong here. Everything is meat now. It is warm. It is watching.',
       sky: ['#3d0a1c', '#c4485f'], fog: '#7a2236', fogFar: 170, sun: '#ffc2b0', ambient: '#b05068',
       ground: ['#c9576b', '#e07a85', '#9c3a4e'], accent: '#fff2c8',
       props: [['fleshpillar', 40], ['eyestalk', 45], ['bonearch', 12], ['pustule', 40]],
       npc: [['meatblob', 11], ['fleshmonk', 4]], pickups: { s: 8, g: 14 }, mat: 'g',
     },
     {
-      id: 'bazaar', name: 'Neon Bazaar', code: 'B-9000', seed: 9001, gravity: 20, amp: 4, scale: 0.015,
+      id: 'bazaar', name: 'Alien Bazaar', code: 'B-9000', seed: 9001, gravity: 20, amp: 4, scale: 0.015,
       blurb: 'An alien night market. Everything is for sale, especially things that should not be.',
       sky: ['#140733', '#ff6fd0'], fog: '#3a1a63', fogFar: 210, sun: '#ffd9fb', ambient: '#8a6cff',
       ground: ['#3b2b7a', '#4d3a9c', '#2e8c8a'], accent: '#5ff8ff',
@@ -71,8 +71,8 @@
       npc: [['mooncrab', 11], ['moonminer', 4]], pickups: { s: 6, c: 16 }, mat: 'c',
     },
     {
-      id: 'featherhold', name: 'Featherhold', code: 'F-77', seed: 3131, gravity: 18, amp: 16, scale: 0.011,
-      blurb: 'Home of the bird people. Golden cliffs, giant nests, and very proud citizens.',
+      id: 'featherhold', name: 'Bird World', code: 'BW-1', seed: 3131, gravity: 18, amp: 16, scale: 0.011,
+      blurb: 'Birdperson\'s home world. Golden cliffs, giant nests, and very proud citizens.',
       sky: ['#2f7fd0', '#ffd9a0'], fog: '#e8c99a', fogFar: 240, sun: '#fff1cc', ambient: '#a89878',
       ground: ['#6f9a3a', '#86ad45', '#a8823f'], accent: '#ffd84d',
       props: [['nest', 18], ['totem', 22], ['featherplant', 40], ['rockspire', 26]],
@@ -163,6 +163,9 @@
         'We do not do small talk. That was big talk.', 'A warrior walks between worlds. A wise warrior brings snacks.'],
       moods: { line: 45, gift: 12, trade: 8, errand: 14, buff: 10, angry: 8, follow: 3 } },
     skyserpent: { name: 'Sky Serpent', hp: 60, speed: 5.5, hostile: true, dmg: 10, drop: { f: 2, s: 1 }, r: 1.0, h: 1.2, fly: 3 },
+    meeseeks: { name: 'Mr. Meeseeks', hp: 30, speed: 6, hostile: false, dmg: 0, drop: {}, r: 0.5, h: 2.0,
+      human: { fixed: 'meeseeks' }, names: ['Mr. Meeseeks'],
+      talk: ['I\'m Mr. Meeseeks! Look at me!', 'Ooh, can do!', 'Existence is pain!', 'Caaan do!'], moods: { line: 100 } },
     invader: { name: 'Invader', hp: 45, speed: 4.5, hostile: true, dmg: 9, drop: { p: 2, s: 2 }, r: 0.6, h: 1.8,
       human: { species: ['alien'], top: ['armor'], acc: ['antennae', 'goggles'], eyes: ['cyclops', 'visor'] } },
   };

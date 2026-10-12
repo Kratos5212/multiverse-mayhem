@@ -23,9 +23,9 @@
   };
   UI.save = function (key, v) { try { localStorage.setItem('mm.' + key, JSON.stringify(v)); } catch (_) {} };
 
-  const ARCH_COLORS = { genius: '#7fdcff', sidekick: '#ffd84d', teen: '#ff8fd0', surgeon: '#b8f0d0', joe: '#9be36b', birdfolk: '#ff9b4d', beanling: '#ffe066', mutant: '#ff7a8a', trooper: '#ff6b5a', hive: '#c49bff' };
+  const ARCH_COLORS = { genius: '#a9cbd6', sidekick: '#f6d34b', teen: '#ff7fb0', surgeon: '#e06a7a', joe: '#7fc76a', birdfolk: '#d98a4a', beanling: '#ffd447', mutant: '#ff7a8a', trooper: '#e4e8ee', hive: '#c49bff', meeseeks: '#7ec8f0', squanchy: '#c98a4a', evilmorty: '#ff5a3a', picklerick: '#7cbf3a' };
   UI.ARCH_COLORS = ARCH_COLORS;
-  const ARCH_ICONS = { genius: 'G', sidekick: 'S', teen: 'T', surgeon: 'H', joe: 'J', birdfolk: 'B', beanling: 'b', mutant: 'M', trooper: 'F', hive: 'U' };
+  const ARCH_ICONS = { genius: 'R', sidekick: 'M', teen: 'S', surgeon: 'B', joe: 'J', birdfolk: 'BP', beanling: 'P', mutant: 'C', trooper: 'F', hive: 'U', meeseeks: 'Me', squanchy: 'Sq', evilmorty: 'EM', picklerick: 'PR' };
 
   const SKINS = ['#ffe0c8', '#f2d2b6', '#e0b08c', '#c68a62', '#a8724f', '#6b4630', '#9ad66b', '#7ec8e3', '#c49bff', '#ffd447', '#e07a85', '#b4b4c0'];
   const COLORS = ['#ffffff', '#f4f6f8', '#b9d4e0', '#9a9a9a', '#2a2a2a', '#7fb2d6', '#3c6fb5', '#2a3f8f', '#ffd447', '#f5a623', '#e2483d', '#a0303b', '#5fb848', '#2e7d32', '#b48aff', '#ff6fd0', '#6b4f2c', '#c9a77a'];
@@ -56,7 +56,7 @@
       archList.textContent = '';
       for (const id of MM.ARCH_IDS) {
         const A = MM.ARCHETYPES[id];
-        const b = el('button', { class: 'arch', 'aria-pressed': String(profile.arch === id), onclick: () => { profile.arch = id; if (id === 'birdfolk') profile.look.species = 'birdfolk'; if (id === 'beanling') profile.look.species = 'beanling'; if (id === 'mutant') profile.look.species = 'blob'; renderArch(); renderLook(); onChange(); } },
+        const b = el('button', { class: 'arch', 'aria-pressed': String(profile.arch === id), onclick: () => { profile.arch = id; profile.look = MM.canonLook(id); renderArch(); renderLook(); onChange(); } },
           el('span', { class: 'ico', style: 'background:' + ARCH_COLORS[id], text: ARCH_ICONS[id] }),
           el('span', null, el('b', { text: A.name }), el('span', { text: A.ability.name + ' · ' + A.hp + ' HP' })));
         archList.append(b);
@@ -109,7 +109,9 @@
       }
     };
     $('randomize').onclick = () => { profile.look = MM.randomLook(profile.arch); renderLook(); onChange(); };
-    $('presetBtn').onclick = () => UI.modal('Presets', box => {
+    $('canonBtn').onclick = () => { profile.look = MM.canonLook(profile.arch); renderLook(); onChange(); };
+    $('variantBtn').onclick = () => { profile.look = MM.variantLook(profile.arch); renderLook(); onChange(); };
+    if ($('presetBtn')) $('presetBtn').onclick = () => UI.modal('Presets', box => {
       const list = el('div', { class: 'list' });
       for (const p of UI.PRESETS) list.append(el('div', { class: 'row' }, el('div', { class: 't' }, el('b', { text: p.label }), el('small', { text: MM.ARCHETYPES[p.arch].name })),
         el('button', { class: 'btn go', onclick: () => { profile.arch = p.arch; profile.look = Object.assign(MM.defaultLook(), p.look); renderArch(); renderLook(); onChange(); UI.closeModal(); } }, 'Use')));

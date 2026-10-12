@@ -47,7 +47,11 @@ input, select { font: inherit; }
 #stage { position: relative; min-height: 200px; pointer-events: auto; cursor: grab; }
 #stage .stage-tools { position: absolute; left: 0; right: 0; bottom: 6px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 #stage .hint { position: absolute; top: 4px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 13px; text-shadow: 0 2px 0 #000; }
-.arch-list { display: grid; gap: 8px; }
+.arch-list { display: grid; gap: 6px; grid-template-columns: 1fr 1fr; }
+.arch-list .arch { grid-template-columns: 30px 1fr; gap: 6px; padding: 6px; }
+.arch-list .arch .ico { width: 30px; height: 30px; font-size: 12px; }
+.arch-list .arch b { font-size: 13px; line-height: 1.15; }
+.arch-list .arch span span { font-size: 11px; }
 .arch { display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: center; text-align: left; background: var(--panel2); border: 3px solid var(--line); border-radius: 14px; padding: 8px; box-shadow: 0 3px 0 var(--line); }
 .arch .ico { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #000; display: grid; place-items: center; font-weight: 700; font-size: 18px; color: #000; }
 .arch b { display: block; font-size: 15px; }
@@ -199,7 +203,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 <section id="menu" hidden>
   <header class="brand">
     <h1>Multiverse Mayhem</h1>
-    <p>Infinite dimensions. Infinite versions of you. Zero consequences (probably).</p>
+    <p>Be any Rick, Morty, or anyone else, from any universe. A free, unofficial fan game.</p>
   </header>
   <div class="creator">
     <div class="panel" id="archPanel">
@@ -210,8 +214,9 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
     <div id="stage">
       <div class="hint">Drag to spin your variant</div>
       <div class="stage-tools">
-        <button class="btn" id="randomize">Randomize</button>
-        <button class="btn" id="presetBtn">Presets</button>
+        <button class="btn" id="canonBtn">Canon look</button>
+        <button class="btn gold" id="variantBtn">Other universe</button>
+        <button class="btn" id="randomize">Random</button>
       </div>
     </div>
     <div class="panel" id="lookPanelWrap">
@@ -221,7 +226,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
   </div>
   <footer>
     <div class="playbar">
-      <label class="grp"><span>Name</span><input class="field" id="name" maxlength="16" size="12" autocomplete="off" spellcheck="false"></label>
+      <label class="grp"><span>Name</span><input class="field" id="name" maxlength="20" size="12" autocomplete="off" spellcheck="false"></label>
       <label class="grp"><span>Home dimension</span><input class="field" id="home" maxlength="7" size="6" autocomplete="off" spellcheck="false"></label>
       <label class="grp"><span>Start in</span><select class="field" id="startDim"></select></label>
       <button class="btn go" id="playOffline">Play offline with bots</button>
@@ -229,7 +234,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
       <button class="btn gold" id="playOnline">Play online</button>
       <button class="btn" id="helpBtn" aria-label="How to play">?</button>
     </div>
-    <p class="note" id="menuNote">A fan-made parody-style game with original characters. Not affiliated with any TV show or studio.</p>
+    <p class="note" id="menuNote">Unofficial, free, non-commercial fan game. Rick and Morty belongs to its creators and Adult Swim; this game is not affiliated with them.</p>
   </footer>
 </section>
 

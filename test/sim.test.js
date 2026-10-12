@@ -191,7 +191,7 @@ test('a teen breaks out of daily life step by step and builds her own portal gun
   host.message(c, '{"t":"cr","g":"gunbuild"}');
   run(host, 0.1);
   assert.ok(p.st.gun, 'has a portal gun');
-  assert.strictEqual(p.prog.title, 'Space Teen');
+  assert.strictEqual(p.prog.title, 'Space Summer');
   assert.strictEqual(p.charges, 2);
 });
 

@@ -335,7 +335,7 @@
 
     // ----- NPCs -----
     // Players a monster can see (Average Joes, sobbing and protected players are beneath notice).
-    visible(p, now) { return !p.dead && p.arch !== 'joe' && now >= p.fx.sob && now >= p.fx.prot; }
+    visible(p, now) { return !p.dead && p.arch !== 'joe' && now >= p.fx.sob && now >= p.fx.prot && now >= p.fx.cloak; }
 
     tickNpcs(dt, now) {
       for (const n of this.npcs.values()) {
@@ -600,7 +600,7 @@
         hp: A.hp, maxHp: A.hp, dead: false, respawnAt: 0, ship: false,
         charges: 0, chargeAt: 0,
         cdFire: 0, cdAb: 0, cdKiosk: 0, cdTalk: 0, cdDrive: 0, cdUse: 0, offer: null,
-        fx: { shield: 0, sprint: 0, sob: 0, shrink: 0, guilt: 0, prot: 0, daze: 0, cuff: 0 },
+        fx: { shield: 0, sprint: 0, sob: 0, shrink: 0, guilt: 0, prot: 0, daze: 0, cuff: 0, cloak: 0 },
         kbUntil: 0, portalCool: 0, kills: 0, deaths: 0, dirtyFlag: true, progDirty: true, saveDirty: false,
       };
       this.restat(p);
@@ -724,6 +724,7 @@
       if (now < p.fx.daze) b |= 256;
       if (p.ship) b |= 512;
       if (now < p.fx.cuff) b |= 1024;
+      if (now < p.fx.cloak) b |= 2048;
       return b;
     }
 
@@ -859,7 +860,7 @@
     onRespawn(p) {
       if (!p.dead || this.time < p.respawnAt) return;
       p.dead = false; p.hp = p.maxHp;
-      p.fx = { shield: 0, sprint: 0, sob: 0, shrink: 0, guilt: 0, prot: this.time + MM.SPAWN_PROTECT, daze: 0, cuff: 0 };
+      p.fx = { shield: 0, sprint: 0, sob: 0, shrink: 0, guilt: 0, prot: this.time + MM.SPAWN_PROTECT, daze: 0, cuff: 0, cloak: 0 };
       const s = MM.spawnPoint(p.inst.dimId);
       this.teleport(p, s.x, s.y + 0.1, s.z);
       p.inst.ev({ k: 'resp', id: p.id });
@@ -897,6 +898,17 @@
           nearNpc(6, n => { n.stun = now + 4; });
           break;
         }
+        case 'summon':
+          for (let i = 0; i < 2; i++) {
+            const a = p.r + (i ? 1.2 : -1.2);
+            const n = inst.spawnNpc('meeseeks', true, { at: { x: p.x + Math.sin(a) * 2, z: p.z + Math.cos(a) * 2 }, until: now + 20 });
+            n.owner = p.id; n.ownerUntil = now + 20;
+            inst.ev({ k: 'say', n: n.id, by: p.id, text: 'I\'m Mr. Meeseeks! Look at me!' });
+          }
+          break;
+        case 'rage': p.fx.shield = now + 5; p.fx.sprint = now + 5; break;
+        case 'scheme': p.fx.cloak = now + ab.dur; break;
+        case 'roll': p.fx.sprint = now + ab.dur; p.fx.shield = now + ab.dur; break;
         case 'assimilate': {
           let k = 0;
           nearNpc(10, n => {

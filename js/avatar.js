@@ -15,16 +15,40 @@
   function buildHead(s, L, R, species, opts) {
     opts = opts || {};
     const skin = L.skin, hair = L.hairColor, dark = '#1b1b1b';
-    const tall = species === 'alien' ? 1.35 : 1.12;
+    // Head shape: round (most people), long (tall oval, like a grumpy scientist), wide.
+    const wideF = L.face === 'wide' ? 1.22 : 1;
+    let tall = L.face === 'long' ? 1.34 : L.face === 'wide' ? 1.0 : 1.12;
+    if (species === 'alien') tall *= 1.2;
     if (opts.noBall) {
       // nothing: the body is the head
+    } else if (species === 'insect') {
+      // Bug head: long, with big compound eyes, mandibles and antennae.
+      s.add(P.sphere, skin, [0, 0, 0.05 * R], null, [R * 0.85, R * 1.25, R * 1.0]);
+      for (const sx of [-1, 1]) {
+        s.add(P.sphere, '#1d1a2e', [sx * R * 0.55, R * 0.22, R * 0.55], null, [R * 0.42, R * 0.5, R * 0.36]);
+        s.add(P.sphereLo, '#8a86c0', [sx * R * 0.48, R * 0.38, R * 0.82], null, [R * 0.1, R * 0.1, R * 0.05], true);
+        s.add(P.cone, shade(skin, 0.7), [sx * R * 0.22, -R * 0.9, R * 0.6], [Math.PI - 0.4, 0, sx * 0.5], [R * 0.12, R * 0.45, R * 0.12]);
+        s.add(P.cylLo, shade(skin, 0.8), [sx * R * 0.3, R * 1.3, R * 0.2], [0.5, 0, -sx * 0.4], [R * 0.04, R * 0.8, R * 0.04]);
+        s.add(P.sphereLo, shade(skin, 0.8), [sx * R * 0.5, R * 1.65, R * 0.45], null, [R * 0.1, R * 0.1, R * 0.1]);
+      }
+      return R * 1.3;
     } else if (species === 'robot') {
       s.add(P.box, skin, [0, 0, 0], null, [R * 1.8, R * 1.9, R * 1.7]);
       s.add(P.cylLo, shade(skin, 0.7), [R * 0.95, 0, 0], [0, 0, Math.PI / 2], [R * 0.18, R * 0.25, R * 0.18]);
       s.add(P.cylLo, shade(skin, 0.7), [-R * 0.95, 0, 0], [0, 0, Math.PI / 2], [R * 0.18, R * 0.25, R * 0.18]);
       for (let i = -1; i <= 1; i++) s.add(P.box, dark, [i * R * 0.25, -R * 0.5, R * 0.86], null, [R * 0.12, R * 0.2, R * 0.04]);
     } else {
-      s.add(P.sphere, skin, [0, 0, 0], null, [R, R * tall, R * 0.95]);
+      s.add(P.sphere, skin, [0, 0, 0], null, [R * wideF, R * tall, R * 0.95]);
+      if (L.face === 'long') s.add(P.sphere, skin, [0, -R * 0.62, R * 0.12], null, [R * 0.72, R * 0.55, R * 0.8]);
+      if (species === 'cat') {
+        for (const sx of [-1, 1]) {
+          s.add(P.cone, skin, [sx * R * 0.55, R * tall * 0.85, 0], [0, 0, -sx * 0.35], [R * 0.32, R * 0.6, R * 0.18]);
+          s.add(P.cone, '#ffb6c8', [sx * R * 0.55, R * tall * 0.83, R * 0.06], [0, 0, -sx * 0.35], [R * 0.18, R * 0.42, R * 0.08]);
+          for (let i = -1; i <= 1; i++) s.add(P.cylLo, '#2a2a2a', [sx * R * 0.55, -R * 0.28 + i * R * 0.06, R * 0.86], [0, 0, Math.PI / 2 + i * 0.15], [R * 0.012, R * 0.6, R * 0.012]);
+        }
+        s.add(P.sphere, shade(skin, 1.35), [0, -R * 0.3, R * 0.72], null, [R * 0.42, R * 0.28, R * 0.3]);
+        s.add(P.sphereLo, '#ff7fa0', [0, -R * 0.14, R * 0.98], null, [R * 0.09, R * 0.07, R * 0.06]);
+      }
       if (species === 'human' || species === 'blob') {
         s.add(P.sphereLo, skin, [R * 0.97, 0, 0], null, [R * 0.13, R * 0.22, R * 0.12]);
         s.add(P.sphereLo, skin, [-R * 0.97, 0, 0], null, [R * 0.13, R * 0.22, R * 0.12]);
@@ -42,12 +66,22 @@
     };
     const ey = R * 0.18 * (species === 'alien' ? 1.4 : 1);
     if (L.eyes === 'cyclops') eye(0, ey, R * 0.42, R * 0.08);
+    else if (L.eyes === 'dots') {
+      for (const sx of [-1, 1]) s.add(P.sphereLo, dark, [sx * R * 0.3, ey, fz + R * 0.12], null, [R * 0.075, R * 0.075, R * 0.05]);
+    }
     else if (L.eyes === 'visor') s.add(P.cyl, '#22e6ff', [0, ey, 0], null, [R * 0.99, R * 0.28, R * 0.99], true);
     else {
       const er = L.eyes === 'wide' ? R * 0.36 : R * 0.29;
       const pr = L.eyes === 'wide' ? R * 0.05 : R * 0.065;
       eye(R * 0.33, ey, er, pr); eye(-R * 0.33, ey, er, pr);
       if (L.eyes === 'three') eye(0, ey + R * 0.5, R * 0.2, R * 0.05);
+      if (L.eyes === 'tired') {
+        // Droopy upper lids and bags under the eyes.
+        for (const sx of [-1, 1]) {
+          s.add(P.hemi, skin, [sx * R * 0.33, ey + er * 0.18, fz + 0.005], [0.15, 0, 0], [er * 1.06, er * 0.85, er * 0.62]);
+          s.add(P.capsule, shade(skin, 0.82), [sx * R * 0.33, ey - er * 1.05, fz + R * 0.02], [0, 0, Math.PI / 2], [R * 0.025, er * 0.9, R * 0.02]);
+        }
+      }
       if (L.eyes === 'sleepy') {
         s.add(P.hemi, skin, [R * 0.33, ey + er * 0.05, fz + 0.005], [0.35, 0, 0], [er * 1.05, er * 1.05, er * 0.62]);
         s.add(P.hemi, skin, [-R * 0.33, ey + er * 0.05, fz + 0.005], [0.35, 0, 0], [er * 1.05, er * 1.05, er * 0.62]);
@@ -92,6 +126,32 @@
     } else if (species === 'robot') {
       s.add(P.cylLo, '#777', [0, R * 1.1, 0], null, [R * 0.04, R * 0.5, R * 0.04]);
       s.add(P.sphereLo, '#ff4040', [0, R * 1.4, 0], null, [R * 0.1, R * 0.1, R * 0.1], true);
+    } else if (hs === 'rick') {
+      // A high hairline and a crown of long spikes sweeping back and out.
+      s.add(P.sphere, hair, [0, R * 0.32 * tall, -R * 0.28], null, [R * 1.02 * wideF, top * 0.78, R * 0.82]);
+      const rows = [[0.35, 9, 1.15], [0.85, 7, 1.05], [1.25, 5, 0.9]];
+      for (const [el, n, len] of rows) {
+        for (let i = 0; i < n; i++) {
+          const th = -2.1 + 4.2 * (i + 0.5) / n;           // around the back, from temple to temple
+          const v = new T.Vector3(Math.sin(th) * Math.cos(el), Math.sin(el), -Math.cos(th) * Math.cos(el)).normalize();
+          const q = new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), v);
+          const e = new T.Euler().setFromQuaternion(q, 'YXZ');
+          s.add(P.cone, hair, [v.x * R * 0.95 * wideF, R * 0.25 * tall + v.y * top * 0.75, v.z * R * 0.85 - R * 0.1], [e.x, e.y, e.z], [R * 0.36, R * 1.5 * len, R * 0.26]);
+        }
+      }
+      for (const sx of [-1, 1]) s.add(P.cone, hair, [sx * R * 0.92 * wideF, R * 0.05, -R * 0.1], [0, 0, -sx * 2.0], [R * 0.18, R * 0.55, R * 0.16]);
+    } else if (hs === 'morty') {
+      // Smooth helmet of hair sitting back from the forehead, with a little peak at the front.
+      s.add(P.hemi, hair, [0, R * 0.12, -R * 0.06], [-0.22, 0, 0], [R * 1.06 * wideF, top * 0.98, R * 1.04]);
+      s.add(P.sphere, hair, [0, -R * 0.05, -R * 0.42], null, [R * 0.98 * wideF, R * 0.75, R * 0.62]);
+      s.add(P.cone, hair, [0, top * 0.92, R * 0.38], [0.7, 0, 0], [R * 0.2, R * 0.38, R * 0.14]);
+      for (const sx of [-1, 1]) s.add(P.sphereLo, hair, [sx * R * 0.92 * wideF, R * 0.18, -R * 0.05], null, [R * 0.16, R * 0.4, R * 0.35]);
+    } else if (hs === 'bob') {
+      // Chin-length bob: a cap plus volume around the sides and back, open at the face.
+      s.add(P.hemi, hair, [0, R * 0.16, -R * 0.02], [-0.12, 0, 0], [R * 1.08 * wideF, top * 0.95, R * 1.06]);
+      s.add(P.sphere, hair, [0, -R * 0.25, -R * 0.38], null, [R * 1.08 * wideF, R * 0.85, R * 0.8]);
+      for (const sx of [-1, 1]) s.add(P.sphere, hair, [sx * R * 0.86 * wideF, -R * 0.3, R * 0.12], null, [R * 0.3, R * 0.75, R * 0.5]);
+      s.add(P.capsule, hair, [R * 0.15, top * 0.82, R * 0.62], [0.9, 0, Math.PI / 2 - 0.3], [R * 0.16, R * 0.5, R * 0.14]);
     } else if (hs === 'spiky') {
       // Wild spikes fanning out from the back and top.
       const dirs = [[0, 1, -0.3], [0.5, 0.85, -0.4], [-0.5, 0.85, -0.4], [0.8, 0.4, -0.5], [-0.8, 0.4, -0.5], [0.3, 0.5, -0.9], [-0.3, 0.5, -0.9], [0, 0.1, -1], [0.7, 0, -0.75], [-0.7, 0, -0.75], [0.25, 1, 0.25], [-0.25, 1, 0.25]];
@@ -116,7 +176,10 @@
       s.add(P.hemi, hair, [0, R * 0.15, -R * 0.03], null, [R * 1.04, top * 0.9, R * 1.0]);
       C.capsuleAt(s, hair, R * 0.18, R * 1.2, [0, R * 0.4, -R * 0.95], [Math.PI - 0.35, 0, 0]);
     } else if (hs === 'slick') {
-      s.add(P.hemi, hair, [0, R * 0.2, -R * 0.1], [-0.25, 0, 0], [R * 1.03, top * 0.75, R * 1.0]);
+      // Neat, combed, side-parted.
+      s.add(P.hemi, hair, [0, R * 0.12, -R * 0.04], [-0.18, 0, 0], [R * 1.06 * wideF, top * 0.92, R * 1.04]);
+      s.add(P.sphere, hair, [0, -R * 0.02, -R * 0.4], null, [R * 0.98 * wideF, R * 0.7, R * 0.6]);
+      s.add(P.capsule, hair, [-R * 0.2, top * 0.86, R * 0.55], [1.2, 0, Math.PI / 2 + 0.25], [R * 0.14, R * 0.5, R * 0.12]);
     }
     // Accessories
     const ac = L.accColor;
@@ -138,8 +201,9 @@
     } else if (L.acc === 'headband') {
       s.add(P.torus, ac, [0, R * 0.48, 0], [Math.PI / 2, 0, 0], [R * 1.0, R * 1.0, R * 0.5]);
     } else if (L.acc === 'eyepatch') {
-      s.add(P.cyl, '#111', [R * 0.33, ey, fz + R * 0.12], [Math.PI / 2, 0, 0], [R * 0.3, R * 0.05, R * 0.3]);
-      s.add(P.torus, '#111', [0, ey + R * 0.1, 0], [Math.PI / 2, 0, 0.3], [R * 1.0, R * 1.0, R * 0.25]);
+      // Patch over the right eye; the strap runs up across the forehead, clear of the other eye.
+      s.add(P.cyl, '#111', [-R * 0.33, ey, fz + R * 0.16], [Math.PI / 2, 0, 0], [R * 0.32, R * 0.06, R * 0.32]);
+      s.add(P.capsule, '#111', [-R * 0.05, ey + R * 0.36, fz + R * 0.04], [0, 0, -0.95], [R * 0.035, R * 0.42, R * 0.035]);
     } else if (L.acc === 'halo') {
       s.add(P.torus, ac, [0, top + R * 0.55, 0], [Math.PI / 2, 0, 0], [R * 0.7, R * 0.7, R * 0.5], true);
     } else if (L.acc === 'crown') {
@@ -161,6 +225,8 @@
     s.add(P.cyl, col, [0, y + 0.02, 0.22], [Math.PI / 2, 0, 0], [0.05, 0.22, 0.05], true);
     s.add(P.sphereLo, col, [0, y + 0.02, 0.36], null, [0.055, 0.055, 0.055], true);
   }
+
+  function s_bump(shape, c, x, y, z) { shape.add(C.prim.sphereLo, c, [x, y, z], null, [0.035, 0.055, 0.03]); }
 
   // ---------- Full character ----------
   C.buildAvatar = function (look, arch, opts) {
@@ -184,13 +250,14 @@
       return pivot;
     };
 
-    const bean = species === 'beanling', blob = species === 'blob';
-    const legLen = (bean ? 0.55 : 0.72) * h;
+    const pickle = species === 'pickle';
+    const bean = species === 'beanling' || pickle, blob = species === 'blob';
+    const legLen = (pickle ? 0.24 : bean ? 0.55 : 0.72) * h;
     const legR = (bean ? 0.045 : blob ? 0.15 : 0.1) * w;
     const torsoLen = (blob ? 0.6 : 0.55) * h;
     const torsoR = (blob ? 0.42 : 0.22) * w;
     const armR = (bean ? 0.04 : blob ? 0.12 : 0.065) * w;
-    const armLen = 0.58 * h * (blob ? 1.1 : 1);
+    const armLen = 0.58 * h * (blob ? 1.1 : pickle ? 0.45 : 1);
     const pants = L.pantsColor, shoe = L.shoeColor, skin = L.skin;
     const top = L.top;
     const topC = top === 'none' ? skin : top === 'vest' ? L.shirtColor : (top === 'labcoat' ? L.shirtColor : L.topColor);
@@ -212,6 +279,14 @@
       // A tall bean: body and head are one shape, the face sits near the top.
       const bh = 1.15 * h;
       C.capsuleAt(ts, skin, 0.33 * w, bh, [0, legLen - 0.15, 0]);
+      if (pickle) {
+        // Pickle bumps, and a lighter belly.
+        for (let i = 0; i < 22; i++) {
+          const a = i * 2.39996, yy = legLen + (i / 22) * bh * 0.9;
+          s_bump(ts, shade(skin, 0.8), Math.sin(a) * 0.32 * w, yy, Math.cos(a) * 0.31 * w);
+        }
+        ts.add(P.sphere, shade(skin, 1.25), [0, legLen + bh * 0.35, 0.12 * w], null, [0.24 * w, bh * 0.35, 0.22 * w]);
+      }
       shoulderY = legLen + bh * 0.48; neckY = legLen + bh * 0.62; headR = 0.33 * w;
       if (top !== 'none') ts.add(P.cyl, topC, [0, legLen + 0.08, 0], null, [0.335 * w, 0.18, 0.335 * w]);
     } else if (blob) {
@@ -246,6 +321,12 @@
         ts.add(P.box, L.topColor, [-torsoR * 0.5, legLen + torsoLen * 0.5, torsoR * 0.8], null, [torsoR * 0.6, torsoLen * 0.85, 0.06]);
         ts.add(P.capsule, L.topColor, [0, legLen + torsoLen * 0.5, -torsoR * 0.35], null, [torsoR * 0.85, torsoLen * 0.42, torsoR * 0.7]);
       }
+      if (top === 'tank') {
+        // Bare shoulders and a scoop neck.
+        for (const sx of [-1, 1]) ts.add(P.sphere, skin, [sx * torsoR * 0.78, legLen + torsoLen * 0.94, 0], null, [0.13, 0.11, 0.14]);
+        ts.add(P.sphere, skin, [0, legLen + torsoLen * 0.98, torsoR * 0.55], null, [torsoR * 0.55, 0.1, torsoR * 0.4]);
+      }
+      if (species === 'cat') for (let i = 0; i < 7; i++) ts.add(P.sphereLo, i > 4 ? shade(skin, 0.7) : skin, [0, legLen + 0.05 + i * i * 0.012, -torsoR - 0.08 - i * 0.09], null, [0.07, 0.07, 0.07]);
       shoulderY = legLen + torsoLen - 0.06; neckY = legLen + torsoLen + 0.05; headR = 0.27 * hs;
     }
     if (species === 'robot' && !bean) ts.add(P.cyl, '#22e6ff', [0, legLen + torsoLen * 0.6, torsoR * 0.95], [Math.PI / 2, 0, 0], [0.07, 0.03, 0.07], true);
@@ -253,7 +334,7 @@
 
     // Arms: sleeves follow the top.
     const sleeveC = top === 'none' ? skin : top === 'labcoat' ? L.topColor : top === 'vest' ? L.shirtColor : L.topColor;
-    const sleeveLen = (top === 'tshirt' || top === 'polo' || top === 'vest') ? 0.35 : (top === 'none' || bean) ? 0 : 1;
+    const sleeveLen = (top === 'tshirt' || top === 'polo' || top === 'vest') ? 0.35 : (top === 'none' || top === 'tank' || bean) ? 0 : 1;
     for (const side of [-1, 1]) {
       const s = new C.Shape();
       C.capsuleAt(s, skin, armR, armLen, [0, -armLen, 0]);
