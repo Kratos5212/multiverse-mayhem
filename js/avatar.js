@@ -303,7 +303,7 @@
     const A = MM.ARCHETYPES[arch] || MM.ARCHETYPES.genius;
     let species = L.species;
     const h = L.height, w = L.width, hs = L.head;
-    const thick = opts.thick || 0.035;
+    const thick = opts.thick || 0.028;   // fine ink, like the show
 
     const root = new T.Group();
     const body = new T.Group();
@@ -320,12 +320,14 @@
 
     const pickle = species === 'pickle';
     const bean = species === 'beanling' || pickle, blob = species === 'blob';
-    const legLen = (pickle ? 0.24 : bean ? 0.55 : 0.72) * h;
+    // Show proportions: long legs and noodle arms, so heads are about a fifth of a grown-up's
+    // height (Morty, with his big head, is closer to a third).
+    const legLen = (pickle ? 0.24 : bean ? 0.55 : 0.84) * h;
     const legR = (bean ? 0.045 : blob ? 0.15 : 0.1) * w;
-    const torsoLen = (blob ? 0.6 : 0.55) * h;
+    const torsoLen = (blob ? 0.6 : 0.58) * h;
     const torsoR = (blob ? 0.42 : 0.22) * w;
     const armR = (bean ? 0.04 : blob ? 0.12 : 0.065) * w;
-    const armLen = 0.58 * h * (blob ? 1.1 : pickle ? 0.45 : 1);
+    const armLen = (bean ? 0.58 : 0.68) * h * (blob ? 1.1 : pickle ? 0.45 : 1);
     const pants = L.pantsColor, shoe = L.shoeColor, skin = L.skin;
     const top = L.top;
     const topC = top === 'none' ? skin : top === 'vest' ? L.shirtColor : (top === 'labcoat' ? L.shirtColor : L.topColor);
@@ -343,9 +345,10 @@
       const legC = bean ? skin : pants;
       const hip = [side * (bean ? 0.12 : 0.11) * w * (blob ? 1.6 : 1), legLen, 0];
       if (jointed) {
-        C.capsuleAt(s, legC, legR * 1.06, thighLen + legR, [0, -thighLen - legR * 0.5, 0]);
+        // Both halves end in a ball centred on the knee, so the leg bends without a seam.
+        C.capsuleAt(s, legC, legR, thighLen + 2 * legR, [0, -thighLen - legR, 0]);
         const k = new C.Shape();
-        C.capsuleAt(k, legC, legR, legLen - thighLen + legR * 0.5, [0, -(legLen - thighLen), 0]);
+        C.capsuleAt(k, legC, legR, legLen - thighLen + legR, [0, -(legLen - thighLen), 0]);
         shoeAt(k, -(legLen - thighLen));
         const hp = mk(s, body, hip);
         parts[side < 0 ? 'legL' : 'legR'] = hp;
@@ -414,7 +417,11 @@
         ts.add(P.sphere, skin, [0, legLen + torsoLen * 0.98, torsoR * 0.55], null, [torsoR * 0.55, 0.1, torsoR * 0.4]);
       }
       if (species === 'cat') for (let i = 0; i < 7; i++) ts.add(P.sphereLo, i > 4 ? shade(skin, 0.7) : skin, [0, legLen + 0.05 + i * i * 0.012, -torsoR - 0.08 - i * 0.09], null, [0.07, 0.07, 0.07]);
-      shoulderY = legLen + torsoLen - 0.06; neckY = legLen + torsoLen + 0.05; headR = 0.27 * hs;
+      // A visible neck, thin for grown-ups.
+      const neckLen = 0.075 * h;
+      headR = 0.235 * hs;
+      if (species !== 'insect' && species !== 'robot') C.capsuleAt(ts, skin, Math.max(0.045, 0.06 * w), neckLen + headR * 0.5 + 0.08, [0, legLen + torsoLen - 0.08, 0]);
+      shoulderY = legLen + torsoLen - 0.06; neckY = legLen + torsoLen + neckLen;
     }
     if (species === 'robot' && !bean) ts.add(P.cyl, '#22e6ff', [0, legLen + torsoLen * 0.6, torsoR * 0.95], [Math.PI / 2, 0, 0], [0.07, 0.03, 0.07], true);
     parts.torso = mk(ts, body);
@@ -426,7 +433,14 @@
     // ride on the forearm.
     const upLen = armLen * 0.5;
     const hand = (s, y, side) => {
-      s.add(P.sphere, species === 'robot' ? shade(skin, 0.8) : skin, [0, y - 0.02, 0], null, [armR * 1.5, armR * 1.6, armR * 1.4]);
+      const hc = species === 'robot' ? shade(skin, 0.8) : skin;
+      if (jointed && !bean && species !== 'robot') {
+        // A cartoon hand: palm, three fingers and a thumb (the show draws four fingers).
+        const gun = side > 0 && !MM.WEAPONS[A.weapon].melee;
+        s.add(P.sphere, hc, [0, y - armR * 0.7, 0], null, [armR * 1.45, armR * 1.7, armR * 1.05]);
+        for (let i = -1; i <= 1; i++) C.capsuleAt(s, hc, armR * 0.4, armR * (gun ? 1.2 : 1.7), [i * armR * 0.62, y - armR * 1.5, armR * 0.15], gun ? [Math.PI - 1.2, 0, 0] : [Math.PI - 0.25, 0, i * 0.12]);
+        C.capsuleAt(s, hc, armR * 0.42, armR * 1.3, [-side * armR * 0.95, y - armR * 0.6, armR * 0.35], [Math.PI - 0.7, 0, side * 0.7]);
+      } else s.add(P.sphere, hc, [0, y - 0.02, 0], null, [armR * 1.5, armR * 1.6, armR * 1.4]);
       if (side > 0 && !MM.WEAPONS[A.weapon].melee) addGun(s, A.weapon, L, y - 0.04);
       if (side > 0 && species === 'birdfolk' && MM.WEAPONS[A.weapon].melee) for (let i = -1; i <= 1; i++) s.add(P.cone, '#e8e2d0', [i * 0.04, y - 0.1, 0.05], [Math.PI - 0.3, 0, 0], [0.025, 0.14, 0.025]);
     };
@@ -435,11 +449,13 @@
       const px = side * (torsoR + armR * 1.2) * (bean ? 1.0 : 1);
       if (jointed) {
         const sl = armLen * sleeveLen * 0.92;
-        C.capsuleAt(s, skin, armR, upLen + armR, [0, -upLen - armR * 0.5, 0]);
-        if (sleeveLen > 0) C.capsuleAt(s, sleeveC, armR * 1.35, Math.min(sl, upLen + armR * 0.6), [0, -Math.min(sl, upLen + armR * 0.6), 0]);
+        // Same trick at the elbow: both halves (and long sleeves) end in a ball on the joint.
+        const sr = armR * 1.35, su = Math.min(sl, upLen);
+        C.capsuleAt(s, skin, armR, upLen + 2 * armR, [0, -upLen - armR, 0]);
+        if (sleeveLen > 0) C.capsuleAt(s, sleeveC, sr, su + 2 * sr, [0, -su - sr, 0]);
         const f = new C.Shape(), fl = armLen - upLen;
-        C.capsuleAt(f, skin, armR * 0.96, fl + armR * 0.5, [0, -fl, 0]);
-        if (sl > upLen) C.capsuleAt(f, sleeveC, armR * 1.33, sl - upLen + armR, [0, -(sl - upLen), 0]);
+        C.capsuleAt(f, skin, armR, fl + armR, [0, -fl, 0]);
+        if (sl > upLen) C.capsuleAt(f, sleeveC, sr, sl - upLen + sr, [0, -(sl - upLen), 0]);
         hand(f, -fl, side);
         const sp = mk(s, body, [px, shoulderY, 0]);
         parts[side < 0 ? 'armL' : 'armR'] = sp;
