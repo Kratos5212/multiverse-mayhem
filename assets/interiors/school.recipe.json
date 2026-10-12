@@ -1,0 +1,99 @@
+{
+  "kind": "floorplan",
+  "title": "Harry Herpson High (inside)",
+  "seed": 200,
+  "width": 60,
+  "height": 34,
+  "style": "brick",
+  "furnish": true,
+  "furnishScale": "share",
+  "windows": true,
+  "wallDecor": true,
+  "entryDoor": true,
+  "floorStyle": "auto",
+  "view": "cutaway",
+  "contactShadows": true,
+  "rooms": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 14,
+      "glyph": "O"
+    },
+    {
+      "x": 20,
+      "y": 0,
+      "w": 20,
+      "h": 14,
+      "glyph": "O"
+    },
+    {
+      "x": 40,
+      "y": 0,
+      "w": 20,
+      "h": 14,
+      "glyph": "O"
+    },
+    {
+      "x": 0,
+      "y": 14,
+      "w": 60,
+      "h": 8,
+      "glyph": "H"
+    },
+    {
+      "x": 0,
+      "y": 22,
+      "w": 30,
+      "h": 12,
+      "glyph": "D"
+    },
+    {
+      "x": 30,
+      "y": 22,
+      "w": 30,
+      "h": 12,
+      "glyph": "L"
+    }
+  ],
+  "doors": [
+    {
+      "x": 0,
+      "y": 18,
+      "room": 3,
+      "edge": "W",
+      "entry": true
+    },
+    {
+      "x": 10,
+      "y": 14,
+      "room": 0,
+      "edge": "S"
+    },
+    {
+      "x": 30,
+      "y": 14,
+      "room": 1,
+      "edge": "S"
+    },
+    {
+      "x": 50,
+      "y": 14,
+      "room": 2,
+      "edge": "S"
+    },
+    {
+      "x": 15,
+      "y": 22,
+      "room": 4,
+      "edge": "N"
+    },
+    {
+      "x": 45,
+      "y": 22,
+      "room": 5,
+      "edge": "N"
+    }
+  ]
+}

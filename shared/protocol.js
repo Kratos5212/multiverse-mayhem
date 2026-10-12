@@ -31,13 +31,13 @@
     ki: m => (str(m.d, 16) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null,   // use the public kiosk
     cr: m => (str(m.g, 16) && own(MM.RECIPES, m.g)) ? { g: m.g } : null,     // build a recipe
     g: m => (str(m.g, 16) && MM.GADGET_IDS.includes(m.g) && aim(m)) ? { g: m.g, dx: m.dx, dy: m.dy, dz: m.dz } : null, // use a gadget
-    use: m => (str(m.l, 16) && own(MM.LANDMARK_BY_ID, m.l) && (m.task === undefined || (str(m.task, 16) && own(MM.TASKS, m.task)))) ? { l: m.l, task: m.task } : null, // daily task at a landmark
+    use: m => (str(m.l, 32) && own(MM.LANDMARK_BY_ID, m.l) && (m.task === undefined || (str(m.task, 24) && own(MM.TASKS, m.task)))) ? { l: m.l, task: m.task } : null, // daily task at a landmark
     talk: m => int(m.n, 0, 1e12) ? { n: m.n } : null,  // talk to a local
     ans: m => int(m.a, 0, 1) ? { a: m.a } : null,      // accept (1) or refuse (0) a local's offer
     ship: m => typeof m.on === 'boolean' ? { on: m.on } : null,                // board or leave your ship
     pvp: m => typeof m.on === 'boolean' ? { on: m.on } : null,                 // allow fights with other players who allow them too
     drive: m => (str(m.d, 16) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null, // dimension drive
-    door: m => (str(m.l, 16) && own(MM.LANDMARK_BY_ID, m.l)) ? { l: m.l } : null,  // walk through a door
+    door: m => (str(m.l, 32) && own(MM.LANDMARK_BY_ID, m.l)) ? { l: m.l } : null,  // walk through a door
     // Teams: invite a player, join the team of someone who invited you, or leave.
     tm: m => (['inv', 'join', 'leave'].includes(m.op) && (m.op === 'leave' || int(m.id, 0, 1e12))) ? { op: m.op, id: m.id | 0 } : null,
     c: m => str(m.text, 300) ? { text: m.text } : null,  // chat

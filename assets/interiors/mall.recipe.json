@@ -1,0 +1,125 @@
+{
+  "kind": "floorplan",
+  "title": "Merpal's Mall (inside)",
+  "seed": 202,
+  "width": 70,
+  "height": 40,
+  "style": "modern",
+  "furnish": true,
+  "furnishScale": "share",
+  "windows": true,
+  "wallDecor": true,
+  "entryDoor": true,
+  "floorStyle": "auto",
+  "view": "cutaway",
+  "contactShadows": true,
+  "rooms": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 18,
+      "h": 14,
+      "glyph": "S"
+    },
+    {
+      "x": 18,
+      "y": 0,
+      "w": 18,
+      "h": 14,
+      "glyph": "L"
+    },
+    {
+      "x": 36,
+      "y": 0,
+      "w": 17,
+      "h": 14,
+      "glyph": "O"
+    },
+    {
+      "x": 53,
+      "y": 0,
+      "w": 17,
+      "h": 14,
+      "glyph": "S"
+    },
+    {
+      "x": 0,
+      "y": 14,
+      "w": 70,
+      "h": 12,
+      "glyph": "H"
+    },
+    {
+      "x": 0,
+      "y": 26,
+      "w": 30,
+      "h": 14,
+      "glyph": "D"
+    },
+    {
+      "x": 30,
+      "y": 26,
+      "w": 20,
+      "h": 14,
+      "glyph": "B"
+    },
+    {
+      "x": 50,
+      "y": 26,
+      "w": 20,
+      "h": 14,
+      "glyph": "K"
+    }
+  ],
+  "doors": [
+    {
+      "x": 0,
+      "y": 20,
+      "room": 4,
+      "edge": "W",
+      "entry": true
+    },
+    {
+      "x": 9,
+      "y": 14,
+      "room": 0,
+      "edge": "S"
+    },
+    {
+      "x": 27,
+      "y": 14,
+      "room": 1,
+      "edge": "S"
+    },
+    {
+      "x": 44,
+      "y": 14,
+      "room": 2,
+      "edge": "S"
+    },
+    {
+      "x": 61,
+      "y": 14,
+      "room": 3,
+      "edge": "S"
+    },
+    {
+      "x": 15,
+      "y": 26,
+      "room": 5,
+      "edge": "N"
+    },
+    {
+      "x": 40,
+      "y": 26,
+      "room": 6,
+      "edge": "N"
+    },
+    {
+      "x": 60,
+      "y": 26,
+      "room": 7,
+      "edge": "N"
+    }
+  ]
+}

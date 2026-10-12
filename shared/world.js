@@ -941,7 +941,17 @@
   MM.randomSpot = function (dimId, rand, minR, maxR) {
     const rr = rand || Math.random;
     const props = MM.genProps(dimId);
-    const bound = MM.boundOf(dimId);
+    const bound = MM.boundOf(dimId), D = MM.DIM_BY_ID[dimId];
+    if (D.walls) {
+      // Inside a building: anywhere in the rooms, clear of the walls.
+      const bz = MM.boundZOf(dimId);
+      for (let k = 0; k < 30; k++) {
+        const x = (rr() * 2 - 1) * bound * 0.85, z = (rr() * 2 - 1) * bz * 0.85;
+        const [wx, wz] = MM.collideWalls(dimId, x, z, 0.8);
+        if (wx === x && wz === z) return { x, y: 0, z };
+      }
+      return { x: D.spawn.x, y: 0, z: D.spawn.z };
+    }
     if (bound < 60) { minR = Math.min(minR || 15, bound * 0.2); maxR = Math.min(maxR || 140, bound * 0.85); }
     for (let k = 0; k < 30; k++) {
       const a = rr() * Math.PI * 2, d = (minR || 15) + rr() * ((maxR || 140) - (minR || 15));
@@ -955,6 +965,43 @@
 
   // Push a circle (x, z, radius) out of solid props. Used by clients for walking
   // and by the server for NPCs. Arches can be walked through.
+  // Buildings collide as their real footprint (a box in the model's own frame: [x0, x1, z0, z1],
+  // front = +z), turned and scaled like the prop. Everything else is a circle.
+  const BOX = {
+    house: [-5.95, 5.95, -4.8, 5.4], house2: [-9, 4.95, -5.05, 5.4], doghouse: [-2.55, 2.55, -2.55, 2.55], farmhouse: [-3.95, 3.95, -3.55, 4.6],
+    barn: [-4.5, 8.55, -6.3, 6.3], cityblock: [-3.7, 3.7, -3.7, 3.7], fedtower: [-4.5, 4.5, -4.5, 4.5], prisonblock: [-5.2, 5.2, -3.2, 3.2],
+    gearhouse: [-3.22, 3.22, -3.09, 3.3], storefront: [-4.7, 4.7, -3.7, 3.9], skyscraper: [-5.7, 5.7, -5.7, 5.7], apartment: [-5.2, 5.2, -5.2, 5.6],
+    officeblock: [-7.8, 7.8, -5.8, 6.4], hangar: [-7.6, 7.6, -9, 9.1], humanhouse: [-2.32, 2.32, -2.9, 2.9], factory: [-6, 6, -5, 5.11],
+    lm_home: [-6.7, 6.7, -5.3, 6.4], lm_garage: [-4.95, 4.95, -5.05, 5.2], lm_school: [-9.3, 9.3, -4.8, 5.2], lm_hospital: [-7.15, 7.15, -5.15, 5.4],
+    lm_office: [-5.7, 5.7, -4.2, 4.6], lm_forge: [-6.1, 6.1, -5.5, 5.5], lm_shipyard: [-8, 8, -8, 8], lm_market: [-5.85, 5.85, -5.41, 6],
+    lm_refinery: [-7, 7, -7, 7], lm_council: [-9, 9, -9, 9], lm_daycare: [-5.8, 7.04, -4.8, 6.5], lm_palace: [-9.34, 9.34, -5, 7.02],
+    lm_gooble: [-7.2, 7.2, -5.2, 7.65], lm_fakedoors: [-4.7, 4.7, -3.7, 3.9], lm_antsjohnson: [-4.7, 4.7, -3.7, 3.9], lm_plumbusline: [-6, 6, -5, 5.11],
+    lm_mall: [-11.5, 11.5, -7.25, 10.6], lm_shoneys: [-5.9, 5.9, -4.4, 4.6], lm_needful: [-4.25, 4.25, -4.25, 4.7], lm_wong: [-5.7, 5.7, -4.7, 5.2],
+    lm_tvstore: [-5.2, 5.2, -4.2, 4.35], lm_whitehouse: [-12.3, 12.3, -5.8, 9.6], lm_capitol: [-15.5, 15.5, -7.5, 9.5], lm_sonicstage: [-9, 9, -5, 5],
+    lm_hangar: [-7.6, 7.6, -9, 9.2], spacecruiser: [-2.02, 2.02, -2.5, 2.5],
+  };
+  for (const k in BOX) if (MM.PROPS[k]) MM.PROPS[k].box = BOX[k];
+  MM.PROPS.lm_highway.arch = true;   // a gantry over the road: walk (and drive) under it
+  // How far from its centre a prop can block (its circle, or its box's far corner).
+  MM.propReach = p => { const T = MM.PROPS[p.type]; if (!T.box) return p.r; if (!T.boxR) { const [x0, x1, z0, z1] = T.box; T.boxR = Math.hypot(Math.max(-x0, x1), Math.max(-z0, z1)); } return T.boxR * (p.s || 1); };
+  // Push a circle (x, z, rad) out of prop p. Returns [x, z], moved or not.
+  MM.pushOutOfProp = function (p, x, z, rad) {
+    const T = MM.PROPS[p.type];
+    if (T.box) {
+      const c = Math.cos(p.rot), s = Math.sin(p.rot), dx = x - p.x, dz = z - p.z, k = p.s || 1;
+      let lx = (dx * c - dz * s) / k, lz = (dx * s + dz * c) / k;
+      const r = rad / k, [x0, x1, z0, z1] = T.box;
+      if (lx > x0 - r && lx < x1 + r && lz > z0 - r && lz < z1 + r) {
+        const pen = [lx - (x0 - r), (x1 + r) - lx, lz - (z0 - r), (z1 + r) - lz], m = Math.min(...pen);
+        if (m === pen[0]) lx = x0 - r; else if (m === pen[1]) lx = x1 + r; else if (m === pen[2]) lz = z0 - r; else lz = z1 + r;
+        return [p.x + (lx * c + lz * s) * k, p.z + (-lx * s + lz * c) * k];
+      }
+      return [x, z];
+    }
+    const dx = x - p.x, dz = z - p.z, min = p.r + rad, d2 = dx * dx + dz * dz;
+    if (d2 < min * min && d2 > 1e-6) { const d = Math.sqrt(d2); return [p.x + dx / d * min, p.z + dz / d * min]; }
+    return [x, z];
+  };
   // Inside walls of a room (segments [x1, z1, x2, z2]): push a circle of radius rad out of them.
   MM.collideWalls = function (dimId, x, z, rad) {
     const W = MM.DIM_BY_ID[dimId].walls;
@@ -976,12 +1023,9 @@
     for (const p of props) {
       if (alive && !alive[p.id]) continue;
       if (MM.PROPS[p.type].arch) continue;
-      const dx = x - p.x, dz = z - p.z, min = p.r + rad;
-      const d2 = dx * dx + dz * dz;
-      if (d2 < min * min && d2 > 1e-6) {
-        const d = Math.sqrt(d2);
-        x = p.x + dx / d * min; z = p.z + dz / d * min;
-      }
+      const reach = MM.propReach(p) + rad;
+      if (Math.abs(x - p.x) > reach || Math.abs(z - p.z) > reach) continue;
+      [x, z] = MM.pushOutOfProp(p, x, z, rad);
     }
     return [x, z];
   };

@@ -1400,8 +1400,9 @@
     for (const p of props) {
       if (!G.alive[p.id] || MM.PROPS[p.type].arch) continue;
       if (y >= p.y + p.h * 0.92 - 0.6) continue;
-      const dx = x - p.x, dz = z - p.z, min = p.r + rad, d2 = dx * dx + dz * dz;
-      if (d2 < min * min && d2 > 1e-6) { const d = Math.sqrt(d2); x = p.x + dx / d * min; z = p.z + dz / d * min; }
+      const reach = MM.propReach(p) + rad;
+      if (Math.abs(x - p.x) > reach || Math.abs(z - p.z) > reach) continue;
+      [x, z] = MM.pushOutOfProp(p, x, z, rad);
     }
     return [x, z];
   }
@@ -1685,7 +1686,7 @@
     let d = dist;
     if ((G.camPropT -= dt) <= 0) {
       G.camPropT = 0.3;
-      G.camProps = MM.genProps(G.dimId).filter(p => (p.x - tx) ** 2 + (p.z - tz) ** 2 < (p.r + dist + 2) ** 2);
+      G.camProps = MM.genProps(G.dimId).filter(p => (p.x - tx) ** 2 + (p.z - tz) ** 2 < (MM.propReach(p) + dist + 2) ** 2);
     }
     for (let s = 0.8; s <= dist; s += 0.4) {
       const px = tx - fx_ * s + rx * sh * s / dist, py = ty - fy * s, pz = tz - fz * s + rz * sh * s / dist;
@@ -1693,7 +1694,8 @@
       if (MM.DIM_BY_ID[G.dimId].walls) { const [wx, wz] = MM.collideWalls(G.dimId, px, pz, 0.15); if (wx !== px || wz !== pz) hit = true; }
       if (!hit) for (const p of G.camProps || []) {
         if (!G.alive[p.id] || py > p.y + p.h || py < p.y - 1) continue;
-        if ((px - p.x) ** 2 + (pz - p.z) ** 2 < (p.r + 0.3) ** 2) { hit = true; break; }
+        const [qx, qz] = MM.pushOutOfProp(p, px, pz, 0.3);
+        if (qx !== px || qz !== pz) { hit = true; break; }
       }
       if (hit) { d = Math.max(0.8, s - 0.4); break; }
     }

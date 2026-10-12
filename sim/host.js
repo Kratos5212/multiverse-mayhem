@@ -94,7 +94,8 @@
       this.event = null;
       this.nextEvent = host.time + 60 + Math.random() * 90;
       // [type, count] or [type, count, x, z] for someone who lives at a particular spot.
-      for (const [type, count, x, z] of this.dim.npc) for (let i = 0; i < count; i++) this.spawnNpc(type, false, x !== undefined ? { at: { x: x + (Math.random() - 0.5) * 6, z: z + (Math.random() - 0.5) * 6 } } : null);
+      const bx = MM.boundOf(this.dimId) - 0.8, bz = MM.boundZOf(this.dimId) - 0.8, cl = (v, b) => Math.max(-b, Math.min(b, v));
+      for (const [type, count, x, z] of this.dim.npc) for (let i = 0; i < count; i++) this.spawnNpc(type, false, x !== undefined ? { at: { x: cl(x + (Math.random() - 0.5) * 6, bx), z: cl(z + (Math.random() - 0.5) * 6, bz) } } : null);
       for (const k in this.dim.pickups) for (let i = 0; i < this.dim.pickups[k]; i++) this.spawnPickup(k, false);
     }
 
@@ -414,6 +415,7 @@
             const step = Math.min(l, speed * dt);
             let nx = n.x + dx / l * step, nz = n.z + dz / l * step;
             [nx, nz] = MM.collideProps(this.dimId, nx, nz, T.r, null);
+            [nx, nz] = MM.collideWalls(this.dimId, nx, nz, T.r);
             const lim = Math.min(MM.WORLD_HALF - 15, MM.boundOf(this.dimId) - 0.8), limZ = Math.min(MM.WORLD_HALF - 15, MM.boundZOf(this.dimId) - 0.8);
             n.x = Math.max(-lim, Math.min(lim, nx)); n.z = Math.max(-limZ, Math.min(limZ, nz));
             n.r = Math.atan2(dx, dz);

@@ -5,6 +5,7 @@ const assert = require('node:assert');
 require('../shared/rules.js');
 require('../shared/world.js');
 require('../shared/layouts.js');
+require('../shared/interiors.js');
 require('../shared/protocol.js');
 require('../sim/host.js');
 const MM = require('../sim/bot.js');
@@ -540,4 +541,28 @@ test('Pickle Rick can only roll until he builds the rat suit', () => {
   assert.ok(p.prog.up.ratsuit, 'built the rat suit anywhere');
   host.message(c, '{"t":"g","g":"grenade","dx":0,"dy":0,"dz":1}');
   assert.strictEqual(p.inv.grenade, 1, 'now he can use gadgets');
+});
+
+test('buildings have insides: in through the door, do things, out again; walls and boxes block', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'sidekick', { dim: 'suburbia' });
+  for (const I of MM.INTERIORS) {
+    const out = MM.LANDMARK_BY_ID[I.outside];
+    near(host, c, p, out.id); run(host, 1.2);
+    host.message(c, JSON.stringify({ t: 'door', l: out.id }));
+    assert.strictEqual(p.inst.dimId, I.id, 'into ' + I.name);
+    assert.ok(MM.DIM_BY_ID[I.id].walls.length > 0);
+    assert.ok([...p.inst.npcs.values()].every(n => Math.abs(n.x) <= MM.boundOf(I.id) && Math.abs(n.z) <= MM.boundZOf(I.id)), 'locals are inside');
+    near(host, c, p, I.id + '_exit'); run(host, 1.2);
+    host.message(c, JSON.stringify({ t: 'door', l: I.id + '_exit' }));
+    assert.strictEqual(p.inst.dimId, out.dim, 'back out of ' + I.name);
+  }
+  // Inside the school, the class task works at the classroom spot (it is the school's task).
+  near(host, c, p, 'schoolin_class'); run(host, 1.2);
+  host.message(c, '{"t":"use","l":"schoolin_class","task":"school"}');
+  assert.ok(p.prog.tasks.school > 0);
+  // A house collides as its box: its corner, which the old circle missed, now blocks.
+  const h = MM.genProps('suburbia').find(q => q.type === 'house'), cs = Math.cos(h.rot), sn = Math.sin(h.rot);
+  const wx = h.x + 5.5 * cs - 4.5 * sn, wz = h.z - 5.5 * sn - 4.5 * cs;
+  assert.notDeepStrictEqual(MM.pushOutOfProp(h, wx, wz, 0.4), [wx, wz]);
 });

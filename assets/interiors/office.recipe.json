@@ -1,0 +1,60 @@
+{
+  "kind": "floorplan",
+  "title": "Unemployment Office (inside)",
+  "seed": 205,
+  "width": 34,
+  "height": 24,
+  "style": "modern",
+  "furnish": true,
+  "furnishScale": "share",
+  "windows": true,
+  "wallDecor": true,
+  "entryDoor": true,
+  "floorStyle": "auto",
+  "view": "cutaway",
+  "contactShadows": true,
+  "rooms": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 24,
+      "glyph": "L"
+    },
+    {
+      "x": 20,
+      "y": 0,
+      "w": 14,
+      "h": 12,
+      "glyph": "O"
+    },
+    {
+      "x": 20,
+      "y": 12,
+      "w": 14,
+      "h": 12,
+      "glyph": "O"
+    }
+  ],
+  "doors": [
+    {
+      "x": 10,
+      "y": 24,
+      "room": 0,
+      "edge": "S",
+      "entry": true
+    },
+    {
+      "x": 20,
+      "y": 6,
+      "room": 1,
+      "edge": "W"
+    },
+    {
+      "x": 20,
+      "y": 18,
+      "room": 2,
+      "edge": "W"
+    }
+  ]
+}

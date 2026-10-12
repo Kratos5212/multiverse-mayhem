@@ -1,0 +1,99 @@
+{
+  "kind": "floorplan",
+  "title": "Horse Hospital (inside)",
+  "seed": 201,
+  "width": 46,
+  "height": 30,
+  "style": "modern",
+  "furnish": true,
+  "furnishScale": "share",
+  "windows": true,
+  "wallDecor": true,
+  "entryDoor": true,
+  "floorStyle": "auto",
+  "view": "cutaway",
+  "contactShadows": true,
+  "rooms": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 16,
+      "h": 12,
+      "glyph": "O"
+    },
+    {
+      "x": 16,
+      "y": 0,
+      "w": 15,
+      "h": 12,
+      "glyph": "B"
+    },
+    {
+      "x": 31,
+      "y": 0,
+      "w": 15,
+      "h": 12,
+      "glyph": "B"
+    },
+    {
+      "x": 0,
+      "y": 12,
+      "w": 46,
+      "h": 6,
+      "glyph": "H"
+    },
+    {
+      "x": 0,
+      "y": 18,
+      "w": 23,
+      "h": 12,
+      "glyph": "B"
+    },
+    {
+      "x": 23,
+      "y": 18,
+      "w": 23,
+      "h": 12,
+      "glyph": "K"
+    }
+  ],
+  "doors": [
+    {
+      "x": 0,
+      "y": 15,
+      "room": 3,
+      "edge": "W",
+      "entry": true
+    },
+    {
+      "x": 8,
+      "y": 12,
+      "room": 0,
+      "edge": "S"
+    },
+    {
+      "x": 23,
+      "y": 12,
+      "room": 1,
+      "edge": "S"
+    },
+    {
+      "x": 38,
+      "y": 12,
+      "room": 2,
+      "edge": "S"
+    },
+    {
+      "x": 11,
+      "y": 18,
+      "room": 4,
+      "edge": "N"
+    },
+    {
+      "x": 34,
+      "y": 18,
+      "room": 5,
+      "edge": "N"
+    }
+  ]
+}

@@ -236,6 +236,12 @@ node scripts/glb2mm.js model.glb assets/interiors/smith.mmg --scale 1.4 --origin
 
 `scripts/glb2mm.js` merges a glTF into one compact mesh (quantised positions, normals and colours, about 600 KB here) that `js/mmg.js` loads and draws with the game's own cel shading. The Mojulo recipe is kept next to it (`assets/interiors/smith.recipe.json`), so the house can be rebuilt or changed with Mojulo and re-exported (use the unshaded `lit` export). Inside walls for collision are listed as segments on the dimension (`walls` in `shared/world.js`).
 
+### More insides (Mojulo floor plans)
+
+Harry Herpson High, the Horse Hospital, Merpal's Mall, Shoney's, the White House and the Unemployment Office can be walked into as well (F at the building, then **Go to ...**). Each is one floor plan in `shared/interiors.js`, used twice: Mojulo builds the furnished rooms from it (the recipes are in `assets/interiors/*.recipe.json`), and the game reads the same plan for the inside walls, bounds, the way in and out, and the spots to do things. Inside: Mr. Goldenfold's classroom, the principal's office and the cafeteria; the operating theatre and the horse ward; the mall concourse, food court and mattress store; a booth and the breakfast bar at Shoney's; the Oval Office (with President Curtis), the Cabinet Room and the press room; the job counter and the waiting room.
+
+Buildings outside now collide as their real footprint (a turned box) instead of a circle, for players, locals and the camera; you can walk under the highway gantries.
+
 ### Adding a dimension
 
 1. Add an entry to `MM.DIMS` in `shared/world.js`: name, seed, gravity, colours, props, locals and monsters, material and loot.

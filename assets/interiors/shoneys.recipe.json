@@ -1,0 +1,60 @@
+{
+  "kind": "floorplan",
+  "title": "Shoney's (inside)",
+  "seed": 203,
+  "width": 40,
+  "height": 28,
+  "style": "cottage",
+  "furnish": true,
+  "furnishScale": "share",
+  "windows": true,
+  "wallDecor": true,
+  "entryDoor": true,
+  "floorStyle": "auto",
+  "view": "cutaway",
+  "contactShadows": true,
+  "rooms": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 26,
+      "h": 28,
+      "glyph": "D"
+    },
+    {
+      "x": 26,
+      "y": 0,
+      "w": 14,
+      "h": 10,
+      "glyph": "E"
+    },
+    {
+      "x": 26,
+      "y": 10,
+      "w": 14,
+      "h": 18,
+      "glyph": "K"
+    }
+  ],
+  "doors": [
+    {
+      "x": 40,
+      "y": 5,
+      "room": 1,
+      "edge": "E",
+      "entry": true
+    },
+    {
+      "x": 26,
+      "y": 5,
+      "room": 0,
+      "edge": "W"
+    },
+    {
+      "x": 33,
+      "y": 10,
+      "room": 2,
+      "edge": "N"
+    }
+  ]
+}
