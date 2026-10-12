@@ -188,6 +188,25 @@ Rick, Morty and Evil Morty's daily lives now include Council meetings and Morty 
 
 The server, kiosk, portals, bots and journal pick it up automatically.
 
+## Virtual reality
+
+Play through a VR headset in a browser that supports WebXR: the **Meta Quest browser**, or Edge/Chrome on a PC with a headset connected (Quest Link, SteamVR or Windows Mixed Reality, which also covers the Windows launcher). When a headset is available, a goggles button appears in the top bar. Tap it to go in. You stand where your character stands, at your own height, and you see through their eyes.
+
+| Controller | Action |
+| --- | --- |
+| Left stick | Walk where you look (real steps move you too) |
+| Right stick left/right | Turn 30° |
+| Right trigger | Fire (aim with the controller; a faint beam shows where) |
+| Right grip | Talk to locals, do a daily task, go through doors, use the kiosk |
+| A | Jump (hold to fly); respawn after dying |
+| B | Ability |
+| Right stick click | Grenade |
+| X / Y | Choose a world for your portal gun |
+| Left trigger | Open a portal there (or take the kiosk) |
+| Left grip | Board or leave your ship |
+
+Your gun is in your right hand. A panel on your left wrist shows the world you're in, your health, your materials, where your portal gun is set to, and any messages. The game needs a secure (https) address for VR: the online server on Render, or the `play/` folder of the releases repository served with GitHub Pages. The Android app is for phones; Android's in-app browser has no VR.
+
 ## Android app and Windows launcher (with automatic updates)
 
 * **Android:** install `MultiverseMayhem.apk`. Allow installs from unknown sources the first time.

@@ -32,6 +32,8 @@
   vmScene.add(new T.HemisphereLight('#ffffff', '#8890a0', 0.65));
   const vmSun = new T.DirectionalLight('#ffffff', 0.5); vmSun.position.set(1, 3, 2); vmScene.add(vmSun);
   const vmCam = new T.PerspectiveCamera(62, 1, 0.02, 10);
+  let vr = null;                       // virtual reality, set up below (js/vr.js)
+  const camWorld = new T.Vector3();    // the camera's world position (in VR the camera sits inside a rig)
   const vm = { root: null, arm: null, src: null, bob: 0, swayX: 0, swayY: 0, pose: { x: 0.3, y: -0.3, z: 0.1, pitch: -0.22, yaw: 0.28, roll: 0, size: 0.92 },
     fistPose: { x: 0.3, y: -0.32, z: 0.1, pitch: -0.5, yaw: 0.4, roll: 0, size: 0.8 } };
   const scene = new T.Scene();
@@ -692,8 +694,9 @@
   }
   function aimDir() {
     if (MM.WEAPONS[weaponId()].melee) return { dx: Math.sin(G.camYaw), dy: 0, dz: Math.cos(G.camYaw) };
-    const o = camera.position, d = new T.Vector3();
-    camera.getWorldDirection(d);
+    const ray = vr && vr.on ? vr.aimRay() : null;
+    const o = ray ? ray.o : camWorld, d = ray ? ray.d : new T.Vector3();
+    if (!ray) camera.getWorldDirection(d);
     let best = 90;
     // Snap to the nearest thing under the crosshair, else to the ground, else far away.
     const test = (x, y, z, r) => {
@@ -1350,10 +1353,10 @@
   }
 
   // Characters within this distance of the camera get their smooth, detailed model.
-  function nearCam(x, z) { return (x - camera.position.x) ** 2 + (z - camera.position.z) ** 2 < (settings.quality === 'low' ? 16 * 16 : 26 * 26); }
+  function nearCam(x, z) { return (x - camWorld.x) ** 2 + (z - camWorld.z) ** 2 < (settings.quality === 'low' ? 16 * 16 : 26 * 26); }
 
   // ---------- Camera ----------
-  function firstPerson() { return settings.view === 'first'; }
+  function firstPerson() { return settings.view === 'first' || !!(vr && vr.on); }
   function setView(v) {
     settings.view = v; UI.save('settings', settings);
     if (v === 'third') G.camPitch = Math.max(-0.6, Math.min(1.25, G.camPitch));
@@ -1377,6 +1380,7 @@
   function updateViewModel(dt) {
     if (vm.src !== G.meAv) buildViewModel();
     if (!vm.root) return false;
+    if (vr && vr.on) { vm.root.visible = false; return false; }   // in VR the gun is in your hand
     const y = G.you, show = firstPerson() && y && !y.dead && !y.ship && G.me.emoteT <= 0;
     vm.root.visible = !!show;
     if (!show) return false;
@@ -1446,7 +1450,6 @@
   const proj = new T.Vector3();
   let menuInited = false;
   function frame() {
-    requestAnimationFrame(frame);
     // Real time passed (capped), so a slow device still plays at normal speed.
     const raw = Math.min(0.25, clock.getDelta());
     const dt = Math.min(0.05, raw);
@@ -1457,10 +1460,12 @@
       return;
     }
     if (G.mode !== 'play' || !G.world) { renderer.clear(); return; }
+    if (vr.on) vr.update(dt);
     for (let left = raw; left > 1e-4; left -= 0.05) updateMe(Math.min(0.05, left));
     updateOthers(dt);
-    updateCamera(dt);
-    G.world.update(dt, clock.elapsedTime, camera.position);
+    if (!vr.on) updateCamera(dt);
+    camera.getWorldPosition(camWorld);
+    G.world.update(dt, clock.elapsedTime, camWorld);
     fx.update(dt);
     const w = window.innerWidth, h = window.innerHeight;
     UI.updateNums(dt, n => {
@@ -1478,5 +1483,48 @@
     renderer.render(scene, camera);
     if (updateViewModel(dt)) { renderer.autoClear = false; renderer.clearDepth(); renderer.render(vmScene, vmCam); renderer.autoClear = true; }
   }
-  frame();
+
+  // ---------- Virtual reality ----------
+  vr = C.createVR({
+    renderer, scene, camera, G, touch,
+    look: () => profile.look, arch: () => profile.arch,
+    onSupported: ok => { $('bVR').hidden = !ok; },
+    onEnter: () => { G.camPitch = 0; },
+    onExit: () => { G.camPitch = 0.15; },
+    interact: vrInteract,
+    ability, ship: toggleShip,
+    gadget: useGadget,
+    respawn: () => { if (G.you && G.you.dead && now() >= G.rsAt) send({ t: 'rs' }); },
+    portal: vrPortal,
+  });
+  C.vr = vr;
+  // Screen messages go to the wrist panel while you are in VR.
+  const flatToast = UI.toast;
+  UI.toast = (text, ms) => { flatToast(text, ms); if (vr.on) vr.say(text); };
+  $('bVR').onclick = () => vr.enter().catch(e => UI.toast('Could not start VR: ' + (e && e.message || e), 4000));
+  // In VR there are no menus to click, so the controllers do things directly.
+  function vrInteract() {
+    if (!canAct()) return;
+    const n = nearestLocal();
+    if (n) { send({ t: 'talk', n: n.id }); return; }
+    const l = nearLandmark();
+    if (l) {
+      const ready = tasksAt(l).filter(t => !(G.prog && G.prog.tasks[t]));
+      if (ready.length) send({ t: 'use', l: l.id, task: ready[0] });
+      else if (l.door) send({ t: 'door', l: l.id });
+      else vr.say(tasksAt(l).length ? 'Nothing ready here yet. Come back later.' : 'This place is not part of your daily life.');
+      return;
+    }
+    if (nearKiosk()) vrPortal(MM.WORLD_IDS[vr.pick % MM.WORLD_IDS.length]);
+  }
+  function vrPortal(id) {
+    if (!canAct() || id === G.dimId) return;
+    if (G.you.ship && G.st.ship && G.st.ship.drive) { send({ t: 'drive', d: id }); return; }
+    if (nearKiosk()) { send({ t: 'ki', d: id }); return; }
+    if (!G.you.chMax) { vr.say('No portal gun in your life (yet). Find a kiosk.'); return; }
+    if (G.you.ch <= 0) { vr.say('Portal gun is recharging.'); return; }
+    send({ t: 'po', d: id });
+    vr.say('Portal open to ' + MM.DIM_BY_ID[id].name + '. Walk through it!');
+  }
+  renderer.setAnimationLoop(frame);
 })();

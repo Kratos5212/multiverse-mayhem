@@ -44,6 +44,11 @@ const files = [];
   }
 })(www, '');
 
+// play/ always holds the newest build, for playing in a browser (and in VR headsets) if the
+// releases repository is served with GitHub Pages.
+fs.rmSync(path.join(rel, 'play'), { recursive: true, force: true });
+fs.cpSync(www, path.join(rel, 'play'), { recursive: true });
+
 const latestFile = path.join(rel, 'latest.json');
 const prev = fs.existsSync(latestFile) ? JSON.parse(fs.readFileSync(latestFile, 'utf8')) : {};
 const latest = { build: ver.build, date: new Date().toISOString(), game: { base: gameRel, files }, android: prev.android, windows: prev.windows };

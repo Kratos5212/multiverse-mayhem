@@ -425,7 +425,7 @@
   // ---------- First-person arm ----------
   // Your right arm as you see it in first person: the forearm points forward (+z) from the
   // shoulder at the origin, with the gun's barrel lined up along it.
-  C.buildViewArm = function (look, arch) {
+  C.buildViewArm = function (look, arch, outline) {
     const L = MM.sanitizeLook(look);
     const A = MM.ARCHETYPES[arch] || MM.ARCHETYPES.genius;
     const species = L.species, h = L.height, w = L.width, top = L.top;
@@ -449,7 +449,7 @@
     } else if (species === 'birdfolk') {
       for (let i = -1; i <= 1; i++) s.add(P.cone, '#e8e2d0', [i * 0.04, 0.02, len + 0.1], [Math.PI / 2, 0, 0], [0.025, 0.14, 0.025]);
     }
-    return C.meshOf(s.build(), 0.03);
+    return C.meshOf(s.build(), outline || 0.03);
   };
 
   // ---------- Animation ----------
