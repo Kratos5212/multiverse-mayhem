@@ -36,6 +36,7 @@
     ans: m => int(m.a, 0, 1) ? { a: m.a } : null,      // accept (1) or refuse (0) a local's offer
     ship: m => typeof m.on === 'boolean' ? { on: m.on } : null,                // board or leave your ship
     drive: m => (str(m.d, 16) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null, // dimension drive
+    door: m => (str(m.l, 16) && own(MM.LANDMARK_BY_ID, m.l)) ? { l: m.l } : null,  // walk through a door
     c: m => str(m.text, 300) ? { text: m.text } : null,  // chat
     em: m => int(m.e, 0, 5) ? { e: m.e } : null,       // emote
     rs: () => ({}),                                     // respawn
@@ -68,7 +69,7 @@
   MM.RATE = {
     all: [90, 45], st: [40, 20], f: [12, 6], c: [3, 0.5], cr: [6, 2], g: [6, 2],
     po: [3, 1], ki: [3, 1], ab: [4, 2], em: [4, 1], rs: [3, 1], pi: [5, 1], hello: [1, 0],
-    use: [4, 1], talk: [4, 1], ans: [4, 1], ship: [4, 1], drive: [3, 0.5],
+    use: [4, 1], talk: [4, 1], ans: [4, 1], ship: [4, 1], drive: [3, 0.5], door: [3, 1],
   };
 
   // Animation states the client reports.

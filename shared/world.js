@@ -78,10 +78,65 @@
       props: [['nest', 18], ['totem', 22], ['featherplant', 40], ['rockspire', 26]],
       npc: [['birdcitizen', 9], ['skyserpent', 7]], pickups: { s: 6, f: 14 }, mat: 'f',
     },
+    {
+      id: 'citadel', name: 'Citadel of Ricks', code: 'CIT-1', seed: 1337, gravity: 22, amp: 0.4, scale: 0.02,
+      blurb: 'A city of infinite Ricks and Mortys floating in space. The Council meets here. Morty Daycare is down the road.',
+      sky: ['#04050d', '#1c2c55'], fog: '#18213f', fogFar: 230, sun: '#e8f0ff', ambient: '#8aa0d8',
+      ground: ['#8d97a6', '#a3adbb', '#6d7686'], accent: '#5ff8ff', tiles: true,
+      props: [['spire', 16], ['rickstatue', 5], ['vending', 26], ['hovercar', 14], ['citbench', 24]],
+      npc: [['citrick', 12], ['citmorty', 10], ['citguard', 4]], pickups: { s: 8, k: 14 }, mat: 'k',
+    },
+    {
+      id: 'dogworld', name: "Snowball's Dog World", code: 'DOG-1', seed: 2020, gravity: 24, amp: 4, scale: 0.013,
+      blurb: 'Dogs rose up in mech suits and took over. Humans are pets now. Snowball rules from his palace.',
+      sky: ['#5aa8ff', '#ffe6c8'], fog: '#d8e8ff', fogFar: 230, sun: '#fff4dc', ambient: '#a8c4ff',
+      ground: ['#6fb84a', '#86c95a', '#5a9a3c'], accent: '#ff5a3a',
+      props: [['doghouse', 22], ['hydrant', 26], ['bigbone', 14], ['tennisball', 14], ['dogstatue', 6]],
+      npc: [['dogcitizen', 10], ['doghuman', 6], ['dogsoldier', 8]], pickups: { s: 12, p: 8 }, mat: 'p',
+    },
+    {
+      id: 'megaseed', name: 'Mega Seed World', code: '35-C', seed: 3535, gravity: 20, amp: 11, scale: 0.016,
+      blurb: 'A wild jungle dimension where Mega Seeds grow. Everything here wants to eat you, slowly.',
+      sky: ['#ff8a3a', '#ffe08a'], fog: '#e8a868', fogFar: 200, sun: '#fff0c0', ambient: '#c88a6a',
+      ground: ['#2f8a6a', '#3aa07a', '#7a4ac0'], accent: '#c8ff6a',
+      props: [['seedtree', 34], ['fungus', 40], ['thornbush', 34]],
+      npc: [['seedbeast', 12]], pickups: { s: 6, m: 3, g: 4 }, mat: 'm',
+    },
+    // ----- Rick's garage and what's under it: small indoor dimensions -----
+    {
+      id: 'rickgarage', name: "Rick's Garage", code: 'C-137', seed: 137, gravity: 24, interior: true, hidden: true, bound: 12.4,
+      blurb: 'Where the science happens. Do not touch anything. Especially that.',
+      sky: ['#2a2a30', '#2a2a30'], fog: '#2a2a30', fogFar: 400, sun: '#fff4e0', ambient: '#a0a4b0',
+      ground: ['#8a8578', '#7d786c', '#958f82'], accent: '#39ff6a', spawn: { x: -2, z: 4 },
+      room: { w: 26, d: 26, h: 7, wall: '#c9c2b0', trim: '#6b6458' },
+      fixed: [['spacecruiser', 4, 2, -0.4], ['shelf', 12, -4, -Math.PI / 2], ['shelf', 12, 2, -Math.PI / 2], ['weaponrack', -4, -12, 0], ['beakers', 4, -12, 0], ['drums', -11, 9, 0], ['toolchest', 11, -10, -Math.PI / 2]],
+      props: [], npc: [['butterbot', 1]], pickups: {}, mat: 's',
+    },
+    {
+      id: 'ricklab', name: 'Secret Underground Lab', code: 'C-137', seed: 138, gravity: 24, interior: true, hidden: true, bound: 11,
+      blurb: 'Under the garage. Clone tanks, a very large computer, and a drawer of memories.',
+      sky: ['#101418', '#101418'], fog: '#101418', fogFar: 400, sun: '#cfe8ff', ambient: '#7a90a8',
+      ground: ['#4a5260', '#566070', '#3e4652'], accent: '#5ff8ff', spawn: { x: 0, z: 6 },
+      room: { w: 23, d: 23, h: 6, wall: '#5a6474', trim: '#2a3240' },
+      fixed: [['clonetank', -6, -9, 0], ['clonetank', -2, -9, 0], ['clonetank', 2, -9, 0], ['bigcomputer', 8, -6, -Math.PI / 2], ['labmachine', 8, 4, -Math.PI / 2]],
+      props: [], npc: [], pickups: { c: 3 }, mat: 'c',
+    },
+    {
+      id: 'cellar', name: "Rick's Wine Cellar", code: '?', seed: 139, gravity: 24, interior: true, hidden: true, bound: 11,
+      blurb: 'A pocket dimension behind a door in the garage. Rick keeps his good stuff here.',
+      sky: ['#1a0e0a', '#1a0e0a'], fog: '#1a0e0a', fogFar: 400, sun: '#ffd8a0', ambient: '#a07850',
+      ground: ['#6a4a32', '#5a3e2a', '#7a5638'], accent: '#ff9b4d', spawn: { x: 0, z: 6 },
+      room: { w: 23, d: 23, h: 5, wall: '#6e4a30', trim: '#3a2618' },
+      fixed: [['barrel', -8, -2, 0], ['barrel', -8, 2, 0], ['barrel', 8, -2, 0], ['barrel', 8, 2, 0], ['bottlerack', -6, -9, 0], ['bottlerack', 6, -9, 0]],
+      props: [], npc: [], pickups: { p: 2 }, mat: 'p',
+    },
   ];
   MM.DIM_BY_ID = {};
   for (const d of MM.DIMS) MM.DIM_BY_ID[d.id] = d;
   MM.DIM_IDS = MM.DIMS.map(d => d.id);
+  // Dimensions you can portal or kiosk to (the garage and its rooms are reached through doors).
+  MM.WORLD_IDS = MM.DIMS.filter(d => !d.hidden).map(d => d.id);
+  MM.boundOf = dimId => MM.DIM_BY_ID[dimId].bound || MM.WORLD_HALF;
 
   // Prop types: r = collision radius, h = height, hp, scrap dropped when destroyed.
   MM.PROPS = {
@@ -107,6 +162,34 @@
     featherplant:{ r: 0.6, h: 5,  hp: 25,  drop: { f: 1 } },
     rockspire:   { r: 2.6, h: 12, hp: 200, drop: { s: 2 } },
   };
+  Object.assign(MM.PROPS, {
+    spire:       { r: 2.6, h: 26, hp: 400, drop: { s: 3, k: 2 } },
+    rickstatue:  { r: 2.2, h: 11, hp: 300, drop: { k: 4 } },
+    vending:     { r: 0.8, h: 2.4, hp: 40, drop: { k: 2, s: 1 } },
+    hovercar:    { r: 2.0, h: 1.6, hp: 90, drop: { s: 3, k: 1 } },
+    citbench:    { r: 1.0, h: 1.0, hp: 20, drop: { s: 1 } },
+    doghouse:    { r: 3.0, h: 4.5, hp: 120, drop: { s: 3 } },
+    hydrant:     { r: 0.5, h: 1.4, hp: 25, drop: { s: 1 } },
+    bigbone:     { r: 2.4, h: 1.2, hp: 60, drop: { s: 2, p: 1 } },
+    tennisball:  { r: 1.5, h: 3.0, hp: 40, drop: { p: 1 } },
+    dogstatue:   { r: 2.2, h: 9, hp: 250, drop: { s: 4, p: 2 } },
+    seedtree:    { r: 1.8, h: 14, hp: 160, drop: { g: 2, s: 1 } },
+    fungus:      { r: 1.0, h: 3.0, hp: 30, drop: { g: 1 } },
+    thornbush:   { r: 1.4, h: 2.0, hp: 30, drop: { s: 1 } },
+    // Garage and lab furniture: solid, unbreakable (Rick would be furious).
+    spacecruiser:{ r: 3.0, h: 2.6, hp: 1e9, drop: {}, fixed: true },
+    shelf:       { r: 1.4, h: 3.2, hp: 1e9, drop: {}, fixed: true },
+    weaponrack:  { r: 1.6, h: 3.0, hp: 1e9, drop: {}, fixed: true },
+    beakers:     { r: 1.4, h: 1.6, hp: 1e9, drop: {}, fixed: true },
+    drums:       { r: 1.0, h: 1.4, hp: 1e9, drop: {}, fixed: true },
+    toolchest:   { r: 1.0, h: 1.6, hp: 1e9, drop: {}, fixed: true },
+    clonetank:   { r: 1.0, h: 3.6, hp: 1e9, drop: {}, fixed: true },
+    bigcomputer: { r: 2.2, h: 4.0, hp: 1e9, drop: {}, fixed: true },
+    labmachine:  { r: 1.8, h: 3.0, hp: 1e9, drop: {}, fixed: true },
+    barrel:      { r: 1.0, h: 1.8, hp: 1e9, drop: {}, fixed: true },
+    bottlerack:  { r: 1.6, h: 3.0, hp: 1e9, drop: {}, fixed: true },
+  });
+
   // Landmarks are solid, can't be destroyed, and each has its own model.
   for (const l of MM.LANDMARKS) MM.PROPS[l.model] = { r: l.r, h: l.h, hp: 1e9, drop: {}, fixed: true };
 
@@ -166,6 +249,34 @@
     meeseeks: { name: 'Mr. Meeseeks', hp: 30, speed: 6, hostile: false, dmg: 0, drop: {}, r: 0.5, h: 2.0,
       human: { fixed: 'meeseeks' }, names: ['Mr. Meeseeks'],
       talk: ['I\'m Mr. Meeseeks! Look at me!', 'Ooh, can do!', 'Existence is pain!', 'Caaan do!'], moods: { line: 100 } },
+    citrick: { name: 'Rick', hp: 60, speed: 2.6, hostile: false, dmg: 0, drop: { k: 3 }, r: 0.6, h: 2.0,
+      human: { variant: 'genius' }, names: ['Rick D-99', 'Rick C-132', 'Rick J-22', 'Cop Rick', 'Rick K-83', 'Cowboy Rick', 'Rick Q-9', 'Rick Z-4'],
+      talk: ['Ugh. Another Rick. Get in line.', 'Nice Morty you got there. Is it a Morty? Whatever.', 'The Council is corrupt and I am the only one who sees it.', 'Wubba lubba dub dub!',
+        'I am not drunk, I am temporally misaligned.', 'Do not trust the Ricks in the purple robes.', 'I traded my Morty for a sandwich. Good sandwich.'],
+      moods: { line: 40, gift: 14, trade: 14, errand: 12, buff: 6, angry: 8, follow: 3, prank: 3 } },
+    citmorty: { name: 'Morty', hp: 40, speed: 3.2, hostile: false, dmg: 0, drop: { k: 2 }, r: 0.5, h: 1.6,
+      human: { variant: 'sidekick' }, names: ['Morty C-131', 'Morty K-22', 'Morty D-716', 'Cool Morty', 'Lil Morty', 'Morty Q-17'],
+      talk: ['Aw jeez, aw man.', 'H-have you seen my Rick? He said he would be right back. That was a year ago.', 'I am just trying to get to Morty Daycare.', 'Every Morty here is so... Morty.',
+        'Do not go to the shady part of the Citadel. Trust me.'],
+      moods: { line: 45, gift: 10, trade: 8, errand: 14, buff: 6, angry: 4, follow: 10, prank: 1, dance: 2 } },
+    citguard: { name: 'Citadel Guard', hp: 90, speed: 3, hostile: false, dmg: 10, drop: { k: 4, s: 2 }, r: 0.6, h: 2.0,
+      human: { variant: 'genius', top: 'armor', acc: 'goggles' }, names: ['Guard Rick', 'Officer Rick', 'Sergeant Rick'],
+      talk: ['Move along, Rick.', 'Papers. Portal papers. Now.', 'The Council sees all. Mostly.', 'No loitering near the Council.'],
+      moods: { line: 55, angry: 25, trade: 10, buff: 5, errand: 5 } },
+    dogcitizen: { name: 'Dog', hp: 45, speed: 3.5, hostile: false, dmg: 6, drop: { p: 2 }, r: 0.7, h: 1.4,
+      names: ['Rex', 'Biscuit', 'Duke', 'Princess', 'Sir Barksalot', 'Muffin', 'General Fluff'],
+      talk: ['Bark! I mean, hello, human.', 'Who is a good boy? It is me. I am the good boy.', 'Snowball says humans make excellent pets.', 'Do NOT throw that stick. Please. Please throw it.',
+        'We remember the vacuum cleaner. We will always remember.', 'Sit. Good human.'],
+      moods: { line: 45, gift: 12, trade: 8, errand: 12, buff: 8, angry: 8, follow: 6, dance: 1 } },
+    doghuman: { name: 'Pet Human', hp: 30, speed: 2.5, hostile: false, dmg: 0, drop: { s: 2 }, r: 0.6, h: 1.8,
+      human: { species: ['human'], top: ['tshirt', 'sweater', 'none'], acc: ['headband', 'none'] }, names: ['Buddy', 'Champ', 'Sparky', 'Good Boy Dave', 'Fluffy'],
+      talk: ['They feed us twice a day. It is not terrible.', 'Do not let them take you to the vet.', 'I used to be an accountant. Now I fetch.', 'Psst. Is there a way out of here?'],
+      moods: { line: 45, gift: 10, errand: 18, buff: 6, follow: 15, angry: 2, prank: 2, dance: 2 } },
+    dogsoldier: { name: 'Mech Dog', hp: 75, speed: 4.6, hostile: true, dmg: 12, drop: { s: 3, p: 2 }, r: 0.9, h: 1.8 },
+    seedbeast: { name: 'Seed Beast', hp: 65, speed: 4.4, hostile: true, dmg: 11, drop: { g: 2, m: 1 }, r: 1.0, h: 1.4 },
+    butterbot: { name: 'Butter Robot', hp: 20, speed: 1.2, hostile: false, dmg: 0, drop: { s: 1 }, r: 0.4, h: 0.6,
+      names: ['Butter Robot'], talk: ['What is my purpose?', 'I pass butter?', 'Oh my god.', 'Yeah, welcome to the club, pal.', 'I am still processing that.'],
+      moods: { line: 80, follow: 10, gift: 10 } },
     invader: { name: 'Invader', hp: 45, speed: 4.5, hostile: true, dmg: 9, drop: { p: 2, s: 2 }, r: 0.6, h: 1.8,
       human: { species: ['alien'], top: ['armor'], acc: ['antennae', 'goggles'], eyes: ['cyclops', 'visor'] } },
   };
@@ -189,6 +300,18 @@
     moon: [
       { id: 'meteors', name: 'Meteor Shower', text: 'Meteors are hitting the surface. Crystals everywhere, explosions everywhere.', loot: ['c', 14], booms: 10, dur: 45 },
       { id: 'crabs', name: 'Crab Migration', text: 'Thousands of crabs. Well, nine. Angry ones.', spawn: [['mooncrab', 9]], dur: 80 },
+    ],
+    citadel: [
+      { id: 'election', name: 'Citadel Election', text: 'Campaign Ricks are handing out Schmeckles for votes.', talkBoost: 1, loot: ['k', 12], dur: 70 },
+      { id: 'raid', name: 'Federation Raid', text: 'The Galactic Federation is raiding the Citadel!', spawn: [['invader', 8]], dur: 90 },
+    ],
+    dogworld: [
+      { id: 'uprising', name: 'Mech Dog Patrol', text: 'Snowball sent his soldiers to round up stray humans.', spawn: [['dogsoldier', 7]], dur: 90 },
+      { id: 'treats', name: 'Treat Day', text: 'Treats are falling from the sky. Everyone is a good boy today.', loot: ['p', 12], talkBoost: 1, dur: 50 },
+    ],
+    megaseed: [
+      { id: 'seedfall', name: 'Seed Drop', text: 'The great trees are dropping Mega Seeds. Grab them!', loot: ['m', 5], dur: 40 },
+      { id: 'pack', name: 'Feeding Time', text: 'A pack of Seed Beasts is hunting.', spawn: [['seedbeast', 7]], dur: 80 },
     ],
     featherhold: [
       { id: 'molting', name: 'Molting Season', text: 'Feathers are falling from the sky. Very majestic, slightly gross.', loot: ['f', 16], dur: 45 },
@@ -226,6 +349,7 @@
   };
   function baseHeight(dimId, x, z) {
     const dim = MM.DIM_BY_ID[dimId];
+    if (dim.interior) return 0;
     const r = Math.sqrt(x * x + z * z);
     let h = (MM.fbm(x * dim.scale, z * dim.scale, dim.seed, 4) - 0.5) * 2 * dim.amp;
     h *= smooth(14, 40, r);
@@ -261,6 +385,7 @@
     const r = MM.rng(dim.seed);
     const out = [];
     const free = (x, z, rad) => {
+      if (dim.interior) return true;
       if (Math.hypot(x, z) < 22 + rad) return false;
       if (Math.hypot(x - MM.KIOSK.x, z - MM.KIOSK.z) < 8 + rad) return false;
       for (const p of out) if (Math.hypot(p.x - x, p.z - z) < p.r + rad + 1.5) return false;
@@ -270,7 +395,8 @@
       const t = MM.PROPS[type];
       out.push({ id: out.length, type, x, z, rot, s: scale, r: t.r * scale, h: t.h * scale, hp: Math.round(t.hp * scale) });
     };
-    for (const l of MM.LANDMARKS) if (l.dim === dimId) add(l.model, l.x, l.z, Math.atan2(-l.x, -l.z), 1);
+    for (const l of MM.LANDMARKS) if (l.dim === dimId) add(l.model, l.x, l.z, dim.interior ? (l.z < -3 ? 0 : l.z > 3 ? Math.PI : l.x < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.atan2(-l.x, -l.z), 1);
+    for (const [type, x, z, rot] of dim.fixed || []) add(type, x, z, rot, 1);
     if (dimId === 'suburbia') {
       // Houses on lots along a grid of streets (streets run along x and z multiples of 44).
       for (let gx = -3; gx <= 3; gx++) for (let gz = -3; gz <= 3; gz++) {
@@ -301,6 +427,8 @@
   // A random open spot near the middle (spawns and arrivals).
   MM.spawnPoint = function (dimId, rand) {
     const rr = rand || Math.random;
+    const dim = MM.DIM_BY_ID[dimId];
+    if (dim.spawn) { const x = dim.spawn.x + (rr() - 0.5) * 2, z = dim.spawn.z + (rr() - 0.5) * 2; return { x, y: 0, z }; }
     const a = rr() * Math.PI * 2, d = 4 + rr() * 9;
     const x = Math.cos(a) * d, z = Math.sin(a) * d + 4;
     return { x, y: MM.heightAt(dimId, x, z), z };
@@ -310,6 +438,8 @@
   MM.randomSpot = function (dimId, rand, minR, maxR) {
     const rr = rand || Math.random;
     const props = MM.genProps(dimId);
+    const bound = MM.boundOf(dimId);
+    if (bound < 60) { minR = Math.min(minR || 15, bound * 0.2); maxR = Math.min(maxR || 140, bound * 0.85); }
     for (let k = 0; k < 30; k++) {
       const a = rr() * Math.PI * 2, d = (minR || 15) + rr() * ((maxR || 140) - (minR || 15));
       const x = Math.cos(a) * d, z = Math.sin(a) * d;

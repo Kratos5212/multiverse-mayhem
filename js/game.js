@@ -122,6 +122,7 @@
     camYaw: 0, camPitch: 0.25, camDist: 6, shake: 0,
     offset: null, lastSnap: 0, stT: 0, fireT: 0, pingT: 0, ping: 0, pop: null, top: [],
     muted: new Set(), deadBy: '', modal: null, entered: false,
+    promptT: 0, promptKey: '', camPropT: 0, camProps: [],
   };
   C.G = G; // for debugging from the console
 
@@ -638,6 +639,7 @@
     mk('grenade', '1', 'Grenade', () => useGadget('grenade'));
     mk('turret', '2', 'Turret', () => useGadget('turret'));
     mk('shrink', '3', 'Shrink', () => useGadget('shrink'));
+    mk('meeseeks', '4', 'Meeseeks', () => useGadget('meeseeks'));
     mk('craft', 'C', 'Build', () => openCraft());
     mk('journal', 'J', 'Journal', () => openJournal());
     mk('portal', 'E', 'Portal', () => portalAction());
@@ -649,7 +651,7 @@
   function updateHotbar() {
     const y = G.you;
     if (!y || !slots.grenade) return;
-    for (const g of ['grenade', 'turret', 'shrink']) {
+    for (const g of MM.GADGET_IDS) {
       slots[g].querySelector('.n').textContent = y.inv[g] || '';
       slots[g].classList.toggle('off', !(y.inv[g] > 0));
     }
@@ -710,7 +712,7 @@
     if (!canAct()) return;
     if (G.you.ship) { UI.toast('Land first (B) to use gadgets.'); return; }
     if (!(G.you.inv[g] > 0)) { UI.toast('No ' + MM.RECIPES[g].name + '. Build one with C.'); return; }
-    const a = g === 'turret' ? { dx: Math.sin(G.camYaw), dy: 0, dz: Math.cos(G.camYaw) } : aimDir();
+    const a = g === 'turret' || g === 'meeseeks' ? { dx: Math.sin(G.camYaw), dy: 0, dz: Math.cos(G.camYaw) } : aimDir();
     if (g === 'grenade') { const l = Math.hypot(a.dx, a.dz) || 1; a.dx /= l; a.dz /= l; a.dy = 0; }
     G.me.yaw = G.camYaw; G.me.aimT = 1;
     send(Object.assign({ t: 'g', g }, a));
@@ -723,7 +725,7 @@
     send({ t: 'ab' });
     C.sfx('ability');
   }
-  function nearKiosk() { return G.dimId && Math.hypot(G.me.x - MM.KIOSK.x, G.me.z - MM.KIOSK.z) < MM.KIOSK_RADIUS; }
+  function nearKiosk() { return G.dimId && !MM.DIM_BY_ID[G.dimId].interior && Math.hypot(G.me.x - MM.KIOSK.x, G.me.z - MM.KIOSK.z) < MM.KIOSK_RADIUS; }
   function portalAction() {
     if (!canAct()) return;
     if (G.you.ship && G.st.ship && G.st.ship.drive) return openDims('drive');
@@ -757,13 +759,18 @@
     const n = nearestLocal();
     if (n) { send({ t: 'talk', n: n.id }); return; }
     const l = nearLandmark();
-    if (l) { openLandmark(l); return; }
+    if (l) { if (l.door && !tasksAt(l).length) send({ t: 'door', l: l.id }); else openLandmark(l); return; }
     if (nearKiosk()) openDims('kiosk');
+  }
+  // Daily tasks you can do at a landmark: your own life's, plus the ones anyone can do.
+  function tasksAt(l) {
+    const A = MM.ARCHETYPES[profile.arch];
+    return Object.keys(MM.TASKS).filter(t => MM.TASKS[t].at === l.id && (MM.TASKS[t].any || A.life.daily.includes(t)));
   }
   function openLandmark(l) {
     const A = MM.ARCHETYPES[profile.arch];
-    const tasks = A.life.daily.filter(t => MM.TASKS[t].at === l.id);
-    const builds = MM.RECIPE_IDS.filter(r => MM.RECIPES[r].at === l.id);
+    const tasks = tasksAt(l);
+    const builds = MM.RECIPE_IDS.filter(r => MM.RECIPES[r].at && MM.isAt(l, MM.RECIPES[r].at));
     openModal('landmark', l.name, box => {
       const list = el('div', { class: 'list' });
       for (const t of tasks) {
@@ -772,8 +779,9 @@
         list.append(el('div', { class: 'row' }, el('div', { class: 't' }, el('b', { text: T.name }), el('small', { text: (gives || '') + (T.heal ? ' · heals you' : '') + (wait ? ' · ready in ' + wait + ' s' : '') })),
           el('button', { class: 'btn go', disabled: wait ? '' : null, onclick: () => { send({ t: 'use', l: l.id, task: t }); UI.closeModal(); } }, 'Do it')));
       }
-      if (!tasks.length) list.append(el('p', { class: 'note', text: 'This place is not part of your daily life.' }));
+      if (!tasks.length && !l.door) list.append(el('p', { class: 'note', text: 'This place is not part of your daily life.' }));
       box.append(list);
+      if (l.door) box.append(el('button', { class: 'btn go', onclick: () => { send({ t: 'door', l: l.id }); UI.closeModal(); } }, 'Go to ' + MM.DIM_BY_ID[l.door.dim].name));
       if (builds.length) box.append(el('p', { class: 'note', text: 'Built here: ' + builds.map(r => MM.RECIPES[r].name).join(', ') + '.' }), el('button', { class: 'btn gold', onclick: () => openCraft() }, 'Open workbench'));
     });
   }
@@ -790,7 +798,7 @@
     openModal('dims', mode === 'kiosk' ? 'Portal Kiosk' : mode === 'drive' ? 'Dimension Drive' : 'Portal gun', box => {
       const list = el('div', { class: 'list' });
       for (const d of MM.DIMS) {
-        if (d.id === G.dimId) continue;
+        if (d.id === G.dimId || d.hidden) continue;
         const n = G.pop ? G.pop.d[d.id] : 0;
         list.append(el('div', { class: 'row dim' },
           el('div', { class: 't' }, el('b', { text: d.name + '  ' + d.code }), el('small', { text: d.blurb + ' · ' + n + ' here' })),
@@ -954,6 +962,7 @@
       case 'Digit1': useGadget('grenade'); break;
       case 'Digit2': useGadget('turret'); break;
       case 'Digit3': useGadget('shrink'); break;
+      case 'Digit4': useGadget('meeseeks'); break;
       case 'KeyV': emote(); break;
       case 'Space': e.preventDefault(); if (G.you && G.you.dead && now() >= G.rsAt) send({ t: 'rs' }); break;
     }
@@ -1026,7 +1035,7 @@
   $('bJournal').onclick = () => openJournal();
   // Offline progress lives in this browser: save it when the page goes away.
   window.addEventListener('pagehide', () => { if (G.net && G.net.host) G.net.host.saveAll(); });
-  $('tGadget').addEventListener('pointerdown', () => { const y = G.you; if (!y) return; const g = ['grenade', 'turret', 'shrink'].find(k => y.inv[k] > 0); if (g) useGadget(g); else openCraft(); });
+  $('tGadget').addEventListener('pointerdown', () => { const y = G.you; if (!y) return; const g = MM.GADGET_IDS.find(k => y.inv[k] > 0); if (g) useGadget(g); else openCraft(); });
 
   $('respawn').onclick = () => { if (G.you && G.you.dead && now() >= G.rsAt) send({ t: 'rs' }); };
   $('bBoard').onclick = () => openBoard();
@@ -1108,7 +1117,7 @@
     if (!inShip) me.vy -= dim.gravity * dt * (me.flying ? 0.2 : 1);
     let nx = me.x + me.vx * dt, nz = me.z + me.vz * dt, ny = me.y + me.vy * dt;
     [nx, nz] = pushOut(nx, nz, ny, inShip ? 1.6 : 0.45);
-    const lim = MM.WORLD_HALF - 1;
+    const lim = MM.boundOf(G.dimId) - (MM.DIM_BY_ID[G.dimId].interior ? 0 : 1);
     nx = Math.max(-lim, Math.min(lim, nx)); nz = Math.max(-lim, Math.min(lim, nz));
     const g = groundAt(nx, nz, Math.max(ny, me.y)) + (inShip ? 0.4 : 0);
     if (inShip) { if (ny < g) { ny = g; me.vy = Math.max(0, me.vy); } ny = Math.min(ny, g + 90); }
@@ -1150,7 +1159,11 @@
         $('prompt').textContent = '';
         const b = el('b', { text: isTouch ? 'TALK' : 'F' });
         if (n) { $('prompt').append(b, ' Talk to ' + n.name); $('tTalk').textContent = 'TALK'; }
-        else if (l) { $('prompt').append(b, ' ' + l.name); $('tTalk').textContent = 'USE'; }
+        else if (l) {
+          const dest = l.door ? MM.DIM_BY_ID[l.door.dim].name : '';
+          $('prompt').append(b, ' ' + (l.door ? (dest === l.name ? 'Enter ' + dest : l.name + ' → ' + dest) : l.name));
+          $('tTalk').textContent = l.door && !tasksAt(l).length ? 'GO' : 'USE';
+        }
         else if (nk) { $('prompt').append(b, ' Portal Kiosk: travel to any dimension'); $('tTalk').textContent = 'KIOSK'; }
         updateHotbar();
       }
@@ -1250,7 +1263,7 @@
     const tx = me.x, ty = me.y + 1.7 * sc + 0.2, tz = me.z;
     const cp = Math.cos(G.camPitch), sp = Math.sin(G.camPitch);
     const fx_ = Math.sin(G.camYaw) * cp, fy = -sp, fz = Math.cos(G.camYaw) * cp;
-    const dist = G.camDist * (0.7 + 0.3 * sc);
+    const dist = G.camDist * (0.7 + 0.3 * sc) * (MM.DIM_BY_ID[G.dimId].room ? 0.7 : 1);
     const rx = -Math.cos(G.camYaw), rz = Math.sin(G.camYaw);
     const sh = 0.55;
     // Pull the camera in when a prop is between it and the player.
@@ -1273,6 +1286,12 @@
     let cx = tx - fx_ * G.camD + rx * sh * k, cy = ty - fy * G.camD, cz = tz - fz * G.camD + rz * sh * k;
     const g = MM.heightAt(G.dimId, cx, cz) + 0.4;
     if (cy < g) cy = g;
+    const room = MM.DIM_BY_ID[G.dimId].room;
+    if (room) {
+      // Keep the camera inside the walls and under the ceiling.
+      const hx = room.w / 2 - 0.5, hz = room.d / 2 - 0.5;
+      cx = Math.max(-hx, Math.min(hx, cx)); cz = Math.max(-hz, Math.min(hz, cz)); cy = Math.min(room.h - 0.5, cy);
+    }
     if (G.shake > 0) { cx += (Math.random() - 0.5) * G.shake; cy += (Math.random() - 0.5) * G.shake; cz += (Math.random() - 0.5) * G.shake; G.shake = Math.max(0, G.shake - dt * 1.5); }
     camera.position.set(cx, cy, cz);
     camera.lookAt(cx + fx_, cy + fy, cz + fz);

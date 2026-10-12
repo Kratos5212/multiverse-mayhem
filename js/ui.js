@@ -146,9 +146,9 @@
       const add = (k, d) => keys.append(el('span', null, ...k.split(' ').map(x => el('kbd', { text: x }))), el('span', { text: d }));
       add('W A S D', 'Move'); add('Mouse', 'Look (click the game to capture the mouse)'); add('Click', 'Fire / attack'); add('Space', 'Jump (hold to fly as a Birdfolk)');
       add('Q', 'Archetype ability'); add('E', 'Portal gun: open a portal to another dimension'); add('F', 'Use the Portal Kiosk (when standing at it)');
-      add('F', 'Talk to locals, do daily tasks at buildings, use the kiosk'); add('J', 'Journal: your life, your path, errands');
+      add('F', 'Talk to locals, do daily tasks, go through doors (Rick\'s garage!), use the kiosk'); add('J', 'Journal: your life, your path, errands');
       add('B', 'Board or leave your ship (Space up, Shift down)');
-      add('1 2 3', 'Throw a grenade / deploy a turret / fire the shrink ray'); add('C', 'Workbench: build gadgets and upgrades'); add('Enter', 'Chat with the whole multiverse');
+      add('1 2 3 4', 'Grenade / turret / shrink ray / Meeseeks Box'); add('C', 'Workbench: build gadgets and upgrades'); add('Enter', 'Chat with the whole multiverse');
       add('Tab', 'Players, leaderboard and mute'); add('V', 'Emote (wave)'); add('Esc', 'Menu and settings');
       box.append(el('p', { text: 'Live your character\'s life, or break out of it. Do daily tasks at buildings, talk to locals (they do strange things), and follow your path in the journal (J). Every world has its own material, and the big upgrades (your body, a portal gun, a ship) are built at stations in different worlds. Every dimension holds up to 64 players.' }), keys,
         el('p', { class: 'note', text: 'On a phone: left stick to move, drag the right side to look, and use the round buttons.' }));

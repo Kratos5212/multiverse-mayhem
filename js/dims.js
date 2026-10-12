@@ -143,6 +143,222 @@
       s.add(P.dodeca, '#a27a42', [0.6, 1.2, 0.4], null, [2.4, 1.6, 2.2]);
       s.add(P.cyl, '#8fae4a', [0, 9.5, 0], null, [1.0, 0.25, 1.0]);
     },
+    // ----- Citadel of Ricks -----
+    spire(s) {
+      s.add(P.cyl, '#9aa6b8', [0, 6, 0], null, [2.2, 12, 2.2]);
+      s.add(P.cone, '#c8d2e0', [0, 18, 0], null, [1.8, 14, 1.8]);
+      for (const y of [5, 10, 15]) s.add(P.torus, '#5ff8ff', [0, y, 0], [Math.PI / 2, 0, 0], [2.6, 2.6, 0.8], true);
+      s.add(P.sphere, '#5ff8ff', [0, 25.5, 0], null, [0.5, 0.5, 0.5], true);
+    },
+    rickstatue(s) {
+      s.add(P.cyl, '#7d8796', [0, 1, 0], null, [2.2, 2, 2.2]);
+      s.add(P.capsule, '#c8ccd2', [0, 4.2, 0], null, [1.0, 2.4, 0.8]);
+      s.add(P.sphere, '#c8ccd2', [0, 7.6, 0], null, [1.3, 1.7, 1.2]);
+      for (let i = 0; i < 9; i++) { const a = -1.9 + i * 0.475; s.add(P.cone, '#b4bac2', [Math.sin(a) * 1.1, 8.6 + Math.abs(Math.cos(a)) * 0.4, -Math.cos(a) * 1.0], [-0.9 * Math.cos(a), a, 0], [0.4, 1.6, 0.3]); }
+      s.add(P.capsule, '#9aa2ac', [0, 8.0, 1.1], [0, 0, Math.PI / 2], [0.12, 1.2, 0.1]);
+      s.add(P.sphere, '#ffffff', [0.45, 7.7, 1.05], null, [0.35, 0.35, 0.15]); s.add(P.sphere, '#ffffff', [-0.45, 7.7, 1.05], null, [0.35, 0.35, 0.15]);
+    },
+    vending(s) {
+      s.add(P.box, '#3a4a6a', [0, 1.2, 0], null, [1.4, 2.4, 1.0]);
+      s.add(P.box, '#5ff8ff', [0.1, 1.5, 0.51], null, [0.9, 1.4, 0.04], true);
+      s.add(P.box, '#ffd84d', [-0.5, 1.6, 0.52], null, [0.2, 0.6, 0.04], true);
+    },
+    hovercar(s) {
+      s.add(P.sphere, '#e2483d', [0, 1.1, 0], null, [1.6, 0.55, 2.2]);
+      s.add(P.hemi, '#a8dcff', [0, 1.4, -0.2], null, [1.0, 0.7, 1.2]);
+      s.add(P.cyl, '#5ff8ff', [0, 0.45, 0], null, [1.2, 0.1, 1.6], true);
+    },
+    citbench(s) {
+      s.add(P.box, '#59606e', [0, 0.5, 0], null, [2.0, 0.15, 0.7]);
+      s.add(P.box, '#59606e', [0, 0.9, -0.3], null, [2.0, 0.6, 0.12]);
+      for (const x of [-0.85, 0.85]) s.add(P.box, '#3a3f4a', [x, 0.25, 0], null, [0.12, 0.5, 0.6]);
+    },
+    lm_council(s) {
+      s.add(P.cyl, '#7d8796', [0, 1, 0], null, [9, 2, 9]);
+      s.add(P.hemi, '#c8d2e0', [0, 2, 0], null, [8, 9, 8]);
+      s.add(P.torus, '#5ff8ff', [0, 2.2, 0], [Math.PI / 2, 0, 0], [8.2, 8.2, 0.6], true);
+      s.add(P.cyl, '#3a3f4a', [0, 12, 0], null, [0.5, 6, 0.5]);
+      s.add(P.sphere, '#39ff6a', [0, 15.5, 0], null, [1.2, 1.2, 1.2], true);
+      s.add(P.box, '#3a3f4a', [0, 2.8, 8.2], null, [3, 3.6, 1]);
+      s.add(P.box, '#a33aff', [0, 5.4, 8.6], null, [4, 0.8, 0.1], true);
+    },
+    lm_daycare(s) {
+      s.add(P.box, '#f6d34b', [0, 3, 0], null, [11, 6, 9]);
+      s.add(P.box, '#3a62a8', [0, 6.3, 0], null, [11.6, 0.6, 9.6]);
+      s.add(P.box, '#ffffff', [0, 1.5, 4.55], null, [2.4, 3, 0.1]);
+      for (const x of [-3.5, 3.5]) s.add(P.box, '#bfe6ff', [x, 3.5, 4.55], null, [2, 1.6, 0.1]);
+      // A slide out front.
+      s.add(P.box, '#e2483d', [5.5, 1.2, 6], [0, 0, 0.5], [3.4, 0.2, 1.0]);
+      s.add(P.cyl, '#3a62a8', [4.2, 1.3, 6], null, [0.1, 2.6, 0.1]);
+    },
+    // ----- Snowball's Dog World -----
+    doghouse(s) {
+      s.add(P.box, '#c8504a', [0, 1.7, 0], null, [4.4, 3.4, 4.4]);
+      const roof = new T.ConeGeometry(3.6, 2.2, 4, 1); roof.rotateY(Math.PI / 4);
+      s.add(roof, '#7a3a2a', [0, 4.5, 0], null, [1, 1, 1]); roof.dispose();
+      s.add(P.cyl, '#2a1a12', [0, 1.3, 2.21], [Math.PI / 2, 0, 0], [1.0, 0.05, 1.0]);
+      s.add(P.box, '#f4f4f4', [0, 3.2, 2.22], null, [1.6, 0.4, 0.05]);
+    },
+    hydrant(s) {
+      s.add(P.cyl, '#e2483d', [0, 0.6, 0], null, [0.32, 1.2, 0.32]);
+      s.add(P.hemi, '#e2483d', [0, 1.2, 0], null, [0.34, 0.3, 0.34]);
+      for (const sx of [-1, 1]) s.add(P.cyl, '#c03a30', [sx * 0.38, 0.8, 0], [0, 0, Math.PI / 2], [0.12, 0.2, 0.12]);
+    },
+    bigbone(s) {
+      s.add(P.capsule, '#f4efe0', [0, 0.6, 0], [0, 0, Math.PI / 2], [0.45, 3.2, 0.45]);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) s.add(P.sphere, '#f4efe0', [sx * 2.0, 0.6, sz * 0.45], null, [0.6, 0.6, 0.6]);
+    },
+    tennisball(s) {
+      s.add(P.sphere, '#d8f04a', [0, 1.5, 0], null, [1.5, 1.5, 1.5]);
+      s.add(P.torus, '#ffffff', [0, 1.5, 0], [0.4, 0, 0.3], [1.48, 1.48, 0.15]);
+    },
+    dogstatue(s) {
+      s.add(P.box, '#7d8796', [0, 1, 0], null, [3.6, 2, 3.6]);
+      s.add(P.sphere, '#ffffff', [0, 4, 0], null, [1.4, 1.8, 2.2]);
+      s.add(P.sphere, '#ffffff', [0, 6.4, 1.2], null, [1.2, 1.1, 1.3]);
+      s.add(P.sphere, '#ffffff', [0, 6.1, 2.4], null, [0.6, 0.5, 0.7]);
+      s.add(P.sphereLo, '#111', [0, 6.3, 3.05], null, [0.22, 0.18, 0.15]);
+      for (const sx of [-1, 1]) s.add(P.sphere, '#e8e8e8', [sx * 1.1, 6.6, 1.0], [0, 0, sx * 0.4], [0.35, 0.9, 0.5]);
+      s.add(P.box, '#3a3f4a', [0, 4.8, 0.2], null, [2.6, 0.5, 2.8]);   // little armour vest
+    },
+    lm_palace(s) {
+      s.add(P.box, '#f4efe0', [0, 4, 0], null, [16, 8, 10]);
+      for (const x of [-7, 7]) { s.add(P.cyl, '#f4efe0', [x, 6, 0], null, [2, 12, 2]); s.add(P.cone, '#e2483d', [x, 13.5, 0], null, [2.4, 3, 2.4]); }
+      s.add(P.cyl, '#2a1a12', [0, 2.2, 5.05], [Math.PI / 2, 0, 0], [1.8, 0.05, 1.8]);
+      // Snowball's head over the door.
+      s.add(P.sphere, '#ffffff', [0, 9, 4.5], null, [2, 1.8, 1.6]);
+      s.add(P.sphere, '#ffffff', [0, 8.6, 6], null, [0.9, 0.7, 0.9]);
+      s.add(P.sphereLo, '#111', [0, 8.8, 6.85], null, [0.3, 0.25, 0.2]);
+      for (const sx of [-1, 1]) { s.add(P.sphere, '#e8e8e8', [sx * 1.8, 9.4, 4.2], [0, 0, sx * 0.5], [0.5, 1.2, 0.6]); s.add(P.sphereLo, '#111', [sx * 0.7, 9.5, 5.85], null, [0.2, 0.25, 0.1]); }
+    },
+    // ----- Mega Seed world -----
+    seedtree(s) {
+      s.add(P.cyl, '#5a3a6a', [0, 5, 0], [0, 0, 0.05], [0.9, 10, 0.9]);
+      s.add(P.sphere, '#2fa07a', [0, 11.5, 0], null, [4.2, 2.6, 4.2]);
+      s.add(P.sphere, '#3ac08a', [1.5, 13, 0.8], null, [2.4, 1.8, 2.4]);
+      for (let i = 0; i < 5; i++) { const a = i * 1.3; s.add(P.sphere, '#c8ff6a', [Math.cos(a) * 3.2, 10.2, Math.sin(a) * 3.2], null, [0.35, 0.5, 0.35], true); }
+    },
+    fungus(s) {
+      s.add(P.cyl, '#e8d0ff', [0, 1.2, 0], null, [0.3, 2.4, 0.3]);
+      s.add(P.hemi, '#ff7ad0', [0, 2.4, 0], null, [1.1, 0.8, 1.1]);
+      s.add(P.sphereLo, '#ffe066', [0.4, 2.9, 0.3], null, [0.18, 0.12, 0.18], true);
+    },
+    thornbush(s) {
+      s.add(P.sphereLo, '#4a2a6a', [0, 0.9, 0], null, [1.4, 1.0, 1.4]);
+      for (let i = 0; i < 10; i++) { const a = i * 0.63, el = (i % 3) * 0.4; s.add(P.cone, '#c8ff6a', [Math.cos(a) * 1.1, 1.0 + el, Math.sin(a) * 1.1], [0, -a, 1.2], [0.1, 0.6, 0.1]); }
+    },
+    lm_megatree(s) {
+      s.add(P.cyl, '#5a3a6a', [0, 9, 0], null, [3, 18, 3]);
+      for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; s.add(P.capsule, '#5a3a6a', [Math.cos(a) * 3, 1, Math.sin(a) * 3], [Math.sin(a) * 0.8, 0, -Math.cos(a) * 0.8], [0.8, 3, 0.8]); }
+      s.add(P.sphere, '#2fa07a', [0, 21, 0], null, [9, 5, 9]);
+      s.add(P.sphere, '#3ac08a', [3, 24, 2], null, [5, 3.5, 5]);
+      for (let i = 0; i < 9; i++) { const a = i * 0.7; s.add(P.sphere, '#c8ff6a', [Math.cos(a) * 7, 18.5, Math.sin(a) * 7], null, [0.7, 1.0, 0.7], true); }
+    },
+    // ----- Rick's garage -----
+    lm_workbench(s) {
+      s.add(P.box, '#8a5a32', [0, 1.0, 0], null, [5, 0.2, 2]);
+      for (const x of [-2.3, 2.3]) for (const z of [-0.8, 0.8]) s.add(P.box, '#5a3a20', [x, 0.5, z], null, [0.2, 1.0, 0.2]);
+      s.add(P.box, '#d8dde2', [-1.2, 1.25, 0], [0, 0.4, 0], [0.9, 0.3, 0.45]);             // the portal gun
+      s.add(P.cyl, '#39ff6a', [-1.2, 1.35, 0.3], [Math.PI / 2, 0.4, 0], [0.12, 0.6, 0.12], true);
+      for (let i = 0; i < 3; i++) s.add(P.cyl, ['#39ff6a', '#ff6fd0', '#5ff8ff'][i], [1 + i * 0.5, 1.4, -0.3], null, [0.12, 0.6, 0.12], true);
+      s.add(P.box, '#59606e', [0, 2.4, -1.0], null, [5, 2.6, 0.15]);                      // pegboard
+      for (let i = 0; i < 6; i++) s.add(P.box, '#c9c9c9', [-2 + i * 0.8, 2.6 + (i % 2) * 0.5, -0.9], null, [0.1, 0.7, 0.05]);
+    },
+    lm_plumbus(s) {
+      s.add(P.cyl, '#6b6458', [0, 0.45, 0], null, [0.6, 0.9, 0.6]);
+      s.add(P.capsule, '#f4a0b8', [0, 1.3, 0], [0, 0, 0.2], [0.22, 0.7, 0.22]);
+      s.add(P.sphere, '#e87fa0', [0.15, 1.5, 0], null, [0.38, 0.3, 0.32]);
+      s.add(P.sphere, '#d9b0ff', [-0.1, 1.95, 0], null, [0.2, 0.22, 0.2]);
+      s.add(P.capsule, '#f4a0b8', [0.3, 1.1, 0.1], [0, 0, -1.2], [0.08, 0.35, 0.08]);
+      s.add(P.sphere, '#ffd0e0', [0.42, 1.35, 0], null, [0.12, 0.12, 0.12]);
+    },
+    lm_mbox(s) {
+      s.add(P.cyl, '#6b6458', [0, 0.4, 0], null, [0.6, 0.8, 0.6]);
+      s.add(P.box, '#3c8fd8', [0, 1.05, 0], null, [0.8, 0.5, 0.8]);
+      s.add(P.cyl, '#7ec8f0', [0, 1.36, 0], null, [0.22, 0.14, 0.22], true);
+    },
+    lm_battery(s) {
+      s.add(P.box, '#2a2a30', [0, 0.5, 0], null, [1.6, 1.0, 1.1]);
+      s.add(P.box, '#ffd84d', [0, 1.02, 0], null, [1.2, 0.05, 0.7], true);
+      for (const x of [-0.5, 0.5]) s.add(P.cyl, x < 0 ? '#e2483d' : '#2a2a2a', [x, 1.15, 0], null, [0.12, 0.25, 0.12]);
+      s.add(P.box, '#5ff8ff', [0, 0.55, 0.56], null, [1.2, 0.5, 0.03], true);
+    },
+    lm_gdoor(s) {
+      s.add(P.box, '#3a3f4a', [0, 2.0, 0], null, [6, 4, 0.2]);
+      for (let i = 0; i < 4; i++) s.add(P.box, '#59606e', [0, 0.6 + i * 1.0, 0.12], null, [6, 0.08, 0.05]);
+      s.add(P.box, '#bfe6ff', [0, 3.2, 0.13], null, [4, 0.5, 0.03], true);
+    },
+    lm_trapdoor(s) {
+      s.add(P.box, '#5a3a20', [0, 0.06, 0], null, [2.0, 0.12, 2.0]);
+      s.add(P.box, '#3a2618', [0, 0.13, 0], null, [1.7, 0.03, 1.7]);
+      s.add(P.torus, '#c9c9c9', [0.6, 0.16, 0], [Math.PI / 2, 0, 0], [0.18, 0.18, 0.5]);
+    },
+    lm_cellardoor(s) {
+      s.add(P.box, '#3a2618', [0, 1.7, 0], null, [2.2, 3.4, 0.3]);
+      s.add(P.box, '#ff9b4d', [0, 1.6, 0.16], null, [1.6, 2.8, 0.04], true);
+      s.add(P.sphereLo, '#ffd84d', [0.55, 1.6, 0.25], null, [0.1, 0.1, 0.1], true);
+    },
+    spacecruiser(s) {
+      s.add(P.sphere, '#c9cfd6', [0, 1.0, 0], null, [2.2, 0.6, 3.2]);
+      s.add(P.hemi, '#a8dcff', [0, 1.4, -0.3], null, [1.4, 1.0, 1.6], true);
+      s.add(P.cyl, '#8f97a0', [0, 0.5, 0], null, [1.4, 0.4, 2.0]);
+      for (const sx of [-1, 1]) { s.add(P.cyl, '#59606e', [sx * 1.8, 0.9, 2.2], [Math.PI / 2, 0, 0], [0.35, 1.2, 0.35]); s.add(P.cyl, '#ffb03a', [sx * 1.8, 0.9, 2.85], [Math.PI / 2, 0, 0], [0.25, 0.1, 0.25], true); }
+      s.add(P.box, '#e2483d', [0, 1.2, -3.0], null, [1.4, 0.3, 0.2]);
+    },
+    shelf(s) {
+      s.add(P.box, '#6b4a2b', [0, 1.6, 0], null, [2.6, 3.2, 0.8]);
+      for (let y = 0; y < 3; y++) for (let i = 0; i < 4; i++) s.add(P.cyl, ['#39ff6a', '#ff6fd0', '#ffd84d', '#5ff8ff'][(i + y) % 4], [-0.9 + i * 0.6, 0.5 + y * 1.0, 0.25], null, [0.15, 0.4, 0.15], true);
+    },
+    weaponrack(s) {
+      s.add(P.box, '#59606e', [0, 1.6, 0], null, [3.2, 3.0, 0.2]);
+      for (let i = 0; i < 4; i++) { s.add(P.box, '#d8dde2', [-1.1 + i * 0.75, 1.8, 0.2], [0, 0, Math.PI / 2], [1.2, 0.2, 0.15]); s.add(P.sphereLo, ['#ff5a5a', '#39ff6a', '#ffd84d', '#b48aff'][i], [-1.1 + i * 0.75, 1.2, 0.25], null, [0.1, 0.1, 0.1], true); }
+    },
+    beakers(s) {
+      s.add(P.box, '#8a5a32', [0, 0.8, 0], null, [2.6, 0.15, 1.2]);
+      for (const x of [-1.1, 1.1]) s.add(P.box, '#5a3a20', [x, 0.4, 0], null, [0.15, 0.8, 1.0]);
+      for (let i = 0; i < 5; i++) s.add(P.cyl, ['#39ff6a', '#ff6fd0', '#5ff8ff', '#ffd84d', '#ff5a3a'][i], [-1 + i * 0.5, 1.15, 0], null, [0.12 + (i % 2) * 0.05, 0.5 + (i % 3) * 0.2, 0.12], true);
+    },
+    drums(s) { for (const [x, z] of [[-0.5, 0], [0.5, 0.3]]) { s.add(P.cyl, '#3a62a8', [x, 0.7, z], null, [0.5, 1.4, 0.5]); s.add(P.cyl, '#2a2a30', [x, 1.41, z], null, [0.52, 0.04, 0.52]); } },
+    toolchest(s) {
+      s.add(P.box, '#c8504a', [0, 0.8, 0], null, [1.2, 1.6, 0.8]);
+      for (let i = 0; i < 4; i++) s.add(P.box, '#c9c9c9', [0, 0.3 + i * 0.38, 0.41], null, [0.8, 0.05, 0.02]);
+    },
+    // ----- Secret lab -----
+    clonetank(s) {
+      s.add(P.cyl, '#59606e', [0, 0.2, 0], null, [1.0, 0.4, 1.0]);
+      s.add(P.cyl, '#7affea', [0, 1.9, 0], null, [0.9, 3.0, 0.9], true);
+      s.add(P.capsule, '#e8f0d8', [0, 1.2, 0], null, [0.28, 1.2, 0.22]);
+      s.add(P.sphere, '#e8f0d8', [0, 2.6, 0], null, [0.3, 0.38, 0.3]);
+      s.add(P.cyl, '#59606e', [0, 3.5, 0], null, [1.0, 0.3, 1.0]);
+    },
+    bigcomputer(s) {
+      s.add(P.box, '#3a3f4a', [0, 2, 0], null, [4.2, 4, 1.2]);
+      for (let i = 0; i < 3; i++) s.add(P.box, ['#39ff6a', '#5ff8ff', '#ffd84d'][i], [-1.3 + i * 1.3, 2.6, 0.62], null, [1.0, 1.2, 0.03], true);
+      for (let i = 0; i < 8; i++) s.add(P.sphereLo, i % 2 ? '#ff5a5a' : '#39ff6a', [-1.6 + i * 0.45, 1.2, 0.62], null, [0.08, 0.08, 0.04], true);
+    },
+    labmachine(s) {
+      s.add(P.cyl, '#59606e', [0, 1.2, 0], null, [1.6, 2.4, 1.6]);
+      s.add(P.torus, '#5ff8ff', [0, 2.6, 0], [Math.PI / 2, 0, 0], [1.2, 1.2, 0.6], true);
+      s.add(P.sphere, '#b48aff', [0, 3, 0], null, [0.5, 0.5, 0.5], true);
+    },
+    lm_ladder(s) {
+      for (const x of [-0.5, 0.5]) s.add(P.cyl, '#9aa3ab', [x, 2.5, 0], null, [0.06, 5, 0.06]);
+      for (let i = 0; i < 9; i++) s.add(P.cyl, '#9aa3ab', [0, 0.4 + i * 0.55, 0], [0, 0, Math.PI / 2], [0.05, 1.0, 0.05]);
+    },
+    lm_mindblowers(s) {
+      s.add(P.box, '#3a3f4a', [0, 1.2, 0], null, [2.4, 2.4, 0.9]);
+      for (let y = 0; y < 3; y++) for (let i = 0; i < 6; i++) s.add(P.cyl, '#b48aff', [-0.9 + i * 0.36, 0.5 + y * 0.7, 0.3], null, [0.08, 0.4, 0.08], true);
+    },
+    // ----- Wine cellar -----
+    barrel(s) { s.add(P.cyl, '#7a5030', [0, 0.9, 0], [0, 0, Math.PI / 2], [0.9, 1.8, 0.9]); for (const x of [-0.6, 0.6]) s.add(P.cyl, '#3a2618', [x, 0.9, 0], [0, 0, Math.PI / 2], [0.93, 0.08, 0.93]); },
+    bottlerack(s) {
+      s.add(P.box, '#4a3020', [0, 1.5, 0], null, [3.0, 3.0, 0.8]);
+      for (let y = 0; y < 4; y++) for (let i = 0; i < 6; i++) s.add(P.cyl, ['#3a6a2a', '#6a1a2a', '#2a3a6a'][(i + y) % 3], [-1.2 + i * 0.48, 0.45 + y * 0.7, 0.3], [Math.PI / 2, 0, 0], [0.11, 0.6, 0.11]);
+    },
+    lm_winerack(s) {
+      s.add(P.box, '#4a3020', [0, 1.5, 0], null, [4.0, 3.0, 0.9]);
+      for (let y = 0; y < 4; y++) for (let i = 0; i < 8; i++) s.add(P.cyl, ['#3a6a2a', '#6a1a2a', '#ffd84d'][(i * 3 + y) % 3], [-1.7 + i * 0.48, 0.45 + y * 0.7, 0.3], [Math.PI / 2, 0, 0], [0.11, 0.6, 0.11], (i * 3 + y) % 3 === 2);
+    },
     // ----- Landmarks -----
     lm_home(s) {
       s.add(P.box, '#f3e4c4', [0, 3.2, 0], null, [12, 6.4, 10]);
@@ -289,6 +505,41 @@
       ring.position.set(-250, 210, -330); ring.rotation.set(1.2, 0.3, 0);
       group.add(ring);
       group.add(stars(900, 560, '#ffffff', 2));
+    } else if (dim.id === 'citadel') {
+      // The rest of the Citadel floating around you, and a planet.
+      for (let i = 0; i < 7; i++) {
+        const s = new C.Shape();
+        s.add(P.cone, '#7d8796', [0, -30, 0], [Math.PI, 0, 0], [26, 50, 26], true);
+        s.add(P.cyl, '#9aa6b8', [0, 0, 0], null, [26, 3, 26], true);
+        for (let j = 0; j < 6; j++) s.add(P.cone, '#c8d2e0', [Math.cos(j) * 14, 14, Math.sin(j) * 14], null, [2.5, 26 + (j % 3) * 8, 2.5], true);
+        s.add(P.torus, '#5ff8ff', [0, 2, 0], [Math.PI / 2, 0, 0], [27, 27, 1], true);
+        const a = i / 7 * Math.PI * 2, d = 330 + (i % 2) * 90;
+        add(s, [Math.cos(a) * d, 40 + (i % 3) * 60, Math.sin(a) * d]);
+      }
+      const pl = new C.Shape(); pl.add(P.sphere, '#5a3aa8', [0, 0, 0], null, [90, 90, 90], true); pl.add(P.torus, '#b48aff', [0, 0, 0], [1.2, 0.2, 0], [130, 130, 0.5], true);
+      add(pl, [-280, 260, -380]);
+      group.add(stars(2000, 560, '#ffffff', 2));
+    } else if (dim.id === 'dogworld') {
+      for (let i = 0; i < 12; i++) {
+        const s = new C.Shape();
+        for (let j = 0; j < 4; j++) s.add(P.sphereLo, '#ffffff', [j * 9 - 13, Math.sin(j * 2) * 2, (j % 2) * 4], null, [9, 5, 7], true);
+        const a = i / 12 * Math.PI * 2, d = 300 + (i % 3) * 60;
+        add(s, [Math.cos(a) * d, 110 + (i % 4) * 25, Math.sin(a) * d]);
+      }
+      // A giant bone-shaped moon. Of course.
+      const b = new C.Shape(); b.add(P.capsule, '#fff4dc', [0, 0, 0], [0, 0, Math.PI / 2], [12, 60, 12], true);
+      for (const sx of [-1, 1]) for (const sy of [-1, 1]) b.add(P.sphere, '#fff4dc', [sx * 38, sy * 10, 0], null, [16, 16, 16], true);
+      add(b, [220, 230, -360]).rotation.z = 0.3;
+    } else if (dim.id === 'megaseed') {
+      for (let i = 0; i < 10; i++) {
+        const s = new C.Shape();
+        s.add(P.cyl, '#5a3a6a', [0, 0, 0], null, [8, 160, 8], true);
+        s.add(P.sphere, '#2fa07a', [0, 80, 0], null, [50, 28, 50], true);
+        const a = i / 10 * Math.PI * 2, d = 300 + (i % 3) * 50;
+        add(s, [Math.cos(a) * d, 30, Math.sin(a) * d]);
+      }
+      const sun2 = new C.Shape(); sun2.add(P.sphere, '#ffe066', [0, 0, 0], null, [40, 40, 40], true);
+      add(sun2, [150, 200, -400]);
     } else if (dim.id === 'featherhold') {
       for (let i = 0; i < 9; i++) {
         const s = new C.Shape();
@@ -341,6 +592,10 @@
         const v = Math.abs(Math.sin(x * 0.11 + Math.sin(z * 0.07) * 3) * Math.cos(z * 0.09 + Math.sin(x * 0.05) * 2));
         if (v < 0.05) tmp.set('#7c1e34');
       }
+      if (dim.tiles) {
+        const gx = Math.abs(((x % 12) + 12) % 12 - 6), gz = Math.abs(((z % 12) + 12) % 12 - 6);
+        if (gx > 5.8 || gz > 5.8) tmp.set('#5ff8ff');
+      }
       if (dim.id === 'bazaar') {
         const gx = Math.abs(((x % 8) + 8) % 8 - 4), gz = Math.abs(((z % 8) + 8) % 8 - 4);
         if ((gx > 3.85 || gz > 3.85) && Math.hypot(x, z) < 60) tmp.set('#5ff8ff');
@@ -354,6 +609,26 @@
     g.computeVertexNormals();
     const m = new T.Mesh(g, C.toonMat);
     return m;
+  }
+
+  // ---------- Rooms (the garage and the dimensions under it) ----------
+  function makeRoom(dim) {
+    const R = dim.room, s = new C.Shape(), w = R.w, d = R.d, h = R.h;
+    s.add(P.box, dim.ground[0], [0, -0.1, 0], null, [w, 0.2, d]);
+    // Floor planks / tiles for a bit of texture.
+    for (let i = 0; i < 8; i++) s.add(P.box, i % 2 ? dim.ground[1] : dim.ground[2], [-w / 2 + w / 16 + i * w / 8, 0.005, 0], null, [w / 8 - 0.05, 0.01, d - 0.2]);
+    const walls = [[0, h / 2, -d / 2, w, h, 0.4], [0, h / 2, d / 2, w, h, 0.4], [-w / 2, h / 2, 0, 0.4, h, d], [w / 2, h / 2, 0, 0.4, h, d]];
+    for (const [x, y, z, sx, sy, sz] of walls) s.add(P.box, R.wall, [x, y, z], null, [sx, sy, sz]);
+    for (const [x, z, sx, sz] of [[0, -d / 2 + 0.25, w, 0.1], [0, d / 2 - 0.25, w, 0.1], [-w / 2 + 0.25, 0, 0.1, d], [w / 2 - 0.25, 0, 0.1, d]]) s.add(P.box, R.trim, [x, 0.3, z], null, [sx, 0.6, sz]);
+    s.add(P.box, R.trim, [0, h, 0], null, [w, 0.3, d]);
+    // Hanging lights.
+    for (const x of [-w / 4, w / 4]) for (const z of [-d / 4, d / 4]) { s.add(P.cylLo, '#2a2a2a', [x, h - 0.5, z], null, [0.03, 1, 0.03]); s.add(P.sphereLo, '#fff4c0', [x, h - 1.1, z], null, [0.35, 0.25, 0.35], true); }
+    const g = C.meshOf(s.build(), 0.05);
+    g.traverse(o => { if (o.material && o.material.side === T.BackSide) o.visible = false; });   // outlines would show through walls
+    const lamp = new T.PointLight('#fff1d0', 0.8, 40);
+    lamp.position.set(0, h - 1.5, 0);
+    g.add(lamp);
+    return g;
   }
 
   // ---------- Kiosk ----------
@@ -413,6 +688,7 @@
   C.npcLook = function (type, seed) {
     const H = MM.NPCS[type].human, r = MM.rng(seed >>> 0);
     if (H.fixed) return MM.canonLook(H.fixed);
+    if (H.variant) { const L = MM.variantLook(H.variant, r); if (H.top) L.top = H.top; if (H.acc) L.acc = H.acc; return L; }
     const pk = a => a[Math.floor(r() * a.length)];
     const col = () => '#' + Math.floor(r() * 0xffffff).toString(16).padStart(6, '0');
     const look = MM.defaultLook();
@@ -429,7 +705,8 @@
   C.npcModel = function (type, seed) {
     if (MM.NPCS[type].human) {
       const look = C.npcLook(type, seed || 1);
-      const av = C.buildAvatar(look, type === 'invader' ? 'trooper' : type === 'birdcitizen' ? 'birdfolk' : type === 'meeseeks' ? 'meeseeks' : 'joe');
+      const H = MM.NPCS[type].human;
+      const av = C.buildAvatar(look, type === 'invader' ? 'trooper' : type === 'birdcitizen' ? 'birdfolk' : type === 'meeseeks' ? 'meeseeks' : H.variant || 'joe');
       return { root: av.root, av };
     }
     if (!npcCache[type]) {
@@ -446,6 +723,41 @@
         s.add(P.sphereLo, '#ff8af0', [0, 0.95, 0], null, [0.35, 0.3, 0.35], true);
         for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; C.capsuleAt(s, '#5ad8ff', 0.06, 1.3, [Math.cos(a) * 0.55, -0.55, Math.sin(a) * 0.55], null, true); }
         s.add(P.sphereLo, '#111', [0.25, 1.0, 0.75], null, [0.08, 0.08, 0.05]); s.add(P.sphereLo, '#111', [-0.25, 1.0, 0.75], null, [0.08, 0.08, 0.05]);
+      } else if (type === 'dogcitizen' || type === 'dogsoldier') {
+        // A dog. Soldiers wear mech armour and carry a cannon.
+        const fur = type === 'dogsoldier' ? '#f4f4f4' : '#c98a4a';
+        s.add(P.sphere, fur, [0, 0.75, -0.1], null, [0.45, 0.4, 0.75]);
+        s.add(P.sphere, fur, [0, 1.25, 0.55], null, [0.38, 0.36, 0.38]);
+        s.add(P.sphere, fur, [0, 1.15, 0.9], null, [0.2, 0.17, 0.25]);
+        s.add(P.sphereLo, '#111', [0, 1.2, 1.13], null, [0.08, 0.07, 0.06]);
+        for (const sx of [-1, 1]) {
+          s.add(P.sphere, shade(fur, 0.7), [sx * 0.33, 1.25, 0.5], [0, 0, sx * 0.3], [0.12, 0.3, 0.18]);
+          s.add(P.sphere, '#fff', [sx * 0.15, 1.35, 0.85], null, [0.1, 0.11, 0.06]);
+          s.add(P.sphereLo, '#111', [sx * 0.15, 1.35, 0.9], null, [0.045, 0.05, 0.03]);
+          for (const z of [-0.5, 0.35]) s.add(P.cyl, fur, [sx * 0.25, 0.3, z], null, [0.09, 0.6, 0.09]);
+        }
+        s.add(P.capsule, fur, [0, 0.95, -0.85], [-0.8, 0, 0], [0.06, 0.4, 0.06]);
+        if (type === 'dogsoldier') {
+          s.add(P.box, '#59606e', [0, 0.85, -0.1], null, [1.0, 0.55, 1.3]);
+          s.add(P.box, '#3a3f4a', [0, 0.4, -0.1], null, [1.1, 0.15, 1.4]);
+          for (const sx of [-1, 1]) for (const z of [-0.55, 0.4]) s.add(P.cyl, '#59606e', [sx * 0.55, 0.3, z], null, [0.14, 0.6, 0.14]);
+          s.add(P.cyl, '#3a3f4a', [0.45, 1.2, 0.1], [Math.PI / 2, 0, 0], [0.1, 0.9, 0.1]);
+          s.add(P.sphereLo, '#ff5a3a', [0.45, 1.2, 0.58], null, [0.08, 0.08, 0.06], true);
+          s.add(P.hemi, '#a8dcff', [0, 1.3, 0.55], null, [0.45, 0.45, 0.45]);
+        }
+      } else if (type === 'seedbeast') {
+        s.add(P.sphere, '#7a4ac0', [0, 0.8, 0], null, [0.9, 0.7, 1.1]);
+        for (let i = 0; i < 7; i++) s.add(P.cone, '#c8ff6a', [Math.sin(i) * 0.4, 1.35, -0.6 + i * 0.2], [-0.3, 0, Math.sin(i) * 0.3], [0.12, 0.5, 0.12]);
+        for (const sx of [-1, 1]) for (const z of [-0.5, 0.5]) s.add(P.capsule, '#5a3a90', [sx * 0.6, 0.3, z], [0, 0, sx * 0.5], [0.12, 0.5, 0.12]);
+        s.add(P.sphere, '#ffe066', [0.3, 1.0, 0.95], null, [0.16, 0.16, 0.08], true); s.add(P.sphere, '#ffe066', [-0.3, 1.0, 0.95], null, [0.16, 0.16, 0.08], true);
+        s.add(P.sphereLo, '#2a0a2a', [0, 0.6, 1.05], null, [0.4, 0.15, 0.1]);
+        for (let i = -2; i <= 2; i++) s.add(P.cone, '#fff', [i * 0.12, 0.66, 1.08], [Math.PI, 0, 0], [0.04, 0.12, 0.04]);
+      } else if (type === 'butterbot') {
+        s.add(P.cyl, '#9aa3ab', [0, 0.2, 0], null, [0.3, 0.12, 0.3]);
+        s.add(P.box, '#c9cfd6', [0, 0.38, 0], null, [0.36, 0.3, 0.3]);
+        s.add(P.sphere, '#3a3f4a', [0, 0.42, 0.16], null, [0.09, 0.09, 0.04]);
+        s.add(P.sphereLo, '#ff5a3a', [0, 0.42, 0.2], null, [0.035, 0.035, 0.02], true);
+        for (const sx of [-1, 1]) { s.add(P.capsule, '#9aa3ab', [sx * 0.22, 0.38, 0.1], [0.8, 0, sx * 0.3], [0.025, 0.2, 0.025]); s.add(P.sphereLo, '#9aa3ab', [sx * 0.25, 0.42, 0.28], null, [0.04, 0.04, 0.04]); }
       } else if (type === 'skyserpent') {
         for (let i = 0; i < 7; i++) s.add(P.sphere, i % 2 ? '#3fb6a8' : '#2a8f86', [0, 0.6 + Math.sin(i * 0.9) * 0.3, -i * 0.55], null, [0.45 - i * 0.04, 0.42 - i * 0.04, 0.5]);
         s.add(P.sphere, '#3fb6a8', [0, 0.75, 0.55], null, [0.55, 0.45, 0.65]);
@@ -492,7 +804,13 @@
       const f = new C.Shape();
       f.add(P.sphere, '#ffcf4d', [0, 0, 0], [0, 0, 0.4], [0.16, 0.55, 0.05]);
       f.add(P.cylLo, '#8a6233', [0.12, -0.45, 0], [0, 0, 0.4], [0.02, 0.4, 0.02]);
-      pickupModels = { s: s.build(), c: c.build(), g: g.build(), p: pl.build(), f: f.build() };
+      const m = new C.Shape();
+      m.add(P.sphere, '#c8ff6a', [0, 0, 0], null, [0.28, 0.4, 0.28], true);
+      m.add(P.cone, '#4a8a2a', [0, 0.45, 0], null, [0.1, 0.25, 0.1]);
+      const k = new C.Shape();
+      k.add(P.cyl, '#ffd84d', [0, 0, 0], [Math.PI / 2, 0, 0], [0.4, 0.08, 0.4]);
+      k.add(P.cyl, '#fff2a0', [0, 0, 0.045], [Math.PI / 2, 0, 0], [0.26, 0.02, 0.26], true);
+      pickupModels = { s: s.build(), c: c.build(), g: g.build(), p: pl.build(), f: f.build(), m: m.build(), k: k.build() };
     }
     const g = new T.Group();
     const m = C.meshOf(pickupModels[kind] || pickupModels.s, 0.03);
@@ -528,8 +846,8 @@
     const dim = MM.DIM_BY_ID[dimId];
     const group = new T.Group();
     group.add(makeSky(dim));
-    skyDecor(dim, group);
-    group.add(makeTerrain(dim));
+    if (dim.interior) group.add(makeRoom(dim));
+    else { skyDecor(dim, group); group.add(makeTerrain(dim)); }
 
     // Instanced props
     const props = MM.genProps(dimId);
@@ -571,14 +889,14 @@
       if (l.dim !== dimId) continue;
       const tag = C.makeTag(l.name, '', '', '#ffd84d');
       tag.draw(-1);
-      tag.sprite.scale.set(6, 1.5, 1);
-      tag.sprite.position.set(l.x, MM.heightAt(dimId, l.x, l.z) + l.h + 2.2, l.z);
+      if (dim.room) { tag.sprite.scale.set(2.6, 0.65, 1); tag.sprite.position.set(l.x, Math.min(dim.room.h - 0.8, l.h + 0.7), l.z); }
+      else { tag.sprite.scale.set(6, 1.5, 1); tag.sprite.position.set(l.x, MM.heightAt(dimId, l.x, l.z) + l.h + 2.2, l.z); }
       group.add(tag.sprite);
     }
 
     const kiosk = makeKiosk(dim);
     kiosk.position.set(MM.KIOSK.x, MM.heightAt(dimId, MM.KIOSK.x, MM.KIOSK.z), MM.KIOSK.z);
-    group.add(kiosk);
+    if (!dim.interior) group.add(kiosk);
 
     // Lights
     const sun = new T.DirectionalLight(dim.sun, 0.9);

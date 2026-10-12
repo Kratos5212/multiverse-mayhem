@@ -144,7 +144,7 @@
       // Hop dimensions now and then: own portal gun, someone's portal, or the kiosk.
       if (this.t > this.travelT) {
         this.travelT = this.t + 50 + Math.random() * 100;
-        const others = MM.DIM_IDS.filter(d => d !== this.dim);
+        const others = MM.WORLD_IDS.filter(d => d !== this.dim);
         if (you.chMax > 0 && you.ch > 0) { this.send({ t: 'po', d: pick(others) }); this.goal = { x: this.x + Math.sin(this.yaw) * 4, z: this.z + Math.cos(this.yaw) * 4, portal: true }; }
         else this.goal = { x: MM.KIOSK.x, z: MM.KIOSK.z, kiosk: pick(others) };
       }

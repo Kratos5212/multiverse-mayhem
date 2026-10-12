@@ -137,7 +137,7 @@ for (let i = 0; i < BOTS; i++) {
   let bot;
   const conn = { send: s => bot && bot.onMessage(s), close() { if (bot) bot.closed = true; } };
   host.connect(conn, { bot: true });
-  bot = new MM.Bot(s => host.message(conn, s), { dim: MM.DIM_IDS[i % MM.DIM_IDS.length], chatty: 0.25 });
+  bot = new MM.Bot(s => host.message(conn, s), { dim: MM.WORLD_IDS[i % MM.WORLD_IDS.length], chatty: 0.25 });
   bots.push(bot);
 }
 

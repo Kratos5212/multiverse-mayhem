@@ -82,7 +82,7 @@ You never have to break out: you can play a normal life and still go anywhere by
 
 ## Crafting across dimensions
 
-Every world has its own material: **Scrap** (everywhere), **Moon Crystals** (Lowgrav Moon), **Meat Goo** (Cronenberg World), **Neon Plasma** (Alien Bazaar) and **Sky Feathers** (Bird World). Gadgets can be built anywhere; big upgrades must be built at a particular station in a particular world, from materials gathered in others.
+Every world has its own material: **Scrap** (everywhere), **Moon Crystals** (Lowgrav Moon), **Meat Goo** (Cronenberg World), **Neon Plasma** (Alien Bazaar), **Sky Feathers** (Bird World), **Schmeckles** (Citadel of Ricks) and **Mega Seeds** (Mega Seed World, rare). Gadgets can be built anywhere; big upgrades must be built at a particular station in a particular world, from materials gathered in others.
 
 | What | Built at | Needs |
 | --- | --- | --- |
@@ -134,6 +134,32 @@ Every few minutes a **world event** hits a dimension:
 | Bird World | Golden cliffs, giant nests, totems, floating islands | Bird citizens, sky serpents (hostile) | Sky Feather | Aerie Temple |
 
 Every prop except the landmarks can be destroyed. Wrecking things and beating other players earns **chaos points** for the multiverse-wide leaderboard.
+
+| Citadel of Ricks | A space city of infinite Ricks and Mortys | Ricks, Mortys, Citadel guards | Schmeckles | Council of Ricks, Morty Daycare |
+| Snowball's Dog World | Dogs in mech suits rule; humans are pets | Talking dogs, pet humans, mech dogs (hostile) | Neon Plasma, scrap | Snowball's Palace |
+| Mega Seed World | A dangerous jungle where Mega Seeds grow | Seed beasts (hostile) | **Mega Seeds** (rare) | Mega Seed Tree |
+
+### Rick's garage (and what's under it)
+
+Walk up to the garage on Earth C-137 and press **F** to go inside. It's a real room you can walk around, with:
+
+* **Rick's workbench**, with the portal gun on it. It counts as the garage station, so you can build there.
+* The **Space Cruiser** parked inside, shelves of glowing jars, a weapon rack, beakers and a toolchest.
+* A **Plumbus**: anyone can make one.
+* The **Meeseeks Box**: press it and a Mr. Meeseeks pops out to help you.
+* The **microverse battery**, charging the car.
+* The **Butter Robot**. It talks.
+* A **trapdoor** down to the **secret underground lab**: clone tanks, a giant computer, a machine, and the **Mind Blowers** cabinet.
+* A **door to Rick's wine cellar**, a pocket dimension with barrels, bottle racks and his private stash.
+
+Kiosks, portals and ships can't take you into these rooms; you have to use the doors.
+
+**New things to build and use:**
+* **Meeseeks Box** gadget (Schmeckles, key 4): a Meeseeks fights for you for 30 s. Everyone knows how.
+* **Mega Seed Smarts** (4 Mega Seeds, at the garage): abilities recharge 30% faster and you hit 10% harder.
+* **Citadel Cloak** (Schmeckles and plasma, at the Council of Ricks): monsters and turrets lose track of you when you stop fighting.
+
+Rick, Morty and Evil Morty's daily lives now include Council meetings and Morty Daycare at the Citadel.
 
 ### Adding a dimension
 

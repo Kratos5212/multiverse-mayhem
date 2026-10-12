@@ -28,7 +28,7 @@ test('world generation is deterministic', () => {
   const a = MM.genProps('suburbia').map(p => [p.type, p.x, p.z]);
   assert.ok(a.length > 50);
   assert.strictEqual(MM.heightAt('moon', 12.5, -40.25), MM.heightAt('moon', 12.5, -40.25));
-  for (const d of MM.DIM_IDS) assert.ok(MM.genProps(d).length > 40, d + ' has props');
+  for (const d of MM.WORLD_IDS) assert.ok(MM.genProps(d).length > 40, d + ' has props');
 });
 
 test('protocol rejects junk', () => {
@@ -282,4 +282,52 @@ test('world events start and bring visitors', () => {
   const ev = c.sent.filter(m => m.t === 'ev').flatMap(m => m.l).find(e => e.k === 'world');
   assert.ok(ev && ev.name, 'event announced');
   assert.ok(p.inst.npcs.size >= before);
+});
+
+test("Rick's garage: walk in, use the Plumbus, go down to the lab, build at the workbench", () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'sidekick');
+  near(host, c, p, 'garage');
+  run(host, 1.2);
+  host.message(c, '{"t":"door","l":"garage"}');
+  assert.strictEqual(p.inst.dimId, 'rickgarage');
+  // Kiosks and portals can't target the garage from outside.
+  assert.ok(MM.DIM_BY_ID.rickgarage.hidden && !MM.WORLD_IDS.includes('rickgarage'));
+  near(host, c, p, 'plumbus');
+  run(host, 1.2);
+  host.message(c, '{"t":"use","l":"plumbus"}');
+  assert.strictEqual(p.inv.s, 3, 'anyone can make a plumbus');
+  near(host, c, p, 'mbox');
+  run(host, 1.2);
+  host.message(c, '{"t":"use","l":"mbox"}');
+  assert.ok([...p.inst.npcs.values()].some(n => n.type === 'meeseeks' && n.owner === p.id), 'a Meeseeks pops out');
+  Object.assign(p.inv, { m: 5, c: 5 });
+  near(host, c, p, 'workbench');
+  run(host, 1.2);
+  host.message(c, '{"t":"cr","g":"megabrain"}');
+  assert.ok(p.prog.up.megabrain, 'the indoor workbench counts as the garage station');
+  assert.strictEqual(p.st.cdMult, 0.7);
+  near(host, c, p, 'trapdoor');
+  run(host, 1.2);
+  host.message(c, '{"t":"door","l":"trapdoor"}');
+  assert.strictEqual(p.inst.dimId, 'ricklab');
+  // Walls: you cannot walk out of the room.
+  run(host, 0.2);
+  host.message(c, JSON.stringify({ t: 'st', x: p.x, y: 0, z: p.z + 3, r: 0, a: 1, ep: p.ep }));
+  run(host, 0.4);
+  host.message(c, JSON.stringify({ t: 'st', x: p.x, y: 0, z: 40, r: 0, a: 1, ep: p.ep }));
+  assert.ok(p.z <= MM.boundOf('ricklab'));
+});
+
+test('Meeseeks Box gadget and the Citadel', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'citadel' });
+  assert.strictEqual(p.inst.dimId, 'citadel');
+  p.inv.k = 10; p.inv.s = 5;
+  host.message(c, '{"t":"cr","g":"meeseeks"}');
+  assert.strictEqual(p.inv.meeseeks, 1);
+  host.message(c, '{"t":"g","g":"meeseeks","dx":0,"dy":0,"dz":1}');
+  assert.strictEqual(p.inv.meeseeks, 0);
+  assert.ok([...p.inst.npcs.values()].some(n => n.type === 'meeseeks'));
+  assert.ok([...p.inst.npcs.values()].some(n => n.type === 'citrick'), 'Ricks live at the Citadel');
 });

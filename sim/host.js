@@ -335,7 +335,10 @@
 
     // ----- NPCs -----
     // Players a monster can see (Average Joes, sobbing and protected players are beneath notice).
-    visible(p, now) { return !p.dead && p.arch !== 'joe' && now >= p.fx.sob && now >= p.fx.prot && now >= p.fx.cloak; }
+    visible(p, now) {
+      if (p.st.cloak && now - (p.lastFight || 0) > 3) return false;   // Citadel Cloak
+      return !p.dead && p.arch !== 'joe' && now >= p.fx.sob && now >= p.fx.prot && now >= p.fx.cloak;
+    }
 
     tickNpcs(dt, now) {
       for (const n of this.npcs.values()) {
@@ -401,7 +404,7 @@
             const step = Math.min(l, speed * dt);
             let nx = n.x + dx / l * step, nz = n.z + dz / l * step;
             [nx, nz] = MM.collideProps(this.dimId, nx, nz, T.r, null);
-            const lim = MM.WORLD_HALF - 15;
+            const lim = Math.min(MM.WORLD_HALF - 15, MM.boundOf(this.dimId) - 0.8);
             n.x = Math.max(-lim, Math.min(lim, nx)); n.z = Math.max(-lim, Math.min(lim, nz));
             n.r = Math.atan2(dx, dz);
           }
@@ -573,6 +576,7 @@
         case 'ans': this.onAnswer(p, m.a); break;
         case 'ship': this.onShip(p, m.on); break;
         case 'drive': this.onDrive(p, m.d); break;
+        case 'door': this.onDoor(p, m.l); break;
       }
     }
 
@@ -637,7 +641,7 @@
       switch (kind) {
         case 'use': c.use[val] = (c.use[val] || 0) + 1; break;
         case 'at': if (!(c.at || (c.at = [])).includes(val)) c.at.push(val); else return; break;
-        case 'dim': if (!c.dims.includes(val)) c.dims.push(val); else return; break;
+        case 'dim': if (!MM.DIM_BY_ID[val].hidden && !c.dims.includes(val)) c.dims.push(val); else return; break;
         case 'craft': if (!c.crafted.includes(val)) c.crafted.push(val); break;
         case 'kill': c.kills++; c.kill[val] = (c.kill[val] || 0) + 1; break;
         case 'ko': c.ko++; break;
@@ -743,7 +747,7 @@
       const dt = Math.min(1.0, Math.max(0.05, now - p.lastSt));
       const kb = now < p.kbUntil;
       const allowed = this.speedOf(p) * dt * 1.5 + 1.5 + (kb ? 30 * dt + 3 : 0);
-      const lim = MM.WORLD_HALF;
+      const lim = MM.boundOf(p.inst.dimId);
       const x = Math.max(-lim, Math.min(lim, m.x)), z = Math.max(-lim, Math.min(lim, m.z));
       const moved = Math.hypot(x - p.x, z - p.z);
       const ground = MM.heightAt(p.inst.dimId, x, z);
@@ -801,6 +805,7 @@
       const wid = this.weaponOf(p), w = MM.WEAPONS[wid];
       p.cdFire = now + w.cd * 0.9;
       p.fx.prot = 0;
+      p.lastFight = now;
       const s = this.scaleOf(p);
       if (w.melee) { this.melee(p, m, w, wid); return; }
       const oy = p.ship ? 1.2 : 1.35 * s;
@@ -870,7 +875,7 @@
     onAbility(p) {
       const now = this.time, A = p.A, ab = A.ability, inst = p.inst;
       if (p.dead || now < p.cdAb) return;
-      p.cdAb = now + ab.cd;
+      p.cdAb = now + ab.cd * (p.st.cdMult || 1);
       inst.ev({ k: 'ab', id: p.id, a: ab.id });
       const near = (r, fn) => { for (const o of [...inst.players.values()]) if (o !== p && !o.dead && dist2(o.x, o.z, p.x, p.z) < r * r) fn(o); };
       const nearNpc = (r, fn) => { for (const n of [...inst.npcs.values()]) if (dist2(n.x, n.z, p.x, p.z) < r * r) fn(n); };
@@ -898,14 +903,7 @@
           nearNpc(6, n => { n.stun = now + 4; });
           break;
         }
-        case 'summon':
-          for (let i = 0; i < 2; i++) {
-            const a = p.r + (i ? 1.2 : -1.2);
-            const n = inst.spawnNpc('meeseeks', true, { at: { x: p.x + Math.sin(a) * 2, z: p.z + Math.cos(a) * 2 }, until: now + 20 });
-            n.owner = p.id; n.ownerUntil = now + 20;
-            inst.ev({ k: 'say', n: n.id, by: p.id, text: 'I\'m Mr. Meeseeks! Look at me!' });
-          }
-          break;
+        case 'summon': this.summonMeeseeks(p, 2, 20); break;
         case 'rage': p.fx.shield = now + 5; p.fx.sprint = now + 5; break;
         case 'scheme': p.fx.cloak = now + ab.dur; break;
         case 'roll': p.fx.sprint = now + ab.dur; p.fx.shield = now + ab.dur; break;
@@ -923,9 +921,33 @@
       this.dirty(p);
     }
 
+    // Mr. Meeseeks pops out and fights for you, then (happily) stops existing.
+    summonMeeseeks(p, count, secs) {
+      const inst = p.inst, now = this.time;
+      for (let i = 0; i < count; i++) {
+        const a = p.r + (count > 1 ? (i ? 1.2 : -1.2) : 0.9);
+        let x = p.x + Math.sin(a) * 2, z = p.z + Math.cos(a) * 2;
+        [x, z] = MM.collideProps(inst.dimId, x, z, 0.5, null);
+        const n = inst.spawnNpc('meeseeks', true, { at: { x, z }, until: now + secs });
+        n.owner = p.id; n.ownerUntil = now + secs;
+        inst.ev({ k: 'say', n: n.id, by: p.id, text: pick(['I\'m Mr. Meeseeks! Look at me!', 'Ooh, can do!', 'Caaan do!']) });
+      }
+    }
+
+    // Walking through a door (into the garage, down to the lab, into the cellar, back out).
+    onDoor(p, lid) {
+      const l = MM.LANDMARK_BY_ID[lid];
+      if (p.dead || !l || !l.door || l.dim !== p.inst.dimId || this.time < p.cdUse) return;
+      if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2) return;
+      p.cdUse = this.time + 1;
+      if (p.ship && MM.DIM_BY_ID[l.door.dim].interior) { this.toast(p, 'Park your ship first (B).'); return; }
+      p.inst.ev({ k: 'kiosk', id: p.id });
+      this.travel(p, l.door.dim, { x: l.door.x, z: l.door.z });
+    }
+
     onPortal(p, d) {
       const now = this.time;
-      if (!p.st.gun || p.dead || p.charges <= 0 || d === p.inst.dimId) return;
+      if (!p.st.gun || p.dead || p.charges <= 0 || d === p.inst.dimId || MM.DIM_BY_ID[d].hidden) return;
       p.charges--;
       if (!p.chargeAt) p.chargeAt = now + p.st.gun.recharge;
       const fx = Math.sin(p.r), fz = Math.cos(p.r);
@@ -949,7 +971,7 @@
 
     onKiosk(p, d) {
       const now = this.time;
-      if (p.dead || d === p.inst.dimId || now < p.cdKiosk) return;
+      if (p.dead || d === p.inst.dimId || now < p.cdKiosk || p.inst.dim.interior || MM.DIM_BY_ID[d].hidden) return;
       if (dist2(p.x, p.z, MM.KIOSK.x, MM.KIOSK.z) > MM.KIOSK_RADIUS * MM.KIOSK_RADIUS) return;
       p.cdKiosk = now + 3;
       p.inst.ev({ k: 'kiosk', id: p.id });
@@ -966,7 +988,7 @@
     }
     onDrive(p, d) {
       const now = this.time;
-      if (p.dead || !p.ship || !p.st.ship.drive || d === p.inst.dimId || now < p.cdDrive) return;
+      if (p.dead || !p.ship || !p.st.ship.drive || d === p.inst.dimId || now < p.cdDrive || MM.DIM_BY_ID[d].hidden) return;
       p.cdDrive = now + 15;
       p.inst.ev({ k: 'warp', id: p.id });
       this.travel(p, d, null);
@@ -981,7 +1003,8 @@
       if (why) { this.toast(p, why); return; }
       if (R.at) {
         const l = MM.LANDMARK_BY_ID[R.at];
-        if (p.inst.dimId !== l.dim || dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2) { this.toast(p, 'Build this at the ' + l.name + ' in ' + MM.DIM_BY_ID[l.dim].name + '.'); return; }
+        const here = MM.LANDMARKS.some(x => MM.isAt(x, R.at) && x.dim === p.inst.dimId && dist2(x.x, x.z, p.x, p.z) <= (x.r + MM.USE_RADIUS + 2) ** 2);
+        if (!here) { this.toast(p, 'Build this at the ' + l.name + ' in ' + MM.DIM_BY_ID[l.dim].name + '.'); return; }
       }
       const cost = MM.recipeCost(p.arch, id);
       for (const k in cost) if ((p.inv[k] || 0) < cost[k]) { this.toast(p, 'Not enough ' + MM.MATERIALS[k].name + '.'); return; }
@@ -1007,6 +1030,8 @@
         this.fireProjectile(inst, { owner: p.id, kind: 'gren', x: p.x + m.dx, y: p.y + 1.5, z: p.z + m.dz, dx: m.dx, dy: m.dy, dz: m.dz, speed: 20, up: 6, gravity: true, life: 1.8, dmg: 0, rad: 0.3 });
       } else if (g === 'shrink') {
         this.fireProjectile(inst, { owner: p.id, kind: 'shrink', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 65, range: 70, dmg: 5, rad: 0.35 });
+      } else if (g === 'meeseeks') {
+        this.summonMeeseeks(p, 1, 30);
       } else if (g === 'turret') {
         let mine = 0;
         for (const t of inst.turrets.values()) if (t.owner === p.id) mine++;
@@ -1028,15 +1053,16 @@
       if (p.dead || !l || l.dim !== p.inst.dimId || this.time < p.cdUse) return;
       if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2) return;
       p.cdUse = this.time + 1;
-      const mine = p.A.life.daily.filter(t => MM.TASKS[t].at === lid);
+      const mine = Object.keys(MM.TASKS).filter(t => MM.TASKS[t].at === lid && (MM.TASKS[t].any || p.A.life.daily.includes(t)));
       const id = taskId && mine.includes(taskId) ? taskId : mine[0];
-      if (!id) { this.toast(p, 'Nothing for you to do at the ' + l.name + '. You could still build things here (C).'); return; }
+      if (!id) { if (l.door) this.onDoor(p, lid); else this.toast(p, 'Nothing for you to do at the ' + l.name + '. You could still build things here (C).'); return; }
       const T = MM.TASKS[id], wall = this.wall();
       if ((p.prog.tasks[id] || 0) > wall) { this.toast(p, T.name + ': come back in ' + Math.ceil((p.prog.tasks[id] - wall) / 1000) + ' s.'); return; }
       p.prog.tasks[id] = wall + T.cd * 1000;
       const mult = p.arch === 'teen' ? 2 : 1;
       for (const k in T.give) p.inv[k] = (p.inv[k] || 0) + T.give[k] * mult;
       if (T.heal) p.hp = p.maxHp;
+      if (T.summon) this.summonMeeseeks(p, 1, 45);
       this.priv(p, { k: 'task', id, text: T.text, give: T.give, mult });
       p.inst.ev({ k: 'em', id: p.id, e: 0 });
       this.progress(p, 'use', id);
@@ -1097,7 +1123,7 @@
           break;
         }
         case 'errand': {
-          const dims = MM.DIMS.filter(d => d.id !== inst.dimId);
+          const dims = MM.DIMS.filter(d => d.id !== inst.dimId && !d.hidden);
           const D = pick(dims);
           const locals = D.npc.map(x => x[0]).filter(t => !MM.NPCS[t].hostile && MM.NPCS[t].talk);
           if (!locals.length) { say(line); break; }
@@ -1128,7 +1154,7 @@
           say(pick(['Adventure? I am in!', 'I will follow you anywhere. For a minute.', 'Finally, something interesting!']));
           break;
         case 'prank': {
-          const d = pick(MM.DIM_IDS.filter(x => x !== inst.dimId));
+          const d = pick(MM.WORLD_IDS.filter(x => x !== inst.dimId));
           say(pick(['Want to see a magic trick?', 'Hold still. This will tickle.', 'Surprise!']));
           inst.ev({ k: 'kiosk', id: p.id });
           this.later(0.6, () => { if (this.players.get(p.id) === p && p.inst === inst && !p.dead) { this.toast(p, n.name + ' pranked you into ' + MM.DIM_BY_ID[d].name + '!'); this.travel(p, d, null); } });

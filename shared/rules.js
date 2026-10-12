@@ -4,7 +4,7 @@
   'use strict';
   const MM = root.MM || (root.MM = {});
 
-  MM.VERSION = 3;               // protocol version; client and server must match
+  MM.VERSION = 4;               // protocol version; client and server must match
   MM.TICK = 1 / 30;             // server simulation step (seconds)
   MM.SNAP_EVERY = 2;            // a snapshot every 2 ticks = 15 per second
   MM.INSTANCE_CAP = 64;         // players per dimension instance (servers can raise it)
@@ -20,6 +20,8 @@
     g: { name: 'Meat Goo', icon: '●', color: '#ff7a8a', from: 'Cronenberg World' },
     p: { name: 'Neon Plasma', icon: '✦', color: '#ff6fd0', from: 'Alien Bazaar' },
     f: { name: 'Sky Feather', icon: '➶', color: '#ffd84d', from: 'Bird World' },
+    m: { name: 'Mega Seed', icon: '❂', color: '#c8ff6a', from: 'the Mega Seed world (rare)' },
+    k: { name: 'Schmeckles', icon: '$', color: '#ffe9a0', from: 'the Citadel of Ricks' },
   };
   MM.MAT_IDS = Object.keys(MM.MATERIALS);
 
@@ -28,7 +30,7 @@
   // can only be built at a particular one.
   MM.LANDMARKS = [
     { id: 'home', dim: 'suburbia', name: 'Smith House', x: -36, z: 24, r: 7, h: 9, model: 'lm_home' },
-    { id: 'garage', dim: 'suburbia', name: "Rick's Garage", x: -36, z: 0, r: 5.5, h: 6, model: 'lm_garage' },
+    { id: 'garage', dim: 'suburbia', name: "Rick's Garage", x: -36, z: 0, r: 5.5, h: 6, model: 'lm_garage', door: { dim: 'rickgarage', x: -2, z: 4 } },
     { id: 'school', dim: 'suburbia', name: 'Harry Herpson High', x: 40, z: 30, r: 8, h: 8, model: 'lm_school' },
     { id: 'hospital', dim: 'suburbia', name: 'Horse Hospital', x: 40, z: -24, r: 7, h: 8, model: 'lm_hospital' },
     { id: 'office', dim: 'suburbia', name: 'Unemployment Office', x: -36, z: -30, r: 6, h: 7, model: 'lm_office' },
@@ -37,10 +39,28 @@
     { id: 'market', dim: 'bazaar', name: 'Black Market', x: -32, z: 16, r: 6, h: 6, model: 'lm_market' },
     { id: 'refinery', dim: 'moon', name: 'Crystal Refinery', x: -30, z: 18, r: 7, h: 8, model: 'lm_refinery' },
     { id: 'aerie', dim: 'featherhold', name: 'Aerie Temple', x: 0, z: 36, r: 7, h: 14, model: 'lm_aerie' },
+    { id: 'council', dim: 'citadel', name: 'Council of Ricks', x: 0, z: 40, r: 9, h: 14, model: 'lm_council' },
+    { id: 'daycare', dim: 'citadel', name: 'Morty Daycare', x: -38, z: 8, r: 6.5, h: 7, model: 'lm_daycare' },
+    { id: 'palace', dim: 'dogworld', name: "Snowball's Palace", x: 0, z: 40, r: 9, h: 12, model: 'lm_palace' },
+    { id: 'megatree', dim: 'megaseed', name: 'Mega Seed Tree', x: 0, z: 36, r: 6, h: 24, model: 'lm_megatree' },
+    // Inside Rick's garage (its own little dimension). door: walking through takes you there.
+    { id: 'workbench', dim: 'rickgarage', name: "Rick's Workbench", x: 0, z: -8.6, r: 2.2, h: 1.3, model: 'lm_workbench', alias: 'garage' },
+    { id: 'plumbus', dim: 'rickgarage', name: 'Plumbus', x: -7.5, z: -7.5, r: 1.0, h: 1.6, model: 'lm_plumbus' },
+    { id: 'mbox', dim: 'rickgarage', name: 'Meeseeks Box', x: 7.5, z: -7.5, r: 0.9, h: 1.4, model: 'lm_mbox' },
+    { id: 'battery', dim: 'rickgarage', name: 'Microverse Battery', x: 9.5, z: 7.5, r: 1.1, h: 1.2, model: 'lm_battery' },
+    { id: 'gdoor', dim: 'rickgarage', name: 'Garage door (outside)', x: 0, z: 12.4, r: 2.6, h: 4, model: 'lm_gdoor', door: { dim: 'suburbia', x: -28.5, z: 0 } },
+    { id: 'trapdoor', dim: 'rickgarage', name: 'Trapdoor to the secret lab', x: -8, z: 6.5, r: 1.2, h: 0.3, model: 'lm_trapdoor', door: { dim: 'ricklab', x: 0, z: 6 } },
+    { id: 'cellardoor', dim: 'rickgarage', name: 'Door to the wine cellar', x: -12.3, z: -1, r: 1.2, h: 3.4, model: 'lm_cellardoor', door: { dim: 'cellar', x: 0, z: 6 } },
+    { id: 'ladder', dim: 'ricklab', name: 'Ladder up to the garage', x: 0, z: 9.5, r: 1.2, h: 5, model: 'lm_ladder', door: { dim: 'rickgarage', x: -6, z: 4.5 } },
+    { id: 'mindblowers', dim: 'ricklab', name: 'Mind Blowers', x: -8.5, z: -6, r: 1.4, h: 2.4, model: 'lm_mindblowers' },
+    { id: 'cellarexit', dim: 'cellar', name: 'Back to the garage', x: 0, z: 9.5, r: 1.4, h: 3.4, model: 'lm_cellardoor', door: { dim: 'rickgarage', x: -10, z: -1 } },
+    { id: 'winerack', dim: 'cellar', name: "Rick's private stash", x: 0, z: -8.5, r: 2.0, h: 3, model: 'lm_winerack' },
   ];
   MM.LANDMARK_BY_ID = {};
   for (const l of MM.LANDMARKS) MM.LANDMARK_BY_ID[l.id] = l;
   MM.USE_RADIUS = 4;   // how close to a landmark's wall you must be to use it
+  // A landmark counts as a recipe's station if it is that station or stands in for it.
+  MM.isAt = (l, at) => l.id === at || l.alias === at;
 
   // ---------- Daily life ----------
   // Things you do at a landmark. Each can be repeated after its cooldown (seconds).
@@ -60,6 +80,16 @@
     patrol:  { at: 'aerie', name: 'Stand guard at the Aerie', cd: 120, give: { f: 3 }, text: 'Nothing attacked. You stood there magnificently anyway.' },
     chore:   { at: 'home', name: 'Help someone with a chore', cd: 90, give: { s: 2 }, heal: 1, text: 'Ooh, can do! The chore is done. You feel a deep urge to stop existing. It passes.' },
     party:   { at: 'market', name: 'Throw a party', cd: 150, give: { p: 2, s: 2 }, text: 'Everyone got squanched. Nobody remembers anything. Great party.' },
+    council: { at: 'council', name: 'Attend a Council of Ricks meeting', cd: 180, give: { k: 4, s: 2 }, text: 'Twelve Ricks argued for an hour. Nothing was decided. You were paid in Schmeckles.' },
+    daycare: { at: 'daycare', name: 'Drop by Morty Daycare', cd: 150, give: { k: 3 }, text: 'Hundreds of Mortys, one tiny slide. You helped. Kind of.' },
+    // Things anyone can do, whoever they are.
+    plumbus: { at: 'plumbus', any: true, name: 'Make a plumbus', cd: 150, give: { s: 3 }, text: 'Dinglebop, schleem, grumbo, fleeb. You made a plumbus. Everyone has one.' },
+    mbox:    { at: 'mbox', any: true, name: 'Press the Meeseeks Box', cd: 120, give: {}, summon: true, text: 'I\'m Mr. Meeseeks! Look at me! He will help you for a while.' },
+    battery: { at: 'battery', any: true, name: 'Check the microverse battery', cd: 150, give: { c: 2, s: 1 }, text: 'The tiny civilisation inside still thinks it invented the power. Car is charged.' },
+    mindblower: { at: 'mindblowers', any: true, name: 'Watch a Mind Blower', cd: 120, heal: 1, give: { s: 1 }, text: 'A memory you asked to forget. Huh. That explains a lot.' },
+    wine:    { at: 'winerack', any: true, name: 'Take a bottle', cd: 150, heal: 1, give: { p: 1 }, text: 'From the private stash. Do not tell Rick. Seriously.' },
+    fetch:   { at: 'palace', any: true, name: 'Play fetch with the dogs', cd: 120, give: { s: 2, p: 1 }, text: 'You threw. They fetched. Then they made you fetch. Then they patted your head.' },
+    harvest: { at: 'megatree', any: true, name: 'Harvest a Mega Seed', cd: 300, give: { m: 1 }, text: 'You got a Mega Seed. Do not ask where Rick usually keeps these.' },
     train:   { at: 'aerie', name: 'Train with the elders', cd: 180, give: { f: 2, s: 2 }, text: 'The elders said "again" forty times. You are stronger now.' },
   };
 
@@ -71,6 +101,9 @@
     turret:   { cat: 'gadget', name: 'Auto-Turret', cost: { s: 6, c: 1 }, max: 2, desc: 'A turret that shoots anyone near it for 45 s.' },
     shrink:   { cat: 'gadget', name: 'Shrink Ray Shot', cost: { s: 4, c: 2 }, max: 3, desc: 'One shot that shrinks the target to half size for 8 s.' },
     fluid:    { cat: 'gadget', name: 'Portal Fluid', cost: { c: 2 }, gun: true, desc: 'Refills one portal gun charge right away.' },
+    meeseeks: { cat: 'gadget', name: 'Meeseeks Box', cost: { k: 3, s: 1 }, max: 2, desc: 'Press it (4): a Mr. Meeseeks pops out and fights for you for 30 s.' },
+    megabrain: { cat: 'self', name: 'Mega Seed Smarts', cost: { m: 4, c: 2 }, at: 'garage', desc: 'Abilities recharge 30% faster and you hit 10% harder.' },
+    cloak:    { cat: 'self', name: 'Citadel Cloak', cost: { k: 8, p: 3 }, at: 'council', desc: 'Monsters and turrets lose track of you 3 s after you stop fighting.' },
     armor1:   { cat: 'self', name: 'Bio-Armor I', cost: { g: 4, s: 4 }, at: 'forge', desc: '+25 max health. Grown, not built.' },
     armor2:   { cat: 'self', name: 'Bio-Armor II', cost: { g: 6, c: 3 }, at: 'forge', needs: 'armor1', desc: '+25 more max health.' },
     armor3:   { cat: 'self', name: 'Bio-Armor III', cost: { g: 8, c: 5, p: 4 }, at: 'forge', needs: 'armor2', desc: '+30 more max health.' },
@@ -90,7 +123,9 @@
     drive:    { cat: 'ship', name: 'Dimension Drive', cost: { c: 6, g: 4, p: 6, f: 4 }, at: 'shipyard', needs: 'engine', desc: 'Fly your ship straight into any dimension.' },
   };
   MM.RECIPE_IDS = Object.keys(MM.RECIPES);
-  MM.GADGET_IDS = ['grenade', 'turret', 'shrink'];
+  MM.GADGET_IDS = ['grenade', 'turret', 'shrink', 'meeseeks'];
+  // Recipes everyone knows, whoever they are.
+  MM.COMMON = ['meeseeks', 'megabrain'];
   MM.CATS = { gadget: 'Gadgets', self: 'You', gun: 'Portal gun', ship: 'Ship' };
 
   // ---------- Who you are ----------
@@ -109,7 +144,7 @@
       ability: { id: 'shield', name: 'Science Shield', cd: 16, dur: 4 },
       blurb: 'Smartest being in any dimension. Owns a portal gun, builds anything, but is fragile and has a terrible attitude.',
       perk: 'Knows every recipe and pays a third less. Portal gun with 3 charges.',
-      life: { normal: 'Grandpa Rick', breakout: 'Rickest Rick', daily: ['tinker', 'dinner'] },
+      life: { normal: 'Grandpa Rick', breakout: 'Rickest Rick', daily: ['tinker', 'dinner', 'council'] },
       steps: [
         { name: 'Tinker time', desc: "Tinker in Rick's Garage once.", goal: { type: 'use', task: 'tinker', n: 1 } },
         { name: 'Field research', desc: 'Visit 3 different dimensions.', goal: { type: 'dims', n: 3 } },
@@ -123,7 +158,7 @@
       ability: { id: 'sprint', name: 'Panic Sprint', cd: 11, dur: 3 },
       blurb: 'Dragged along on every adventure. Panics a lot, survives anyway.',
       perk: 'Dodges 20% of hits out of pure luck. Borrowed portal gun with 1 charge.',
-      life: { normal: 'Regular Morty', breakout: 'Adventure Morty', daily: ['school', 'dinner'] },
+      life: { normal: 'Regular Morty', breakout: 'Adventure Morty', daily: ['school', 'dinner', 'daycare'] },
       steps: [
         { name: 'Ugh, school', desc: 'Sit through class at Harry Herpson High.', goal: { type: 'use', task: 'school', n: 1 } },
         { name: 'Dragged along', desc: 'Visit 2 different dimensions.', goal: { type: 'dims', n: 2 }, grants: ['turret', 'blaster1'] },
@@ -282,7 +317,7 @@
       ability: { id: 'scheme', name: 'Vanish', cd: 18, dur: 5 },
       blurb: 'A Morty with an eye patch and a plan. Quiet, patient, and always three steps ahead.',
       perk: 'Vanish: monsters and turrets lose track of you for 5 s. Starts with a portal gun.',
-      life: { normal: 'Quiet Morty', breakout: 'President Morty', daily: ['school', 'haggle'] },
+      life: { normal: 'Quiet Morty', breakout: 'President Morty', daily: ['school', 'daycare', 'council'] },
       steps: [
         { name: 'Blend in', desc: 'Sit through class at Harry Herpson High.', goal: { type: 'use', task: 'school', n: 1 } },
         { name: 'Gather support', desc: 'Talk to 10 locals.', goal: { type: 'talk', n: 10 }, grants: ['armor1', 'blaster1', 'turret'] },
@@ -326,7 +361,7 @@
     const A = MM.ARCHETYPES[arch];
     const up = {};
     for (const r of A.start || []) up[r] = 1;
-    return { up, step: 0, grants: [], cnt: { use: {}, dims: [], crafted: [], kill: {}, kills: 0, ko: 0, talk: 0, smash: 0, errand: 0 }, errands: [], tasks: {}, inv: { s: 0, c: 0, g: 0, p: 0, f: 0 }, chaos: 0 };
+    return { up, step: 0, grants: [], cnt: { use: {}, dims: [], crafted: [], kill: {}, kills: 0, ko: 0, talk: 0, smash: 0, errand: 0 }, errands: [], tasks: {}, inv: { s: 0, c: 0, g: 0, p: 0, f: 0, m: 0, k: 0 }, chaos: 0 };
   };
 
   MM.hasGun = (arch, up) => !!(MM.ARCHETYPES[arch].portal || up.gunbuild);
@@ -336,7 +371,7 @@
   MM.canKnow = function (arch, prog, id) {
     const A = MM.ARCHETYPES[arch], R = MM.RECIPES[id];
     if (!R) return 'Unknown recipe';
-    if (A.knows !== '*' && !A.knows.includes(id) && !prog.grants.includes(id)) return 'Not part of your life yet. Follow your path (J) to unlock it.';
+    if (A.knows !== '*' && !A.knows.includes(id) && !prog.grants.includes(id) && !MM.COMMON.includes(id)) return 'Not part of your life yet. Follow your path (J) to unlock it.';
     if (R.gun && !MM.hasGun(arch, prog.up)) return 'Needs a portal gun.';
     if (R.nogun && MM.hasGun(arch, prog.up)) return 'You already have a portal gun.';
     if (R.needs && !prog.up[R.needs]) return 'Build ' + MM.RECIPES[R.needs].name + ' first.';
@@ -362,7 +397,9 @@
       speed: A.speed * (up.legs1 ? 1.15 : 1) * (up.legs2 ? 1.15 : 1),
       jump: A.jump * (up.legs1 ? 1.1 : 1) * (up.legs2 ? 1.1 : 1),
       fly: A.fly || up.wings ? 'wings' : up.jetpack ? 'jet' : null,
-      dmg: (up.blaster1 ? 1.3 : 1) * (up.blaster2 ? 1.4 : 1),
+      dmg: (up.blaster1 ? 1.3 : 1) * (up.blaster2 ? 1.4 : 1) * (up.megabrain ? 1.1 : 1),
+      cdMult: up.megabrain ? 0.7 : 1,
+      cloak: !!up.cloak,
       gun: null, ship: null,
     };
     s.flyTime = s.fly === 'wings' ? 6 : s.fly === 'jet' ? 2.5 : 0;
