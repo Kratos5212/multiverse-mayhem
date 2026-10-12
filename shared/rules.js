@@ -36,7 +36,11 @@
   // can only be built at a particular one.
   MM.LANDMARKS = [
     // rot: which way the front faces (PI/2 = toward +x). The Smith house and Rick's garage stand side by side on one lot.
-    { id: 'home', dim: 'suburbia', name: 'Smith House', x: -14, z: 25, r: 7, h: 10, model: 'lm_home', rot: Math.PI / 2 },
+    { id: 'home', dim: 'suburbia', name: 'Smith House', x: -14, z: 25, r: 7, h: 10, model: 'lm_home', rot: Math.PI / 2, door: { dim: 'smithhouse', x: -4.69, z: -4.2 } },
+    // Inside the Smith house (a Mojulo floor plan: see assets/interiors). Spots marked with a ring.
+    { id: 'smithexit', dim: 'smithhouse', name: 'Front door', x: -4.69, z: -4.95, r: 0.8, h: 2.2, model: 'lm_marker', door: { dim: 'suburbia', x: -5.5, z: 25 } },
+    { id: 'smithtv', dim: 'smithhouse', name: 'The couch (interdimensional cable)', x: -3.41, z: 1.6, r: 0.8, h: 1.2, model: 'lm_marker' },
+    { id: 'smithtable', dim: 'smithhouse', name: 'Dining table', x: 3.84, z: 1.9, r: 0.8, h: 1.2, model: 'lm_marker' },
     { id: 'garage', dim: 'suburbia', name: "Rick's Garage", x: -14.5, z: 12.5, r: 5.5, h: 6.5, model: 'lm_garage', rot: Math.PI / 2, door: { dim: 'rickgarage', x: -2, z: 4 } },
     { id: 'school', dim: 'suburbia', name: 'Harry Herpson High', x: 30, z: 22, r: 8.5, h: 8, model: 'lm_school', rot: Math.PI / 2, sign: { text: 'HARRY HERPSON HIGH SCHOOL', y: 6.95, z: 4.62, w: 9.5 } },
     { id: 'hospital', dim: 'suburbia', name: 'Horse Hospital', x: 30, z: -22, r: 7, h: 8, model: 'lm_hospital', rot: Math.PI / 2, sign: { text: 'HORSE HOSPITAL', y: 7.0, z: 5.1, w: 8 } },
@@ -133,8 +137,8 @@
     school:  { at: 'school', name: 'Sit through class', cd: 150, give: { s: 2 }, text: 'Algebra. Again. You pocketed some scrap from shop class.' },
     surgery: { at: 'hospital', name: 'Operate on a horse', cd: 150, give: { s: 3, c: 1 }, heal: 1, text: 'The horse will live. Probably. It looked grateful.' },
     jobhunt: { at: 'office', name: 'Look for a job', cd: 120, give: { s: 1 }, text: 'They said they would call you. They will not call you.' },
-    tv:      { at: 'home', name: 'Watch interdimensional TV', cd: 90, heal: 1, give: {}, text: 'A show about a man who is also a ball. You feel restored.' },
-    dinner:  { at: 'home', name: 'Family dinner', cd: 180, heal: 1, give: { s: 2 }, text: 'Everyone argued. The mashed potatoes were good, though.' },
+    tv:      { at: 'smithtv', any: true, name: 'Watch interdimensional TV', cd: 90, heal: 1, give: {}, text: 'A show about a man who is also a ball. You feel restored.' },
+    dinner:  { at: 'smithtable', name: 'Family dinner', cd: 180, heal: 1, give: { s: 2 }, text: 'Everyone argued. The mashed potatoes were good, though.' },
     hug:     { at: 'home', name: 'Visit an old friend', cd: 120, heal: 1, give: { s: 2 }, text: 'They swear they have known you for years. It was lovely.' },
     forge:   { at: 'forge', name: 'Feed the forge', cd: 120, give: { g: 3 }, text: 'You fed it. It fed you back. Do not think about it.' },
     haggle:  { at: 'market', name: 'Haggle at the black market', cd: 120, give: { p: 2 }, text: 'You sold a "genuine" moon rock. It was a regular rock.' },

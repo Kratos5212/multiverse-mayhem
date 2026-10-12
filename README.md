@@ -222,6 +222,16 @@ Portals, stations and ships can't take you into these rooms; you have to use the
 
 Rick, Morty and Evil Morty's daily lives now include Council meetings and Morty Daycare at the Citadel.
 
+### Inside the Smith house (built with Mojulo)
+
+Walk up to the Smith House and press **F**, then **Go to Smith House**. The ground floor has the front hall, the living room (sit on the couch to watch interdimensional cable), the dining room (family dinner) and the kitchen. The rooms were laid out and furnished with [Mojulo](https://mojulo.com) from a floor plan, exported as glTF, and converted for the game:
+
+```
+node scripts/glb2mm.js model.glb assets/interiors/smith.mmg --scale 1.4 --origin 7.254,-5.547 --floor0
+```
+
+`scripts/glb2mm.js` merges a glTF into one compact mesh (quantised positions, normals and colours, about 600 KB here) that `js/mmg.js` loads and draws with the game's own cel shading. The Mojulo recipe is kept next to it (`assets/interiors/smith.recipe.json`), so the house can be rebuilt or changed with Mojulo and re-exported (use the unshaded `lit` export). Inside walls for collision are listed as segments on the dimension (`walls` in `shared/world.js`).
+
 ### Adding a dimension
 
 1. Add an entry to `MM.DIMS` in `shared/world.js`: name, seed, gravity, colours, props, locals and monsters, material and loot.

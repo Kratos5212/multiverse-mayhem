@@ -470,3 +470,21 @@ test('Earth: highways between regions, the President is guarded, and freezing ti
   run(host, 3);
   assert.ok([...p.inst.npcs.values()].some(n => n.type === 'timecop' && n.angry === p.id));
 });
+
+test('Smith house: in through the front door, watch TV on the couch, out again; inside walls block', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'sidekick', { dim: 'suburbia' });
+  near(host, c, p, 'home'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"home"}');
+  assert.strictEqual(p.inst.dimId, 'smithhouse');
+  near(host, c, p, 'smithtv'); run(host, 1.2);
+  host.message(c, '{"t":"use","l":"smithtv","task":"tv"}');
+  assert.ok(p.prog.tasks.tv > 0, 'watched TV');
+  const [x] = MM.collideWalls('smithhouse', 0.43, 1, 0.4);
+  assert.ok(Math.abs(x - 0.43) >= 0.5, 'the wall between the living and dining rooms pushes you out');
+  assert.deepStrictEqual(MM.collideWalls('smithhouse', 0.43, 3.0, 0.4), [0.43, 3.0], 'the doorway is open');
+  near(host, c, p, 'smithexit'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"smithexit"}');
+  assert.strictEqual(p.inst.dimId, 'suburbia');
+  assert.ok(MM.LANDMARK_BY_ID.shrimpearth_home, 'alternate Earths keep their Smith house');
+});

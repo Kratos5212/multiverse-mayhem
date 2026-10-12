@@ -1,0 +1,107 @@
+{
+  "kind": "floorplan",
+  "title": "Smith House ground floor",
+  "seed": 137,
+  "width": 34,
+  "height": 26,
+  "style": "cottage",
+  "furnish": true,
+  "furnishScale": "share",
+  "windows": true,
+  "wallDecor": true,
+  "entryDoor": true,
+  "floorStyle": "auto",
+  "view": "cutaway",
+  "contactShadows": true,
+  "rooms": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 18,
+      "h": 16,
+      "glyph": "L",
+      "items": [
+        {
+          "type": "sofa",
+          "at": [
+            0.5,
+            0.7
+          ],
+          "facing": "N",
+          "size": [
+            8,
+            3
+          ],
+          "height": 3
+        },
+        {
+          "type": "media-console",
+          "wall": "N",
+          "at": 0.5
+        },
+        {
+          "type": "armchair",
+          "at": [
+            0.15,
+            0.45
+          ],
+          "facing": "E"
+        }
+      ]
+    },
+    {
+      "x": 18,
+      "y": 0,
+      "w": 16,
+      "h": 12,
+      "glyph": "D"
+    },
+    {
+      "x": 18,
+      "y": 12,
+      "w": 16,
+      "h": 14,
+      "glyph": "K"
+    },
+    {
+      "x": 0,
+      "y": 16,
+      "w": 18,
+      "h": 10,
+      "glyph": "E"
+    }
+  ],
+  "doors": [
+    {
+      "x": 6,
+      "y": 26,
+      "room": 3,
+      "edge": "S",
+      "entry": true
+    },
+    {
+      "x": 12,
+      "y": 16,
+      "room": 3,
+      "edge": "N"
+    },
+    {
+      "x": 18,
+      "y": 6,
+      "room": 0,
+      "edge": "E"
+    },
+    {
+      "x": 26,
+      "y": 12,
+      "room": 1,
+      "edge": "S"
+    },
+    {
+      "x": 18,
+      "y": 21,
+      "room": 3,
+      "edge": "E"
+    }
+  ]
+}

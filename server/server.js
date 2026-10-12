@@ -47,8 +47,8 @@ const MAX_SAVES = Math.max(100, Number(env.MAX_SAVES) || 100000);
 MM.INSTANCE_CAP = CAP;
 
 // ---------- Static files ----------
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.txt': 'text/plain; charset=utf-8', '.woff2': 'font/woff2' };
-const PUBLIC_DIRS = ['vendor', 'shared', 'sim', 'js', 'fonts'];
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.txt': 'text/plain; charset=utf-8', '.woff2': 'font/woff2', '.mmg': 'application/octet-stream' };
+const PUBLIC_DIRS = ['vendor', 'shared', 'sim', 'js', 'fonts', 'assets'];
 const SECURITY_HEADERS = {
   'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'none'; frame-ancestors 'self'; form-action 'none'",
   'x-content-type-options': 'nosniff',

@@ -4,7 +4,7 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const out = path.join(root, 'www');
-const include = ['index.html', 'js', 'shared', 'sim', 'vendor', 'fonts'];
+const include = ['index.html', 'js', 'shared', 'sim', 'vendor', 'fonts', 'assets'];
 
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out);

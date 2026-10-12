@@ -271,6 +271,22 @@
       ground: ['#5fae3e', '#78c24b', '#4c9636'], accent: '#ffd84d',
       extra: [['moviesign', 4]], npc: [['neighbor', 10], ['paparazzi', 4]], pickups: { s: 18, k: 2 }, mat: 'k',
     },
+    // ----- Inside the Smith house (built with Mojulo, see assets/interiors) -----
+    {
+      id: 'smithhouse', name: 'Smith House', code: 'C-137', seed: 139, gravity: 24, interior: true, hidden: true, bound: 7.0, boundZ: 5.3,
+      blurb: 'The living room, the dining room where nobody talks, and the kitchen. The TV gets every channel in the multiverse.',
+      sky: ['#2a2a30', '#2a2a30'], fog: '#2a2a30', fogFar: 400, sun: '#fff4e0', ambient: '#c0b8a8',
+      ground: ['#b88a5a', '#a87a4a', '#c89a6a'], accent: '#ffd84d', spawn: { x: -4.5, z: -3.6 },
+      // The rooms come from a Mojulo floor plan (34 x 26 ft, 1 ft = 0.427 m here). walls: the
+      // inside walls for collision, as [x1, z1, x2, z2] segments with gaps where the doors are.
+      room: { w: 14.5, d: 11.1, h: 4.27, mesh: 'assets/interiors/smith.mmg' },
+      walls: [
+        [0.43, 5.55, 0.43, 3.69], [0.43, 2.29, 0.43, -2.71], [0.43, -4.11, 0.43, -5.55],   // living | dining, hall | kitchen
+        [-7.25, -1.28, -2.83, -1.28], [-1.43, -1.28, 0.43, -1.28],                           // hall | living room
+        [0.43, 0.43, 3.14, 0.43], [4.54, 0.43, 7.25, 0.43],                                 // kitchen | dining
+      ],
+      props: [], npc: [], pickups: {}, mat: 's',
+    },
     // ----- Rick's garage and what's under it: small indoor dimensions -----
     {
       id: 'rickgarage', name: "Rick's Garage", code: 'C-137', seed: 137, gravity: 24, interior: true, hidden: true, bound: 7.9,
@@ -310,8 +326,8 @@
     d.props = (B.props || []).concat(d.extra || []);
     // The same buildings stand here too (minus the doors into this Earth's garage and the
     // highways): the Smith house, the school, the hospital. Tasks there work the same.
-    for (const l of MM.LANDMARKS.slice()) if (l.dim === d.variantOf && !l.door) {
-      const c = Object.assign({}, l, { id: d.id + '_' + l.id, alias: l.id, dim: d.id });
+    for (const l of MM.LANDMARKS.slice()) if (l.dim === d.variantOf && !/^hw_/.test(l.id) && l.id !== 'anatomyentry' && l.id !== 'chalkdoor') {
+      const c = Object.assign({}, l, { id: d.id + '_' + l.id, alias: l.id, dim: d.id, door: undefined });
       MM.LANDMARKS.push(c); MM.LANDMARK_BY_ID[c.id] = c;
     }
   }
@@ -319,6 +335,8 @@
   // Dimensions you can portal or kiosk to (the garage and its rooms are reached through doors).
   MM.WORLD_IDS = MM.DIMS.filter(d => !d.hidden).map(d => d.id);
   MM.boundOf = dimId => MM.DIM_BY_ID[dimId].bound || MM.WORLD_HALF;
+  // Rooms that aren't square have their own north-south limit.
+  MM.boundZOf = dimId => MM.DIM_BY_ID[dimId].boundZ || MM.boundOf(dimId);
   // Outdoor worlds have a public kiosk; indoor ones only if they declare one (Blips and Chitz does).
   // ---------- Getting around, the way the show does it ----------
   // space: worlds in the same universe (ships fly between them). near: a short hop (Earth
@@ -444,6 +462,7 @@
     voidcrystal: { r: 0.8, h: 3.5, hp: 60, drop: { c: 2 } },
     curvepillar: { r: 1.3, h: 12, hp: 300, drop: { c: 2, s: 2 } },
     storefront:  { r: 5.0, h: 6.5, hp: 220, drop: { s: 4, k: 1 } },
+    lm_marker:   { r: 0.3, h: 0.1, hp: 9999, drop: {} },
     // The rest of Earth and the alternate Earths
     skyscraper:  { r: 6.5, h: 34, hp: 700, drop: { s: 6, c: 1 } },
     apartment:   { r: 6.0, h: 16, hp: 420, drop: { s: 5 } },
@@ -918,6 +937,22 @@
 
   // Push a circle (x, z, radius) out of solid props. Used by clients for walking
   // and by the server for NPCs. Arches can be walked through.
+  // Inside walls of a room (segments [x1, z1, x2, z2]): push a circle of radius rad out of them.
+  MM.collideWalls = function (dimId, x, z, rad) {
+    const W = MM.DIM_BY_ID[dimId].walls;
+    if (!W) return [x, z];
+    for (const [x1, z1, x2, z2] of W) {
+      const dx = x2 - x1, dz = z2 - z1, l2 = dx * dx + dz * dz || 1;
+      const t = Math.max(0, Math.min(1, ((x - x1) * dx + (z - z1) * dz) / l2));
+      const px = x1 + dx * t, pz = z1 + dz * t, ex = x - px, ez = z - pz, d2 = ex * ex + ez * ez, m = rad + 0.12;
+      if (d2 < m * m) {
+        let ux = ex, uz = ez, d = Math.sqrt(d2);
+        if (d < 1e-6) { const l = Math.sqrt(l2); ux = -dz / l; uz = dx / l; d = 1; }   // exactly on the wall: step off sideways
+        x = px + ux / d * m; z = pz + uz / d * m;
+      }
+    }
+    return [x, z];
+  };
   MM.collideProps = function (dimId, x, z, rad, alive) {
     const props = MM.genProps(dimId);
     for (const p of props) {

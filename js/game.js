@@ -798,7 +798,7 @@
     $('tPortal').querySelector('.n').textContent = slots.portal.querySelector('.n').textContent;
     slots.portal.classList.toggle('off', !(y.chMax && y.ch > 0) && !(y.bor > 0) && !nearKiosk() && !y.ship);
     slots.ship.hidden = !(st && st.ship);
-    slots.ship.querySelector('span:nth-child(2)').textContent = y.ship ? 'Land' : 'Ship';
+    slots.ship.querySelector('.l').textContent = y.ship ? 'Land' : 'Ship';
     $('tShip').hidden = !(st && st.ship);
     tLabel('tShip', y.ship ? 'LAND' : 'SHIP');
   }
@@ -1369,8 +1369,9 @@
     if (!inShip) me.vy -= dim.gravity * dt * (me.flying ? 0.2 : 1);
     let nx = me.x + me.vx * dt, nz = me.z + me.vz * dt, ny = me.y + me.vy * dt;
     [nx, nz] = pushOut(nx, nz, ny, inShip ? 1.6 : 0.45);
-    const lim = MM.boundOf(G.dimId) - (MM.DIM_BY_ID[G.dimId].interior ? 0 : 1);
-    nx = Math.max(-lim, Math.min(lim, nx)); nz = Math.max(-lim, Math.min(lim, nz));
+    const lim = MM.boundOf(G.dimId) - (MM.DIM_BY_ID[G.dimId].interior ? 0 : 1), limZ = MM.boundZOf(G.dimId) - (MM.DIM_BY_ID[G.dimId].interior ? 0 : 1);
+    nx = Math.max(-lim, Math.min(lim, nx)); nz = Math.max(-limZ, Math.min(limZ, nz));
+    [nx, nz] = MM.collideWalls(G.dimId, nx, nz, 0.4);
     const g = groundAt(nx, nz, Math.max(ny, me.y)) + (inShip ? 0.4 : 0);
     if (inShip) { if (ny < g) { ny = g; me.vy = Math.max(0, me.vy); } ny = Math.min(ny, g + 90); }
     else if (ny <= g) {
@@ -1590,7 +1591,8 @@
     for (let s = 0.8; s <= dist; s += 0.4) {
       const px = tx - fx_ * s + rx * sh * s / dist, py = ty - fy * s, pz = tz - fz * s + rz * sh * s / dist;
       let hit = false;
-      for (const p of G.camProps || []) {
+      if (MM.DIM_BY_ID[G.dimId].walls) { const [wx, wz] = MM.collideWalls(G.dimId, px, pz, 0.15); if (wx !== px || wz !== pz) hit = true; }
+      if (!hit) for (const p of G.camProps || []) {
         if (!G.alive[p.id] || py > p.y + p.h || py < p.y - 1) continue;
         if ((px - p.x) ** 2 + (pz - p.z) ** 2 < (p.r + 0.3) ** 2) { hit = true; break; }
       }

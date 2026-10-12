@@ -414,8 +414,8 @@
             const step = Math.min(l, speed * dt);
             let nx = n.x + dx / l * step, nz = n.z + dz / l * step;
             [nx, nz] = MM.collideProps(this.dimId, nx, nz, T.r, null);
-            const lim = Math.min(MM.WORLD_HALF - 15, MM.boundOf(this.dimId) - 0.8);
-            n.x = Math.max(-lim, Math.min(lim, nx)); n.z = Math.max(-lim, Math.min(lim, nz));
+            const lim = Math.min(MM.WORLD_HALF - 15, MM.boundOf(this.dimId) - 0.8), limZ = Math.min(MM.WORLD_HALF - 15, MM.boundZOf(this.dimId) - 0.8);
+            n.x = Math.max(-lim, Math.min(lim, nx)); n.z = Math.max(-limZ, Math.min(limZ, nz));
             n.r = Math.atan2(dx, dz);
           }
         }
@@ -764,8 +764,8 @@
       const dt = Math.min(1.0, Math.max(0.05, now - p.lastSt));
       const kb = now < p.kbUntil;
       const allowed = this.speedOf(p) * dt * 1.5 + 1.5 + (kb ? 30 * dt + 3 : 0);
-      const lim = MM.boundOf(p.inst.dimId);
-      const x = Math.max(-lim, Math.min(lim, m.x)), z = Math.max(-lim, Math.min(lim, m.z));
+      const lim = MM.boundOf(p.inst.dimId), limZ = MM.boundZOf(p.inst.dimId);
+      const x = Math.max(-lim, Math.min(lim, m.x)), z = Math.max(-limZ, Math.min(limZ, m.z));
       const moved = Math.hypot(x - p.x, z - p.z);
       const ground = MM.heightAt(p.inst.dimId, x, z);
       const g = p.inst.dim.gravity;
