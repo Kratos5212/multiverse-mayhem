@@ -108,7 +108,7 @@
     spawnNpc(type, announce, opts) {
       opts = opts || {};
       const T = MM.NPCS[type];
-      const s = opts.at ? { x: opts.at.x, z: opts.at.z, y: MM.heightAt(this.dimId, opts.at.x, opts.at.z) } : MM.randomSpot(this.dimId, Math.random, 25, 140);
+      const s = opts.at ? { x: opts.at.x, z: opts.at.z, y: MM.heightAt(this.dimId, opts.at.x, opts.at.z) } : MM.randomSpot(this.dimId, Math.random, 25, 165);
       const n = { id: this.host.ent(), type, T, x: s.x, y: s.y + (T.fly || 0), z: s.z, r: Math.random() * 6.28, hp: T.hp,
         tx: s.x, tz: s.z, wait: 0, cd: 0, flee: 0, target: 0, home: s, seed: Math.floor(Math.random() * 1e9),
         name: T.names ? pick(T.names) : T.name, temp: opts.until || 0, talkedBy: new Set(),
@@ -120,7 +120,7 @@
     npcRow(n) { return [n.id, n.type, r2(n.x), r2(n.y), r2(n.z), r2(n.r), Math.round(n.hp / n.T.hp * 100), n.seed, n.name]; }
 
     spawnPickup(kind, announce, at, count) {
-      const s = at || MM.randomSpot(this.dimId, Math.random, 12, 140);
+      const s = at || MM.randomSpot(this.dimId, Math.random, 12, 165);
       const pk = { id: this.host.ent(), c: kind, n: count || 1, x: s.x, y: MM.heightAt(this.dimId, s.x, s.z), z: s.z, drop: !!at, born: this.host.time };
       this.pickups.set(pk.id, pk);
       if (announce) this.ev({ k: 'pk+', p: [pk.id, pk.c, r2(pk.x), r2(pk.y), r2(pk.z), pk.n] });
@@ -207,7 +207,7 @@
       const players = [...this.players.values()];
       if (E.spawn) for (const [type, n] of E.spawn) for (let i = 0; i < n; i++) {
         const p = pick(players), a = Math.random() * 6.28, d = 14 + Math.random() * 16;
-        const x = Math.max(-150, Math.min(150, p.x + Math.cos(a) * d)), z = Math.max(-150, Math.min(150, p.z + Math.sin(a) * d));
+        const x = Math.max(-MM.WORLD_HALF + 25, Math.min(MM.WORLD_HALF - 25, p.x + Math.cos(a) * d)), z = Math.max(-MM.WORLD_HALF + 25, Math.min(MM.WORLD_HALF - 25, p.z + Math.sin(a) * d));
         this.spawnNpc(type, true, { at: { x, z }, until: now + E.dur + 20 });
       }
       if (E.loot) for (let i = 0; i < E.loot[1]; i++) {
@@ -417,8 +417,8 @@
           if (now >= n.wait && dist2(n.x, n.z, n.tx, n.tz) < 1) {
             n.wait = now + 1 + Math.random() * 4;
             const a = Math.random() * 6.28, d = 4 + Math.random() * 14;
-            n.tx = Math.max(-150, Math.min(150, n.home.x + Math.cos(a) * d));
-            n.tz = Math.max(-150, Math.min(150, n.home.z + Math.sin(a) * d));
+            n.tx = Math.max(-MM.WORLD_HALF + 25, Math.min(MM.WORLD_HALF - 25, n.home.x + Math.cos(a) * d));
+            n.tz = Math.max(-MM.WORLD_HALF + 25, Math.min(MM.WORLD_HALF - 25, n.home.z + Math.sin(a) * d));
           }
           if (now >= n.wait) goal = { x: n.tx, z: n.tz };
         }

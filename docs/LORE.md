@@ -26,6 +26,10 @@ TVs on Earth are normal. Rick "fixed" his own TV with crystallised Xanthenite in
 
 Prime (Cronenberged), C-131 (the Replacement Dimension), the Parmesan Dimension (the current home), C-137 (Rick's origin), Cronenberg World, C-500A (Beth and Jerry never married), the Fascist, Shrimp and Teddy universes, and J19ζ7 (Doofus Rick). The game has Prime, Fascist, Shrimp, Teddy and C-500A, each on the Smith street plan.
 
+## More of the multiverse
+
+Snake Planet and its time-travelling Snake Terminators ("Rattlestar Ricklactica"), Giant World up the beanstalk ("Meeseeks and Destroy"), Mr. Nimbus's Atlantis (S5E1), the dream world and Scary Terry ("Lawnmower Dog"), Doofus Rick's J19ζ7, and two other times: the split timeline from "A Rickle in Time" and Earth before the asteroid, with the dinosaurs who come back in "JuRicksic Mort".
+
 ## Time
 
 Shleemypants, a fourth-dimensional Time Cop ("A Rickle in Time", "Rattlestar Ricklactica", S9E1), arrests third-dimensional beings who mess with time. In S9E1 Evil Morty froze time and was taken to Time Prison. In the game, using a Time Crystal brings Shleemypants after you.

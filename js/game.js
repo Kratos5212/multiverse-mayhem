@@ -1063,7 +1063,7 @@
     const ids = MM.WORLD_IDS.filter(id => !MM.DIM_BY_ID[id].outsideCurve);
     const out = MM.WORLD_IDS.filter(id => MM.DIM_BY_ID[id].outsideCurve);
     const spots = [];
-    const rings = [[0.9, 0.88, 10], [0.77, 0.78, 9], [0.64, 0.66, 8], [0.5, 0.5, 6]];
+    const rings = [[0.9, 0.88, 11], [0.78, 0.8, 10], [0.66, 0.68, 9], [0.54, 0.52, 7], [0.42, 0.3, 4]];
     let k = 0;
     for (const [f, span, n] of rings) for (let i = 0; i < n && k < ids.length; i++, k++) {
       const t = n === 1 ? 0 : -span + (2 * span * i) / (n - 1);
@@ -1132,8 +1132,8 @@
       // Home dimensions: yours, and those of everyone online (their Earth, their twist).
       const homes = [MM.homeDimId(profile.home)].concat(G.pop ? Object.keys(G.pop.d).filter(id => MM.HOME_RE.test(id) && G.pop.d[id] > 0) : [])
         .filter((id, i, a) => id !== 'suburbia' && id !== G.dimId && a.indexOf(id) === i);
-      for (const outside of ['home', false, true]) {
-        const ids = outside === 'home' ? homes : MM.WORLD_IDS.filter(id => !!MM.DIM_BY_ID[id].outsideCurve === outside && id !== G.dimId && !MM.DIM_BY_ID[id].pocket);
+      for (const outside of ['home', false, 'time', true]) {
+        const ids = outside === 'home' ? homes : MM.WORLD_IDS.filter(id => { const D = MM.DIM_BY_ID[id]; return (outside === 'time' ? !!D.timeline : !D.timeline && !!D.outsideCurve === outside) && id !== G.dimId && !D.pocket; });
         if (!ids.length) continue;
         const list = el('div', { class: 'list' });
         for (const id of ids) {
@@ -1142,7 +1142,7 @@
             el('div', { class: 't' }, el('b', { text: d.name + '  ' + d.code }), el('small', { text: w || d.blurb + ' · ' + n + ' here' })),
             el('button', { class: 'btn go', disabled: w ? 'disabled' : null, onclick: () => go(id) }, mode === 'gun' ? 'Open' : mode === 'ship' ? 'Fly' : 'Go')));
         }
-        box.append(el('h3', { text: outside === 'home' ? 'Home dimensions' : outside ? 'Outside the Central Finite Curve' : 'Inside the Central Finite Curve' }), list);
+        box.append(el('h3', { text: outside === 'home' ? 'Home dimensions' : outside === 'time' ? 'Other times' : outside ? 'Outside the Central Finite Curve' : 'Inside the Central Finite Curve' }), list);
       }
       const fee = S && !S.free.includes(profile.arch) ? Object.keys(S.fee).map(k => S.fee[k] + ' ' + MM.MATERIALS[k].name).join(', ') : '';
       box.append(el('p', { class: 'note', text: mode === 'station' ? 'Step through the station portal' + (fee ? ' for ' + fee : ' (free for you)') + '.'
@@ -1604,7 +1604,18 @@
     return k < 0.5 ? a : b;
   }
   const tmp = {};
+  // The split timeline stutters: now and then the world skips, with a flash of static.
+  function timeGlitch(dt) {
+    if (!MM.DIM_BY_ID[G.dimId].glitch || G.mode !== 'play') return;
+    G.glitchT = (G.glitchT || 4) - dt;
+    if (G.glitchT > 0) return;
+    G.glitchT = 3 + Math.random() * 6;
+    screenFlash(Math.random() < 0.5 ? '#8fd8ff' : '#c8c8d8', 0.35, 260);
+    G.shake = Math.max(G.shake || 0, 0.25);
+    if (Math.random() < 0.3) UI.toast(pick(['The timeline skips.', 'You remember this moment. Twice.', 'Static, then nothing.', 'Somewhere, a Time Cop sighs.']), 1800);
+  }
   function updateOthers(dt) {
+    timeGlitch(dt);
     const rt = now() - (G.offset || 0) - INTERP;
     const fogFar = MM.DIM_BY_ID[G.dimId].fogFar;
     for (const p of G.players.values()) {

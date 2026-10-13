@@ -1550,6 +1550,175 @@
       s.add(P.box, '#f4f4f4', [1.2, 4.2, 0.17], null, [2.2, 0.3, 0.02]);
     },
     // A glowing ring on the floor: something to do here (inside rooms built elsewhere).
+    // ----- Snake Planet -----
+    // A snake hut: a round mud hut wrapped by a carved snake, coiling up to a head over the door.
+    snakehut(s) {
+      s.add(P.cyl, '#b88a5a', [0, 1.6, 0], null, [2.6, 3.2, 2.6]);
+      s.add(P.cone, '#7a9a3a', [0, 4.3, 0], null, [3.1, 2.4, 3.1]);
+      s.add(P.box, '#3a2a1a', [0, 1.1, 2.55], null, [1.2, 2.2, 0.2]);
+      for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2.4, y = 0.4 + i * 0.17; s.add(P.sphere, i % 2 ? '#c8e04a' : '#8ab02a', [Math.sin(a) * 2.75, y, Math.cos(a) * 2.75], null, [0.36, 0.3, 0.36]); }
+      s.add(P.sphere, '#c8e04a', [0, 3.6, 2.9], null, [0.55, 0.42, 0.7]);
+      for (const sx of [-1, 1]) s.add(P.sphereLo, '#ffe066', [sx * 0.24, 3.75, 3.4], null, [0.1, 0.12, 0.08], true);
+      s.add(P.box, '#e2483d', [0, 3.45, 3.6], [0.3, 0, 0], [0.06, 0.04, 0.5]);
+    },
+    fern(s) {
+      for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2; s.add(P.sphere, i % 2 ? '#3a8a3a' : '#4aa04a', [Math.sin(a) * 0.9, 1.5, Math.cos(a) * 0.9], [0.9 * Math.cos(a), a, -0.9 * Math.sin(a)], [0.28, 1.5, 0.08]); }
+      s.add(P.sphereLo, '#2a6a2a', [0, 0.5, 0], null, [0.5, 0.5, 0.5]);
+    },
+    jungletree(s) {
+      s.add(P.cylLo, '#6a4a2a', [0, 4.5, 0], [0, 0, 0.05], [0.45, 9, 0.45]);
+      for (let i = 0; i < 4; i++) { const a = i * 1.6; C.capsuleAt(s, '#5a3a1a', 0.07, 3, [Math.sin(a) * 0.6, 7, Math.cos(a) * 0.6], [Math.cos(a) * 0.2, 0, -Math.sin(a) * 0.2]); }
+      for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; s.add(P.sphere, i % 2 ? '#2f7a3a' : '#3a9a44', [Math.sin(a) * 2.2, 9.2 + (i % 3) * 0.3, Math.cos(a) * 2.2], [0.5 * Math.cos(a), a, -0.5 * Math.sin(a)], [0.8, 0.25, 2.4]); }
+      s.add(P.sphere, '#2a6a32', [0, 9.6, 0], null, [1.4, 0.9, 1.4]);
+    },
+    // The Snake Jazz Club: a stone stage under a giant coiled snake, with lights on its scales.
+    lm_snakeclub(s) {
+      s.add(P.box, '#7a6a4a', [0, 0.6, 0], null, [15, 1.2, 10]);
+      s.add(P.box, '#3a2a3a', [0, 3.6, -4.6], null, [14, 6, 0.6]);
+      for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 3, r = 6.5 - i * 0.12, y = 1.6 + i * 0.26; s.add(P.sphere, i % 2 ? '#8ab02a' : '#6a9020', [Math.cos(a) * r, y, Math.sin(a) * r * 0.55 - 1], null, [0.85, 0.7, 0.85]); }
+      s.add(P.sphere, '#8ab02a', [0, 9.2, 0.6], null, [1.5, 1.1, 1.9]);
+      for (const sx of [-1, 1]) { s.add(P.sphere, '#ffe066', [sx * 0.7, 9.6, 2.0], null, [0.28, 0.32, 0.2], true); s.add(P.sphereLo, '#111', [sx * 0.7, 9.6, 2.2], null, [0.08, 0.26, 0.05]); }
+      s.add(P.box, '#e2483d', [0, 8.9, 2.6], [0.4, 0, 0], [0.12, 0.06, 1.2]);
+      for (let i = -3; i <= 3; i++) s.add(P.sphereLo, ['#ff6fd0', '#5ff8ff', '#ffe066'][(i + 3) % 3], [i * 2, 6.8, -4.2], null, [0.3, 0.3, 0.3], true);
+      s.add(P.cylLo, '#c8a040', [-3, 2.2, 2], null, [0.5, 2, 0.5]); s.add(P.cone, '#c8a040', [-3, 3.5, 2.2], [0.5, 0, 0], [0.6, 0.9, 0.6]);   // a saxophone, sort of
+    },
+    // ----- Earth, 65 million years ago -----
+    volcano(s) {
+      s.add(P.cone, '#5a4a40', [0, 14, 0], null, [17, 28, 17]);
+      s.add(P.cone, '#6a5a4a', [4, 6, 3], null, [10, 12, 10]);
+      s.add(P.cyl, '#ff5a1a', [0, 27.6, 0], null, [3.2, 0.8, 3.2], true);
+      for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; s.add(P.box, '#ff7a2a', [Math.sin(a) * 4, 22, Math.cos(a) * 4], [0, a, 0.32], [0.7, 12, 0.3], true); }
+      for (let i = 0; i < 5; i++) s.add(P.sphereLo, i % 2 ? '#7a7a80' : '#9a9aa0', [Math.sin(i) * 1.5, 31 + i * 2.2, Math.cos(i * 2) * 1.5], null, [2.2 + i * 0.4, 1.6, 2.2 + i * 0.4]);
+    },
+    dinoegg(s) {
+      s.add(P.sphere, '#e8e0c8', [0, 1.1, 0], null, [0.75, 1.1, 0.75]);
+      for (let i = 0; i < 7; i++) s.add(P.sphereLo, '#8aa06a', [Math.sin(i * 2.3) * 0.62, 0.6 + i * 0.22, Math.cos(i * 2.3) * 0.62], null, [0.14, 0.12, 0.06]);
+      s.add(P.torus, '#a87a4a', [0, 0.15, 0], [Math.PI / 2, 0, 0], [1.1, 1.1, 1.4]);
+    },
+    // The Dinosaur Council: a ring of stone seats around a fire, under giant ferns.
+    lm_dinocouncil(s) {
+      s.add(P.cyl, '#9a8a6a', [0, 0.2, 0], null, [9.5, 0.4, 9.5]);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.box, '#7a6a5a', [Math.sin(a) * 7.4, 1.6, Math.cos(a) * 7.4], [0, a, 0], [3.2, 2.8, 1.4]); s.add(P.box, '#8a7a6a', [Math.sin(a) * 8.1, 4, Math.cos(a) * 8.1], [0, a, 0], [3.2, 5, 0.6]); }
+      s.add(P.cylLo, '#5a4a3a', [0, 0.6, 0], null, [1.6, 0.6, 1.6]);
+      s.add(P.cone, '#ff8a2a', [0, 1.7, 0], null, [1.1, 2, 1.1], true); s.add(P.cone, '#ffe066', [0, 1.4, 0], null, [0.6, 1.3, 0.6], true);
+      for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI * 2 + 0.4; for (let k = 0; k < 6; k++) { const b = k / 6 * Math.PI * 2; s.add(P.sphere, '#3a8a3a', [Math.sin(a) * 10 + Math.sin(b) * 1.6, 3.8, Math.cos(a) * 10 + Math.cos(b) * 1.6], [0.9 * Math.cos(b), b, -0.9 * Math.sin(b)], [0.5, 3, 0.12]); } }
+    },
+    // ----- Giant World -----
+    giantmug(s) {
+      s.add(P.cyl, '#e8e0d0', [0, 4.2, 0], null, [3.6, 8.4, 3.6]);
+      s.add(P.cyl, '#5a3a20', [0, 8.3, 0], null, [3.3, 0.3, 3.3]);
+      s.add(P.torus, '#e8e0d0', [3.9, 4.5, 0], [0, 0, 0], [2.0, 2.4, 3.2]);
+      s.add(P.box, '#e2483d', [0, 4.4, 3.55], null, [3, 2, 0.2]);
+    },
+    giantboot(s) {
+      s.add(P.box, '#6a4a2a', [0, 1.2, 1.2], null, [4, 2.4, 6.5]);
+      s.add(P.cyl, '#6a4a2a', [0, 4.4, -0.8], null, [2.1, 6.2, 2.4]);
+      s.add(P.box, '#2a1a10', [0, 0.25, 1.2], null, [4.2, 0.5, 6.7]);
+      for (let i = 0; i < 5; i++) s.add(P.box, '#e8d8a8', [0, 2.6 + i * 0.6, 1.4 - i * 0.3], [0.3, 0, 0], [2.4, 0.12, 0.12]);
+    },
+    giantfork(s) {
+      s.add(P.box, '#b8c0c8', [0, 4.5, 0], [0, 0, 0.1], [0.7, 9, 0.35]);
+      s.add(P.box, '#b8c0c8', [0.9, 9.4, 0], [0, 0, 0.1], [2.6, 1.0, 0.35]);
+      for (let i = -1.5; i <= 1.5; i++) s.add(P.box, '#c8d0d8', [0.9 + i * 0.75 - 0.4, 11.6, 0], [0, 0, 0.1], [0.3, 3.6, 0.3]);
+    },
+    beanstalk(s) {
+      for (let i = 0; i < 12; i++) { const y = i * 2.6; s.add(P.cylLo, i % 2 ? '#4a9a2a' : '#5aaa32', [Math.sin(i * 0.8) * 0.8, y + 1.3, Math.cos(i * 0.8) * 0.8], [Math.sin(i) * 0.2, 0, Math.cos(i) * 0.2], [0.9, 2.9, 0.9]); s.add(P.sphere, '#6ac83a', [Math.sin(i * 0.8 + 1.5) * 2.2, y + 1.8, Math.cos(i * 0.8 + 1.5) * 2.2], [0, i, 0.8], [1.2, 0.2, 0.7]); }
+      s.add(P.sphere, '#8ad84a', [0, 31.5, 0], null, [3, 1.6, 3]);
+    },
+    cloudpuff(s) {
+      s.add(P.sphere, '#ffffff', [0, 1, 0], null, [2.2, 1.3, 2.0]);
+      s.add(P.sphere, '#f4f8ff', [1.6, 0.8, 0.4], null, [1.4, 1.0, 1.4]);
+      s.add(P.sphere, '#f4f8ff', [-1.5, 0.7, -0.3], null, [1.3, 0.9, 1.3]);
+    },
+    // The giants' castle: stone walls, round towers with cone roofs, and a door you could fly a ship through.
+    lm_giantcastle(s) {
+      s.add(P.box, '#a8a090', [0, 7, 0], null, [22, 14, 14]);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) { s.add(P.cyl, '#b8b0a0', [sx * 11, 10, sz * 7], null, [3.2, 20, 3.2]); s.add(P.cone, '#5a6ac8', [sx * 11, 23.5, sz * 7], null, [3.8, 7, 3.8]); }
+      for (let i = -5; i <= 5; i++) s.add(P.box, '#a8a090', [i * 2, 14.6, 7], null, [1.1, 1.2, 1]);
+      s.add(P.box, '#4a3020', [0, 4.5, 7.05], null, [6, 9, 0.3]);
+      s.add(P.cyl, '#4a3020', [0, 9, 7.05], [Math.PI / 2, 0, 0], [3, 0.3, 3]);
+      for (const sx of [-1, 1]) s.add(P.box, '#ffe9a0', [sx * 6.5, 9, 7.05], null, [1.8, 3, 0.2], true);
+      s.add(P.box, '#e2483d', [0, 27, 0], null, [0.2, 4, 0.2]); s.add(P.box, '#e2483d', [1, 28.4, 0], null, [2, 1.2, 0.1]);
+    },
+    // ----- Atlantis -----
+    coral(s) {
+      const c = ['#ff6f8a', '#ff9b4d', '#c86aff'];
+      for (let i = 0; i < 6; i++) { const a = i * 1.1; C.capsuleAt(s, c[i % 3], 0.22, 2.2 + (i % 3) * 0.5, [Math.sin(a) * 0.5, 0, Math.cos(a) * 0.5], [Math.cos(a) * 0.35, 0, -Math.sin(a) * 0.35]); s.add(P.sphereLo, c[(i + 1) % 3], [Math.sin(a) * 1.1, 2.6 + (i % 3) * 0.5, Math.cos(a) * 1.1], null, [0.35, 0.35, 0.35], true); }
+    },
+    kelp(s) {
+      for (let k = 0; k < 3; k++) for (let i = 0; i < 7; i++) s.add(P.sphere, i % 2 ? '#3a8a4a' : '#4a9a3a', [k * 0.4 - 0.4 + Math.sin(i * 0.9 + k) * 0.35, 0.5 + i * 0.95, Math.cos(k * 2) * 0.3], [0, k, Math.sin(i + k) * 0.3], [0.3, 0.6, 0.06]);
+    },
+    column(s) {
+      s.add(P.box, '#d8d0c0', [0, 0.3, 0], null, [2.2, 0.6, 2.2]);
+      s.add(P.cyl, '#e8e0d0', [0, 4.5, 0], null, [0.8, 8, 0.8]);
+      s.add(P.box, '#d8d0c0', [0, 8.7, 0], null, [2.0, 0.6, 2.0]);
+      for (let i = 0; i < 4; i++) s.add(P.sphereLo, '#5aa86a', [Math.sin(i * 1.7) * 0.82, 1.5 + i * 1.5, Math.cos(i * 1.7) * 0.82], null, [0.3, 0.6, 0.12]);
+    },
+    shell(s) {
+      for (let i = 0; i < 7; i++) s.add(P.sphere, i % 2 ? '#f4c8b0' : '#ffd8c8', [(i - 3) * 0.32, 0.8, 0], [0, 0, (i - 3) * 0.22], [0.4, 1.0, 1.3]);
+      s.add(P.sphere, '#fff4f0', [0, 0.6, 0.6], null, [0.35, 0.35, 0.35], true);
+    },
+    // Mr. Nimbus's palace: a domed temple of white columns, sea green roof, trident on top.
+    lm_nimbuspalace(s) {
+      s.add(P.box, '#d8d0c0', [0, 0.8, 0], null, [22, 1.6, 14]);
+      s.add(P.box, '#e8e0d0', [0, 1.9, 0], null, [20, 0.6, 12.4]);
+      for (let i = -4; i <= 4; i++) for (const sz of [-5.5, 5.5]) s.add(P.cyl, '#f0e8d8', [i * 2.3, 5.4, sz], null, [0.6, 6.6, 0.6]);
+      s.add(P.box, '#d8d0c0', [0, 9.1, 0], null, [21, 1, 13]);
+      s.add(P.hemi, '#4ac8a0', [0, 9.6, 0], null, [6.5, 5, 6.5]);
+      s.add(P.cylLo, '#ffd84d', [0, 16.5, 0], null, [0.2, 3.5, 0.2], true);
+      for (const sx of [-1, 0, 1]) s.add(P.cone, '#ffd84d', [sx * 0.6, 18.6, 0], null, [0.18, 1, 0.18], true);
+      s.add(P.box, '#ffd84d', [0, 18, 0], null, [1.4, 0.2, 0.2], true);
+    },
+    // ----- The Dream World -----
+    floatdoor(s) {
+      s.add(P.box, '#8a5a3a', [0, 2.4, 0], [0, 0, 0.12], [1.3, 2.6, 0.14]);
+      s.add(P.box, '#6a3a22', [0, 2.4, 0], [0, 0, 0.12], [1.6, 2.9, 0.08]);
+      s.add(P.sphereLo, '#ffd84d', [0.4, 2.3, 0.1], null, [0.08, 0.08, 0.08], true);
+      s.add(P.box, '#ffe066', [0, 2.4, -0.05], [0, 0, 0.12], [1.2, 2.5, 0.02], true);
+    },
+    // A Dali clock, draped over a dead branch.
+    meltclock(s) {
+      s.add(P.cylLo, '#6a4a3a', [0, 1.6, 0], [0, 0, 0.3], [0.2, 3.2, 0.2]);
+      s.add(P.cyl, '#ffd84d', [0.4, 3.2, 0], [Math.PI / 2, 0, 0.2], [1.1, 0.12, 1.4]);
+      s.add(P.cyl, '#fff8e0', [0.4, 3.2, 0.07], [Math.PI / 2, 0, 0.2], [0.95, 0.04, 1.2]);
+      s.add(P.sphere, '#fff8e0', [1.1, 2.1, 0.05], null, [0.45, 0.9, 0.08]);
+      s.add(P.box, '#1a1a1a', [0.4, 3.35, 0.12], [0, 0, 0.6], [0.06, 0.6, 0.02]); s.add(P.box, '#1a1a1a', [0.6, 3.2, 0.12], [0, 0, 1.6], [0.05, 0.45, 0.02]);
+    },
+    locker(s) {
+      for (let i = -1; i <= 1; i++) { s.add(P.box, ['#3a6ac8', '#c83a3a', '#3a8a5a'][i + 1], [i * 0.8, 1.2, 0], null, [0.76, 2.4, 0.7]); for (let k = 0; k < 3; k++) s.add(P.box, '#1a2a4a', [i * 0.8, 2.1 - k * 0.12, 0.36], null, [0.4, 0.04, 0.02]); }
+    },
+    // Stairs up to nowhere.
+    dreamstair(s) {
+      for (let i = 0; i < 12; i++) s.add(P.box, i % 2 ? '#e8d8ff' : '#c8b0f0', [Math.sin(i * 0.5) * 1.6, 0.4 + i * 0.72, Math.cos(i * 0.5) * 1.6 - 1.6], [0, i * 0.5, 0], [2.2, 0.25, 0.9]);
+      s.add(P.box, '#ffe066', [Math.sin(6) * 1.6, 9.2, Math.cos(6) * 1.6 - 1.6], null, [1.0, 1.8, 0.1], true);
+    },
+    // Dream High School: the school, but leaning, with a giant clock and too many doors.
+    lm_dreamschool(s) {
+      s.add(P.box, '#c86a5a', [0, 4, 0], [0, 0, 0.04], [18, 8, 9]);
+      s.add(P.box, '#e8e0d8', [0, 8.3, 0], [0, 0, 0.04], [18.6, 0.6, 9.6]);
+      for (let i = -3; i <= 3; i++) s.add(P.box, '#8a5a3a', [i * 2.4, 1.3, 4.55], null, [1.1, 2.4, 0.1]);
+      for (let i = -3; i <= 3; i++) s.add(P.box, '#ffe9a0', [i * 2.4 + (i % 2) * 0.3, 5.5, 4.55], [0, 0, i * 0.1], [1.4, 1.6, 0.1], true);
+      s.add(P.cyl, '#fff8e0', [0, 10.8, 1], [Math.PI / 2, 0, 0], [2.4, 0.4, 2.8]);
+      s.add(P.box, '#1a1a1a', [0, 11.4, 1.25], [0, 0, 0.5], [0.15, 1.6, 0.05]);
+      s.add(P.box, '#1a1a1a', [0.4, 10.7, 1.25], [0, 0, 1.9], [0.12, 1.1, 0.05]);
+    },
+    // ----- The split timeline -----
+    timeshard(s) {
+      s.add(P.octa, '#8fd8ff', [0, 1.9, 0], [0.3, 0.5, 0.2], [0.55, 1.7, 0.4], true);
+      s.add(P.octa, '#ffffff', [0.3, 1.6, 0.2], [0.8, 0.1, 0.4], [0.25, 0.8, 0.2], true);
+    },
+    lm_timerift(s) {
+      s.add(P.torus, '#8fd8ff', [0, 4.5, 0], null, [3.6, 3.6, 2.0], true);
+      s.add(P.torus, '#ffffff', [0, 4.5, 0], [0, 0, 0.3], [2.8, 2.8, 1.2], true);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.octa, i % 2 ? '#c8f0ff' : '#5aa8ff', [Math.cos(a) * 3.6, 4.5 + Math.sin(a) * 3.6, 0], [a, a, 0], [0.4, 0.9, 0.3], true); }
+      s.add(P.cyl, '#5a5a6a', [0, 0.2, 0], null, [3, 0.4, 3]);
+    },
+    // ----- Doofus Rick's Earth -----
+    flowerbed(s) {
+      s.add(P.box, '#6a4a2a', [0, 0.2, 0], null, [2.6, 0.4, 1.2]);
+      const c = ['#ff6f8a', '#ffe066', '#ffffff', '#c88aff'];
+      for (let i = 0; i < 8; i++) { s.add(P.cylLo, '#3a8a3a', [(i % 4) * 0.6 - 0.9, 0.6, (i < 4 ? -0.3 : 0.3)], null, [0.03, 0.6, 0.03]); s.add(P.sphereLo, c[i % 4], [(i % 4) * 0.6 - 0.9, 0.95, (i < 4 ? -0.3 : 0.3)], null, [0.16, 0.12, 0.16]); }
+    },
     lm_marker(s) {
       const ring = new T.TorusGeometry(0.55, 0.05, 6, 32);
       s.add(ring, '#ffd84d', [0, 0.03, 0], [Math.PI / 2, 0, 0], null, true);
@@ -1850,7 +2019,7 @@
   })();
   const terrainMat = new T.MeshToonMaterial({ vertexColors: true, gradientMap: C.gradientMap, map: grain });
   function makeTerrain(dim) {
-    const size = MM.WORLD_HALF * 2 + 120, seg = 150;
+    const size = MM.WORLD_HALF * 2 + 120, seg = 170;
     const g = new T.PlaneGeometry(size, size, seg, seg);
     g.rotateX(-Math.PI / 2);
     const pos = g.attributes.position;
@@ -2157,9 +2326,10 @@
       const look = C.npcLook(type, seed || 1);
       const H = MM.NPCS[type].human;
       const av = C.buildAvatar(look, type === 'invader' ? 'trooper' : type === 'birdcitizen' ? 'birdfolk' : type === 'meeseeks' ? 'meeseeks' : H.variant || 'joe');
+      if (H.scale) { av.baseScale = H.scale; av.root.scale.setScalar(H.scale); }   // giants
       return { root: av.root, av };
     }
-    const key = type === 'froopy' ? type + ((seed || 0) % 4) : type;
+    const key = type === 'froopy' ? type + ((seed || 0) % 4) : type === 'merfolk' ? type + ((seed || 0) % 3) : type;
     if (!npcCache[key]) {
       const s = new C.Shape();
       if (type === 'meatblob') {
@@ -2265,6 +2435,54 @@
         }
         s.add(P.sphereLo, '#3a1a2a', [0, 0.62, 0.56], null, [0.1, 0.05, 0.03]);
         s.add(P.sphere, shade(c, 0.85), [0, 1.35, 0], null, [0.1, 0.2, 0.1]);
+      } else if (type === 'snakefolk' || type === 'snaketerm') {
+        // A Snake Planet snake: an S-curve of a body, rearing up, with a big head. The
+        // terminators from the future are chrome with a red eye.
+        const term = type === 'snaketerm', c1 = term ? '#a8b0b8' : '#8ab02a', c2 = term ? '#7a828a' : '#c8e04a';
+        for (let i = 0; i < 9; i++) { const t = i / 8; s.add(P.sphere, i % 2 ? c1 : c2, [Math.sin(t * 5) * 0.35, 0.18 + Math.max(0, t - 0.45) * 1.5, -0.9 + t * 1.1], null, [0.24 - t * 0.04, 0.2, 0.24]); }
+        s.add(P.sphere, c1, [0, 0.98, 0.35], null, [0.3, 0.24, 0.38]);
+        if (term) { s.add(P.sphereLo, '#ff2a2a', [0.13, 1.06, 0.62], null, [0.08, 0.08, 0.06], true); s.add(P.box, '#4a5058', [-0.1, 1.05, 0.55], null, [0.2, 0.12, 0.2]); }
+        else for (const sx of [-1, 1]) { s.add(P.sphereLo, '#ffe066', [sx * 0.14, 1.08, 0.6], null, [0.08, 0.09, 0.06]); s.add(P.sphereLo, '#111', [sx * 0.14, 1.08, 0.65], null, [0.03, 0.07, 0.02]); }
+        s.add(P.box, '#e2483d', [0, 0.92, 0.78], [0.2, 0, 0], [0.04, 0.02, 0.2]);
+      } else if (type === 'dinosaur') {
+        // A long-necked, kindly dinosaur, built to scale with you (it is very big).
+        const g = '#6a9a7a', b = '#a8c8a0';
+        s.add(P.sphere, g, [0, 3.0, 0], null, [1.7, 1.5, 2.6]);
+        s.add(P.sphere, b, [0, 2.4, 0.2], null, [1.4, 0.9, 2.2]);
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) C.capsuleAt(s, g, 0.45, 2.2, [sx * 1.0, 0, sz * 1.4]);
+        for (let i = 0; i < 6; i++) s.add(P.sphere, g, [0, 3.8 + i * 0.5, 2.2 + i * 0.35], null, [0.55 - i * 0.03, 0.55, 0.55]);
+        s.add(P.sphere, g, [0, 6.8, 4.5], null, [0.7, 0.55, 0.9]);
+        for (const sx of [-1, 1]) { s.add(P.sphereLo, '#fff', [sx * 0.42, 7.0, 4.9], null, [0.16, 0.18, 0.12]); s.add(P.sphereLo, '#111', [sx * 0.46, 7.0, 5.0], null, [0.07, 0.09, 0.05]); }
+        s.add(P.box, '#3a4a3a', [0, 6.55, 5.3], null, [0.5, 0.05, 0.05]);
+        for (let i = 0; i < 6; i++) s.add(P.sphere, g, [0, 2.9 - i * 0.25, -2.4 - i * 0.6], null, [0.5 - i * 0.07, 0.45 - i * 0.06, 0.6]);
+        for (let i = 0; i < 6; i++) s.add(P.cone, '#d8a84a', [0, 4.4 - Math.abs(i - 2.5) * 0.15, -1.4 + i * 0.6], null, [0.12, 0.5, 0.25]);
+      } else if (type === 'raptor') {
+        const g = '#a86a3a';
+        s.add(P.sphere, g, [0, 1.0, 0], [0.3, 0, 0], [0.4, 0.42, 0.75]);
+        for (let i = 0; i < 5; i++) s.add(P.sphere, g, [0, 1.0 + i * 0.03, -0.7 - i * 0.3], null, [0.22 - i * 0.04, 0.2 - i * 0.03, 0.3]);
+        s.add(P.sphere, g, [0, 1.45, 0.75], null, [0.24, 0.22, 0.42]);
+        s.add(P.box, '#3a1a12', [0, 1.36, 1.05], null, [0.2, 0.05, 0.18]);
+        for (const sx of [-1, 1]) { s.add(P.sphereLo, '#ffe066', [sx * 0.15, 1.55, 0.95], null, [0.06, 0.06, 0.05]); C.capsuleAt(s, g, 0.12, 0.85, [sx * 0.2, 0, -0.05]); C.capsuleAt(s, g, 0.05, 0.4, [sx * 0.22, 0.85, 0.45], [0.8, 0, 0]); s.add(P.cone, '#f0e8d0', [sx * 0.2, 0.05, 0.25], [1.4, 0, 0], [0.04, 0.2, 0.04]); }
+        for (let i = 0; i < 5; i++) s.add(P.cone, '#5a3a1a', [0, 1.4 - i * 0.02, 0.3 - i * 0.25], [-0.4, 0, 0], [0.05, 0.25, 0.08]);
+      } else if (type === 'merfolk') {
+        // An Atlantean: a person from the waist up, a fish from the waist down, floating.
+        const sk = ['#e8b89a', '#8ac8d8', '#c8a0e0'][(seed || 0) % 3], tail = ['#3aa8a0', '#5a7ae0', '#e06a8a'][(seed || 0) % 3];
+        for (let i = 0; i < 5; i++) s.add(P.sphere, tail, [0, 0.9 - i * 0.18, -i * 0.12], null, [0.3 - i * 0.04, 0.22, 0.28 - i * 0.03]);
+        s.add(P.sphere, tail, [0, 0.12, -0.7], [0.4, 0, 0], [0.45, 0.06, 0.25]);
+        s.add(P.sphere, sk, [0, 1.35, 0], null, [0.32, 0.38, 0.24]);
+        s.add(P.sphere, sk, [0, 1.95, 0.02], null, [0.27, 0.29, 0.27]);
+        s.add(P.sphere, '#2a5a8a', [0, 2.12, -0.08], null, [0.3, 0.22, 0.3]);
+        for (const sx of [-1, 1]) { s.add(P.sphereLo, '#fff', [sx * 0.1, 1.98, 0.24], null, [0.07, 0.08, 0.04]); s.add(P.sphereLo, '#111', [sx * 0.1, 1.98, 0.27], null, [0.03, 0.04, 0.02]); C.capsuleAt(s, sk, 0.07, 0.6, [sx * 0.36, 1.05, 0.05], [0, 0, sx * 0.3]); }
+        s.add(P.torus, '#ffd84d', [0, 1.6, 0], [Math.PI / 2, 0, 0], [0.25, 0.25, 0.4]);
+      } else if (type === 'seamonster') {
+        // A trench beast: a long eel with a lantern on its head and far too many teeth.
+        for (let i = 0; i < 9; i++) s.add(P.sphere, i % 2 ? '#2a4a6a' : '#3a5a7a', [Math.sin(i * 0.7) * 0.4, 0.8, -i * 0.42], null, [0.55 - i * 0.04, 0.5 - i * 0.04, 0.4]);
+        s.add(P.sphere, '#2a4a6a', [0, 0.9, 0.55], null, [0.65, 0.55, 0.6]);
+        s.add(P.sphereLo, '#1a0a12', [0, 0.72, 0.95], null, [0.45, 0.25, 0.2]);
+        for (let i = -3; i <= 3; i++) s.add(P.cone, '#f0f0e8', [i * 0.11, 0.9, 1.0], [Math.PI, 0, 0], [0.04, 0.16, 0.04]);
+        for (const sx of [-1, 1]) s.add(P.sphereLo, '#ffffff', [sx * 0.3, 1.15, 0.95], null, [0.1, 0.1, 0.06], true);
+        C.capsuleAt(s, '#3a5a7a', 0.04, 0.8, [0, 1.35, 0.5], [0.6, 0, 0]);
+        s.add(P.sphere, '#7affea', [0, 1.85, 1.0], null, [0.14, 0.14, 0.14], true);
       } else if (type === 'bacteria') {
         // An Anatomy Park disease: a green, spiky, angry germ.
         s.add(P.sphere, '#7ac83a', [0, 0.75, 0], null, [0.65, 0.6, 0.65]);

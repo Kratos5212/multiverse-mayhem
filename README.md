@@ -166,12 +166,23 @@ Every world is laid out like a real place (`shared/layouts.js`): roads and squar
 | Unity's Planet | Tidy towers, everyone one mind | Unity | Moon Crystal | |
 | Galactic Federation HQ | White towers, ships and a prison block | Federation guards (hostile), clerks | Schmeckles | |
 | Planet Gear | Giant gears, pipes and brass houses | Gearpeople | Scrap | |
+| Snake Planet | Jungle of snake huts, ferns and palms | Snakes; Snake Terminators from the future (hostile, during the war) | Meat Goo | The Snake Jazz Club |
+| Giant World | A floor of cloud, giant mugs, boots and forks, beanstalks | Giants (three times your size) | Scrap | The Giants' Castle (court is in session) |
+| Atlantis | Mr. Nimbus's sunken city: columns, coral, kelp, low gravity | Atlanteans, sea beasts (hostile) | Moon Crystal | Mr. Nimbus's Palace |
+| The Dream World | Floating doors, melting clocks, stairs to nowhere | Dream figures, **Scary Terry** (hostile) | Neon Plasma | Dream High School |
+| Earth C-137, split timeline | *Another time*: the Smith street after "A Rickle in Time"; the world stutters | Neighbours, Time Cops | Moon Crystal | The Time Rift |
+| Earth, 65 million years ago | *Another time*: ferns, volcanoes, dinosaur eggs | Dinosaurs (kind, huge), raptors (hostile) | Meat Goo (and Mega Seeds) | The Dinosaur Council |
+| Earth J19ζ7 | Doofus Rick's street: perfect lawns, flowers, everyone is nice | Neighbours | Schmeckles | Same buildings as home |
 | **Beyond the Curve** | Golden paths through the void past the Curve's wall, universe orbs, the golden helix in the sky; *outside the Curve* | Free Mortys | Moon Crystal (and Mega Seeds) | Edge of the Curve |
 | **Interdimensional Cable** | A commercial strip of stores and giant TVs; *outside the Curve* | Pitchmen from the ads | Schmeckles | Real Fake Doors, Ants in my Eyes Johnson's |
 | **Hamster-in-Butt World** | A village of seated people who are also houses; *outside the Curve* | Hamsters | Sky Feather | |
 | **Plumbubo Prime 51b** | The plumbus works: factory halls, production lines, fleeb vats; *outside the Curve* | Blamphs, plumbus workers | Meat Goo | Plumbus Production Line |
 
 **One Earth, several places.** The Smith neighbourhood, Downtown, Washington, D.C. and Area 51 are the same planet: drive between them on the highways along the north edge of each (your team comes too), or hop between them in a ship. **The same Earth in other dimensions** (Fascist, Shrimp, Teddy, C-500A and the Cronenberged Prime Earth) has the same street plan and buildings with its own people; reach those by portal.
+
+**Bigger worlds.** Open worlds run to 200 m from the middle in every direction, with more out in the wild to find.
+
+**Curios and your inventory (I).** 44 odd things from the show lie around the worlds they belong to, each glowing in a column of light: Szechuan Sauce, Eyeholes, a plumbus, Death Crystals, Kalaxian Crystals, a love potion, Snake Jazz, Scary Terry's hat and more. Walk into one to pick it up. Many can be used from the inventory (healing, speed, a shield, a free portal charge, a vision of another life...), the rest are keepsakes. The collection log shows what you have found and hints where the rest are. The inventory also lists your gadgets, including the new **Freeze Ray Shot** (key 6), which freezes whoever it hits.
 
 **TVs.** Earth TVs show normal Earth TV. Rick's own TV in the Smith house always has interdimensional cable, and a Rick can "fix" the TVs in the Downtown electronics store so they pick up every channel in the multiverse for a while.
 

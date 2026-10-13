@@ -606,3 +606,20 @@ test('the freeze ray freezes whoever it hits', () => {
   run(host, 0.5);
   assert.ok(n.stun > host.time, 'frozen');
 });
+
+test('more of the multiverse: new worlds, other times, and things to do there', () => {
+  for (const d of ['snakeplanet', 'giantland', 'atlantis', 'dreamworld', 'dinoearth', 'splitearth', 'doofusearth']) {
+    assert.ok(MM.DIM_BY_ID[d] && MM.WORLD_IDS.includes(d), d);
+    assert.ok(MM.genProps(d).length > 40, d + ' has things in it');
+    assert.ok(MM.curiosOf(d).length > 0, d + ' has curios');
+  }
+  assert.ok(MM.DIM_BY_ID.dinoearth.timeline && MM.DIM_BY_ID.splitearth.timeline);
+  assert.strictEqual(MM.boundOf('snakeplanet'), 200, 'open worlds are bigger');
+  const host = new MM.Host();
+  const { c, p } = join(host, 'sidekick', { dim: 'suburbia' });
+  for (const [lid, task] of [['snakeclub', 'snakejazz'], ['dinocouncil', 'dinotalk'], ['giantcastle', 'giantcourt'], ['nimbuspalace', 'nimbus'], ['dreamschool', 'dreamtest'], ['timerift', 'timerift']]) {
+    near(host, c, p, lid); run(host, 1.2);
+    host.message(c, JSON.stringify({ t: 'use', l: lid, task }));
+    assert.ok(p.prog.tasks[task] > 0, task);
+  }
+});

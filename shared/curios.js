@@ -37,11 +37,22 @@
     unityring:  { name: "Unity's bracelet", icon: '💍', color: '#5fd6b0', dims: ['unityworld'], w: 1, desc: 'From a hive mind who was always just a little too into Rick.', text: 'For a second, a whole planet says hi.' },
     birdfeather: { name: 'Phoenix feather', icon: '🪶', color: '#ff7a3a', dims: ['featherhold'], w: 2, use: 'heal', eat: true, desc: 'From the bird people of Bird World. Warm to the touch.', text: 'Caw. You feel the heat of a rebirth, a small one.' },
     purgemask: { name: 'Purge mask', icon: '🎭', color: '#e8e0d0', dims: ['purge'], w: 2, use: 'rage', eat: true, desc: 'One night a year, anything goes. Tonight is that night.', text: 'You put it on. Something in you wants to purge.' },
-    snakejazz: { name: 'Snake Jazz record', icon: '🎷', color: '#4aa86a', dims: ['whitehousein', 'downtown'], w: 1, use: 'channel', desc: 'Ssss-ss-sss. The President listens to it alone.', text: '' },
+    snakejazz: { name: 'Snake Jazz record', icon: '🎷', color: '#4aa86a', dims: ['whitehousein', 'downtown', 'snakeplanet'], w: 1, use: 'channel', desc: 'Ssss-ss-sss. The President listens to it alone.', text: '' },
     wongpad: { name: "Dr. Wong's notepad", icon: '🗒️', color: '#f0e8d0', dims: ['officein'], w: 2, use: 'truth', desc: 'Her notes on the family. They are brutal and correct.', text: '' },
     rubenkidney: { name: 'Spare kidney (labelled "Ruben")', icon: '🫘', color: '#c84a5a', dims: ['hospitalin', 'anatomy'], w: 2, use: 'snack', eat: true, desc: 'From the hospital fridge. Probably fine.', text: 'You... ate it. Anatomy Park lost a ride.' },
     flask: { name: "Rick's flask", icon: '🫗', color: '#9aa8b4', dims: ['ricklab', 'rickgarage', 'cellar'], w: 2, use: 'trip', eat: true, desc: 'Whatever is in it is older than you.', text: 'Burrrp. Wubba lubba dub dub.' },
     mindblowers: { name: "Morty's Mind Blowers vial", icon: '🧠', color: '#c8a0ff', dims: ['ricklab', 'cellar'], w: 1, use: 'vision', desc: 'A memory Rick took away. You probably should not look.', text: '' },
+    snakecollar: { name: 'Snake time collar', icon: '🐍', color: '#c8e04a', dims: ['snakeplanet'], w: 1, use: 'fate', eat: true, desc: 'A snake used it to go back in time and stop a war. It still has one jump left.', text: 'You slip a few seconds out of time. Nothing can touch you while you are gone.' },
+    dinotooth: { name: 'Raptor tooth', icon: '🦖', color: '#f0e8d0', dims: ['dinoearth'], w: 2, use: 'rage', eat: true, desc: 'From before the asteroid. Still sharp.', text: 'You feel 65 million years of fury. Briefly.' },
+    dinoseed:  { name: 'Prehistoric Mega Seed', icon: '🌰', color: '#c8ff6a', dims: ['dinoearth'], w: 1, use: 'trip', eat: true, desc: 'The dinosaurs said "for later". It is later.', text: 'Ancient seed, ancient high. You see the asteroid coming. You feel fine about it.' },
+    magicbean: { name: 'Magic bean', icon: '🫘', color: '#8ad84a', dims: ['giantland'], w: 2, use: 'speed', eat: true, desc: 'Grows a beanstalk. Or, if you eat it, very fast legs.', text: 'You ate the bean. Your legs feel like beanstalks: long and in a hurry.' },
+    giantcoin: { name: "A giant's coin", icon: '🪙', color: '#ffd84d', dims: ['giantland'], w: 2, use: 'cash', eat: true, desc: 'The size of a manhole cover. Worth a lot of Schmeckles to the right fence.', text: 'You sold it to a very small fence for five Schmeckles.' },
+    nimbuspearl: { name: "Mr. Nimbus's pearl", icon: '🦪', color: '#e8f0ff', dims: ['atlantis'], w: 1, use: 'shield', eat: true, desc: 'He controls the sea. This pearl controls a bit of it.', text: 'A bubble of the sea wraps around you and turns away blows.' },
+    seaglass:  { name: 'Atlantean sea glass', icon: '🫧', color: '#5ff8e0', dims: ['atlantis'], w: 3, use: 'heal', eat: true, desc: 'Glows in the dark water. Atlanteans use it as medicine.', text: 'Cool and salty. Your scrapes close up.' },
+    terryhat:  { name: "Scary Terry's hat", icon: '🎩', color: '#5a3a2a', dims: ['dreamworld'], w: 1, desc: 'You can run, but you cannot hide.', text: 'You put it on. Somewhere, someone wakes up screaming.' },
+    dreamkey:  { name: 'Key to a floating door', icon: '🗝️', color: '#ffe066', dims: ['dreamworld'], w: 2, use: 'vision', desc: 'Opens one of the doors in the dream. They all lead to other lives.', text: '' },
+    timeshard: { name: 'Shard of a split timeline', icon: '⌛', color: '#8fd8ff', dims: ['splitearth'], w: 2, use: 'truth', desc: 'A sliver of the moment Summer and Morty froze time.', text: '' },
+    doofuspants: { name: "Doofus Rick's homemade pants", icon: '👖', color: '#6a8ad8', dims: ['doofusearth'], w: 2, desc: 'He made them himself. He is very proud. They are... pants.', text: 'They are a little crooked. You love them anyway.' },
   };
   MM.CURIO_IDS = Object.keys(MM.CURIOS);
   MM.isCurio = c => typeof c === 'string' && c.startsWith('q:') && !!MM.CURIOS[c.slice(2)];
@@ -49,7 +60,7 @@
   // The curios that turn up in a world (home dimensions share the show's Earth's).
   MM.curiosOf = dimId => {
     const D = MM.DIM_BY_ID[dimId], key = D && (D.home || D.variantOf) ? 'suburbia' : dimId;
-    return MM.CURIO_IDS.filter(id => MM.CURIOS[id].dims.includes(key));
+    return MM.CURIO_IDS.filter(id => MM.CURIOS[id].dims.includes(key) || MM.CURIOS[id].dims.includes(dimId));
   };
   // How many lie around at once: a handful outside, one or two indoors.
   MM.curioCount = dimId => { const D = MM.DIM_BY_ID[dimId]; return MM.curiosOf(dimId).length ? (D.interior ? 2 : 6) : 0; };

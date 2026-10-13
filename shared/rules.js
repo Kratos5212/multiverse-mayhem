@@ -24,7 +24,7 @@
   MM.TICK = 1 / 30;             // server simulation step (seconds)
   MM.SNAP_EVERY = 2;            // a snapshot every 2 ticks = 15 per second
   MM.INSTANCE_CAP = 64;         // players per dimension instance (servers can raise it)
-  MM.WORLD_HALF = 170;          // playable area is -170..170 on x and z
+  MM.WORLD_HALF = 200;          // playable area is -200..200 on x and z
   MM.RESPAWN_TIME = 4;
   MM.SPAWN_PROTECT = 3;
 
@@ -102,6 +102,13 @@
     { id: 'pentagon', dim: 'dc', name: 'The Pentagon', x: 100, z: -40, r: 20, h: 7, model: 'lm_pentagon', rot: -Math.PI / 2 },
     // ----- Area 51 -----
     { id: 'sonicstage', dim: 'area51', name: 'The Sonic Stage', x: 0, z: -40, r: 12, h: 9, model: 'lm_sonicstage', rot: 0 },
+    // ----- Snake Planet, Giant World, Atlantis, the Dream World, other times -----
+    { id: 'snakeclub', dim: 'snakeplanet', name: 'The Snake Jazz Club', x: 0, z: -34, r: 8, h: 8, model: 'lm_snakeclub', rot: 0 },
+    { id: 'dinocouncil', dim: 'dinoearth', name: 'The Dinosaur Council', x: 30, z: -30, r: 10, h: 10, model: 'lm_dinocouncil' },
+    { id: 'giantcastle', dim: 'giantland', name: "The Giants' Castle", x: 0, z: -60, r: 14, h: 26, model: 'lm_giantcastle', rot: 0 },
+    { id: 'nimbuspalace', dim: 'atlantis', name: "Mr. Nimbus's Palace", x: 0, z: -45, r: 12, h: 16, model: 'lm_nimbuspalace', rot: 0 },
+    { id: 'dreamschool', dim: 'dreamworld', name: 'Dream High School (it never ends)', x: 0, z: -40, r: 10, h: 9, model: 'lm_dreamschool', rot: 0 },
+    { id: 'timerift', dim: 'splitearth', name: 'The Time Rift', x: 22, z: 0, r: 4, h: 9, model: 'lm_timerift' },
     { id: 'hangar51', dim: 'area51', name: 'Hangar 18', x: 60, z: 10, r: 13, h: 10, model: 'lm_hangar', rot: -Math.PI / 2, sign: { text: 'HANGAR 18', y: 8.2, z: 9.6, w: 6 } },
   ];
   // Highways between the parts of Earth. Each part has an on-ramp to every other part,
@@ -141,6 +148,12 @@
     tour:    { at: 'monument', any: true, name: 'Ride up the Washington Monument', cd: 120, give: { s: 1 }, text: 'A very tall view of a very flat city. You spot three portals and a Secret Service agent pretending not to.' },
     congress:{ at: 'capitol', any: true, name: 'Sit in on Congress', cd: 200, give: { k: 2 }, text: 'Four hours of shouting. One bill passed. It was about portals, and it was confusing.' },
     warroom: { at: 'pentagon', any: true, name: 'Sit in the war room', cd: 240, give: { p: 2, k: 1 }, text: 'Generals pointing at a big screen. The big screen is pointing at your house.' },
+    snakejazz:  { at: 'snakeclub', any: true, name: 'Listen to snake jazz', cd: 150, heal: 1, give: { g: 2, s: 1 }, text: 'Ssss-ss-ss-sssss. Ss-ss. You do not understand it, and that is the point.' },
+    dinotalk:   { at: 'dinocouncil', any: true, name: 'Ask the Dinosaur Council for wisdom', cd: 240, give: { m: 1, c: 2 }, text: 'They explained universal healthcare, then gave you a seed "for later". They are very patient with mammals.' },
+    giantcourt: { at: 'giantcastle', any: true, name: "Sit in on the giants' court", cd: 200, give: { k: 3, s: 3 }, text: 'The case: a tiny man pushed a giant down the stairs. The jury has questions. You kept your head down.' },
+    nimbus:     { at: 'nimbuspalace', any: true, name: 'Get an audience with Mr. Nimbus', cd: 200, heal: 1, give: { c: 3 }, text: '"I control the sea. And the police." He let you leave with some crystals and your dignity, mostly.' },
+    dreamtest:  { at: 'dreamschool', any: true, name: 'Take the test you never studied for', cd: 150, give: { p: 3 }, text: 'Every question is about a class you never took. You passed anyway. Dreams are like that.' },
+    timerift:   { at: 'timerift', any: true, name: 'Stitch the time rift', cd: 240, give: { c: 3, m: 1 }, text: 'You held the two timelines together until they clicked. A Time Cop nodded at you. Once.' },
     schwifty:{ at: 'sonicstage', any: true, name: 'Get Schwifty for the Cromulons', cd: 300, give: { m: 2, k: 2 }, text: 'SHOW ME WHAT YOU GOT! You took off your pants and your panties and the giant heads in the sky approved.' },
     hangar:  { at: 'hangar51', any: true, name: 'Look inside Hangar 18', cd: 200, give: { c: 3 }, text: 'Weather balloons. Lots of weather balloons. One of them waved.' },
     tinker:  { at: 'garage', name: 'Tinker in the garage', cd: 120, give: { s: 3, c: 1 }, text: 'You built something, took it apart, and kept the good bits.' },
