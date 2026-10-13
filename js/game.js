@@ -143,7 +143,7 @@
   }
 
   // ---------- Game state ----------
-  const G = {
+  const G = { baseFov: 62, pairs: new Map(),
     mode: 'menu', net: null, myId: 0, ep: 0, dimId: null, inst: 0, world: null, you: null,
     me: { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, grounded: true, fly: 6, kbT: 0, aimT: 0, emoteT: 0, flying: false },
     meAv: null, players: new Map(), npcs: new Map(), pickups: new Map(), portals: new Map(), turrets: new Map(), alive: [],
@@ -286,6 +286,73 @@
     scene.remove(p.g); p.tag.sprite.material.map.dispose();
     G.portals.delete(id);
   }
+  // ----- The portal pair: blue and orange, Valve style -----
+  function addPair(e) {
+    const key = e.o + ':' + e.c;
+    removePair(key);
+    const P = { x: e.x, y: e.y, z: e.z, nx: e.nx, ny: e.ny, nz: e.nz };
+    const g = new T.Group();
+    const mesh = C.portalMesh(MM.PAIR_COLORS[e.c], 0.85);
+    mesh.renderOrder = 3;
+    // Valve-style: a hard, glowing oval rim around the swirl.
+    const rim = new T.Mesh(pairRimGeo || (pairRimGeo = new T.RingGeometry(0.86, 1.0, 48)), new T.MeshBasicMaterial({ color: MM.PAIR_COLORS[e.c], side: T.DoubleSide, fog: false }));
+    rim.scale.set(0.85, 0.85 * 1.35, 1); rim.position.z = 0.01;
+    g.add(mesh, rim);
+    mesh.userData.rim = rim;
+    g.position.set(P.x, P.y, P.z);
+    g.lookAt(P.x + P.nx, P.y + P.ny, P.z + P.nz);
+    scene.add(g);
+    G.pairs.set(key, { o: e.o, c: e.c, P, g, mesh, born: now() });
+  }
+  let pairRimGeo = null;
+  function removePair(key) { const q = G.pairs.get(key); if (q) { scene.remove(q.g); q.mesh.material.dispose(); q.mesh.userData.rim.material.dispose(); G.pairs.delete(key); } }
+  function removePairsOf(o) { removePair(o + ':0'); removePair(o + ':1'); }
+  // Aim with the crosshair and shoot the next portal of your pair (R, right click, or the
+  // touch button): blue, then orange, then blue again (which moves the old blue one).
+  function shootPair() {
+    if (!canAct() || pickled()) return;
+    if (G.you.ship) { UI.toast('Land first (B) to shoot portals.'); return; }
+    if (!(G.prog && MM.canPair(profile.arch, G.prog.up))) { UI.toast('You need a portal gun for that. Ricks have one; anyone else can build or borrow one (J).', 3500); return; }
+    if (now() < (G.pairCd || 0)) return;
+    const ray = vr && vr.on ? vr.aimRay() : null;
+    const o = ray ? ray.o : camWorld.clone(), d = ray ? ray.d : new T.Vector3();
+    if (!ray) camera.getWorldDirection(d);
+    // Start the ray at your gun, not behind you at the camera.
+    const skip = Math.max(0, (G.me.x - o.x) * d.x + (G.me.y + 1.4 - o.y) * d.y + (G.me.z - o.z) * d.z);
+    const from = { x: o.x + d.x * skip, y: o.y + d.y * skip, z: o.z + d.z * skip };
+    const hit = MM.raycastWorld(G.dimId, from, { x: d.x, y: d.y, z: d.z }, MM.PAIR_RANGE, G.alive);
+    if (!hit) { UI.toast('Nothing in range to put a portal on.', 1500); return; }
+    const c = G.pairNext || 0, S = MM.pairSpot(G.dimId, hit);
+    G.pairNext = 1 - c; G.pairCd = now() + 0.35;
+    send({ t: 'pp', c, x: r2(S.x), y: r2(S.y), z: r2(S.z), nx: r2(S.nx), ny: r2(S.ny), nz: r2(S.nz) });
+    // The shot: a streak of the portal's colour from the gun to the wall.
+    const gx = G.me.x, gy = G.me.y + 1.4, gz = G.me.z, n = Math.min(40, Math.ceil(hit.t / 2));
+    for (let i = 0; i <= n; i++) { const k = i / n; fx.glow.emit(gx + (S.x - gx) * k, gy + (S.y - gy) * k, gz + (S.z - gz) * k, 0, 0, 0, MM.PAIR_COLORS[c], 0.35, 0.35, 0); }
+    G.me.aimT = 1; G.me.yaw = G.camYaw;
+    if (G.meAv) G.meAv.attackT = 0.2;
+    C.sfx('plasma', 0.6);
+    updateHotbar();
+  }
+  // Walking into a portal of any complete pair: out of the other one, at the same speed.
+  function pairTransit(me) {
+    if (now() < (G.transitCool || 0) || (G.you && G.you.ship)) return;
+    for (const q of G.pairs.values()) {
+      const other = G.pairs.get(q.o + ':' + (1 - q.c));
+      if (!other || !MM.inPair(q.P, me.x, me.y, me.z)) continue;
+      const A = q.P, B = other.P, speed = Math.hypot(me.vx, me.vy, me.vz), ex = MM.pairExit(B, speed);
+      // Through a wall portal into a wall portal: turn the way the exit faces, like in Portal.
+      if (MM.pairKind(A) === 'wall' && MM.pairKind(B) === 'wall') G.camYaw += Math.atan2(B.nx, B.nz) - Math.atan2(-A.nx, -A.nz);
+      else if (MM.pairKind(B) === 'wall') G.camYaw = Math.atan2(B.nx, B.nz);
+      fx.burst(me.x, me.y + 1, me.z, MM.PAIR_COLORS[q.c], 18, 5, 0.5, 0.5, 2);
+      me.x = ex.x; me.y = ex.y; me.z = ex.z; me.vx = ex.vx; me.vy = ex.vy; me.vz = ex.vz;
+      me.grounded = false; me.kbT = 1.1;
+      G.transitCool = now() + 0.35;
+      send({ t: 'pt', o: q.o, c: q.c });
+      fx.burst(me.x, me.y + 1, me.z, MM.PAIR_COLORS[1 - q.c], 18, 5, 0.5, 0.5, 2);
+      C.sfx('warp', 0.5);
+      return;
+    }
+  }
   function addTurret(row) {
     const [id, owner, x, y, z] = row;
     if (G.turrets.has(id)) return;
@@ -302,6 +369,7 @@
     for (const id of [...G.pickups.keys()]) removePickup(id);
     for (const id of [...G.portals.keys()]) removePortal(id);
     for (const id of [...G.turrets.keys()]) removeTurret(id);
+    for (const k of [...G.pairs.keys()]) removePair(k);
     fx.clear();
     UI.clearNums();
     if (all) {
@@ -332,6 +400,7 @@
     for (const pk of w.pickups) addPickup(pk);
     for (const po of w.portals) addPortal(po);
     for (const t of w.turrets) addTurret(t);
+    for (const P of w.pairs || []) addPair(P);
     const me = G.me;
     me.x = w.x; me.y = w.y; me.z = w.z; me.vx = me.vy = me.vz = 0;
     if (!G.meAv) {
@@ -579,7 +648,20 @@
     const me = G.me;
     switch (e.k) {
       case 'join': if (e.p.id !== G.myId) addPlayer(e.p); updateDimInfo(); break;
+      case 'pp': {
+        addPair(e);
+        if (e.o !== G.myId) sfxAt('plasma', e.x, e.z, 0.5);
+        fx.burst(e.x, e.y, e.z, MM.PAIR_COLORS[e.c], 16, 4, 0.5, 0.5, 0);
+        break;
+      }
+      case 'pt': {
+        if (e.id === G.myId) break;
+        const p = G.players.get(e.id);
+        if (p) sfxAt('warp', p.x, p.z, 0.5);
+        break;
+      }
       case 'leave': {
+        removePairsOf(e.id);
         const p = G.players.get(e.id);
         if (p && e.via) { fx.burst(p.x, p.y + 1, p.z, '#39ff6a', 20, 6, 0.7, 0.5, 2); sfxAt('warp', p.x, p.z, 0.6); }
         removePlayer(e.id); updateDimInfo();
@@ -874,6 +956,7 @@
     mk('timecrystal', '5', 'Time', () => useGadget('timecrystal'));
     mk('freeze', '6', 'Freeze', () => useGadget('freeze'));
     mk('items', 'I', 'Items', () => openInventory());
+    mk('pair', 'R', 'Portals', () => shootPair());
     mk('scan', 'X', 'Scan', () => scan());
     mk('craft', 'C', 'Build', () => openCraft());
     mk('journal', 'J', 'Journal', () => openJournal());
@@ -894,6 +977,10 @@
       slots[g].classList.toggle('empty', !(y.inv[g] > 0));
     }
     slots.scan.hidden = !(G.st && G.st.scanner);
+    const canPair = !!(G.prog && MM.canPair(profile.arch, G.prog.up));
+    slots.pair.hidden = !canPair; $('tPair').hidden = !canPair;
+    slots.pair.style.setProperty('--pc', MM.PAIR_COLORS[G.pairNext || 0]);
+    $('tPair').style.setProperty('--pc', MM.PAIR_COLORS[G.pairNext || 0]);
     // Only Ricks and Evil Morty know how to make a Time Crystal: no slot for everyone else.
     slots.timecrystal.hidden = !(y.inv.timecrystal > 0) && !!(G.prog && MM.canKnow(profile.arch, G.prog, 'timecrystal'));
     const st = G.st;
@@ -903,6 +990,7 @@
     slots.ship.hidden = !(st && st.ship);
     slots.ship.querySelector('.l').textContent = y.ship ? 'Land' : 'Ship';
     $('tShip').hidden = !(st && st.ship);
+    $('tDown').hidden = !y.ship;
     tLabel('tShip', y.ship ? 'LAND' : 'SHIP');
   }
 
@@ -1308,7 +1396,7 @@
 
   // ---------- Input ----------
   const keys = new Set();
-  const touch = { mx: 0, mz: 0, fire: false, jump: false, stickId: null, lookId: null, lx: 0, ly: 0 };
+  const touch = { mx: 0, mz: 0, fire: false, jump: false, down: false, sprint: false, stickId: null, lookId: null, lx: 0, ly: 0 };
   let mouseDown = false;
   const chatOpen = () => !$('chatInput').hidden;
   function openChat() {
@@ -1342,6 +1430,7 @@
       case 'KeyF': interact(); break;
       case 'KeyC': openCraft(); break;
       case 'KeyX': scan(); break;
+      case 'KeyR': shootPair(); break;
       case 'KeyJ': openJournal(); break;
       case 'KeyB': toggleShip(); break;
       case 'KeyQ': ability(); break;
@@ -1366,6 +1455,7 @@
     C.audioUnlock();
     if (!document.pointerLockElement && canvas.requestPointerLock) { try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (_) {} }
     if (e.button === 0) mouseDown = true;
+    if (e.button === 2) shootPair();   // right click: the next portal of your pair
   });
   window.addEventListener('mouseup', e => { if (e.button === 0) mouseDown = false; });
   window.addEventListener('mousemove', e => {
@@ -1395,7 +1485,7 @@
   const stick = $('stick');
   stick.addEventListener('pointerdown', e => { touch.stickId = e.pointerId; stick.setPointerCapture(e.pointerId); moveStick(e); C.audioUnlock(); });
   stick.addEventListener('pointermove', e => { if (e.pointerId === touch.stickId) moveStick(e); });
-  const endStick = e => { if (e.pointerId !== touch.stickId) return; touch.stickId = null; touch.mx = touch.mz = 0; stick.firstElementChild.style.transform = ''; };
+  const endStick = e => { if (e.pointerId !== touch.stickId) return; touch.stickId = null; touch.mx = touch.mz = 0; touch.sprint = false; stick.classList.remove('sprint'); stick.firstElementChild.style.transform = ''; };
   stick.addEventListener('pointerup', endStick); stick.addEventListener('pointercancel', endStick);
   function moveStick(e) {
     const r = stick.getBoundingClientRect();
@@ -1403,6 +1493,8 @@
     const l = Math.hypot(dx, dy);
     if (l > 1) { dx /= l; dy /= l; }
     touch.mx = dx; touch.mz = -dy;
+    touch.sprint = l > 1.25;   // drag past the edge of the stick to sprint
+    stick.classList.toggle('sprint', touch.sprint);
     stick.firstElementChild.style.transform = `translate(${dx * 36}px, ${dy * 36}px)`;
   }
   canvas.addEventListener('pointerdown', e => {
@@ -1426,11 +1518,12 @@
     b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
   };
   for (const b of document.querySelectorAll('#tbtns button[data-i]')) b.prepend(UI.icon(b.dataset.i));
-  hold('tFire', 'fire'); hold('tJump', 'jump');
+  hold('tFire', 'fire'); hold('tJump', 'jump'); hold('tDown', 'down');
   $('tAb').addEventListener('pointerdown', () => ability());
   $('tPortal').addEventListener('pointerdown', () => portalAction());
   $('tTalk').addEventListener('pointerdown', () => interact());
   $('tShip').addEventListener('pointerdown', () => toggleShip());
+  $('tPair').addEventListener('pointerdown', () => shootPair());
   $('bJournal').onclick = () => openJournal();
   // Offline progress lives in this browser: save it when the page goes away.
   window.addEventListener('pagehide', () => { if (G.net && G.net.host) G.net.host.saveAll(); });
@@ -1488,7 +1581,9 @@
     const inShip = !!(y && y.ship && st.ship);
     // Same speed rules as the server (Host.speedOf), so you never get snapped back.
     const mult = (fxb & 2 ? 1.8 : 1) * (fxb & 8 ? 0.75 : 1) * (fxb & 16 ? 0.6 : 1) * (fxb & 256 ? 0.5 : 1) * (fxb & 1024 ? 0.12 : 1);
-    const speed = inShip ? st.ship.speed * mult : st.speed * mult * (st.fly && !me.grounded ? 1.3 : 1);
+    const shift = !chatOpen() && !UI.modalOpen() && (keys.has('ShiftLeft') || keys.has('ShiftRight'));
+    me.sprinting = !inShip && !dead && il > 0.3 && (shift || touch.sprint) && iz > -0.2;
+    const speed = inShip ? st.ship.speed * mult : st.speed * mult * (st.fly && !me.grounded ? 1.3 : 1) * (me.sprinting ? st.sprint || 1.3 : 1);
     const sy = Math.sin(G.camYaw), cy = Math.cos(G.camYaw);
     const wx = (sy * iz - cy * ix) * speed, wz = (cy * iz + sy * ix) * speed;
     const accel = me.kbT > 0 ? 2 : inShip ? 5 : me.grounded ? 40 : 10;
@@ -1496,7 +1591,7 @@
     me.vx += (wx - me.vx) * k; me.vz += (wz - me.vz) * k;
     me.kbT = Math.max(0, me.kbT - dt);
     const jumpHeld = !chatOpen() && !UI.modalOpen() && (keys.has('Space') || touch.jump) && !dead;
-    const downHeld = !chatOpen() && !UI.modalOpen() && (keys.has('ShiftLeft') || keys.has('ShiftRight') || keys.has('ControlLeft'));
+    const downHeld = !chatOpen() && !UI.modalOpen() && (shift || keys.has('ControlLeft') || touch.down);
     me.flying = false;
     if (inShip) {
       // Ship: fly where you look. Space climbs, Shift dives.
@@ -1522,7 +1617,7 @@
     nx = Math.max(-lim, Math.min(lim, nx)); nz = Math.max(-limZ, Math.min(limZ, nz));
     [nx, nz] = MM.collideWalls(G.dimId, nx, nz, 0.4);
     const g = groundAt(nx, nz, Math.max(ny, me.y)) + (inShip ? 0.4 : 0);
-    if (inShip) { if (ny < g) { ny = g; me.vy = Math.max(0, me.vy); } ny = Math.min(ny, g + 90); }
+    if (inShip) { if (ny < g) { ny = g; me.vy = Math.max(0, me.vy); } ny = Math.min(ny, MM.heightAt(G.dimId, nx, nz) + 100); }   // the server allows 120
     else if (ny <= g) {
       if (!me.grounded && me.vy < -14) fx.puff(nx, g, nz, '#ddd', 6, 1, 1, 0.5);
       if (!me.grounded && me.vy < -24 && !inShip) C.ragdoll(G.meAv, me.vx || Math.sin(me.yaw), me.vz || Math.cos(me.yaw), Math.min(0.8, -me.vy / 50));   // a hard landing: stumble over
@@ -1530,6 +1625,7 @@
     } else if (ny > g + 0.15) me.grounded = false;
     else if (me.grounded && me.vy <= 0) ny = g;
     me.x = nx; me.y = ny; me.z = nz;
+    if (G.pairs.size > 1) pairTransit(me);
     // Face where you move, or where you aim right after shooting.
     me.aimT = Math.max(0, me.aimT - dt);
     me.emoteT = Math.max(0, me.emoteT - dt);
@@ -1545,6 +1641,10 @@
       G.meAv.body.visible = !firstPerson() || dead;
       vm.bob += (me.grounded && !inShip ? hs : 0) * dt * 1.6; vm.speed = me.grounded && !inShip ? Math.min(1, hs / 5) : 0;
     }
+    // Sprinting: dust at your heels and a slightly wider view.
+    if (me.sprinting && me.grounded && hs > 3 && Math.random() < dt * 14) fx.puff(me.x - me.vx * 0.05, me.y + 0.1, me.z - me.vz * 0.05, '#e8e2d4', 1, 0.5, 0.6, 0.4);
+    const fovT = G.baseFov + (me.sprinting && hs > 3 ? 6 : 0);
+    if (Math.abs(camera.fov - fovT) > 0.05) { camera.fov += (fovT - camera.fov) * Math.min(1, dt * 6); camera.updateProjectionMatrix(); }
     if (st.fly) $('flyFill').style.transform = 'scaleX(' + me.fly / (st.flyTime || 6) + ')';
     // Hold to fire.
     if ((mouseDown && document.pointerLockElement === canvas) || (mouseDown && !document.pointerLockElement) || touch.fire) fire();
@@ -1669,6 +1769,12 @@
       if (n.tag) n.tag.sprite.visible = Math.hypot(n.x - G.me.x, n.z - G.me.z) < 25;
     }
     const t = now();
+    for (const q of G.pairs.values()) {
+      q.mesh.userData.tick(dt);
+      const op = Math.min(1, (t - q.born) * 4);
+      q.mesh.material.uniforms.open.value = op; q.mesh.userData.rim.scale.set(0.85 * op, 0.85 * 1.35 * op, 1);
+      if (Math.random() < 0.15) fx.glow.emit(q.P.x + (Math.random() - 0.5) * 1.4, q.P.y + (Math.random() - 0.5) * 1.8, q.P.z + (Math.random() - 0.5) * 1.4, q.P.nx, q.P.ny, q.P.nz, MM.PAIR_COLORS[q.c], 0.25, 0.4, 0);
+    }
     for (const po of G.portals.values()) {
       po.mesh.userData.tick(dt);
       const left = po.ttl - (t - po.born);
@@ -1789,7 +1895,17 @@
   const clock = new T.Clock();
   const proj = new T.Vector3();
   let menuInited = false;
+  // One bad frame must never freeze the game: report the error once and keep going.
+  const seenErr = new Set();
   function frame() {
+    try { frameBody(); }
+    catch (err) {
+      const key = String(err && err.message);
+      if (!seenErr.has(key)) { seenErr.add(key); console.error('Frame error (the game keeps running):', err); }
+      try { renderer.render(scene, camera); } catch (e2) { /* nothing more to do this frame */ }
+    }
+  }
+  function frameBody() {
     // Real time passed (capped), so a slow device still plays at normal speed.
     const raw = Math.min(0.25, clock.getDelta());
     const dt = Math.min(0.05, raw);
@@ -1868,4 +1984,12 @@
     if (m === 'gun') vr.say('Portal open to ' + MM.DIM_BY_ID[id].name + '. Walk through it!');
   }
   renderer.setAnimationLoop(frame);
+  // Phones sometimes drop the graphics context under memory pressure. Ask for it back and
+  // rebuild the world when it returns, instead of leaving a dead black screen.
+  canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); UI.toast('Graphics hiccup: rebuilding the world…', 3000); }, false);
+  canvas.addEventListener('webglcontextrestored', () => {
+    if (!G.world || !G.dimId) return;
+    scene.remove(G.world.group); G.world = C.buildDimension(G.dimId, settings.quality); scene.add(G.world.group);
+    for (let i = 0; i < G.alive.length; i++) G.world.setAlive(i, G.alive[i]);
+  }, false);
 })();

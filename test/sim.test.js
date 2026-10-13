@@ -6,6 +6,7 @@ require('../shared/rules.js');
 require('../shared/world.js');
 require('../shared/layouts.js');
 require('../shared/interiors.js');
+require('../shared/portals.js');
 require('../shared/curios.js');
 require('../shared/protocol.js');
 require('../sim/host.js');
@@ -622,4 +623,32 @@ test('more of the multiverse: new worlds, other times, and things to do there', 
     host.message(c, JSON.stringify({ t: 'use', l: lid, task }));
     assert.ok(p.prog.tasks[task] > 0, task);
   }
+});
+
+test('portal pair: Rick shoots blue and orange, anyone steps through one and out the other', () => {
+  // The ray finds the ground, and a house wall from the street.
+  const down = MM.raycastWorld('moon', { x: 0, y: 40, z: 0 }, { x: 0, y: -1, z: 0 }, 200);
+  assert.ok(down && down.ny > 0.5 && Math.abs(down.y - MM.heightAt('moon', 0, 0)) < 0.3);
+  const h = MM.genProps('suburbia').find(q => q.type === 'house');
+  const ox = h.x + Math.sin(h.rot) * 20, oz = h.z + Math.cos(h.rot) * 20;
+  const l = Math.hypot(h.x - ox, h.z - oz);
+  const wall = MM.raycastWorld('suburbia', { x: ox, y: h.y + 2, z: oz }, { x: (h.x - ox) / l, y: 0, z: (h.z - oz) / l }, 100);
+  assert.ok(wall && Math.abs(wall.ny) < 0.1 && wall.t < 20, 'hit the house wall');
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'moon' });
+  const m2 = join(host, 'joe', { dim: 'moon' });
+  run(host, 0.5);
+  const y0 = MM.heightAt('moon', p.x, p.z), far = { x: p.x + 60, z: p.z + 40 };
+  host.message(c, JSON.stringify({ t: 'pp', c: 0, x: p.x + 2, y: y0, z: p.z, nx: 0, ny: 1, nz: 0 }));
+  host.time += 1;
+  host.message(c, JSON.stringify({ t: 'pp', c: 1, x: far.x, y: MM.heightAt('moon', far.x, far.z), z: far.z, nx: 0, ny: 1, nz: 0 }));
+  assert.ok(p.pp[0] && p.pp[1], 'both portals placed');
+  // Jerry walks onto Rick's blue portal and comes out of the orange one.
+  const q = m2.p;
+  host.teleport(q, p.x + 2, y0, p.z);
+  host.message(m2.c, JSON.stringify({ t: 'pt', o: p.id, c: 0 }));
+  assert.ok(Math.hypot(q.x - far.x, q.z - far.z) < 1, 'came out the orange portal');
+  // Jerry has no portal gun: he can't shoot his own.
+  host.message(m2.c, JSON.stringify({ t: 'pp', c: 0, x: q.x, y: q.y, z: q.z, nx: 0, ny: 1, nz: 0 }));
+  assert.ok(!(q.pp && q.pp[0]));
 });

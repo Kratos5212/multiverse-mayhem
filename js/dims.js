@@ -112,6 +112,77 @@
   }
 
   // ---------- Prop models (unit scale, base on the ground) ----------
+  // ---------- Statues: carved figures built from the same parts as a body ----------
+  // fig(s, o): a standing person at (o.x, o.y, o.z), o.k metres per unit (1 unit = 1.8 m tall),
+  // turned o.ry around Y, all in one stone or bronze colour. o.hair: 'spiky' (Rick) or 'none';
+  // o.coat: a lab coat; o.raise: raise the left arm with a portal gun; o.armsOut: arms held
+  // out to the sides (to hold hands).
+  function fig(s, o) {
+    const k = o.k, c = o.color, cy = Math.cos(o.ry || 0), sy = Math.sin(o.ry || 0), dark = shade(c, 0.82), lite = shade(c, 1.08);
+    const put = (geo, col, p, r, sc) => s.add(geo, col, [o.x + (p[0] * cy + p[2] * sy) * k, o.y + p[1] * k, o.z + (-p[0] * sy + p[2] * cy) * k],
+      [(r ? r[0] : 0), (r ? r[1] : 0) + (o.ry || 0), (r ? r[2] : 0)], [sc[0] * k, sc[1] * k, sc[2] * k]);
+    // A limb from point a to point b (local units), as a rounded cylinder.
+    const yAxis = new T.Vector3(0, 1, 0), turn = new T.Quaternion().setFromAxisAngle(yAxis, o.ry || 0);
+    const limb = (a, b, rad, col) => {
+      const dir = new T.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]), l = dir.length();
+      const q = turn.clone().multiply(new T.Quaternion().setFromUnitVectors(yAxis, dir.normalize()));
+      const e = new T.Euler().setFromQuaternion(q, 'YXZ');
+      const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+      s.add(P.cyl, col, [o.x + (m[0] * cy + m[2] * sy) * k, o.y + m[1] * k, o.z + (-m[0] * sy + m[2] * cy) * k], [e.x, e.y, e.z], [rad * k, l * k, rad * k]);
+      put(P.sphere, col, b, null, [rad * 1.05, rad * 1.05, rad * 1.05]);
+    };
+    // Legs and shoes.
+    for (const sx of [-1, 1]) {
+      limb([sx * 0.11, 0.9, 0], [sx * 0.12, 0.12, 0.01], 0.085, o.coat ? dark : c);
+      put(P.box, dark, [sx * 0.12, 0.05, 0.05], null, [0.15, 0.1, 0.28]);
+    }
+    put(P.sphere, c, [0, 0.92, 0], null, [0.2, 0.13, 0.14]);
+    // Body (with a lab coat that hangs open to the knees).
+    put(P.box, c, [0, 1.2, 0], null, [0.38, 0.56, 0.24]);
+    if (o.coat) {
+      for (const sx of [-1, 1]) put(P.box, lite, [sx * 0.13, 0.98, 0.02], [0, 0, sx * 0.05], [0.17, 0.9, 0.27]);
+      for (const sx of [-1, 1]) put(P.box, lite, [sx * 0.07, 1.36, 0.13], [0.15, 0, sx * 0.5], [0.07, 0.22, 0.02]);   // lapels
+    }
+    put(P.cyl, c, [0, 1.52, 0], null, [0.06, 0.12, 0.06]);
+    // Head, face and hair.
+    put(P.sphere, c, [0, 1.68, 0.01], null, [0.15, 0.18, 0.16]);
+    put(P.box, dark, [0, 1.74, 0.15], null, [0.2, 0.03, 0.03]);                          // brow
+    for (const sx of [-1, 1]) put(P.sphere, lite, [sx * 0.06, 1.69, 0.14], null, [0.04, 0.04, 0.02]);
+    put(P.sphere, c, [0, 1.64, 0.16], null, [0.03, 0.04, 0.03]);                        // nose
+    if (o.hair === 'spiky') for (let i = 0; i < 11; i++) {
+      const a = -2.0 + i * 0.4;
+      put(P.cone, lite, [Math.sin(a) * 0.15, 1.74 + Math.abs(Math.cos(a)) * 0.05, -Math.cos(a) * 0.13 - 0.02], [-1.2 * Math.cos(a), a, 0], [0.06, 0.24, 0.05]);
+    }
+    // Arms.
+    for (const sx of [-1, 1]) {
+      const sh = [sx * 0.24, 1.42, 0];
+      let hand;
+      if (o.reach) hand = [o.reach[0] + sx * 0.05, o.reach[1], o.reach[2]];
+      else if (o.armsOut) hand = [sx * 0.86, 1.1, 0.22];
+      else if (o.raise && sx < 0) hand = [-0.36, 1.92, 0.18];
+      else hand = [sx * 0.3, 0.86, 0.06];
+      limb(sh, hand, 0.06, o.coat ? lite : c);
+      if (o.raise && sx < 0) { put(P.box, dark, [hand[0], hand[1] + 0.06, hand[2] + 0.1], [-0.6, 0, 0], [0.08, 0.1, 0.24]); put(P.cyl, lite, [hand[0], hand[1] + 0.14, hand[2] + 0.22], [-0.6, 0, 0], [0.035, 0.12, 0.035]); }
+    }
+  }
+  // A horse, facing +x, standing on its own.
+  function horse(s, x, y, z, k, c) {
+    const d = shade(c, 0.8);
+    const at = (p, q) => [x + p * k, y + q * k, z];
+    s.add(P.sphere, c, at(0, 1.3), null, [0.85 * k, 0.42 * k, 0.36 * k]);                              // barrel
+    s.add(P.sphere, c, at(0.62, 1.42), null, [0.36 * k, 0.4 * k, 0.32 * k]);                           // chest
+    s.add(P.sphere, c, at(-0.6, 1.36), null, [0.38 * k, 0.38 * k, 0.34 * k]);                          // rump
+    s.add(P.cyl, c, at(0.95, 1.85), [0, 0, -0.75], [0.17 * k, 0.75 * k, 0.17 * k]);                    // neck
+    s.add(P.box, c, at(1.3, 2.12), [0, 0, -0.35], [0.5 * k, 0.22 * k, 0.2 * k]);                       // head
+    s.add(P.sphere, d, at(1.5, 2.02), null, [0.12 * k, 0.11 * k, 0.11 * k]);                           // muzzle
+    for (const sz of [-1, 1]) s.add(P.cone, c, [x + 1.12 * k, y + 2.35 * k, z + sz * 0.07 * k], [0, 0, -0.2], [0.05 * k, 0.16 * k, 0.04 * k]);   // ears
+    for (let i = 0; i < 6; i++) s.add(P.box, d, at(0.82 + i * 0.07, 1.72 + i * 0.09), [0, 0, -0.75], [0.07 * k, 0.16 * k, 0.05 * k]);   // mane
+    for (const px of [-0.62, 0.6]) for (const sz of [-1, 1]) {
+      s.add(P.cyl, c, [x + px * k, y + 0.55 * k, z + sz * 0.18 * k], null, [0.08 * k, 1.1 * k, 0.08 * k]);
+      s.add(P.cyl, d, [x + px * k, y + 0.05 * k, z + sz * 0.18 * k], null, [0.1 * k, 0.1 * k, 0.1 * k]);   // hooves
+    }
+    s.add(P.cyl, d, at(-1.05, 1.0), [0, 0, -0.35], [0.07 * k, 0.75 * k, 0.07 * k]);                  // tail
+  }
   const MODELS = {
     house(s) { suburbanHouse(s, { w: 11, d: 8.5, h: 5.6, stories: 2, wall: '#ffffff', trim: '#fbfaf6', roof: '#8a7f78', door: '#7a3a2a', shutter: '#5a6a7a', porch: true, chimney: true }); },
     house2(s) { ranchHouse(s, { w: 13, d: 9, h: 3.3, wall: '#ffffff', trim: '#fbfaf6', roof: '#7d7068', door: '#3a5a7a', shutter: '#6a5a4a' }); },
@@ -260,13 +331,12 @@
       for (const y of [5, 10, 15]) s.add(P.torus, '#5ff8ff', [0, y, 0], [Math.PI / 2, 0, 0], [2.6, 2.6, 0.8], true);
       s.add(P.sphere, '#5ff8ff', [0, 25.5, 0], null, [0.5, 0.5, 0.5], true);
     },
+    // The Citadel's monument: a stone Rick in his lab coat, portal gun raised.
     rickstatue(s) {
       s.add(P.cyl, '#7d8796', [0, 1, 0], null, [2.2, 2, 2.2]);
-      s.add(P.capsule, '#c8ccd2', [0, 4.2, 0], null, [1.0, 2.4, 0.8]);
-      s.add(P.sphere, '#c8ccd2', [0, 7.6, 0], null, [1.3, 1.7, 1.2]);
-      for (let i = 0; i < 9; i++) { const a = -1.9 + i * 0.475; s.add(P.cone, '#b4bac2', [Math.sin(a) * 1.1, 8.6 + Math.abs(Math.cos(a)) * 0.4, -Math.cos(a) * 1.0], [-0.9 * Math.cos(a), a, 0], [0.4, 1.6, 0.3]); }
-      s.add(P.capsule, '#9aa2ac', [0, 8.0, 1.1], [0, 0, Math.PI / 2], [0.12, 1.2, 0.1]);
-      s.add(P.sphere, '#ffffff', [0.45, 7.7, 1.05], null, [0.35, 0.35, 0.15]); s.add(P.sphere, '#ffffff', [-0.45, 7.7, 1.05], null, [0.35, 0.35, 0.15]);
+      s.add(P.cyl, '#8d97a6', [0, 2.05, 0], null, [1.8, 0.1, 1.8]);
+      s.add(P.box, '#ffd84d', [0, 1.2, 2.2], null, [1.6, 0.5, 0.06]);
+      fig(s, { x: 0, y: 2.1, z: 0, k: 4.6, color: '#c8ccd2', hair: 'spiky', coat: true, raise: true });
     },
     vending(s) {
       s.add(P.box, '#3a4a6a', [0, 1.2, 0], null, [1.4, 2.4, 1.0]);
@@ -616,13 +686,9 @@
       s.add(P.box, '#bfdcec', [0, 1.6, D / 2 + 0.05], null, [2.6, 2.6, 0.06]);
       s.add(P.box, '#f3f1ea', [0, 1.6, D / 2 + 0.09], null, [0.08, 2.6, 0.04]);
       s.add(P.box, '#4a9a6a', [0, 3.3, D / 2 + 0.9], [-0.15, 0, 0], [4, 0.15, 2]);
-      // A horse statue out front, in honour of the patients.
+      // A bronze horse out front, in honour of the patients.
       s.add(P.box, '#9aa0a6', [5, 0.4, D / 2 + 2.5], null, [3.4, 0.8, 1.4]);
-      s.add(P.capsule, '#a0703f', [5, 2.1, D / 2 + 2.5], [0, 0, Math.PI / 2], [0.5, 1.7, 0.5]);
-      for (const x of [4.2, 5.8]) for (const z of [-0.3, 0.3]) s.add(P.cylLo, '#a0703f', [x, 1.25, D / 2 + 2.5 + z], null, [0.12, 1.0, 0.12]);
-      s.add(P.capsule, '#a0703f', [6.2, 2.9, D / 2 + 2.5], [0, 0, -0.6], [0.3, 0.9, 0.35]);
-      s.add(P.box, '#3a2a1a', [6.0, 3.1, D / 2 + 2.5], [0, 0, -0.6], [0.15, 1.0, 0.1]);
-      s.add(P.capsule, '#3a2a1a', [3.7, 2.0, D / 2 + 2.5], [0, 0, 0.6], [0.06, 0.6, 0.06]);
+      horse(s, 4.7, 0.8, D / 2 + 2.5, 1.25, '#a0703f');
     },
     // The unemployment office: a grey municipal block with a queue of chairs outside.
     lm_office(s) {
@@ -1052,12 +1118,12 @@
     unitystatue(s) {
       s.add(P.cyl, '#c9cfd6', [0, 0.6, 0], null, [3.2, 1.2, 3.2]);
       for (let i = 0; i < 3; i++) {
-        const a = i / 3 * Math.PI * 2, x = Math.cos(a) * 1.1, z = Math.sin(a) * 1.1;
-        C.capsuleAt(s, '#e8e8f0', 0.5, 4.2, [x, 1.2, z]);
-        s.add(P.sphere, '#e8e8f0', [x, 6.0, z], null, [0.6, 0.65, 0.6]);
-        s.add(P.box, '#e8e8f0', [x * 0.5, 4.5, z * 0.5], [0, -a, 0], [0.18, 0.18, 1.3]);
+        const a = i / 3 * Math.PI * 2;
+        // Three hosts facing out, all reaching up to one point in the middle: one mind.
+        fig(s, { x: Math.sin(a) * 1.15, y: 1.2, z: Math.cos(a) * 1.15, ry: a, k: 3.0, color: '#e8e8f0', reach: [0, 2.2, -0.36] });
       }
-      s.add(P.torus, '#5fd6b0', [0, 7.3, 0], [Math.PI / 2, 0, 0], [1.5, 1.5, 0.6], true);
+      s.add(P.sphere, '#5fd6b0', [0, 1.2 + 2.3 * 3.0, 0], null, [0.45, 0.45, 0.45], true);
+      s.add(P.torus, '#5fd6b0', [0, 8.6, 0], [Math.PI / 2, 0, 0], [1.6, 1.6, 0.6], true);
     },
 
     // ----- Galactic Federation -----
@@ -1507,15 +1573,24 @@
       s.add(P.sphereLo, '#d8b040', [0, 5.1, 0.11], null, [0.12, 0.12, 0.03]);
       s.add(P.box, '#d8b040', [0, 3.5, 0.11], null, [0.9, 0.12, 0.02]);
     },
+    // A heroic shrimp, standing tall on its tail fan, one claw raised.
     shrimpstatue(s) {
       s.add(P.box, '#c8c2b4', [0, 0.6, 0], null, [2.6, 1.2, 2.6]);
-      const k = '#ff8a6a';
-      for (let i = 0; i < 6; i++) { const a = 0.3 + i * 0.42; s.add(P.sphere, shade(k, 1 - i * 0.04), [0, 1.8 + Math.sin(a) * 1.6, Math.cos(a) * 1.6 - 0.4], [a, 0, 0], [0.85 - i * 0.09, 0.55, 0.6]); }
-      s.add(P.cone, '#ff9d7d', [0, 1.6, -1.2], [-1.6, 0, 0], [0.7, 0.9, 0.3]);
+      const k = '#ff8a6a', d = '#e86a4a';
+      for (let i = 0; i < 5; i++) { const a = (i - 2) * 0.5; s.add(P.sphere, d, [Math.sin(a) * 0.5, 1.35, -0.2 + Math.cos(a) * 0.3], [0.2, a, 0], [0.32, 0.12, 0.55]); }   // tail fan
+      for (let i = 0; i < 7; i++) { const t = i / 6, z = Math.sin(t * 2.2) * 0.45 - 0.1; s.add(P.sphere, shade(k, 1 - i * 0.03), [0, 1.6 + i * 0.48, z], [-0.25 + t * 0.5, 0, 0], [0.62 - i * 0.03, 0.34, 0.5]); }
+      s.add(P.sphere, k, [0, 5.0, 0.5], [0.4, 0, 0], [0.5, 0.42, 0.6]);                // head
+      s.add(P.cone, d, [0, 5.15, 1.1], [1.3, 0, 0], [0.12, 0.6, 0.12]);                 // rostrum
       for (const sx of [-1, 1]) {
-        s.add(P.sphere, '#1b1b1b', [sx * 0.35, 3.8, 1.1], null, [0.16, 0.16, 0.16]);
-        s.add(P.cylLo, '#e86a4a', [sx * 0.3, 4.4, 1.0], [-0.4, 0, -sx * 0.4], [0.04, 1.8, 0.04]);
+        s.add(P.cylLo, d, [sx * 0.25, 5.35, 0.75], null, [0.04, 0.3, 0.04]);
+        s.add(P.sphere, '#1b1b1b', [sx * 0.25, 5.52, 0.78], null, [0.12, 0.12, 0.12]);
+        s.add(P.cylLo, d, [sx * 0.35, 5.6, -0.3], [-0.9, 0, -sx * 0.35], [0.03, 2.4, 0.03]);   // antennae sweep back
+        for (let j = 0; j < 4; j++) s.add(P.cylLo, d, [sx * 0.5, 2.4 + j * 0.45, 0.4], [0.5, 0, sx * 0.9], [0.04, 0.5, 0.04]);   // little legs
       }
+      C.capsuleAt(s, k, 0.11, 1.0, [0.55, 3.8, 0.3], [0, 0, -0.7]);   // raised arm
+      s.add(P.sphere, d, [1.25, 4.6, 0.3], null, [0.24, 0.32, 0.16]);
+      s.add(P.cone, d, [1.35, 4.95, 0.3], [0, 0, -0.3], [0.12, 0.36, 0.1]);
+      C.capsuleAt(s, k, 0.11, 0.9, [-0.55, 3.8, 0.3], [0, 0, 2.5]);
     },
     teddystatue(s) {
       s.add(P.box, '#c8c2b4', [0, 0.6, 0], null, [2.4, 1.2, 2.4]);
@@ -2820,6 +2895,8 @@
             for (const k in modelCache) if (modelCache[k].lit === o.geometry || modelCache[k].glow === o.geometry) shared = true;
             if (!shared) o.geometry.dispose();
           }
+          // Name tags and signs: their canvas textures belong to this world only.
+          if (o.isSprite && o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
         });
       },
     };

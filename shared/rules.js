@@ -524,6 +524,9 @@
       jump: A.jump * (up.legs1 ? 1.1 : 1) * (up.legs2 ? 1.1 : 1) * (up.cyberlegs ? 1.35 : 1),
       fly: A.fly || up.wings ? 'wings' : up.jetpack ? 'jet' : null,
       dmg: (up.blaster1 ? 1.3 : 1) * (up.blaster2 ? 1.4 : 1) * (up.megabrain ? 1.1 : 1) * (up.cyberarm ? 1.35 : 1),
+      // Sprinting (Shift, or push the stick past its edge): a bit faster than walking, more
+      // with better legs.
+      sprint: 1.3 * (up.legs1 ? 1.06 : 1) * (up.legs2 ? 1.06 : 1) * (up.cyberlegs ? 1.15 : 1),
       scanner: !!up.scanner,
       cdMult: up.megabrain ? 0.7 : 1,
       cloak: !!up.cloak,

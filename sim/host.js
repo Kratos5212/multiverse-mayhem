@@ -138,6 +138,7 @@
         npcs: [...this.npcs.values()].map(n => this.npcRow(n)),
         portals: [...this.portals.values()].map(po => this.portalRow(po)),
         turrets: [...this.turrets.values()].map(t => [t.id, t.owner, r2(t.x), r2(t.y), r2(t.z)]),
+        pairs: [...this.players.values()].flatMap(p => (p.pp || []).map((P, c) => P ? Object.assign({ o: p.id, c }, P) : null).filter(Boolean)),
         event: this.event ? { name: this.event.E.name, text: this.event.E.text, left: r2(this.event.until - this.host.time) } : null,
       };
     }
@@ -607,6 +608,8 @@
         case 'door': this.onDoor(p, m.l); break;
         case 'tm': this.onTeam(p, m); break;
         case 'uc': this.onCurio(p, m.id); break;
+        case 'pp': this.onPair(p, m); break;
+        case 'pt': this.onPairTransit(p, m); break;
       }
     }
 
@@ -720,7 +723,9 @@
 
     // Move a player into a dimension (a portal, the kiosk, a ship, or joining).
     travel(p, dimId, at, preferInst, first) {
+      if (p.ship && MM.DIM_BY_ID[dimId] && MM.DIM_BY_ID[dimId].interior) p.ship = false;   // you park the ship to go indoors
       const from = p.inst;
+      p.pp = [null, null];   // your portal pair stays behind (and closes)
       if (from) {
         from.players.delete(p.id);
         from.ev({ k: 'leave', id: p.id, via: dimId });
@@ -776,7 +781,7 @@
     speedOf(p) {
       const now = this.time;
       if (now < p.fx.cuff) return 1;
-      const base = p.ship ? p.st.ship.speed : p.st.speed * (p.st.fly ? 1.35 : 1);
+      const base = p.ship ? p.st.ship.speed : p.st.speed * (p.st.fly ? 1.35 : 1) * (p.st.sprint || 1);   // the most you can go: sprinting
       return base * (now < p.fx.sprint ? 1.8 : 1) * (now < p.fx.shrink ? 0.75 : 1) * (now < p.fx.guilt ? 0.6 : 1) * (now < p.fx.daze ? 0.5 : 1);
     }
 
@@ -795,7 +800,7 @@
       const jv = p.st.jump;
       // Vertical: you can only rise as fast as your jump (or wings, jetpack, ship, a blast)
       // allows, and never above your reach. Falling is always fine.
-      const reach = p.ship ? 120 : p.st.fly === 'wings' ? 70 : jv * jv / (2 * g) + 14 + (p.st.fly === 'jet' ? 20 : 0);
+      const reach = (p.ship ? 120 : p.st.fly === 'wings' ? 70 : jv * jv / (2 * g) + 14 + (p.st.fly === 'jet' ? 20 : 0)) + (now < (p.flingUntil || 0) ? 150 : 0);
       let y = m.y;
       if (y < ground - 1.5) y = ground;
       const rise = y - p.y;
@@ -1111,6 +1116,7 @@
     onShip(p, on) {
       if (on && MM.helpless(p.arch, p.prog.up)) { this.toast(p, MM.HELPLESS_TEXT); return; }
       if (p.dead || !p.st.ship || p.ship === on) return;
+      if (on && p.inst.dim.interior) { this.toast(p, 'No room to fly in here. Take the ship outside.'); return; }
       p.ship = on;
       p.kbUntil = this.time + 1;     // stepping out mid-air: let the fall happen
       p.inst.ev({ k: 'ship', id: p.id, on });
@@ -1159,6 +1165,32 @@
       for (const k in cost) p.inv[k] -= cost[k];
       this.priv(p, { k: 'built', r: id });
       this.progress(p, 'craft', id);
+    }
+
+    // ----- The portal pair (Valve style, inside one world) -----
+    onPair(p, m) {
+      const now = this.time;
+      if (p.dead || p.ship || now < (p.cdPair || 0)) return;
+      if (!MM.canPair(p.arch, p.prog.up)) { this.toast(p, MM.helpless(p.arch, p.prog.up) ? MM.HELPLESS_TEXT : 'You need a portal gun for that.'); return; }
+      if (dist2(m.x, m.z, p.x, p.z) > (MM.PAIR_RANGE + 10) ** 2 || Math.abs(m.y - p.y) > 150) return;
+      const l = Math.hypot(m.nx, m.ny, m.nz) || 1;
+      p.cdPair = now + 0.2;
+      const P = { x: r2(m.x), y: r2(m.y), z: r2(m.z), nx: r2(m.nx / l), ny: r2(m.ny / l), nz: r2(m.nz / l) };
+      (p.pp || (p.pp = [null, null]))[m.c] = P;
+      p.inst.ev(Object.assign({ k: 'pp', o: p.id, c: m.c }, P));
+    }
+    // Someone stepped into a portal of the pair owned by m.o: out of the other one.
+    onPairTransit(p, m) {
+      const now = this.time, o = this.players.get(m.o);
+      if (p.dead || !o || o.inst !== p.inst || !o.pp || now < (p.cdTransit || 0)) return;
+      const A = o.pp[m.c], B = o.pp[1 - m.c];
+      if (!A || !B || dist2(A.x, A.z, p.x, p.z) > 4.5 * 4.5 || Math.abs(A.y - p.y) > 4) return;
+      const ex = MM.pairExit(B, MM.PAIR_MAX_SPEED);
+      p.x = ex.x; p.y = ex.y; p.z = ex.z; p.lastSt = now;
+      p.kbUntil = now + 2.5;            // flung out at speed: the movement check lets it play out
+      p.flingUntil = now + 6;           // and you may be high up (a portal on a tower wall)
+      p.cdTransit = now + 0.3;
+      p.inst.ev({ k: 'pt', id: p.id, o: o.id, c: m.c });
     }
 
     // Use a curio from your inventory. Food and potions are used up; keepsakes just talk back.

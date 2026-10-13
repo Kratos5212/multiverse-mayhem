@@ -204,6 +204,10 @@ input[type=range] { width: 100%; accent-color: var(--portal); }
 #tPortal { right: 76px; bottom: 76px; width: 56px; height: 56px; background: rgba(57,255,106,.75) !important; color: #062b10; }
 #tGadget { right: 138px; bottom: 74px; width: 50px; height: 50px; }
 #tTalk { right: 60px; bottom: 140px; width: 56px; height: 56px; background: rgba(255,216,77,.9) !important; color: #3a2a00; }
+#tPair { right: 20px; bottom: 210px; width: 56px; height: 56px; }
+#tPair svg, .s-pair svg { color: var(--pc, #3a9aff); }
+#tDown { right: 98px; bottom: 74px; width: 50px; height: 50px; }
+#stick.sprint { box-shadow: 0 0 0 4px rgba(255,216,77,.85), 0 0 18px rgba(255,216,77,.6); }
 #tShip { right: 150px; bottom: 132px; width: 50px; height: 50px; background: rgba(95,248,255,.85) !important; color: #06303a; }
 /* Phones: the big round buttons cover fire, jump, skill, travel and the ship, so the slot bar
    only keeps what they don't: gadgets you have, Build and Journal. It sits low in the middle. */
@@ -335,6 +339,8 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
     <button id="tGadget" aria-label="Gadget" data-i="gadget"><span class="l">GADGET</span></button>
     <button id="tTalk" hidden aria-label="Talk or use" data-i="talk"><span class="l">TALK</span></button>
     <button id="tShip" hidden aria-label="Ship" data-i="ship"><span class="l">SHIP</span></button>
+    <button id="tPair" hidden aria-label="Portal pair" data-i="pair"><span class="l">PORTALS</span></button>
+    <button id="tDown" hidden aria-label="Fly down" data-i="down"><span class="l">DOWN</span></button>
   </div>
 </div>
 
@@ -345,6 +351,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 <script src="shared/world.js"></script>
 <script src="shared/layouts.js"></script>
 <script src="shared/interiors.js"></script>
+<script src="shared/portals.js"></script>
 <script src="shared/curios.js"></script>
 <script src="shared/protocol.js"></script>
 <script src="sim/host.js"></script>

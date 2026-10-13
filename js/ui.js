@@ -32,6 +32,8 @@
     scan: '<circle cx="12" cy="12" r="8"/><path d="M12 4v3M12 17v3M4 12h3M17 12h3"/><circle cx="12" cy="12" r="2.5"/>',
     fire: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
     jump: '<path d="M6 13l6-6 6 6M6 19l6-6 6 6"/>',
+    pair: '<ellipse cx="7" cy="12" rx="3.5" ry="7"/><ellipse cx="17" cy="12" rx="3.5" ry="7"/><path d="M10.5 12h3"/>',
+    down: '<path d="M6 5l6 6 6-6M6 11l6 6 6-6"/>',
     talk: '<path d="M4 5h16v11H9l-5 4z"/>',
     gadget: '<circle cx="11" cy="14" r="6"/><path d="M11 8V5h4M15 5l3-2"/>',
   };
