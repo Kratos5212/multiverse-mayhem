@@ -22,6 +22,8 @@
     shrink: '<path d="M4 4l6 6M10 5v5H5M20 20l-6-6M14 19v-5h5"/>',
     meeseeks: '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V8a4 4 0 0 1 8 0v2"/><circle cx="12" cy="15" r="1.6"/>',
     timecrystal: '<path d="M7 3h10M7 21h10M8 3c0 5 8 6 8 9s-8 4-8 9M16 3c0 5-8 6-8 9s8 4 8 9"/>',
+    freeze: '<path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7M9 4l3 2 3-2M9 20l3-2 3 2"/>',
+    items: '<path d="M4 8h16v12H4zM4 8l2-4h12l2 4M10 12h4"/>',
     craft: '<path d="M15 4a4 4 0 0 0-4 5L4 16a2 2 0 0 0 3 3l7-7a4 4 0 0 0 5-4l-3 1-2-2 1-3z"/>',
     journal: '<path d="M6 3h11a2 2 0 0 1 2 2v16H8a2 2 0 0 1-2-2zM6 17a2 2 0 0 1 2-2h11M10 7h5"/>',
     portal: '<path d="M12 12a1 1 0 1 1 1-1 3 3 0 1 1-4 3 5 5 0 1 1 8 -4 7 7 0 1 1-12 5"/>',

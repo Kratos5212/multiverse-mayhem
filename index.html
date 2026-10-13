@@ -142,7 +142,14 @@ input[type=range] { width: 100%; accent-color: var(--portal); }
 .slot .n { position: absolute; top: 2px; right: 4px; color: var(--gold); font-size: 12px; -webkit-text-stroke: .5px #000; }
 .slot .cd, #tbtns .cd { position: absolute; inset: 0; border-radius: inherit; background: conic-gradient(rgba(0,0,0,.68) calc(var(--p, 0) * 1%), transparent 0); pointer-events: none; }
 .slot.off { opacity: .42; }
-.s-grenade svg { color: #ffb43a; } .s-turret svg { color: #c9d1d9; } .s-shrink svg { color: #b48aff; } .s-meeseeks svg { color: #7ec8f0; } .s-timecrystal svg { color: #8fd8ff; }
+.s-grenade svg { color: #ffb43a; } .s-turret svg { color: #c9d1d9; } .s-shrink svg { color: #b48aff; } .s-meeseeks svg { color: #7ec8f0; } .s-timecrystal svg { color: #8fd8ff; } .s-freeze svg { color: #bfeaff; } .s-items svg { color: #ffd84d; }
+.row .emo { font-size: 26px; width: 34px; text-align: center; flex: none; }
+.coll { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.coll .cc { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 10px; background: rgba(255,255,255,0.06); text-align: center; }
+.coll .cc .emo { font-size: 28px; }
+.coll .cc small { font-size: 11px; line-height: 1.2; }
+.coll .cc i { font-size: 10px; opacity: 0.6; font-style: normal; line-height: 1.2; }
+.coll .cc.no .emo { opacity: 0.35; font-weight: 700; }
 .s-craft svg { color: var(--gold); } .s-journal svg { color: #f4f7ff; } .s-portal svg { color: var(--portal); } .s-ship svg { color: var(--cyan); } .s-ab svg { color: var(--pink); }
 .s-ab { background: linear-gradient(#4a2a6a, #24163a); }
 #res span { font-size: 13px; }
@@ -217,6 +224,7 @@ input[type=range] { width: 100%; accent-color: var(--portal); }
 .list { display: grid; gap: 8px; }
 .row { display: flex; gap: 10px; align-items: center; justify-content: space-between; background: var(--panel2); border: 3px solid #000; border-radius: 12px; padding: 8px 10px; }
 .row .t { min-width: 0; }
+.row .emo + .t { flex: 1; }
 .row .t b { display: block; }
 .row .t small { color: var(--muted); }
 .row.dim b { color: var(--portal); }
@@ -337,6 +345,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 <script src="shared/world.js"></script>
 <script src="shared/layouts.js"></script>
 <script src="shared/interiors.js"></script>
+<script src="shared/curios.js"></script>
 <script src="shared/protocol.js"></script>
 <script src="sim/host.js"></script>
 <script src="sim/bot.js"></script>

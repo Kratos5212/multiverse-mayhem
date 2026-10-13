@@ -62,7 +62,9 @@
     if (raw.inv && typeof raw.inv === 'object') {
       for (const k of MM.MAT_IDS) p.inv[k] = num(raw.inv[k], 9999);
       for (const g of MM.GADGET_IDS) p.inv[g] = Math.min(MM.RECIPES[g].max, num(raw.inv[g], 99));
+      for (const q of MM.CURIO_IDS) if (raw.inv['q:' + q]) p.inv['q:' + q] = num(raw.inv['q:' + q], 99);
     }
+    if (Array.isArray(raw.found)) p.found = MM.CURIO_IDS.filter(q => raw.found.includes(q));
     p.chaos = num(raw.chaos, 1e9);
     return p;
   }
@@ -97,6 +99,7 @@
       const bx = MM.boundOf(this.dimId) - 0.8, bz = MM.boundZOf(this.dimId) - 0.8, cl = (v, b) => Math.max(-b, Math.min(b, v));
       for (const [type, count, x, z] of this.dim.npc) for (let i = 0; i < count; i++) this.spawnNpc(type, false, x !== undefined ? { at: { x: cl(x + (Math.random() - 0.5) * 6, bx), z: cl(z + (Math.random() - 0.5) * 6, bz) } } : null);
       for (const k in this.dim.pickups) for (let i = 0; i < this.dim.pickups[k]; i++) this.spawnPickup(k, false);
+      for (let i = MM.curioCount(this.dimId); i > 0; i--) this.spawnPickup('q:' + MM.pickCurio(this.dimId), false);
     }
 
     ev(e) { this.out.push(e); }
@@ -163,6 +166,12 @@
         const have = {};
         for (const pk of this.pickups.values()) if (!pk.drop) have[pk.c] = (have[pk.c] || 0) + 1;
         for (const k in this.dim.pickups) if ((have[k] || 0) < this.dim.pickups[k]) this.spawnPickup(k, true);
+        // And with its curios, more slowly.
+        if (this.host.tickN % 300 === 0) {
+          let q = 0;
+          for (const pk of this.pickups.values()) if (!pk.drop && MM.isCurio(pk.c)) q++;
+          if (q < MM.curioCount(this.dimId)) this.spawnPickup('q:' + MM.pickCurio(this.dimId), true);
+        }
         for (const pk of [...this.pickups.values()]) if (pk.drop && now - pk.born > 90) { this.pickups.delete(pk.id); this.ev({ k: 'pk-', id: pk.id }); }
         // Event visitors leave when their time is up.
         for (const n of [...this.npcs.values()]) if (n.temp && now > n.temp) { this.npcs.delete(n.id); this.ev({ k: 'npc-', id: n.id }); }
@@ -252,8 +261,12 @@
         if (pr.kind === 'gren') { this.explode(pr.x, Math.max(pr.y, ground), pr.z, 6.5, 35, owner, 'grenade'); continue; }
         if (hit.p) {
           if (pr.kind === 'shrink' && this.host.canHurt(owner, hit.p)) { hit.p.fx.shrink = now + 8; this.host.dirty(hit.p); this.ev({ k: 'shrunk', id: hit.p.id }); }
+          if (pr.kind === 'freeze' && this.host.canHurt(owner, hit.p)) { hit.p.fx.cuff = now + 3; this.host.dirty(hit.p); this.ev({ k: 'frozen', id: hit.p.id, t: 3 }); }
           this.host.hurtPlayer(this, hit.p, pr.dmg, owner, pr.kind);
-        } else if (hit.n) this.hurtNpc(hit.n, pr.dmg, owner);
+        } else if (hit.n) {
+          if (pr.kind === 'freeze') { hit.n.stun = now + 4; this.ev({ k: 'frozen', n: hit.n.id, t: 4 }); }
+          this.hurtNpc(hit.n, pr.dmg, owner);
+        }
         else if (hit.t) this.hurtTurret(hit.t, pr.dmg);
         else if (hit.prop !== undefined) this.hurtProp(hit.prop, pr.dmg, owner);
       }
@@ -593,6 +606,7 @@
         case 'drive': this.onDrive(p, m.d); break;
         case 'door': this.onDoor(p, m.l); break;
         case 'tm': this.onTeam(p, m); break;
+        case 'uc': this.onCurio(p, m.id); break;
       }
     }
 
@@ -799,7 +813,14 @@
       for (const pk of p.inst.pickups.values()) {
         if (dist2(pk.x, pk.z, p.x, p.z) < MM.PICKUP_RADIUS * MM.PICKUP_RADIUS && Math.abs(pk.y - p.y) < 3) {
           p.inst.pickups.delete(pk.id);
-          p.inv[pk.c] = Math.min(9999, (p.inv[pk.c] || 0) + pk.n);
+          p.inv[pk.c] = Math.min(MM.isCurio(pk.c) ? 99 : 9999, (p.inv[pk.c] || 0) + pk.n);
+          if (MM.isCurio(pk.c)) {
+            const q = pk.c.slice(2), found = p.prog.found || (p.prog.found = []);
+            const first = !found.includes(q);
+            if (first) found.push(q);
+            this.priv(p, { k: 'found', id: q, first, n: found.length });
+            p.progDirty = true;
+          }
           p.inst.ev({ k: 'pk-', id: pk.id, by: p.id });
           this.dirty(p);
         }
@@ -1140,6 +1161,44 @@
       this.progress(p, 'craft', id);
     }
 
+    // Use a curio from your inventory. Food and potions are used up; keepsakes just talk back.
+    onCurio(p, id) {
+      const Q = MM.CURIOS[id], key = 'q:' + id, now = this.time, inst = p.inst;
+      if (p.dead || !(p.inv[key] > 0) || now < (p.cdCurio || 0)) return;
+      p.cdCurio = now + 1;
+      let text = Q.text;
+      switch (Q.use) {
+        case 'feast': p.hp = p.maxHp; p.fx.sprint = now + 15; break;
+        case 'speed': p.fx.sprint = now + 15; break;
+        case 'fate': p.fx.prot = now + 8; break;
+        case 'heal': p.hp = p.maxHp; break;
+        case 'snack': p.hp = Math.min(p.maxHp, p.hp + 30); break;
+        case 'trip': p.hp = p.maxHp; p.fx.daze = now + 6; break;
+        case 'shield': p.fx.shield = now + 10; break;
+        case 'rage': p.fx.sprint = now + 12; p.fx.shield = now + 12; break;
+        case 'cash': p.inv.k = (p.inv.k || 0) + 5; break;
+        case 'charge':
+          if (p.st.gun) { p.charges = Math.min(p.st.gun.charges, p.charges + 1); if (p.charges >= p.st.gun.charges) p.chargeAt = 0; }
+          else p.borrow = (p.borrow || 0) + 1;
+          break;
+        case 'love': {
+          let k = 0;
+          for (const n of inst.npcs.values()) if (n.T.human && !n.T.hostile && !n.T.guard && dist2(n.x, n.z, p.x, p.z) < 16 * 16 && k < 6) {
+            n.owner = p.id; n.ownerUntil = now + 30; n.angry = 0; k++;
+            inst.ev({ k: 'say', n: n.id, by: p.id, text: pick(['I would follow you anywhere.', 'You are... perfect.', 'Marry me. Or at least let me walk behind you.']) });
+          }
+          if (!k) text = 'Nobody is around to fall in love with you. Probably for the best.';
+          break;
+        }
+        case 'vision': case 'truth': case 'channel': text = pick(MM.CURIO_LINES[Q.use]); break;
+      }
+      if (Q.eat) p.inv[key]--;
+      if (!p.inv[key]) delete p.inv[key];
+      inst.ev({ k: 'curio', id: p.id, q: id });
+      this.toast(p, Q.icon + ' ' + text);
+      this.dirty(p);
+    }
+
     onGadget(p, m) {
       if (MM.helpless(p.arch, p.prog.up)) { this.toast(p, MM.HELPLESS_TEXT); return; }
       const inst = p.inst, g = m.g;
@@ -1148,6 +1207,8 @@
         this.fireProjectile(inst, { owner: p.id, kind: 'gren', x: p.x + m.dx, y: p.y + 1.5, z: p.z + m.dz, dx: m.dx, dy: m.dy, dz: m.dz, speed: 20, up: 6, gravity: true, life: 1.8, dmg: 0, rad: 0.3 });
       } else if (g === 'shrink') {
         this.fireProjectile(inst, { owner: p.id, kind: 'shrink', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 65, range: 70, dmg: 5, rad: 0.35 });
+      } else if (g === 'freeze') {
+        this.fireProjectile(inst, { owner: p.id, kind: 'freeze', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 55, range: 60, dmg: 4, rad: 0.4 });
       } else if (g === 'meeseeks') {
         this.summonMeeseeks(p, 1, 30);
       } else if (g === 'timecrystal') {
@@ -1341,7 +1402,7 @@
     progState(p) {
       const pr = p.prog, wall = this.wall(), tasks = {};
       for (const t of p.A.life.daily) tasks[t] = Math.max(0, Math.ceil(((pr.tasks[t] || 0) - wall) / 1000));
-      return { t: 'pg', up: pr.up, step: pr.step, grants: pr.grants, cnt: pr.cnt, errands: pr.errands, tasks, title: pr.title || '', st: p.st };
+      return { t: 'pg', up: pr.up, step: pr.step, grants: pr.grants, cnt: pr.cnt, errands: pr.errands, tasks, title: pr.title || '', st: p.st, found: pr.found || [] };
     }
 
     // ----- The main loop -----

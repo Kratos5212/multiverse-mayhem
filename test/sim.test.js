@@ -6,6 +6,7 @@ require('../shared/rules.js');
 require('../shared/world.js');
 require('../shared/layouts.js');
 require('../shared/interiors.js');
+require('../shared/curios.js');
 require('../shared/protocol.js');
 require('../sim/host.js');
 const MM = require('../sim/bot.js');
@@ -565,4 +566,43 @@ test('buildings have insides: in through the door, do things, out again; walls a
   const h = MM.genProps('suburbia').find(q => q.type === 'house'), cs = Math.cos(h.rot), sn = Math.sin(h.rot);
   const wx = h.x + 5.5 * cs - 4.5 * sn, wz = h.z - 5.5 * sn - 4.5 * cs;
   assert.notDeepStrictEqual(MM.pushOutOfProp(h, wx, wz, 0.4), [wx, wz]);
+});
+
+test('curios: every world has some, you pick them up, use them, and they are remembered', () => {
+  for (const d of MM.WORLD_IDS) assert.ok(MM.curiosOf(d).length > 0, d + ' has curios');
+  const host = new MM.Host();
+  const { c, p } = join(host, 'sidekick', { dim: 'suburbia' });
+  const inst = p.inst;
+  assert.ok([...inst.pickups.values()].filter(pk => MM.isCurio(pk.c)).length > 0, 'curios lie around');
+  // Walk onto some Eyeholes.
+  inst.spawnPickup('q:eyeholes', false, { x: p.x, z: p.z });
+  host.message(c, JSON.stringify({ t: 'st', x: p.x, y: p.y, z: p.z, r: 0, a: 0, ep: p.ep }));
+  assert.strictEqual(p.inv['q:eyeholes'], 1);
+  assert.ok(p.prog.found.includes('eyeholes'));
+  assert.ok(host.progState(p).found.includes('eyeholes'));
+  // Eat them: faster for a while, and they are gone.
+  host.message(c, '{"t":"uc","id":"eyeholes"}');
+  assert.ok(p.fx.sprint > host.time);
+  assert.ok(!p.inv['q:eyeholes']);
+  // You can't use what you don't have.
+  host.message(c, '{"t":"uc","id":"szechuan"}');
+  assert.ok(!p.inv['q:szechuan']);
+  // Saved and reloaded: still found, junk dropped.
+  const back = MM.cleanProgress('sidekick', JSON.parse(JSON.stringify(Object.assign({}, p.prog, { found: ['eyeholes', 'nope'], inv: Object.assign({}, p.inv, { 'q:plumbus': 2, 'q:bogus': 3 }) }))));
+  assert.deepStrictEqual(back.found, ['eyeholes']);
+  assert.strictEqual(back.inv['q:plumbus'], 2);
+  assert.ok(!('q:bogus' in back.inv));
+});
+
+test('the freeze ray freezes whoever it hits', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'sidekick', { dim: 'suburbia' });
+  const inst = p.inst;
+  const n = inst.spawnNpc('neighbor', false, { at: { x: p.x, z: p.z + 6 } });
+  n.y = p.y; n.tx = n.x; n.tz = n.z; n.wait = host.time + 100;
+  p.inv.freeze = 1;
+  host.message(c, '{"t":"g","g":"freeze","dx":0,"dy":0,"dz":1}');
+  assert.strictEqual(p.inv.freeze, 0);
+  run(host, 0.5);
+  assert.ok(n.stun > host.time, 'frozen');
 });

@@ -2391,12 +2391,40 @@
       k.add(P.cyl, '#fff2a0', [0, 0, 0.045], [Math.PI / 2, 0, 0], [0.26, 0.02, 0.26], true);
       pickupModels = { s: s.build(), c: c.build(), g: g.build(), p: pl.build(), f: f.build(), m: m.build(), k: k.build() };
     }
+    if (MM.isCurio(kind)) return curioModel(kind.slice(2));
     const g = new T.Group();
     const m = C.meshOf(pickupModels[kind] || pickupModels.s, 0.03);
     g.add(m);
     g.userData.spin = m;
     return g;
   };
+  // A curio: its emoji floating in a glowing ring of its colour, with a soft light column so
+  // you can spot it from across the street.
+  const curioTex = {};
+  function curioModel(id) {
+    const Q = MM.CURIOS[id];
+    if (!curioTex[id]) {
+      const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+      const g = cv.getContext('2d');
+      const grd = g.createRadialGradient(64, 64, 8, 64, 64, 62);
+      grd.addColorStop(0, 'rgba(255,255,255,0.95)'); grd.addColorStop(0.55, Q.color + 'cc'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = grd; g.beginPath(); g.arc(64, 64, 62, 0, 7); g.fill();
+      g.font = '72px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(Q.icon, 64, 70);
+      curioTex[id] = new T.CanvasTexture(cv);
+    }
+    const grp = new T.Group();
+    const sp = new T.Sprite(new T.SpriteMaterial({ map: curioTex[id], transparent: true, depthWrite: false }));
+    sp.scale.set(1.1, 1.1, 1);
+    grp.add(sp);
+    const ring = new T.Mesh(new T.TorusGeometry(0.62, 0.05, 6, 28), new T.MeshBasicMaterial({ color: Q.color }));
+    grp.add(ring);
+    const beam = new T.Mesh(new T.CylinderGeometry(0.18, 0.4, 6, 10, 1, true), new T.MeshBasicMaterial({ color: Q.color, transparent: true, opacity: 0.18, depthWrite: false, side: T.DoubleSide }));
+    beam.position.y = 2.2;
+    grp.add(beam);
+    grp.userData.spin = ring;
+    return grp;
+  }
 
   // ---------- Turret ----------
   let turretModel = null;

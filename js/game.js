@@ -257,7 +257,7 @@
     if (G.pickups.has(id)) return;
     const m = C.pickupModel(c);
     m.position.set(x, y + 0.8, z);
-    m.userData.base = y + 0.8; m.userData.ph = Math.random() * 6;
+    m.userData.base = y + 0.8; m.userData.ph = Math.random() * 6; m.userData.kind = c;
     scene.add(m);
     G.pickups.set(id, m);
   }
@@ -499,6 +499,9 @@
       const T = MM.NPCS[it.n.type];
       showScan(it.n.name || T.name, [['Species', T.name], ['Health', (it.n.hp !== undefined ? it.n.hp : 100) + '%'], ['Threat', T.hostile ? 'HOSTILE' : T.guard ? 'guard: will defend others' : 'peaceful'],
         ['Drops', mat(T.drop)]], T.talk ? '"' + pick(T.talk) + '"' : pick(SNARK));
+    } else if (it.k === 'pk' && MM.isCurio(it.m.userData.kind)) {
+      const Q = MM.CURIOS[it.m.userData.kind.slice(2)];
+      showScan(Q.name, [['Type', 'curio'], ['Use', Q.use ? (Q.eat ? 'one use' : 'reusable') : 'keepsake'], ['Seen in', Q.dims.map(d => MM.DIM_BY_ID[d].name).slice(0, 2).join(', ')]], Q.desc);
     } else if (it.k === 'pk') showScan('Loose matter', [['Composition', 'collectable material'], ['Value', 'worth picking up']], 'Grab it before a Jerry does.');
     else if (it.k === 'l') {
       const tasks = tasksAt(it.l).map(t => MM.TASKS[t].name);
@@ -568,7 +571,7 @@
     for (const u of m.u) { const tu = G.turrets.get(u[0]); if (tu) tu.aim = u[1]; }
   }
 
-  const SHOT_COLORS = { plasma: '#5dff8a', blaster: '#ffd84d', toy: '#ff8fd0', turret: '#ff4d4d', shrink: '#b48aff', gren: '#ffd84d' };
+  const SHOT_COLORS = { plasma: '#5dff8a', blaster: '#ffd84d', toy: '#ff8fd0', turret: '#ff4d4d', shrink: '#b48aff', freeze: '#bfeaff', gren: '#ffd84d' };
   const NPC_NAMES = {};
   for (const k in MM.NPCS) NPC_NAMES[k] = MM.NPCS[k].name;
 
@@ -584,7 +587,7 @@
       }
       case 'shot': {
         if (e.o === G.myId && e.w !== 'turret') {
-          if (e.w === 'gren' || e.w === 'shrink') C.sfx(e.w === 'gren' ? 'jump' : 'shrink');
+          if (e.w === 'gren' || e.w === 'shrink' || e.w === 'freeze') C.sfx(e.w === 'gren' ? 'jump' : 'shrink');
         } else {
           sfxAt(e.w === 'gren' ? 'jump' : e.w, e.x, e.z, 0.8);
           const p = G.players.get(e.o); if (p) { p.av.attackT = 0.25; p.aimT = 0.8; }
@@ -666,6 +669,12 @@
       case 'kiosk': { const p = posOf(e.id); if (p) fx.burst(p.x, p.y + 1, p.z, '#ffd84d', 25, 6, 0.6, 0.5, 2); break; }
       case 'timestop': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1.2, p.z, '#8fd8ff', 90, 14, 1.2, 1.4, 0); fx.burst(p.x, p.y + 1.2, p.z, '#ffffff', 30, 8, 0.8, 1.0, 0); } C.sfx('ability'); if (e.id === G.myId) UI.toast('Time stopped. Someone will have noticed.', 3000); break; }
       case 'bite': { const n = G.npcs.get(e.n); if (n) sfxAt('bite', n.x, n.z); break; }
+      case 'frozen': {
+        const p = e.n ? G.npcs.get(e.n) : posOf(e.id);
+        if (p) { fx.burst(p.x, p.y + 1, p.z, '#bfeaff', 34, 5, 0.6, 0.9, 0); fx.shockwave(p.x, p.y + 0.1, p.z, '#bfeaff', 1.6, 0.5, 0.1); numAt(p.x, p.y + 2.4, p.z, 'FROZEN', '#bfeaff', false); sfxAt('shrink', p.x, p.z); }
+        break;
+      }
+      case 'curio': { const p = posOf(e.id); const Q = MM.CURIOS[e.q]; if (p && Q) fx.burst(p.x, p.y + 1.4, p.z, Q.color, 24, 4, 0.5, 0.8, 1); break; }
       case 'shrunk': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1, p.z, '#b48aff', 20, 4, 0.5, 0.6, 0); sfxAt('shrink', p.x, p.z); } break; }
       case 'say': {
         const n = G.npcs.get(e.n);
@@ -719,6 +728,13 @@
     if (e.k === 'tp') { me.x = e.x; me.y = e.y; me.z = e.z; me.vx = me.vy = me.vz = 0; G.ep = e.ep; }
     else if (e.k === 'kb') { me.vx += e.vx; me.vz += e.vz; me.vy = Math.max(me.vy, e.vy); me.grounded = false; me.kbT = 0.7; C.ragdoll(G.meAv, e.vx, e.vz, Math.min(1, Math.hypot(e.vx, e.vz) / 14 + 0.2)); }
     else if (e.k === 'toast') UI.toast(e.text, 3500);
+    else if (e.k === 'found') {
+      const Q = MM.CURIOS[e.id];
+      C.sfx('pickup');
+      if (e.first) UI.banner(Q.icon + ' ' + Q.name, Q.desc + '  (' + e.n + '/' + MM.CURIO_IDS.length + ' found · I to open your inventory)');
+      else UI.toast('Found: ' + Q.icon + ' ' + Q.name, 2500);
+      if (G.prog && !(G.prog.found || (G.prog.found = [])).includes(e.id)) G.prog.found.push(e.id);
+    }
     else if (e.k === 'built') { C.sfx('craft'); UI.toast('Built: ' + MM.RECIPES[e.r].name); if (G.modal === 'craft') setTimeout(openCraft, 50); }
     else if (e.k === 'task') {
       const got = Object.keys(e.give).map(k => '+' + e.give[k] * e.mult + ' ' + MM.MATERIALS[k].icon).join(' ');
@@ -770,6 +786,7 @@
     const invKey = JSON.stringify(y.inv) + y.ch;
     if (invKey !== G.invKey) updateTracker();
     if (G.modal === 'craft' && invKey !== G.invKey) openCraft();
+    if (G.modal === 'items' && invKey !== G.invKey) openInventory();
     G.invKey = invKey;
   }
 
@@ -855,6 +872,8 @@
     mk('shrink', '3', 'Shrink', () => useGadget('shrink'));
     mk('meeseeks', '4', 'Meeseeks', () => useGadget('meeseeks'));
     mk('timecrystal', '5', 'Time', () => useGadget('timecrystal'));
+    mk('freeze', '6', 'Freeze', () => useGadget('freeze'));
+    mk('items', 'I', 'Items', () => openInventory());
     mk('scan', 'X', 'Scan', () => scan());
     mk('craft', 'C', 'Build', () => openCraft());
     mk('journal', 'J', 'Journal', () => openJournal());
@@ -1207,6 +1226,44 @@
         (st.fly ? ' · ' + (st.fly === 'jet' ? 'jetpack' : 'wings') : '') + (st.gun ? ' · portal gun ×' + st.gun.charges : '') + (st.ship ? ' · ship' + (st.ship.drive ? ' with dimension drive' : '') : '') }));
     });
   }
+  // Inventory (I): gadgets, curios you are carrying, materials, and the collection log.
+  const GADGET_KEYS = { grenade: '1', turret: '2', shrink: '3', meeseeks: '4', timecrystal: '5', freeze: '6' };
+  function openInventory() {
+    const y = G.you, pg = G.prog;
+    if (!y || !pg) return;
+    openModal('items', 'Inventory', box => {
+      box.append(el('h3', { text: 'Curios' }));
+      const cl = el('div', { class: 'list' });
+      for (const q of MM.CURIO_IDS) {
+        const n = y.inv['q:' + q] || 0, Q = MM.CURIOS[q];
+        if (!n) continue;
+        cl.append(el('div', { class: 'row' }, el('span', { class: 'emo', text: Q.icon }), el('div', { class: 't' }, el('b', { text: Q.name + (n > 1 ? ' ×' + n : '') }), el('small', { text: Q.desc })),
+          el('button', { class: 'btn' + (Q.use ? ' go' : ''), onclick: () => { send({ t: 'uc', id: q }); } }, Q.use ? (Q.eat ? 'Use' : 'Try') : 'Look')));
+      }
+      if (!cl.childNodes.length) cl.append(el('p', { class: 'note', text: 'Nothing yet. Curios glow in a column of light: walk into one to pick it up.' }));
+      box.append(cl, el('h3', { text: 'Gadgets' }));
+      const gl = el('div', { class: 'list' });
+      for (const g of MM.GADGET_IDS) {
+        const n = y.inv[g] || 0, R = MM.RECIPES[g];
+        if (!n) continue;
+        gl.append(el('div', { class: 'row' + (n ? '' : ' later') }, el('div', { class: 't' }, el('b', { text: R.name + (n ? ' ×' + n : '') }), el('small', { text: R.desc + (isTouch ? '' : ' · key ' + GADGET_KEYS[g]) })),
+          el('button', { class: 'btn go', onclick: () => { UI.closeModal(); useGadget(g); } }, 'Use')));
+      }
+      if (!gl.childNodes.length) gl.append(el('p', { class: 'note', text: 'No gadgets. Build them at the workbench (C).' }));
+      box.append(gl, el('p', { class: 'note' }, 'Build more gadgets at the workbench: ', el('button', { class: 'btn', onclick: () => openCraft() }, 'Build (C)')), el('h3', { text: 'Materials' }));
+      box.append(el('p', { class: 'note', text: MM.MAT_IDS.map(k => MM.MATERIALS[k].icon + ' ' + (y.inv[k] || 0) + ' ' + MM.MATERIALS[k].name).join(' · ') }));
+      const found = pg.found || [];
+      box.append(el('h3', { text: 'Collection: ' + found.length + ' of ' + MM.CURIO_IDS.length }));
+      const grid = el('div', { class: 'coll' });
+      for (const q of MM.CURIO_IDS) {
+        const Q = MM.CURIOS[q], have = found.includes(q);
+        const where = Q.dims.map(d => MM.DIM_BY_ID[d].name).slice(0, 3).join(', ');
+        grid.append(el('div', { class: 'cc' + (have ? '' : ' no'), title: have ? Q.name + ': ' + Q.desc : 'Somewhere in ' + where },
+          el('span', { class: 'emo', text: have ? Q.icon : '?' }), el('small', { text: have ? Q.name : '???' }), el('i', { text: have ? '' : where })));
+      }
+      box.append(grid);
+    });
+  }
   function openBoard() {
     openModal('board', 'Multiverse', box => {
       box.append(el('h3', { text: 'Chaos leaderboard (everyone online)' }));
@@ -1293,6 +1350,8 @@
       case 'Digit3': useGadget('shrink'); break;
       case 'Digit4': useGadget('meeseeks'); break;
       case 'Digit5': useGadget('timecrystal'); break;
+      case 'Digit6': useGadget('freeze'); break;
+      case 'KeyI': openInventory(); break;
       case 'KeyV': toggleView(); break;
       case 'KeyG': emote(); break;
       case 'Space': e.preventDefault(); if (G.you && G.you.dead && now() >= G.rsAt) send({ t: 'rs' }); break;

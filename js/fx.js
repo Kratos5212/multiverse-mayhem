@@ -144,7 +144,7 @@
     shot(e, colors) {
       const color = colors[e.w] || '#ffffff';
       const g = new T.Group();
-      const big = e.w === 'gren' ? 0.3 : e.w === 'shrink' ? 0.28 : 0.16;
+      const big = e.w === 'gren' ? 0.3 : e.w === 'shrink' || e.w === 'freeze' ? 0.28 : 0.16;
       const core = new T.Mesh(this.shotGeo, this.mat(e.w === 'gren' ? '#333a44' : '#ffffff'));
       core.scale.setScalar(big * (e.w === 'gren' ? 1 : 0.6));
       const halo = new T.Mesh(this.shotGeo, this.mat(color));

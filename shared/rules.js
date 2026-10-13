@@ -188,6 +188,7 @@
     shrink:   { cat: 'gadget', name: 'Shrink Ray Shot', cost: { s: 4, c: 2 }, max: 3, desc: 'One shot that shrinks the target to half size for 8 s.' },
     fluid:    { cat: 'gadget', name: 'Portal Fluid', cost: { c: 2 }, gun: true, desc: 'Refills one portal gun charge right away.' },
     timecrystal: { cat: 'gadget', name: 'Time Crystal', cost: { c: 5, m: 2 }, max: 1, desc: 'Press 5: freeze time around you for 4 s. Illegal for third-dimensional beings, so the Time Cops will come for you.' },
+    freeze:   { cat: 'gadget', name: 'Freeze Ray Shot', cost: { s: 3, c: 2 }, max: 3, desc: 'Press 6: one shot that freezes whoever it hits solid for a few seconds.' },
     meeseeks: { cat: 'gadget', name: 'Meeseeks Box', cost: { k: 3, s: 1 }, max: 2, desc: 'Press it (4): a Mr. Meeseeks pops out and fights for you for 30 s.' },
     // Rick's own body upgrades (only Ricks know how): robot limbs and a built-in scanner.
     // Pickle Rick's rat suit, built from rat parts and scrap (in a sewer, anywhere really).
@@ -217,7 +218,7 @@
     drive:    { cat: 'ship', name: 'Dimension Drive', cost: { c: 6, g: 4, p: 6, f: 4 }, at: 'shipyard', needs: 'engine', desc: 'Fly your ship straight into any dimension.' },
   };
   MM.RECIPE_IDS = Object.keys(MM.RECIPES);
-  MM.GADGET_IDS = ['grenade', 'turret', 'shrink', 'meeseeks', 'timecrystal'];
+  MM.GADGET_IDS = ['grenade', 'turret', 'shrink', 'meeseeks', 'timecrystal', 'freeze'];
   // Recipes everyone knows, whoever they are.
   MM.COMMON = ['meeseeks', 'megabrain'];
   MM.CATS = { gadget: 'Gadgets', self: 'You', gun: 'Portal gun', ship: 'Ship' };
@@ -469,7 +470,7 @@
     const A = MM.ARCHETYPES[arch];
     const up = {};
     for (const r of A.start || []) up[r] = 1;
-    return { up, step: 0, grants: [], cnt: { use: {}, dims: [], crafted: [], kill: {}, kills: 0, ko: 0, talk: 0, smash: 0, errand: 0 }, errands: [], tasks: {}, inv: { s: 0, c: 0, g: 0, p: 0, f: 0, m: 0, k: 0 }, chaos: 0 };
+    return { up, step: 0, grants: [], cnt: { use: {}, dims: [], crafted: [], kill: {}, kills: 0, ko: 0, talk: 0, smash: 0, errand: 0 }, errands: [], tasks: {}, inv: { s: 0, c: 0, g: 0, p: 0, f: 0, m: 0, k: 0 }, found: [], chaos: 0 };
   };
 
   MM.hasGun = (arch, up) => !!(MM.ARCHETYPES[arch].portal || up.gunbuild);
