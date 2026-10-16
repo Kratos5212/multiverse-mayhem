@@ -321,16 +321,24 @@
     const skip = Math.max(0, (G.me.x - o.x) * d.x + (G.me.y + 1.4 - o.y) * d.y + (G.me.z - o.z) * d.z);
     const from = { x: o.x + d.x * skip, y: o.y + d.y * skip, z: o.z + d.z * skip };
     const hit = MM.raycastWorld(G.dimId, from, { x: d.x, y: d.y, z: d.z }, MM.PAIR_RANGE, G.alive);
-    if (!hit) { UI.toast('Nothing in range to put a portal on.', 1500); return; }
     const c = G.pairNext || 0, S = MM.pairSpot(G.dimId, hit);
     G.pairNext = 1 - c; G.pairCd = now() + 0.35;
     send({ t: 'pp', c, x: r2(S.x), y: r2(S.y), z: r2(S.z), nx: r2(S.nx), ny: r2(S.ny), nz: r2(S.nz) });
-    // The shot: a streak of the portal's colour from the gun to the wall.
-    const gx = G.me.x, gy = G.me.y + 1.4, gz = G.me.z, n = Math.min(40, Math.ceil(hit.t / 2));
-    for (let i = 0; i <= n; i++) { const k = i / n; fx.glow.emit(gx + (S.x - gx) * k, gy + (S.y - gy) * k, gz + (S.z - gz) * k, 0, 0, 0, MM.PAIR_COLORS[c], 0.35, 0.35, 0); }
+    // The shot: a streak of the portal's colour from the gun to the portal position.
+    const gx = G.me.x, gy = G.me.y + 1.4, gz = G.me.z;
+    // Create a more visible, longer beam effect
+    const n = Math.min(60, Math.ceil(hit.t * 0.8)); // Longer beam
+    for (let i = 0; i <= n; i++) {
+      const k = i / n;
+      // Make the beam pulse slightly and be more visible
+      const alpha = 0.5 + Math.sin(i * 0.2) * 0.2;
+      fx.glow.emit(gx + (S.x - gx) * k, gy + (S.y - gy) * k, gz + (S.z - gz) * k, 0, 0, 0, MM.PAIR_COLORS[c], alpha, 0.4, 0);
+    }
+    // Add a burst effect at the portal placement point for better visibility
+    fx.burst(S.x, S.y, S.z, MM.PAIR_COLORS[c], 20, 8, 0.8, 0.7, 2);
     G.me.aimT = 1; G.me.yaw = G.camYaw;
     if (G.meAv) G.meAv.attackT = 0.2;
-    C.sfx('plasma', 0.6);
+    C.sfx('plasma', 0.8); // Slightly louder sound for feedback
     updateHotbar();
   }
   // Walking into a portal of any complete pair: out of the other one, at the same speed.
@@ -343,13 +351,16 @@
       // Through a wall portal into a wall portal: turn the way the exit faces, like in Portal.
       if (MM.pairKind(A) === 'wall' && MM.pairKind(B) === 'wall') G.camYaw += Math.atan2(B.nx, B.nz) - Math.atan2(-A.nx, -A.nz);
       else if (MM.pairKind(B) === 'wall') G.camYaw = Math.atan2(B.nx, B.nz);
-      fx.burst(me.x, me.y + 1, me.z, MM.PAIR_COLORS[q.c], 18, 5, 0.5, 0.5, 2);
+      // More impressive entry effect
+      fx.burst(me.x, me.y + 1, me.z, MM.PAIR_COLORS[q.c], 25, 8, 0.8, 0.7, 3);
       me.x = ex.x; me.y = ex.y; me.z = ex.z; me.vx = ex.vx; me.vy = ex.vy; me.vz = ex.vz;
       me.grounded = false; me.kbT = 1.1;
       G.transitCool = now() + 0.35;
       send({ t: 'pt', o: q.o, c: q.c });
-      fx.burst(me.x, me.y + 1, me.z, MM.PAIR_COLORS[1 - q.c], 18, 5, 0.5, 0.5, 2);
-      C.sfx('warp', 0.5);
+      // More impressive exit effect
+      fx.burst(ex.x, ex.y + 1, ex.z, MM.PAIR_COLORS[1 - q.c], 25, 8, 0.8, 0.7, 3);
+      // Warp sound with more intensity
+      C.sfx('warp', 0.8);
       return;
     }
   }
@@ -1069,7 +1080,7 @@
   }
   function travelOpts(mode) {
     const st = G.st || {};
-    return mode === 'ship' ? { hull: true, engine: !!(st.ship && st.ship.engine), drive: !!(st.ship && st.ship.drive) }
+    return mode === 'ship' ? { hull: true, engine: !!(st.ship && st.ship.engine), drive: !!(st.ship && st.ship.drive), quantum: !!(st.ship && st.ship.quantum) }
       : mode === 'gun' ? { gold: !!(G.you.chMax && G.you.ch > 0 && st.gun && st.gun.gold) } : {};
   }
   function portalAction() {
@@ -1311,7 +1322,7 @@
         el('small', { text: 'From ' + e.from + '. Reward: ' + Object.keys(e.rew).map(k => e.rew[k] + ' ' + MM.MATERIALS[k].name).join(', ') }))));
       const st = G.st;
       box.append(el('h3', { text: 'You' }), el('p', { class: 'note', text: 'Health ' + st.maxHp + ' · speed ' + st.speed.toFixed(1) + ' · damage ×' + st.dmg.toFixed(2) +
-        (st.fly ? ' · ' + (st.fly === 'jet' ? 'jetpack' : 'wings') : '') + (st.gun ? ' · portal gun ×' + st.gun.charges : '') + (st.ship ? ' · ship' + (st.ship.drive ? ' with dimension drive' : '') : '') }));
+        (st.fly ? ' · ' + (st.fly === 'jet' ? 'jetpack' : 'wings') : '') + (st.gun ? ' · portal gun ×' + st.gun.charges : '') + (st.ship ? ' · ship' + (st.ship.drive ? ' with dimension drive' : '') + (st.ship.quantum ? ' with quantum drive' : '') : '') }));
     });
   }
   // Inventory (I): gadgets, curios you are carrying, materials, and the collection log.
@@ -1610,14 +1621,25 @@
       if (st.fly === 'jet' && Math.random() < 0.5) fx.glow.emit(me.x, me.y + 0.5, me.z, 0, -4, 0, '#ffb03a', 0.4, 0.3, 0);
     }
     if (me.grounded) me.fly = Math.min(st.flyTime || 6, me.fly + dt * 1.5);
-    if (!inShip) me.vy -= dim.gravity * dt * (me.flying ? 0.2 : 1);
+    // Reduced gravity when flying or in ship at high altitude
+    let gravityMult = 1.0;
+    if (me.flying) {
+      gravityMult = 0.2; // Personal jetpack/wings
+    } else if (inShip && me.y > 50) {
+      // Reduce gravity for ships at high altitude (simulating space)
+      gravityMult = Math.max(0.1, 1.0 - (me.y - 50) * 0.015); // Gradually reduce gravity above 50 units
+    }
+    if (!inShip) me.vy -= dim.gravity * dt * gravityMult;
     let nx = me.x + me.vx * dt, nz = me.z + me.vz * dt, ny = me.y + me.vy * dt;
     [nx, nz] = pushOut(nx, nz, ny, inShip ? 1.6 : 0.45);
     const lim = MM.boundOf(G.dimId) - (MM.DIM_BY_ID[G.dimId].interior ? 0 : 1), limZ = MM.boundZOf(G.dimId) - (MM.DIM_BY_ID[G.dimId].interior ? 0 : 1);
     nx = Math.max(-lim, Math.min(lim, nx)); nz = Math.max(-limZ, Math.min(limZ, nz));
     [nx, nz] = MM.collideWalls(G.dimId, nx, nz, 0.4);
     const g = groundAt(nx, nz, Math.max(ny, me.y)) + (inShip ? 0.4 : 0);
-    if (inShip) { if (ny < g) { ny = g; me.vy = Math.max(0, me.vy); } ny = Math.min(ny, MM.heightAt(G.dimId, nx, nz) + 100); }   // the server allows 120
+    if (inShip) { if (ny < g) { ny = g; me.vy = Math.max(0, me.vy); }
+      // Increased height limit for space travel - much higher for interplanetary travel
+      const maxShipHeight = 1000; // Increased from 100 to 1000 for space travel
+      ny = Math.min(ny, MM.heightAt(G.dimId, nx, nz) + maxShipHeight); }
     else if (ny <= g) {
       if (!me.grounded && me.vy < -14) fx.puff(nx, g, nz, '#ddd', 6, 1, 1, 0.5);
       if (!me.grounded && me.vy < -24 && !inShip) C.ragdoll(G.meAv, me.vx || Math.sin(me.yaw), me.vz || Math.cos(me.yaw), Math.min(0.8, -me.vy / 50));   // a hard landing: stumble over
