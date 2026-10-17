@@ -30,6 +30,10 @@ Prime (Cronenberged), C-131 (the Replacement Dimension), the Parmesan Dimension 
 
 Snake Planet and its time-travelling Snake Terminators ("Rattlestar Ricklactica"), Giant World up the beanstalk ("Meeseeks and Destroy"), Mr. Nimbus's Atlantis (S5E1), the dream world and Scary Terry ("Lawnmower Dog"), Doofus Rick's J19ζ7, and two other times: the split timeline from "A Rickle in Time" and Earth before the asteroid, with the dinosaurs who come back in "JuRicksic Mort".
 
+## Crazier still
+
+The Story Train and the Story Lord ("Never Ricking Morty"), the Toxic Dimension where the detox machine dumped Rick and Morty's worst parts ("Rest and Ricklaxation"), and the Zigerion scam simulation ("M. Night Shaym-Aliens!").
+
 ## Time
 
 Shleemypants, a fourth-dimensional Time Cop ("A Rickle in Time", "Rattlestar Ricklactica", S9E1), arrests third-dimensional beings who mess with time. In S9E1 Evil Morty froze time and was taken to Time Prison. In the game, using a Time Crystal brings Shleemypants after you.

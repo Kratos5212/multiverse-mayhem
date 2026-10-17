@@ -176,12 +176,19 @@ Every world is laid out like a real place (`shared/layouts.js`): roads and squar
 | Earth C-137, split timeline | *Another time*: the Smith street after "A Rickle in Time"; the world stutters | Neighbours, Time Cops | Moon Crystal | The Time Rift |
 | Earth, 65 million years ago | *Another time*: ferns, volcanoes, dinosaur eggs | Dinosaurs (kind, huge), raptors (hostile) | Meat Goo (and Mega Seeds) | The Dinosaur Council |
 | Earth J19ζ7 | Doofus Rick's street: perfect lawns, flowers, everyone is nice | Neighbours | Schmeckles | Same buildings as home |
+| The Story Train | A train of anthology stories run by the Story Lord ("Never Ricking Morty") | Passengers, the Story Lord (hostile) | Neon Plasma | The Story Engine |
+| The Toxic Dimension | Where Rick and Morty's detox waste went: green sludge, barrels; *the air hurts* | Toxic Rick (hostile), raiders | Meat Goo | Rick's Detox Machine |
+| Zigerion Simulation | A not-quite-convincing fake Earth inside a Zigerion scam ship | Simulated neighbours, Zigerions | Moon Crystal | Same buildings as home |
 | **Beyond the Curve** | Golden paths through the void past the Curve's wall, universe orbs, the golden helix in the sky; *outside the Curve* | Free Mortys | Moon Crystal (and Mega Seeds) | Edge of the Curve |
 | **Interdimensional Cable** | A commercial strip of stores and giant TVs; *outside the Curve* | Pitchmen from the ads | Schmeckles | Real Fake Doors, Ants in my Eyes Johnson's |
 | **Hamster-in-Butt World** | A village of seated people who are also houses; *outside the Curve* | Hamsters | Sky Feather | |
 | **Plumbubo Prime 51b** | The plumbus works: factory halls, production lines, fleeb vats; *outside the Curve* | Blamphs, plumbus workers | Meat Goo | Plumbus Production Line |
 
-**One Earth, several places.** The Smith neighbourhood, Downtown, Washington, D.C. and Area 51 are the same planet: drive between them on the highways along the north edge of each (your team comes too), or hop between them in a ship. **The same Earth in other dimensions** (Fascist, Shrimp, Teddy, C-500A and the Cronenberged Prime Earth) has the same street plan and buildings with its own people; reach those by portal.
+**One Earth.** The Smith neighbourhood, Downtown, Washington, D.C. and Area 51 are one 1.2 km world: the suburb in the middle, Downtown to the east, D.C. to the west and Area 51 to the north, joined by roads across rolling countryside. **Every Earth** (Fascist, Shrimp, Teddy, C-500A, the split timeline, Doofus Rick's, the Zigerion simulation and everyone's home Earth) is the whole planet too, with its own people and twist, and the same doors into the same insides.
+
+**World rules.** Some worlds play differently: you swim in Atlantis, bounce in Froopyland (where nothing hurts much), fly in lucid moments in the Dream World, slowly heal standing on Cronenberged Earth's living flesh, and slowly get hurt by the Toxic Dimension's air unless your shield is up.
+
+**Something to do everywhere.** Every world has a landmark with something to do: the Festival Stage on Purge Planet, Squanchy's Party Hut, the Gazorpian Throne, the Big Froopy Slide, the Pizza-Phone-Chair Exchange, the Raiders' Garage, Unity's Hive Core, the Federation's Bureau of Forms, the Temple of the Great Gear, the Hamster Tubes, and more.
 
 **Bigger worlds.** Open worlds run to 200 m from the middle in every direction, with more out in the wild to find.
 
@@ -224,7 +231,7 @@ The **portal gun, portal stations and ships** open the travel menu: search by na
 
 ### Rick's garage (and what's under it)
 
-Walk up to the garage on Earth C-137 and press **F** to go inside. It's a real room you can walk around, with:
+Rick's garage stands open on the street, on every Earth: walk straight in under the rolled-up door (no loading, no separate room). Inside:
 
 * **Rick's workbench**, with the portal gun on it. It counts as the garage station, so you can build there.
 * The **Space Cruiser** parked inside, shelves of glowing jars, a weapon rack, beakers and a toolchest.
@@ -235,7 +242,7 @@ Walk up to the garage on Earth C-137 and press **F** to go inside. It's a real r
 * A **trapdoor** down to the **secret underground lab**: clone tanks, a giant computer, a machine, and the **Mind Blowers** cabinet.
 * A **door to Rick's wine cellar**, a pocket dimension with barrels, bottle racks and his private stash.
 
-Portals, stations and ships can't take you into these rooms; you have to use the doors.
+Portals, stations and ships can't take you into the lab or the cellar; you have to use the doors, and coming back up you are in the same garage on the Earth you came from.
 
 **New things to build and use:**
 * **Meeseeks Box** gadget (Schmeckles, key 4): a Meeseeks fights for you for 30 s. Everyone knows how.
@@ -259,6 +266,14 @@ node scripts/glb2mm.js model.glb assets/interiors/smith.mmg --scale 1.4 --origin
 Harry Herpson High, the Horse Hospital, Merpal's Mall, Shoney's, the White House and the Unemployment Office can be walked into as well (F at the building, then **Go to ...**). Each is one floor plan in `shared/interiors.js`, used twice: Mojulo builds the furnished rooms from it (the recipes are in `assets/interiors/*.recipe.json`), and the game reads the same plan for the inside walls, bounds, the way in and out, and the spots to do things. Inside: Mr. Goldenfold's classroom, the principal's office and the cafeteria; the operating theatre and the horse ward; the mall concourse, food court and mattress store; a booth and the breakfast bar at Shoney's; the Oval Office (with President Curtis), the Cabinet Room and the press room; the job counter and the waiting room.
 
 Buildings outside now collide as their real footprint (a turned box) instead of a circle, for players, locals and the camera; you can walk under the highway gantries.
+
+### Sculpted characters
+
+`scripts/sculpt.js` is a small sculpting tool for characters: a model (see `scripts/models/rick.js`) is soft shapes (ellipsoids, capsules, cones, rounded boxes) blended, carved and painted, turned into a smooth mesh and simplified, one mesh per body part around the game's skeleton, so the character still walks, aims and ragdolls. Small details (eyes, brows, mouth) are their own sharp pieces. Rick is the first: about 16,000 triangles.
+
+    node scripts/sculpt.js scripts/models/rick.js assets/characters/rick.mms
+
+Canon-looking characters use their sculpt up close; customised looks and far-away characters keep the built model.
 
 ### Adding a dimension
 
