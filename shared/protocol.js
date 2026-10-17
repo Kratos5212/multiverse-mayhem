@@ -22,7 +22,7 @@
       ? { v: m.v, name: m.name, home: m.home || '', look: m.look, arch: m.arch, dim: m.dim, tok: m.tok, pvp: m.pvp !== false } : null,   // fights are on unless you turned them off
     // Where I am (15 times a second). ep = travel epoch, so stale positions from the
     // previous dimension are ignored.
-    st: m => (num(m.x, -B, B) && num(m.y, -200, 600) && num(m.z, -B, B) && num(m.r, -10, 10) && int(m.a, 0, 9) && int(m.ep, 0, 1e9))
+    st: m => (num(m.x, -B, B) && num(m.y, -200, 1200) && num(m.z, -B, B) && num(m.r, -10, 10) && int(m.a, 0, 9) && int(m.ep, 0, 1e9))
       ? { x: m.x, y: m.y, z: m.z, r: m.r, a: m.a, ep: m.ep } : null,
     // Fire the main weapon along an aim direction (unit vector).
     f: m => aim(m) ? { dx: m.dx, dy: m.dy, dz: m.dz } : null,
@@ -40,7 +40,7 @@
     door: m => (str(m.l, 32) && own(MM.LANDMARK_BY_ID, m.l)) ? { l: m.l } : null,  // walk through a door
     // Teams: invite a player, join the team of someone who invited you, or leave.
     tm: m => (['inv', 'join', 'leave'].includes(m.op) && (m.op === 'leave' || int(m.id, 0, 1e12))) ? { op: m.op, id: m.id | 0 } : null,
-    pp: m => ((m.c === 0 || m.c === 1) && num(m.x, -B, B) && num(m.y, -200, 600) && num(m.z, -B, B) && num(m.nx, -1.01, 1.01) && num(m.ny, -1.01, 1.01) && num(m.nz, -1.01, 1.01))
+    pp: m => ((m.c === 0 || m.c === 1) && num(m.x, -B, B) && num(m.y, -200, 1200) && num(m.z, -B, B) && num(m.nx, -1.01, 1.01) && num(m.ny, -1.01, 1.01) && num(m.nz, -1.01, 1.01))
       ? { c: m.c, x: m.x, y: m.y, z: m.z, nx: m.nx, ny: m.ny, nz: m.nz } : null,   // shoot one of your portal pair
     pt: m => ((m.c === 0 || m.c === 1) && int(m.o, 0, 1e12)) ? { o: m.o, c: m.c } : null,   // step through someone's portal pair
     uc: m => (str(m.id, 20) && own(MM.CURIOS, m.id)) ? { id: m.id } : null,   // use a curio from your inventory

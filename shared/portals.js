@@ -7,7 +7,8 @@
   'use strict';
   const MM = root.MM || (root.MM = {});
 
-  MM.PAIR_RANGE = 260;        // how far the gun reaches in this mode
+  MM.PAIR_RANGE = 1000;       // how far the gun reaches in this mode
+  MM.PAIR_AIR = 120;          // how far out a portal shot at nothing hangs in mid-air
   // Colours come from the owner's look (MM.pairColors): green for a Rick unless changed.
   MM.PAIR_MAX_SPEED = 32;     // fling speed cap
 
@@ -98,7 +99,16 @@
         break;
       }
     }
-    if (!bn) return null;
+    if (!bn) {
+      // Nothing in the way: a portal hanging in mid-air, a little way out (inside the world and
+      // within what the server accepts), facing the way you shot it.
+      const lim = MM.boundOf(dimId) - 2, limZ = MM.boundZOf(dimId) - 2;
+      let t = Math.min(bt, MM.PAIR_AIR);
+      if (Math.abs(d.x) > 1e-6) t = Math.min(t, ((d.x > 0 ? lim : -lim) - o.x) / d.x);
+      if (Math.abs(d.z) > 1e-6) t = Math.min(t, ((d.z > 0 ? limZ : -limZ) - o.z) / d.z);
+      t = Math.max(2, t);
+      return { t, x: o.x + d.x * t, y: o.y + d.y * t, z: o.z + d.z * t, nx: d.x, ny: d.y, nz: d.z };
+    }
     return { t: bt, x: o.x + d.x * bt, y: o.y + d.y * bt, z: o.z + d.z * bt, nx: bn[0], ny: bn[1], nz: bn[2] };
   };
 
