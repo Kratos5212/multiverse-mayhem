@@ -51,6 +51,7 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | F | TALK / USE | Talk to locals, daily tasks at buildings, doors, portal stations |
 | J | Journal button | Your life, your path, errands |
 | B | SHIP | Board or leave your ship (Space up, Shift down; keep climbing for space) |
+| L | LIGHT | Lightspeed, out in space: to another world, dimension or timeline |
 | 1 2 3 4 5 | GADGET | Grenade, turret, shrink ray, Meeseeks Box, Time Crystal (Ricks and Evil Morty) |
 | C | Build slot | Workbench |
 | Enter | Chat button | Chat with the whole multiverse |
@@ -204,34 +205,40 @@ Every prop except the landmarks can be destroyed. Wrecking things and beating ot
 
 ### Your home dimension
 
-The **home dimension** you type on the character screen (Y-231, J-19...) is a real place. Every code is its own alternate Earth with the Smith street plan and its own twist from the show: a Cronenberg Earth, a fascist one, shrimp or teddy or cat people, robots, aliens keeping humans as pets, candy, jungle, an Earth where the sun went out, the pizza-and-furniture one, a wasteland, or a dog-ruled one. The same code is always the same place, for everyone. Ricks, Mortys, Summers, Beths, Jerrys and Evil Mortys start in their own Earth; **C-137** is the show's Earth. There is only one of each variant online at a time: if another Rick C-137 is already playing, you join as a different Rick from the same letter. Home dimensions show up in the portal list ("Home dimensions"): yours, and those of everyone online.
+The **home dimension** you type on the character screen (Y-231, J-19...) is a real place. Every code is its own alternate Earth with the Smith street plan and its own twist from the show: a Cronenberg Earth, a fascist one, shrimp or teddy or cat people, robots, aliens keeping humans as pets, candy, jungle, an Earth where the sun went out, the pizza-and-furniture one, a wasteland, or a dog-ruled one. The same code is always the same place, for everyone. Ricks, Mortys, Summers, Beths, Jerrys and Evil Mortys start in their own Earth; **C-137** is the show's Earth. There is only one of each variant online at a time: if another Rick C-137 is already playing, you join as a different Rick from the same letter. Home dimensions show up in the travel menu under Earth's dimensions: yours (marked ★), and those of everyone online.
 
 ### Teams
 
 Open the **Multiverse** board and press **Invite** next to anyone in your dimension (up to 8 per team). Teammates show a green ★ in their name tags and can't hurt each other. When one of you takes a door, a portal station or a ship, every teammate standing within about 14 m comes along (ship passengers ride with the pilot). Anyone can follow through an open portal anyway.
 
+### Worlds, dimensions and timelines
+
+The multiverse has three layers, and they are different things:
+
+* **Worlds** are places: Earth, the Moon, Bird World, Gazorpazorp, Planet Squanch, the Citadel, Snake Planet, Atlantis, the Dream World and the rest (24 of them).
+* **Dimensions** are parallel versions of a world. Earth's include Earth C-137, Fascist Earth, Shrimp Earth, Teddy Earth, C-500A, Doofus Rick's Earth, Cronenberged Earth, the wasteland, Snowball's dog world, the pizza-and-furniture one, the Zigerion simulation, and everyone's home Earth. Every other world has at least one parallel dimension too: a Cronenberg, mirror, ice age, dark, jungle or cat version (Bird World in an ice age, the Citadel where everyone is a cat...).
+* **Timelines** are other times of one dimension: Earth C-137 65 million years ago, the split timeline from "A Rickle in Time", and Earth under the Federation; the Citadel under President Morty; Bird World after the wedding.
+
 ### Travel, the way the show does it
 
 There is no public portal on Earth. To get around you need one of these:
 
-* **A portal gun.** Ricks own one; Morty has a borrowed one with one charge; Evil Morty's is gold. Anyone else can borrow (steal) Rick's from the workbench in his garage (two jumps, no recharge), grab a charge from a gun owner they knock out, or build their own when their life path allows it.
+* **A portal gun.** Ricks own one; Morty has a borrowed one with one charge; Evil Morty's is gold. Anyone else can borrow (steal) Rick's from the workbench in his garage (two jumps, no recharge), grab a charge from a gun owner they knock out, or build their own when their life path allows it. A portal goes to any world, dimension or timeline.
 * **Somebody else's portal.** Portals stay open for a while and anyone can walk through, so a team can follow whoever has the gun.
 * **A portal station.** The Citadel's portal station (free for Ricks and Mortys, 3 Schmeckles for everyone else) and Interdimensional Customs at the Federation (free for troopers).
-* **A ship.** Earth to the Moon is a short hop. Other planets in the same universe (Bird World, Gazorpazorp, Squanch, the Purge Planet, Unity's planet, Gear World, Blips and Chitz, the Bazaar, the Federation) need the Turbo Engine. Other dimensions need the Dimension Drive.
+* **Your ship.** Fly anywhere on a world (Earth is one big world: the suburb, Downtown, D.C. and Area 51). To leave it, fly **straight up**: at 250 m you leave the atmosphere and are in space, with your planet below and the other worlds of your universe around it (for Earth: the Moon, Bird World, Gazorpazorp, Squanch, the Purge Planet, Unity's planet, Planet Gear, Blips and Chitz, the Bazaar and the Federation). Fly into a planet to land on it (Earth and the Moon need only the ship; the others the Turbo Engine).
+* **Lightspeed.** Out in space, press **L** (or **LIGHT** on a phone) and pick where to go: the stars streak, and you come out in space by that world, dimension or timeline with its planet dead ahead. Another dimension needs the **Dimension Drive**, another timeline the **Quantum Drive**.
 * **Doors.** The Microverse is inside the car battery in Rick's garage; Anatomy Park is inside Ruben, in a tent on Earth; Froopyland is behind Rick's chalk door. Only the doors go there.
-
-* **Straight up.** Climb your ship 250 m and you leave the atmosphere: space around your world, with its planet below and, for Earth, the Moon and the other planets of the show's home universe. Fly into a planet to land on it (Earth and the Moon need only the ship; the others the Turbo Engine).
 
 **The portal pair** (R or right click, for anyone with a portal gun): a short-range mode like Valve's Portal. Shoot one end onto a floor, wall, roof or cliff, then the other, or into thin air; walk in one and come out the other at the same speed. Anyone can use anyone's pair. Both ends take your **portal colours** (green for Rick, as in the show): pick the colour, the second end's colour and the style (swirl, ring, spiral, static) in the character creator's **Portals** tab.
 
 Worlds **outside the Central Finite Curve** can only be reached with a gold portal: Evil Morty's gun, or a gun upgraded with **Golden Portal Fluid** at the garage.
 
-The **portal gun, portal stations and ships** open the travel menu: search by name or code, tabs for Recent, Earths, Worlds, Other times and Outside the Curve, and a card per world in its own colours with who is there (or why you can't go that way). The old **Central Finite Curve** map is the last tab.
-
+**The travel menu** (portal gun, station, ship or lightspeed) is laid out the same way: pick a **world**, see its **dimensions** as cards (in their own colours, with who is there, or why you can't go that way), and the **timelines** of each dimension as chips under its card. It shows where you are now (world › dimension › timeline). Search finds anything by name or code; **Recent** and the old **Central Finite Curve** map are a tab away.
 
 ### Rick's garage (and what's under it)
 
-Rick's garage stands open on the street, on every Earth: walk straight in under the rolled-up door (no loading, no separate room). Inside:
+Rick's garage stands open on the street, on every Earth, on the left of the Smith house as you face it: walk straight in under the rolled-up door (no loading, no separate room). Inside:
 
 * **Rick's workbench**, with the portal gun on it. It counts as the garage station, so you can build there.
 * The **Space Cruiser** parked inside, shelves of glowing jars, a weapon rack, beakers and a toolchest.
@@ -251,21 +258,34 @@ Portals, stations and ships can't take you into the lab or the cellar; you have 
 
 Rick, Morty and Evil Morty's daily lives now include Council meetings and Morty Daycare at the Citadel.
 
-### Inside the Smith house (built with Mojulo)
+### The Smith house (built with Mojulo)
 
-Walk up to the Smith House and press **F**, then **Go to Smith House**. The ground floor has the front hall, the living room (sit on the couch to watch interdimensional cable), the dining room (family dinner) and the kitchen. The rooms were laid out and furnished with [Mojulo](https://mojulo.com) from a floor plan, exported as glTF, and converted for the game:
+**Outside:** a two-storey house with cream siding, a brown roof and a porch with white columns, Rick's garage on its left, and behind both a walled **back yard**: a grey brick wall, Rick's white shed with its brown roof, a big tree, and under it the **two graves** where Rick and Morty buried the Rick and Morty of this Earth after leaving Cronenberged Earth ("Rick Potion #9"). There are three doors: the front door, the **back door** into the kitchen from the yard, and a **side door** into Rick's room facing the garage.
+
+**Inside, two floors** of the same 44 × 32 ft footprint (about 19 × 14 m):
+* **Downstairs:** the front hall with the stairs, the living room (the couch and interdimensional cable), the dining room (family dinner), the kitchen (raid the fridge) and **Rick's room** (look under his bed).
+* **Upstairs:** **Morty's room** (do his homework), **Summer's room** (her phone), **Beth and Jerry's room**, and the **bathroom** (take a shower).
+
+You walk up and down the stairs; walls only stop you on their own floor, the camera stays on your floor, and downstairs you see the rooms with the upper floor lifted off. Spots upstairs only work upstairs. Each floor is a [Mojulo](https://mojulo.com) floor plan, exported as glTF and converted for the game; the upstairs gets its stairwell cut out:
 
 ```
-node scripts/glb2mm.js model.glb assets/interiors/smith.mmg --scale 1.4 --origin 7.254,-5.547 --floor0
+node scripts/glb2mm.js down.glb assets/interiors/smith.mmg --scale 1.4 --origin 9.388,-6.828 --floor0
+node scripts/glb2mm.js up.glb assets/interiors/smith2.mmg --scale 1.4 --origin 9.388,-6.828 --floor0 --no-footing --hole 0.86,-7,2.55,0.2
 ```
 
-`scripts/glb2mm.js` merges a glTF into one compact mesh (quantised positions, normals and colours, about 600 KB here) that `js/mmg.js` loads and draws with the game's own cel shading. The Mojulo recipe is kept next to it (`assets/interiors/smith.recipe.json`), so the house can be rebuilt or changed with Mojulo and re-exported (use the unshaded `lit` export). Inside walls for collision are listed as segments on the dimension (`walls` in `shared/world.js`).
+`scripts/glb2mm.js` merges a glTF into one compact mesh (quantised positions, normals and colours) that `js/mmg.js` loads and draws with the game's own cel shading. The Mojulo recipes are kept next to them (`assets/interiors/smith.recipe.json`, `smith2.recipe.json`). The plans, walls, floors and stairs are in `shared/interiors.js` and `shared/world.js` (`floors`).
 
 ### More insides (Mojulo floor plans)
 
 Harry Herpson High, the Horse Hospital, Merpal's Mall, Shoney's, the White House and the Unemployment Office can be walked into as well (F at the building, then **Go to ...**). Each is one floor plan in `shared/interiors.js`, used twice: Mojulo builds the furnished rooms from it (the recipes are in `assets/interiors/*.recipe.json`), and the game reads the same plan for the inside walls, bounds, the way in and out, and the spots to do things. Inside: Mr. Goldenfold's classroom, the principal's office and the cafeteria; the operating theatre and the horse ward; the mall concourse, food court and mattress store; a booth and the breakfast bar at Shoney's; the Oval Office (with President Curtis), the Cabinet Room and the press room; the job counter and the waiting room.
 
-Buildings outside now collide as their real footprint (a turned box) instead of a circle, for players, locals and the camera, and Rick's open garage collides as its walls.
+**Every other building you can do things at has an inside too**, drawn in the game from a floor plan (no download): the Forge, the Bazaar shipyard and black market, the Moon refinery, the Aerie, the Council of Ricks chamber, Morty Daycare, Snowball's palace, Needful Things, Dr. Wong's office, the TV store, the Capitol, the Pentagon, the snake jazz club, the giants' castle, Mr. Nimbus's palace, the Squanch club, the raiders' garage, the Federation forms office, the Gear temple, Hangar 18 (with the saucer under a tarp), Real Fake Doors, Ants in my Eyes Johnson's, the plumbus factory, the dream school, the Gazorpian throne room and the dinosaur council. Each has its own look, the thing it is about (a furnace, the council's ring table, a throne, a wall of TVs...), furniture and people; what you do outside works inside too, and every room has something of its own to do.
+
+Buildings outside collide as their real footprint (a turned box) instead of a circle, for players, locals and the camera, and Rick's open garage and the back yard collide as their walls.
+
+### Ring races
+
+Glowing rings make race courses; go through the first one to start the clock, then every ring in order. The **Sky ring race** (by ship, over the suburb and Downtown), the **Street sprint** (on foot, round the block), the **Moon slalom** (by ship, in space round the Moon), the **low-gravity hop course** on the Moon and the **Froopy bounce course** in Froopyland. Finish in time for a prize (once every two minutes); your best time is kept. The Earth races run on every Earth (`shared/races.js`).
 
 ### Sculpted characters
 
@@ -330,7 +350,9 @@ Version numbers live in `version.json`. The APK is signed with the project key i
 | --- | --- |
 | `index.html` | Page, styles and HTML layers |
 | `shared/rules.js` | Archetypes, weapons, gadgets, look options and sanitizers |
-| `shared/world.js` | Dimensions, terrain, props (generated from seeds, identical everywhere) |
+| `shared/world.js` | Worlds, dimensions and timelines, terrain, props (generated from seeds, identical everywhere) |
+| `shared/interiors.js` | The insides of buildings: floor plans, walls, spots, the Smith house's two floors |
+| `shared/races.js` | Ring race courses |
 | `shared/protocol.js` | Every message a client may send, and the rate limits |
 | `sim/host.js` | The authoritative game host (runs on the server, and in the browser when offline) |
 | `sim/bot.js` | Bots that play through the same protocol as people |
