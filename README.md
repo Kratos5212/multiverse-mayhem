@@ -40,7 +40,7 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | PC | Phone | Action |
 | --- | --- | --- |
 | W A S D | Left stick | Move |
-| Shift (hold) | Drag past the stick's edge | Sprint (a bit faster; more with leg upgrades) |
+| Shift (hold) | Drag past the stick's edge | Sprint (faster; more with leg upgrades). In the ship: the afterburner |
 | R or right click | PORTALS | Portal pair: shoot one end, then the other (portal gun owners) |
 | I | Items | Inventory: curios, gadgets, collection |
 | Mouse (click to capture) | Drag the right side | Look |
@@ -50,15 +50,17 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | E | PORTAL | Travel: portal gun (own or borrowed), portal station, or your ship |
 | F | TALK / USE | Talk to locals, daily tasks at buildings, doors, portal stations |
 | J | Journal button | Your life, your path, errands |
-| B | SHIP | Board or leave your ship (Space up, Shift down; keep climbing for space) |
+| B | SHIP | Board or leave your ship (Space up, Ctrl down, Shift boost; keep climbing for space) |
 | L | LIGHT | Lightspeed, out in space: to another world, dimension or timeline |
-| 1 2 3 4 5 | GADGET | Grenade, turret, shrink ray, Meeseeks Box, Time Crystal (Ricks and Evil Morty) |
+| 1 2 3 4 5 6 7 | GADGET | Grenade, turret, shrink ray, Meeseeks Box, Time Crystal, freeze ray, Magic Chalk (the last two kinds: Ricks and Evil Morty) |
 | C | Build slot | Workbench |
 | Enter | Chat button | Chat with the whole multiverse |
 | Tab | Chart button | Leaderboard, players here, invite to your team, mute |
 | V or mouse wheel | Eye button | Switch between first and third person |
 | G |  | Wave |
 | Esc | Menu button | Settings and leave |
+
+**Ctrl and the browser:** Ctrl is "down" in the ship. While you play, the game keeps Ctrl shortcuts (Ctrl+R, Ctrl+S, Ctrl+F...) from the browser; Ctrl+W asks before closing, and in **Full screen** (Esc menu) it is caught too. After you close a menu the mouse goes straight back to the game. **F** uses what you are looking at, so in the garage you get the workbench in front of you, not the garage.
 
 **First person:** press **V**, scroll all the way in, tap the eye button, or pick it in the menu's settings. You see through your character's eyes, with your own arm, sleeve and gun (or fist) in front of you. In a ship you look out over the saucer's rim. When you die, the camera pulls back so you can see what happened. The choice is remembered.
 
@@ -85,6 +87,7 @@ Your look is completely free. Your **character** is your lore: it decides your s
 | Mr. Meeseeks | Task Meeseeks | Chores, TV | Meeseeks Who Stayed | "Look at me!" summons two more Meeseeks to fight for you |
 | Squanchy | Party Squanchy | Throw parties, haggle | Freedom Fighter | Squanch Out: huge and tough for 5 s |
 | Evil Morty | Quiet Morty | School, haggling | President Morty | Starts with a portal gun; Vanish hides him from monsters and turrets |
+| King Tommy | King of Froopyland | The Big Froopy Slide | Free at last | Lives in Froopyland and can only leave through a magic chalk door |
 | Pickle Rick | Pickle on the Floor | Tinker | Pickle Rick! | Starts tiny and weak; builds a third cheaper; rat-part upgrades |
 
 Picking a character puts them in their **canon look**. **Other universe** rolls an alternate version of the same character (different colours, outfit or accessories), and every option in the creator is still yours to change. Bots are alternate-universe Ricks, Mortys and the rest of the cast, each from their own home dimension.
@@ -137,7 +140,7 @@ Every few minutes a **world event** hits a dimension:
 
 ## Dimensions
 
-Every world is laid out like a real place (`shared/layouts.js`): roads and squares first, buildings lining the streets with their fronts to the road, lamps and benches along the sidewalks, fields and villages where they belong, and wild things only out in the countryside. Cronenberged Earth is the Smith neighbourhood after the love potion; the Bazaar is a ring of market streets; the Citadel is a white city of towers around a central square; Snowball's palace sits at the end of an avenue of dog statues.
+Every world is laid out like a real place (`shared/layouts.js`): roads and squares first, buildings lining the streets with their fronts to the road, lamps and benches along the sidewalks, fields and villages where they belong, and wild things only out in the countryside. Cronenberged Earth is the whole of Earth after the love potion (the suburb, Downtown, D.C. and Area 51, in meat, its people Cronenbergs, the barbarian Summer, Beth and Jerry at the Smith house); the Bazaar is a ring of market streets; the Citadel is a white city of towers around a central square; Snowball's palace sits at the end of an avenue of dog statues.
 
 
 | Dimension | Feel | Locals | Material | Landmarks |
@@ -205,11 +208,23 @@ Every prop except the landmarks can be destroyed. Wrecking things and beating ot
 
 ### Your home dimension
 
-The **home dimension** you type on the character screen (Y-231, J-19...) is a real place. Every code is its own alternate Earth with the Smith street plan and its own twist from the show: a Cronenberg Earth, a fascist one, shrimp or teddy or cat people, robots, aliens keeping humans as pets, candy, jungle, an Earth where the sun went out, the pizza-and-furniture one, a wasteland, or a dog-ruled one. The same code is always the same place, for everyone. Ricks, Mortys, Summers, Beths, Jerrys and Evil Mortys start in their own Earth; **C-137** is the show's Earth. There is only one of each variant online at a time: if another Rick C-137 is already playing, you join as a different Rick from the same letter. Home dimensions show up in the travel menu under Earth's dimensions: yours (marked ★), and those of everyone online.
+The **home dimension** you type on the character screen (Y-231, J-19...) is a real place. Every code is its own alternate Earth with the Smith street plan and its own twist from the show: a Cronenberg Earth, a fascist one, shrimp or teddy or cat people, robots, aliens keeping humans as pets, candy, jungle, an Earth where the sun went out, the pizza-and-furniture one, a wasteland, or a dog-ruled one. The same code is always the same place, for everyone. Ricks, Mortys, Summers, Beths, Jerrys and Evil Mortys start in their own Earth; **C-137** is the show's Earth.  Home dimensions show up in the travel menu under Earth's dimensions: yours (marked ★), and those of everyone online.
 
 ### Teams
 
 Open the **Multiverse** board and press **Invite** next to anyone in your dimension (up to 8 per team). Teammates show a green ★ in their name tags and can't hurt each other. When one of you takes a door, a portal station or a ship, every teammate standing within about 14 m comes along (ship passengers ride with the pilot). Anyone can follow through an open portal anyway.
+
+### The cast: everyone exists once
+
+Every dimension has its own people (`shared/cast.js`): each Earth its own Rick, Morty, Summer, Beth and Jerry (Earth C-137 also Mr. Poopybutthole), in that Earth's look (shrimp Smiths on Shrimp Earth, barbarians on Cronenberged Earth, where only Summer, Beth and Jerry are left); Bird World its Birdperson, Planet Squanch its Squanchy, the Federation its officer, Unity's planet Unity, the Citadel Evil Morty, and Froopyland King Tommy. Until someone plays them, they live their lives as locals with their own name tags and lines, and the ones who can travel do: Ricks and Evil Morty open portals in their own colours (green; Evil Morty's gold) and step through, Morty tagging along with his Rick, and anyone can follow them; Federation officers take off in their ships, and Birdperson flies.
+
+**You take one over.** Pick a character and a home code and you are that dimension's one: Rick C-137, Beth SH-1, the Birdperson of Bird World. Someone already playing them? You play one of their **clones** (a little weaker, out of the lab under that Earth's garage), or, if you set **If taken: Another dimension** on the start screen, the same character from another dimension. When you leave, your character carries on without you.
+
+**King Tommy** (Beth's childhood friend, lost in Froopyland) cannot leave Froopyland: no portal or door lets him out, except a **magic chalk** door. Only Ricks and Evil Morty know how to make Magic Chalk (key 7): draw a door anywhere into Froopyland, or there, back out; anyone can go through it. Evil Morty can build anything a Rick can (not a Rick's own body upgrades); everyone else only what their life teaches them.
+
+### Beaches and Atlantis
+
+South of every Earth's towns there is a sandy **beach** and the sea. Swim out and dive, and you are in that Earth's own **Atlantis** (C-137's, Shrimp Earth's, your home Earth's...), each with its own **Mr. Nimbus** at his palace. Swim up to the surface to get back to the same beach.
 
 ### Worlds, dimensions and timelines
 
@@ -230,7 +245,7 @@ There is no public portal on Earth. To get around you need one of these:
 * **Lightspeed.** Out in space, press **L** (or **LIGHT** on a phone) and pick where to go: the stars streak, and you come out in space by that world, dimension or timeline with its planet dead ahead. Another dimension needs the **Dimension Drive**, another timeline the **Quantum Drive**.
 * **Doors.** The Microverse is inside the car battery in Rick's garage; Anatomy Park is inside Ruben, in a tent on Earth; Froopyland is behind Rick's chalk door. Only the doors go there.
 
-**The portal pair** (R or right click, for anyone with a portal gun): a short-range mode like Valve's Portal. Shoot one end onto a floor, wall, roof or cliff, then the other, or into thin air; walk in one and come out the other at the same speed. Anyone can use anyone's pair. Both ends take your **portal colours** (green for Rick, as in the show): pick the colour, the second end's colour and the style (swirl, ring, spiral, static) in the character creator's **Portals** tab.
+**The portal pair** (R or right click, for anyone with a portal gun): a short-range mode like Valve's Portal, with the same portals as for other worlds (same size, swirl and colours). Shoot one end onto a floor, wall, roof or cliff, then the other, or into thin air; walk in one and come out the other at the same speed. Anyone can use anyone's pair. Both ends take your **portal colours** (green for Rick, as in the show): pick the colour, the second end's colour and the style (swirl, ring, spiral, static) in the character creator's **Portals** tab.
 
 Worlds **outside the Central Finite Curve** can only be reached with a gold portal: Evil Morty's gun, or a gun upgraded with **Golden Portal Fluid** at the garage.
 
