@@ -10,6 +10,7 @@ require('../shared/portals.js');
 require('../shared/curios.js');
 require('../shared/races.js');
 require('../shared/cast.js');
+require('../shared/house.js');
 require('../shared/protocol.js');
 require('../sim/host.js');
 const MM = require('../sim/bot.js');
@@ -312,28 +313,40 @@ test("Rick's garage: open on the street, use the Plumbus, go down to the lab and
   host.message(c, '{"t":"cr","g":"megabrain"}');
   assert.ok(p.prog.up.megabrain, 'the indoor workbench counts as the garage station');
   assert.strictEqual(p.st.cdMult, 0.7);
-  near(host, c, p, 'trapdoor');
-  run(host, 1.2);
+  // The lab under the garage is Rick's: Morty is turned away; this Earth's Rick goes down.
+  near(host, c, p, 'trapdoor'); run(host, 1.2);
   host.message(c, '{"t":"door","l":"trapdoor"}');
-  assert.strictEqual(p.inst.dimId, 'ricklab');
+  assert.strictEqual(p.inst.dimId, 'suburbia', "only a Rick goes down to Rick's lab");
+  const { c: rc, p: rp } = join(host, 'genius', { dim: 'suburbia' });
+  near(host, rc, rp, 'trapdoor');
+  run(host, 1.2);
+  host.message(rc, '{"t":"door","l":"trapdoor"}');
+  assert.strictEqual(rp.inst.dimId, 'ricklab');
   // Walls: you cannot walk out of the room.
   run(host, 0.2);
-  host.message(c, JSON.stringify({ t: 'st', x: p.x, y: 0, z: p.z + 3, r: 0, a: 1, ep: p.ep }));
+  host.message(rc, JSON.stringify({ t: 'st', x: rp.x, y: 0, z: rp.z + 3, r: 0, a: 1, ep: rp.ep }));
   run(host, 0.4);
-  host.message(c, JSON.stringify({ t: 'st', x: p.x, y: 0, z: 40, r: 0, a: 1, ep: p.ep }));
-  assert.ok(p.z <= MM.boundOf('ricklab'));
+  host.message(rc, JSON.stringify({ t: 'st', x: rp.x, y: 0, z: 40, r: 0, a: 1, ep: rp.ep }));
+  assert.ok(rp.z <= MM.boundOf('ricklab'));
   // Up the ladder: back in the same garage.
-  near(host, c, p, 'ladder'); run(host, 1.2);
-  host.message(c, '{"t":"door","l":"ladder"}');
-  assert.strictEqual(p.inst.dimId, 'suburbia');
-  assert.ok(Math.hypot(p.x - g.x, p.z - g.z) < 6, 'in the garage');
+  near(host, rc, rp, 'ladder'); run(host, 1.2);
+  host.message(rc, '{"t":"door","l":"ladder"}');
+  assert.strictEqual(rp.inst.dimId, 'suburbia');
+  assert.ok(Math.hypot(rp.x - g.x, rp.z - g.z) < 6, 'in the garage');
   // From another Earth's garage, the lab's ladder takes you back to that Earth.
-  near(host, c, p, 'shrimpearth_trapdoor'); run(host, 1.2);
-  host.message(c, '{"t":"door","l":"shrimpearth_trapdoor"}');
-  assert.strictEqual(p.inst.dimId, 'ricklab');
-  near(host, c, p, 'ladder'); run(host, 1.2);
-  host.message(c, '{"t":"door","l":"ladder"}');
-  assert.strictEqual(p.inst.dimId, 'shrimpearth');
+  // Another Earth's lab is another Rick's: Rick C-137 has to hack the hatch first.
+  rp.prog.up.portalgun = 1; host.travel(rp, 'shrimpearth');
+  near(host, rc, rp, 'shrimpearth_trapdoor'); run(host, 1.2);
+  host.message(rc, '{"t":"door","l":"shrimpearth_trapdoor"}');
+  assert.strictEqual(rp.inst.dimId, 'shrimpearth', 'not his: he starts hacking');
+  assert.ok(rp.hack);
+  run(host, MM.HACK_TIME + 0.5);
+  assert.ok(rp.hacked.shrimpearth > host.time, 'hacked');
+  host.message(rc, '{"t":"door","l":"shrimpearth_trapdoor"}');
+  assert.strictEqual(rp.inst.dimId, 'ricklab');
+  near(host, rc, rp, 'ladder'); run(host, 1.2);
+  host.message(rc, '{"t":"door","l":"ladder"}');
+  assert.strictEqual(rp.inst.dimId, 'shrimpearth');
 });
 
 test('Meeseeks Box gadget and the Citadel', () => {
@@ -800,6 +813,83 @@ test('the multiverse in space: every Earth sees the solar system, each kind of p
   host.travel(p, 'dreamworld'); p.ship = true; p.y = MM.heightAt('dreamworld', p.x, p.z) + MM.ORBIT_ALT + 5; host.time += 10;
   host.message(c, '{"t":"orbit"}');
   assert.strictEqual(p.inst.dimId, 'dreamworld', 'no space above a dream');
+});
+
+test('the Smith house: the en-suite, the holodeck, the man cave, the pool, and the elevator to the sublevels', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'suburbia' });
+  // Upstairs, through Beth and Jerry's room into their bathroom, and back out upstairs.
+  near(host, c, p, 'ensuitedoor'); p.y = 4.3; run(host, 1.2);
+  host.message(c, '{"t":"door","l":"ensuitedoor"}');
+  assert.strictEqual(p.inst.dimId, 'ensuite');
+  near(host, c, p, 'ensuiteexit'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"ensuiteexit"}');
+  assert.strictEqual(p.inst.dimId, 'smithhouse');
+  assert.ok(p.y > 4, 'back upstairs');
+  near(host, c, p, 'holodoor'); p.y = 0; run(host, 1.2);
+  host.message(c, '{"t":"door","l":"holodoor"}');
+  assert.strictEqual(p.inst.dimId, 'holodeck');
+  near(host, c, p, 'holoconsole'); run(host, 1.2);
+  host.message(c, '{"t":"use","l":"holoconsole"}');
+  assert.ok(p.prog.tasks.holosim, 'ran a simulation');
+  // The shed in the yard is Jerry's man cave; the pool is by the patio.
+  near(host, c, p, 'shed'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"shed"}');
+  assert.strictEqual(p.inst.dimId, 'mancave');
+  near(host, c, p, 'pool'); run(host, 1.2);
+  host.message(c, '{"t":"use","l":"pool"}');
+  assert.ok(p.prog.tasks.swim);
+  // Down the hatch, the elevator, Sublevel B15: Jiro's.
+  near(host, c, p, 'trapdoor'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"trapdoor"}');
+  near(host, c, p, 'elevator'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"elevator"}');
+  assert.strictEqual(p.inst.dimId, 'sublevels');
+  for (const k of ['b1', 'b2', 'b3', 'b7', 'b10', 'b15', 'b17']) assert.strictEqual(MM.LANDMARK_BY_ID['sl_' + k].door.dim, 'sub_' + k);
+  near(host, c, p, 'sl_b15'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"sl_b15"}');
+  assert.strictEqual(p.inst.dimId, 'sub_b15');
+  assert.ok([...p.inst.npcs.values()].some(n => n.type === 'jiro'), 'Jiro is at his counter');
+  assert.ok([...host.instances.values()].length > 0);
+  for (const k of ['b1', 'b2', 'b3', 'b7', 'b10', 'b15', 'b17']) assert.ok(MM.LANDMARKS.some(l => l.dim === 'sub_' + k && Object.values(MM.TASKS).some(T => T.at === l.id)), 'something to do on ' + k);
+});
+
+test("the house's defences: only its own Rick (or a Rick who hacks the console), and they work", () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'suburbia' });
+  const mm = join(host, 'sidekick', { dim: 'suburbia', home: 'Q-12' }), m = mm.p;
+  m.pvp = true; p.pvp = true;
+  // Voice activation: Rick says it in the yard. Blast doors: Morty Q-12 cannot get in.
+  host.teleport(p, -24, 0, 18); run(host, 0.6);
+  host.message(c, '{"t":"hd","o":"doors"}');
+  const inst = p.inst;
+  assert.ok(inst.house && inst.house.doors > host.time, 'blast doors down');
+  near(host, mm.c, m, 'home'); run(host, 1.2);
+  host.message(mm.c, '{"t":"door","l":"home"}');
+  assert.strictEqual(m.inst.dimId, 'suburbia', 'the doors stay shut for him');
+  // The forcefield pushes him out of the yard.
+  host.time += 1; host.message(c, '{"t":"hd","o":"shield"}');
+  assert.ok(inst.house.shield > host.time, 'forcefield up');
+  host.teleport(m, -18, 0, 20);
+  run(host, 0.3);
+  assert.ok(!MM.inHouse(m.x, m.z), 'pushed out of the dome');
+  host.time += 1; host.message(c, '{"t":"hd","o":"turrets"}');
+  assert.strictEqual([...inst.turrets.values()].filter(t => t.owner === p.id).length, 5);
+  host.time += 1; host.message(c, '{"t":"hd","o":"bots"}');
+  assert.strictEqual([...inst.npcs.values()].filter(n => n.type === 'killbot' && n.owner === p.id && n.guardAt).length, 3);
+  host.time += 1; host.message(c, '{"t":"hd","o":"fungus"}');
+  assert.ok([...inst.npcs.values()].some(n => n.type === 'fungusclone'));
+  run(host, MM.DEFENSES.fungus.dur + 0.5);
+  assert.ok([...inst.npcs.values()].some(n => n.type === 'funguseater'), 'nobody destroyed it: it eats the world');
+  // Morty cannot use the console; another Rick hacks it.
+  const o = join(host, 'genius', { dim: 'suburbia', home: 'D-716' });
+  near(host, o.c, o.p, 'housecon'); run(host, 1.2);
+  host.message(o.c, '{"t":"hd","o":"stash"}');
+  assert.ok(o.p.hack, 'another Rick starts hacking');
+  run(host, MM.HACK_TIME + 0.5);
+  const g = o.p.inv.grenade || 0;
+  host.message(o.c, '{"t":"hd","o":"stash"}');
+  assert.strictEqual(o.p.inv.grenade, g + 1, 'hacked: he can use it');
 });
 
 test('ring races: two or more people at the start pad start one; every ring in order; the winner takes double', () => {

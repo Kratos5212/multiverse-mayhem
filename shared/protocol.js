@@ -47,6 +47,8 @@
       ? { c: m.c, x: m.x, y: m.y, z: m.z, nx: m.nx, ny: m.ny, nz: m.nz } : null,   // shoot one of your portal pair
     pt: m => ((m.c === 0 || m.c === 1) && int(m.o, 0, 1e12)) ? { o: m.o, c: m.c } : null,   // step through someone's portal pair
     uc: m => (str(m.id, 20) && own(MM.CURIOS, m.id)) ? { id: m.id } : null,   // use a curio from your inventory
+    lk: m => (typeof m.look === 'object' && m.look !== null && !Array.isArray(m.look)) ? { look: m.look } : null,   // the wardrobe: a new look
+    hd: m => (str(m.o, 12) && MM.DEFENSES && own(MM.DEFENSES, m.o) && (m.d === undefined || int(m.d, 0, 9))) ? { o: m.o, d: m.d } : null,   // "House, ..." (shared/house.js)
     c: m => str(m.text, 300) ? { text: m.text } : null,  // chat
     em: m => int(m.e, 0, 5) ? { e: m.e } : null,       // emote
     rs: () => ({}),                                     // respawn
@@ -79,7 +81,7 @@
   MM.RATE = {
     all: [90, 45], st: [40, 20], f: [12, 6], c: [3, 0.5], cr: [6, 2], g: [6, 2],
     po: [3, 1], ki: [3, 1], ab: [4, 2], em: [4, 1], rs: [3, 1], pi: [5, 1], hello: [1, 0],
-    use: [4, 1], talk: [4, 1], ans: [4, 1], ship: [4, 1], drive: [3, 0.5], ls: [3, 0.5], orbit: [2, 0.5], land: [3, 1], door: [3, 1], pvp: [3, 0.5], tm: [4, 0.5], uc: [3, 1], pp: [8, 3], pt: [8, 4],
+    use: [4, 1], talk: [4, 1], ans: [4, 1], ship: [4, 1], drive: [3, 0.5], ls: [3, 0.5], orbit: [2, 0.5], land: [3, 1], door: [3, 1], pvp: [3, 0.5], tm: [4, 0.5], uc: [3, 1], pp: [8, 3], pt: [8, 4], hd: [4, 1], lk: [2, 0.2],
   };
 
   // Animation states the client reports.

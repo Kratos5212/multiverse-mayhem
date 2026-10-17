@@ -853,6 +853,14 @@
       s.add(P.sphere, '#ff6a8a', [-5.0, 0.34, -4.7], null, [0.12, 0.08, 0.12]);   // somebody left flowers
       s.add(P.sphere, '#ffe066', [-3.6, 0.34, -4.6], null, [0.12, 0.08, 0.12]);
       s.add(P.box, '#8a6a4a', [-6.4, 0.6, -4.0], [0, 0.4, -0.2], [0.08, 1.2, 0.4]);  // the shovel, against the shed
+      // The swimming pool (new this season), with a ladder and Jerry's cheap Pool Bot.
+      const px = 6.0, pz = -3.0;
+      s.add(P.box, '#e8e4dc', [px, 0.08, pz], null, [3.9, 0.16, 6.9]);
+      s.add(P.box, '#3a9ad8', [px, 0.17, pz], null, [3.3, 0.04, 6.3]);
+      s.add(P.box, '#7ad0f0', [px, 0.19, pz], null, [3.1, 0.02, 6.1], true);
+      for (const sx of [-0.25, 0.25]) s.add(P.cylLo, '#d8d8d8', [px + 1.55, 0.6, pz + 2.6 + sx], [0, 0, 0.2], [0.03, 0.9, 0.03]);
+      s.add(P.cyl, '#6a6a72', [px - 0.6, 0.22, pz - 1.2], null, [0.3, 0.08, 0.3]);
+      s.add(P.sphereLo, '#ff4a4a', [px - 0.6, 0.28, pz - 1.0], null, [0.05, 0.05, 0.05], true);
       // Bushes along the wall, a patio by the back door, a grill and two lawn chairs.
       for (const [x, z] of [[-12.6, 2], [-12.6, -3], [12.6, 3.5], [-3, -7.6], [2.5, -7.6]]) s.add(P.sphere, '#3f8a34', [x, 0.55, z], null, [0.9, 0.7, 0.9]);
       s.add(P.box, '#bcb4a6', [4.5, 0.05, 6.7], null, [4.5, 0.08, 3.4]);
@@ -2036,6 +2044,113 @@
       for (const sx of [-1, 0, 1]) s.add(P.cone, '#ffd84d', [sx * 0.6, 18.6, 0], null, [0.18, 1, 0.18], true);
       s.add(P.box, '#ffd84d', [0, 18, 0], null, [1.4, 0.2, 0.2], true);
     },
+    // ----- The rest of the Smith house, and the garage's sublevels -----
+    // Rick's elevator doors: brushed steel, a floor display and a call button.
+    lm_elevator(s) {
+      s.add(P.box, '#4a525e', [0, 1.6, -0.12], null, [2.5, 3.2, 0.2]);
+      for (const sx of [-1, 1]) s.add(P.box, '#a8b0bc', [sx * 0.52, 1.35, 0.0], null, [1.0, 2.6, 0.08]);
+      s.add(P.box, '#2a2f38', [0, 1.35, 0.02], null, [0.04, 2.6, 0.09]);
+      s.add(P.box, '#101418', [0, 2.95, 0.0], null, [0.9, 0.3, 0.06]);
+      s.add(P.box, '#5ff8ff', [0, 2.95, 0.04], null, [0.6, 0.14, 0.02], true);
+      s.add(P.cyl, '#ffd84d', [1.05, 1.3, 0.0], [Math.PI / 2, 0, 0], [0.07, 0.06, 0.07], true);
+    },
+    // A plain door set in a wall (the front faces into the room).
+    lm_walldoor(s) {
+      s.add(P.box, '#f2efe6', [0, 1.1, -0.04], null, [1.15, 2.25, 0.06]);
+      s.add(P.box, '#a8805a', [0, 1.05, 0.0], null, [0.95, 2.1, 0.05]);
+      for (const y of [0.55, 1.5]) s.add(P.box, '#987048', [0, y, 0.03], null, [0.7, 0.7, 0.02]);
+      s.add(P.sphereLo, '#ffd84d', [0.36, 1.05, 0.06], null, [0.05, 0.05, 0.05]);
+    },
+    // The holodeck console: a pedestal with a glowing, tilted screen.
+    lm_holoconsole(s) {
+      s.add(P.cyl, '#2a2f38', [0, 0.5, 0], null, [0.35, 1.0, 0.35]);
+      s.add(P.box, '#1a1e24', [0, 1.1, 0], [-0.5, 0, 0], [1.1, 0.08, 0.7]);
+      s.add(P.box, '#ffd84d', [0, 1.14, 0.02], [-0.5, 0, 0], [0.95, 0.02, 0.55], true);
+      s.add(P.torus, '#ffd84d', [0, 0.02, 0], [Math.PI / 2, 0, 0], [1.2, 1.2, 0.3], true);
+    },
+    // The house defence console, on the garage wall: a screen, a row of lights and a big red button.
+    lm_housecon(s) {
+      s.add(P.box, '#5a6270', [0, 1.4, -0.1], null, [1.4, 1.6, 0.18]);
+      s.add(P.box, '#101418', [0, 1.6, 0.0], null, [1.1, 0.7, 0.04]);
+      s.add(P.box, '#5ff8a0', [0, 1.6, 0.03], null, [1.0, 0.6, 0.01], true);
+      for (let i = 0; i < 5; i++) s.add(P.sphereLo, ['#ff4a4a', '#ffd84d', '#5ff8ff', '#7aff6a', '#ff8fc8'][i], [-0.4 + i * 0.2, 1.1, 0.02], null, [0.05, 0.05, 0.03], true);
+      s.add(P.cyl, '#c82a2a', [0.45, 0.82, 0.02], [Math.PI / 2, 0, 0], [0.12, 0.06, 0.12], true);
+      s.add(P.box, '#3a4048', [0, 0.45, -0.1], null, [0.2, 0.9, 0.12]);
+    },
+    // The Phantom Zone: a steel box with a grey, swirling glass top.
+    lm_phantombox(s) {
+      s.add(P.box, '#4a525e', [0, 0.6, 0], null, [1.8, 1.2, 1.8]);
+      s.add(P.box, '#c8ccd4', [0, 1.22, 0], null, [1.5, 0.05, 1.5], true);
+      s.add(P.torus, '#8a8e98', [0, 1.26, 0], [Math.PI / 2, 0, 0], [0.5, 0.5, 0.5], true);
+    },
+    killerplant(s) {
+      s.add(P.cyl, '#8a5a3a', [0, 0.35, 0], null, [0.7, 0.7, 0.7]);
+      s.add(P.cyl, '#3a2a1a', [0, 0.71, 0], null, [0.62, 0.04, 0.62]);
+      s.add(P.capsule, '#3a8a2a', [0, 1.4, 0], [0.15, 0, 0], [0.12, 1.4, 0.12]);
+      for (const sx of [-1, 1]) s.add(P.capsule, '#4a9a3a', [sx * 0.35, 1.0, 0], [0, 0, sx * 0.9], [0.18, 0.6, 0.06]);
+      // the head: two jaws with teeth
+      s.add(P.hemi, '#7aaa3a', [0, 2.3, 0.15], [-0.35, 0, 0], [0.6, 0.5, 0.6]);
+      s.add(P.hemi, '#7aaa3a', [0, 2.2, 0.2], [Math.PI + 0.45, 0, 0], [0.6, 0.45, 0.6]);
+      s.add(P.sphereLo, '#c83a4a', [0, 2.25, 0.25], null, [0.45, 0.12, 0.45]);
+      for (let i = -3; i <= 3; i++) { s.add(P.cone, '#fff8e0', [i * 0.14, 2.32, 0.55], [Math.PI, 0, 0], [0.04, 0.16, 0.04]); s.add(P.cone, '#fff8e0', [i * 0.14, 2.14, 0.6], null, [0.04, 0.14, 0.04]); }
+    },
+    // A globaflyn sac: a big translucent pink pod, someone asleep inside, on a frame.
+    globaflyn(s) {
+      s.add(P.box, '#3a3a44', [0, 0.1, 0], null, [1.4, 0.2, 1.4]);
+      s.add(P.cylLo, '#5a5a66', [0, 2.6, 0], null, [0.05, 0.6, 0.05]);
+      s.add(P.capsule, '#4a2a3a', [0, 1.4, 0], null, [0.22, 0.9, 0.22]);
+      s.add(P.sphere, '#e08aff', [0, 1.45, 0], null, [0.7, 1.1, 0.7], true);
+    },
+    // Memory Diane's ant-farm brain: a huge brain in a glass tank, ant tunnels all through it.
+    antbrain(s) {
+      s.add(P.box, '#3a3a44', [0, 0.4, 0], null, [5, 0.8, 4]);
+      s.add(P.sphere, '#e8a0b0', [0, 2.6, 0], null, [2.0, 1.6, 1.6]);
+      for (let i = 0; i < 10; i++) s.add(P.capsule, '#c87888', [Math.sin(i * 1.7) * 1.4, 2.6 + Math.cos(i * 2.3) * 0.9, Math.cos(i * 1.7) * 1.1], [i, i * 0.6, 0], [0.12, 1.2, 0.12]);
+      for (let i = 0; i < 14; i++) s.add(P.sphereLo, '#2a1a12', [Math.sin(i * 2.9) * 1.6, 2.5 + Math.cos(i * 1.3) * 1.1, Math.cos(i * 2.9) * 1.25], null, [0.08, 0.05, 0.08]);
+      for (const [x, z] of [[-2.3, -1.8], [2.3, -1.8], [-2.3, 1.8], [2.3, 1.8]]) s.add(P.box, '#8a96a8', [x, 2.6, z], null, [0.1, 4.2, 0.1]);
+      s.add(P.box, '#5a6270', [0, 4.75, 0], null, [4.8, 0.15, 3.8]);
+    },
+    // A cork board: photos, maps and red string, all of it pointing at one face.
+    mapboard(s) {
+      s.add(P.box, '#a8804a', [0, 1.5, 0], null, [3.2, 2.0, 0.08]);
+      s.add(P.box, '#6a4a2a', [0, 1.5, -0.02], null, [3.4, 2.2, 0.06]);
+      for (let i = 0; i < 9; i++) s.add(P.box, i === 4 ? '#e8d0c0' : '#f2f2f2', [-1.2 + (i % 3) * 1.2, 0.85 + Math.floor(i / 3) * 0.65, 0.05], [0, 0, (i % 2 - 0.5) * 0.15], [0.5, 0.4, 0.01]);
+      s.add(P.sphereLo, '#6fd2df', [0, 1.5, 0.07], null, [0.12, 0.12, 0.02]);
+      for (const [a, b] of [[0, 4], [2, 4], [6, 4], [8, 4], [1, 7], [3, 5]]) {
+        const ax = -1.2 + (a % 3) * 1.2, ay = 0.85 + Math.floor(a / 3) * 0.65, bx = -1.2 + (b % 3) * 1.2, by = 0.85 + Math.floor(b / 3) * 0.65;
+        s.add(P.box, '#d8282a', [(ax + bx) / 2, (ay + by) / 2, 0.07], [0, 0, Math.atan2(by - ay, bx - ax)], [Math.hypot(bx - ax, by - ay), 0.02, 0.01]);
+      }
+    },
+    // Prison bars, a cell's width of them, with crossbars.
+    cellbars(s) {
+      for (let i = -9; i <= 9; i++) s.add(P.cylLo, '#5a5e62', [i * 0.22, 1.5, 0], null, [0.035, 3.0, 0.035]);
+      for (const y of [0.1, 1.6, 2.95]) s.add(P.box, '#4a4e52', [0, y, 0], null, [4.1, 0.1, 0.08]);
+    },
+    // A prisoner who is, inexplicably, dead: slumped in an orange jumpsuit.
+    deadprisoner(s) {
+      s.add(P.capsule, '#e07a2a', [0, 0.3, 0], [Math.PI / 2 - 0.3, 0, 0], [0.22, 0.7, 0.18]);
+      s.add(P.sphere, '#b8b0a0', [0, 0.6, -0.45], null, [0.17, 0.17, 0.17]);
+      for (const sx of [-1, 1]) { s.add(P.capsule, '#e07a2a', [sx * 0.15, 0.1, 0.45], [Math.PI / 2, 0, 0], [0.08, 0.5, 0.08]); s.add(P.capsule, '#e07a2a', [sx * 0.3, 0.25, 0.0], [0.3, 0, sx * 1.2], [0.06, 0.4, 0.06]); }
+    },
+    // A landline portal: an old rotary phone on a pedestal, humming faintly green.
+    landline(s) {
+      s.add(P.cyl, '#3a3a40', [0, 0.45, 0], null, [0.25, 0.9, 0.25]);
+      s.add(P.box, '#2a2a2e', [0, 0.95, 0], null, [0.5, 0.18, 0.4]);
+      s.add(P.capsule, '#2a2a2e', [0, 1.12, 0], [0, 0, Math.PI / 2], [0.07, 0.45, 0.07]);
+      s.add(P.cyl, '#d8d8d0', [0, 1.05, 0.12], [Math.PI / 2 - 0.4, 0, 0], [0.13, 0.02, 0.13]);
+      s.add(P.torus, '#7aff8a', [0, 0.95, 0], [Math.PI / 2, 0, 0], [0.4, 0.4, 0.3], true);
+    },
+    titanicposter(s) {
+      s.add(P.box, '#1a2a4a', [0, 1.7, 0], null, [1.0, 1.4, 0.02]);
+      s.add(P.box, '#f2e8d0', [0, 2.25, 0.015], null, [0.8, 0.14, 0.01]);
+      s.add(P.box, '#1a1a1a', [0, 1.5, 0.015], [0, 0, -0.3], [0.7, 0.18, 0.01]);
+      s.add(P.box, '#e8e8e0', [-0.1, 1.62, 0.015], [0, 0, -0.3], [0.08, 0.16, 0.01]);
+      s.add(P.sphereLo, '#ffd84d', [0.25, 1.85, 0.015], null, [0.07, 0.07, 0.01]);
+    },
+    golfbag(s) {
+      s.add(P.cyl, '#2a5a3a', [0, 0.5, 0], [0.12, 0, 0], [0.22, 1.0, 0.22]);
+      for (let i = 0; i < 4; i++) { s.add(P.cylLo, '#c8c8c8', [Math.sin(i) * 0.08, 1.15, Math.cos(i) * 0.08], null, [0.015, 0.4, 0.015]); s.add(P.box, '#a8a8b0', [Math.sin(i) * 0.08 + 0.04, 1.36, Math.cos(i) * 0.08], null, [0.1, 0.05, 0.04]); }
+    },
     // ----- The solar system -----
     // King Flippy Nips's palace: a stepped pyramid in Pluto's teal and gold, a mushroom dome on top.
     lm_plutopalace(s) {
@@ -3041,6 +3156,14 @@
     s.add(P.box, dim.ground[0], [0, -0.1, 0], null, [w, 0.2, d]);
     // Floor planks / tiles for a bit of texture.
     if (R.style === 'garage') for (let i = 1; i < 4; i++) s.add(P.box, '#7e7e78', [0, 0.004, -d / 2 + i * d / 4], null, [w, 0.008, 0.06]);   // concrete joints
+    else if (R.style === 'holo' || R.style === 'tile' || R.style === 'lab') {
+      // A grid: the holodeck's glowing yellow lines, bathroom tiles, or the lab's floor plates.
+      const step = R.style === 'holo' ? 1.5 : R.style === 'tile' ? 0.5 : 2, col = R.style === 'holo' ? R.trim : R.style === 'tile' ? '#b8c0c0' : '#2a3038', glow = R.style === 'holo';
+      for (let v = -w / 2 + step; v < w / 2; v += step) s.add(P.box, col, [v, 0.006, 0], null, [0.03, 0.01, d], glow);
+      for (let v = -d / 2 + step; v < d / 2; v += step) s.add(P.box, col, [0, 0.006, v], null, [w, 0.01, 0.03], glow);
+      for (let y = step; y < h; y += step) for (const [x, z, sx, sz] of [[0, -d / 2 + 0.21, w, 0.02], [0, d / 2 - 0.21, w, 0.02], [-w / 2 + 0.21, 0, 0.02, d], [w / 2 - 0.21, 0, 0.02, d]]) s.add(P.box, col, [x, y, z], null, [sx, 0.03, sz], glow);
+      if (R.style === 'holo') for (let v = -w / 2 + step; v < w / 2; v += step) for (const z of [-d / 2 + 0.21, d / 2 - 0.21]) s.add(P.box, col, [v, h / 2, z], null, [0.03, h, 0.02], true);
+    }
     else for (let i = 0; i < 8; i++) s.add(P.box, i % 2 ? dim.ground[1] : dim.ground[2], [-w / 2 + w / 16 + i * w / 8, 0.005, 0], null, [w / 8 - 0.05, 0.01, d - 0.2]);
     const walls = [[0, h / 2, -d / 2, w, h, 0.4], [0, h / 2, d / 2, w, h, 0.4], [-w / 2, h / 2, 0, 0.4, h, d], [w / 2, h / 2, 0, 0.4, h, d]];
     for (const [x, y, z, sx, sy, sz] of walls) s.add(P.box, R.wall, [x, y, z], null, [sx, sy, sz]);
@@ -3066,7 +3189,7 @@
     for (const [x, z, sx, sz] of [[0, -d / 2 + 0.25, w, 0.1], [0, d / 2 - 0.25, w, 0.1], [-w / 2 + 0.25, 0, 0.1, d], [w / 2 - 0.25, 0, 0.1, d]]) s.add(P.box, R.trim, [x, 0.3, z], null, [sx, 0.6, sz]);
     s.add(P.box, R.trim, [0, h, 0], null, [w, 0.3, d]);
     // Hanging lights.
-    if (R.style !== 'garage') for (const x of [-w / 4, w / 4]) for (const z of [-d / 4, d / 4]) { s.add(P.cylLo, '#2a2a2a', [x, h - 0.5, z], null, [0.03, 1, 0.03]); s.add(P.sphereLo, '#fff4c0', [x, h - 1.1, z], null, [0.35, 0.25, 0.35], true); }
+    if (R.style !== 'garage' && R.style !== 'holo') for (const x of [-w / 4, w / 4]) for (const z of [-d / 4, d / 4]) { s.add(P.cylLo, '#2a2a2a', [x, h - 0.5, z], null, [0.03, 1, 0.03]); s.add(P.sphereLo, '#fff4c0', [x, h - 1.1, z], null, [0.35, 0.25, 0.35], true); }
     const g = C.meshOf(s.build(), 0.05);
     g.traverse(o => { if (o.material && o.material.side === T.BackSide) o.visible = false; });   // outlines would show through walls
     const lamp = new T.PointLight('#fff1d0', R.style === 'garage' ? 0.25 : 0.35, 40);
@@ -3506,6 +3629,40 @@
           s.add(P.sphereLo, '#1a1a1a', [sx * 0.16, 1.4, 0.55], null, [0.045, 0.055, 0.03]);
         }
         s.add(P.box, '#3a1a3a', [0, 1.2, 0.52], null, [0.22, 0.04, 0.03]);
+      } else if (type === 'maneater' || type === 'yardplant') {
+        // A man-eating plant on legs of root.
+        const head = type === 'yardplant' ? '#5aaa4a' : '#7aaa3a';
+        for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; s.add(P.capsule, '#5a4a2a', [Math.cos(a) * 0.4, 0.2, Math.sin(a) * 0.4], [Math.sin(a) * 0.9, 0, -Math.cos(a) * 0.9], [0.08, 0.6, 0.08]); }
+        s.add(P.capsule, '#3a8a2a', [0, 1.1, 0], [0.2, 0, 0], [0.16, 1.4, 0.16]);
+        s.add(P.hemi, head, [0, 1.95, 0.25], [-0.35, 0, 0], [0.65, 0.55, 0.65]);
+        s.add(P.hemi, head, [0, 1.85, 0.3], [Math.PI + 0.45, 0, 0], [0.65, 0.5, 0.65]);
+        s.add(P.sphereLo, '#c83a4a', [0, 1.9, 0.35], null, [0.5, 0.13, 0.5]);
+        for (let i = -3; i <= 3; i++) { s.add(P.cone, '#fff8e0', [i * 0.15, 1.97, 0.7], [Math.PI, 0, 0], [0.045, 0.18, 0.045]); s.add(P.cone, '#fff8e0', [i * 0.15, 1.78, 0.75], null, [0.045, 0.16, 0.045]); }
+      } else if (type === 'killbot') {
+        // A kill bot: treads, a boxy body, a red eye and two gun arms.
+        for (const sx of [-1, 1]) s.add(P.box, '#2a2a2e', [sx * 0.45, 0.3, 0], null, [0.3, 0.6, 1.3]);
+        s.add(P.box, '#7a828c', [0, 1.2, 0], null, [1.0, 1.2, 0.8]);
+        s.add(P.box, '#5a626c', [0, 2.0, 0], null, [0.6, 0.45, 0.55]);
+        s.add(P.box, '#ff2a2a', [0, 2.02, 0.29], null, [0.4, 0.08, 0.02], true);
+        for (const sx of [-1, 1]) { s.add(P.box, '#5a626c', [sx * 0.65, 1.3, 0.2], null, [0.22, 0.22, 0.8]); s.add(P.cyl, '#2a2a2e', [sx * 0.65, 1.3, 0.7], [Math.PI / 2, 0, 0], [0.08, 0.4, 0.08]); }
+        s.add(P.cylLo, '#2a2a2e', [0.2, 2.5, 0], null, [0.02, 0.5, 0.02]);
+      } else if (type === 'boomdrone') {
+        // A boombox drone: two speakers, a screen with its owner's face, four rotors.
+        s.add(P.box, '#3a3a40', [0, 0.4, 0], null, [1.0, 0.5, 0.35]);
+        for (const sx of [-1, 1]) { s.add(P.cyl, '#1a1a1e', [sx * 0.3, 0.4, 0.18], [Math.PI / 2, 0, 0], [0.18, 0.04, 0.18]); s.add(P.cyl, '#5a5a62', [sx * 0.3, 0.4, 0.2], [Math.PI / 2, 0, 0], [0.07, 0.04, 0.07]); }
+        s.add(P.box, '#6fd2df', [0, 0.72, 0.1], null, [0.3, 0.18, 0.02], true);
+        for (const [x, z] of [[-0.6, -0.3], [0.6, -0.3], [-0.6, 0.3], [0.6, 0.3]]) { s.add(P.cylLo, '#2a2a2e', [x, 0.7, z], null, [0.02, 0.3, 0.02]); s.add(P.cyl, '#8a8a92', [x, 0.86, z], null, [0.28, 0.02, 0.28]); }
+      } else if (type === 'fungusclone' || type === 'funguseater') {
+        // A fungus clone: a lumpy, pale fungal person with mushroom caps for hair. The hungry
+        // one is huge and mostly mouth.
+        const big = type === 'funguseater', k = big ? 2.2 : 1;
+        s.add(P.sphere, '#d8c8a8', [0, 0.7 * k, 0], null, [0.55 * k, 0.7 * k, 0.5 * k]);
+        s.add(P.sphere, '#e8dcc0', [0, 1.45 * k, 0.05], null, [0.42 * k, 0.45 * k, 0.4 * k]);
+        for (let i = 0; i < 5; i++) s.add(P.hemi, i % 2 ? '#a87a5a' : '#c89a6a', [Math.sin(i * 1.3) * 0.25 * k, 1.8 * k + (i % 2) * 0.08, Math.cos(i * 1.3) * 0.2 * k], null, [0.22 * k, 0.12 * k, 0.22 * k]);
+        for (const sx of [-1, 1]) { s.add(P.sphereLo, '#fff', [sx * 0.15 * k, 1.5 * k, 0.38 * k], null, [0.09 * k, 0.09 * k, 0.05 * k]); s.add(P.sphereLo, '#111', [sx * 0.15 * k, 1.5 * k, 0.42 * k], null, [0.04 * k, 0.04 * k, 0.02 * k]); }
+        s.add(P.sphereLo, '#3a1a12', [0, 1.28 * k, 0.38 * k], null, [big ? 0.3 * k : 0.12, big ? 0.18 * k : 0.04, 0.05 * k]);
+        if (big) for (let i = -3; i <= 3; i++) s.add(P.cone, '#fff8e0', [i * 0.1 * k, 1.36 * k, 0.42 * k], [Math.PI, 0, 0], [0.04 * k, 0.1 * k, 0.04 * k]);
+        for (const sx of [-1, 1]) s.add(P.capsule, '#d8c8a8', [sx * 0.6 * k, 0.8 * k, 0], [0, 0, sx * 0.5], [0.12 * k, 0.6 * k, 0.12 * k]);
       } else if (type === 'mooncrab') {
         s.add(P.sphere, '#c9c9d6', [0, 0.55, 0], null, [0.85, 0.35, 0.7]);
         for (const sx of [-1, 1]) {

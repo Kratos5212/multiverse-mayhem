@@ -485,6 +485,107 @@
       props: [['column', 30], ['banner', 12], ['lantern', 14]],
       npc: [['sunknight', 10], ['sunking', 1, 0, -38]], pickups: { c: 6, k: 2 }, mat: 'c',
     },
+    // ----- The rest of the Smith house: rooms off the main floors -----
+    {
+      id: 'ensuite', name: "Beth and Jerry's bathroom", code: 'C-137', seed: 141, gravity: 24, interior: true, hidden: true, bound: 4.2, boundZ: 3.2,
+      blurb: 'The en-suite off Beth and Jerry\'s room. Two sinks, one hair dryer, a lot of history.',
+      sky: ['#2a2a30', '#2a2a30'], fog: '#2a2a30', fogFar: 400, sun: '#fff4e0', ambient: '#c8c8c0',
+      ground: ['#e8e8e0', '#d8dcd8', '#f4f4ee'], accent: '#7ad8ff', spawn: { x: -2.8, z: 0 },
+      room: { w: 8.6, d: 6.6, h: 3.2, wall: '#a8d8e0', trim: '#f4f4f0', style: 'tile' },
+      fixed: [['bathtub', 2.6, -2.2, 0], ['toilet', 3.6, 2.6, Math.PI], ['bathsink', 0.4, -3.0, 0], ['bathsink', -1.2, -3.0, 0], ['bathmirror', -0.4, -3.25, 0], ['in_plant', -3.7, 2.8, 0]],
+      props: [], npc: [], pickups: {}, mat: 's',
+    },
+    {
+      id: 'holodeck', name: "Rick's Holodeck", code: 'C-137', seed: 142, gravity: 24, interior: true, hidden: true, bound: 7.3,
+      blurb: 'A room that can be anywhere. Beth and Space Beth used it for a very long simulation once.',
+      sky: ['#05070a', '#05070a'], fog: '#05070a', fogFar: 400, sun: '#ffffff', ambient: '#8a96a8',
+      ground: ['#14181e', '#181d24', '#101318'], accent: '#ffd84d', spawn: { x: 0, z: 5 },
+      room: { w: 15, d: 15, h: 6, wall: '#101318', trim: '#ffd84d', style: 'holo' },
+      fixed: [], props: [], npc: [], pickups: {}, mat: 'c',
+    },
+    {
+      id: 'mancave', name: "Jerry's Man Cave", code: 'C-137', seed: 143, gravity: 24, interior: true, hidden: true, bound: 5.3, boundZ: 4.3,
+      blurb: 'Jerry\'s place to be a man, in the shed. A couch, a TV, a Titanic poster and the Lovefinderrz app, abandoned.',
+      sky: ['#2a2018', '#2a2018'], fog: '#2a2018', fogFar: 400, sun: '#ffe8c8', ambient: '#b09878',
+      ground: ['#6a5040', '#5a4436', '#7a5c48'], accent: '#ffd84d', spawn: { x: 0, z: 3 },
+      room: { w: 11, d: 9, h: 3.2, wall: '#7a5a3e', trim: '#4a3424' },
+      fixed: [['in_sofa', 0, 0.6, Math.PI], ['tvscreen', 0, -4.1, 0], ['titanicposter', -3.4, -4.3, 0], ['in_desk', 4.2, -2.6, -Math.PI / 2], ['in_counter', -4.4, 1.2, Math.PI / 2], ['golfbag', 4.6, 3.2, 0]],
+      props: [], npc: [], pickups: { p: 1 }, mat: 'p',
+    },
+    // ----- Under the lab: the garage's sublevels, down the elevator -----
+    {
+      id: 'sublevels', name: 'Garage Elevator (sublevels)', code: 'C-137', seed: 150, gravity: 24, interior: true, hidden: true, bound: 11, boundZ: 7.2,
+      blurb: 'Rick\'s elevator, from the lab down to the sublevels. There are more of them than there should be.',
+      sky: ['#0c1014', '#0c1014'], fog: '#0c1014', fogFar: 400, sun: '#cfe8ff', ambient: '#7a90a8',
+      ground: ['#3a424e', '#424a58', '#343c46'], accent: '#5ff8ff', spawn: { x: 0, z: 4.5 },
+      room: { w: 23, d: 15, h: 5, wall: '#4a5462', trim: '#22303a', style: 'lab' },
+      fixed: [], props: [], npc: [], pickups: {}, mat: 'c',
+    },
+    {
+      id: 'sub_b1', name: 'Sublevel B1: clones and weapons', code: 'B1', seed: 151, gravity: 24, interior: true, hidden: true, bound: 13,
+      blurb: 'Operation Phoenix: rows of spare Rick bodies, and the walls are weapons. Blim Blam was kept down here once.',
+      sky: ['#0c1014', '#0c1014'], fog: '#0c1014', fogFar: 400, sun: '#cfe8ff', ambient: '#7a90a8',
+      ground: ['#4a5260', '#566070', '#3e4652'], accent: '#5ff8ff', spawn: { x: 0, z: 10 },
+      room: { w: 27, d: 27, h: 6, wall: '#5a6474', trim: '#2a3240', style: 'lab' },
+      fixed: [[-9, -11], [-6, -11], [-3, -11], [3, -11], [6, -11], [9, -11], [-9, -6], [-6, -6], [6, -6], [9, -6]].map(([x, z]) => ['clonetank', x, z, 0])
+        .concat([-8, -4, 0, 4, 8].map(z => ['weaponrack', -12.6, z, Math.PI / 2]), [-8, -4, 0, 4, 8].map(z => ['weaponrack', 12.6, z, -Math.PI / 2])),
+      props: [], npc: [], pickups: { s: 3 }, mat: 's',
+    },
+    {
+      id: 'sub_b2', name: 'Sublevel B2: the Killer Plant Lab', code: 'B2', seed: 152, gravity: 24, interior: true, hidden: true, bound: 13,
+      blurb: 'Sentient, man-eating plants that need feeding all the time. Summer says there is a Phantom Zone down here too.',
+      sky: ['#0a140c', '#0a140c'], fog: '#0a140c', fogFar: 400, sun: '#d8ffd0', ambient: '#7aa878',
+      ground: ['#3a4a32', '#44583a', '#33402c'], accent: '#7aff6a', spawn: { x: 0, z: 10 },
+      room: { w: 27, d: 27, h: 6, wall: '#3a5a3e', trim: '#1e2a1e', style: 'lab' },
+      fixed: [[-9, -9], [-3, -10], [3, -10], [9, -9], [-10, -3], [10, -3], [-10, 3], [10, 3], [-6, 6], [6, 6]].map(([x, z], i) => ['killerplant', x, z, i]).concat([['f_vat', 0, -6, 0]]),
+      props: [], npc: [['maneater', 5]], pickups: { g: 4 }, mat: 'g',
+    },
+    {
+      id: 'sub_b3', name: 'Sublevel B3: the Globaflyn Prison', code: 'B3', seed: 153, gravity: 24, interior: true, hidden: true, bound: 13,
+      blurb: 'People Rick wants gone but not dead, each in a sac of globaflyn, living forever in a dream of what they want most.',
+      sky: ['#140c18', '#140c18'], fog: '#140c18', fogFar: 400, sun: '#f0d8ff', ambient: '#9a80a8',
+      ground: ['#3e3448', '#4a3e56', '#342c3e'], accent: '#e08aff', spawn: { x: 0, z: 10 },
+      room: { w: 27, d: 27, h: 6, wall: '#4a3e5a', trim: '#221a2a', style: 'lab' },
+      fixed: [].concat(...[-10, -5, 0, 5].map(z => [-10, -6, -2, 2, 6, 10].map((x, i) => ['globaflyn', x, z, i]))),
+      props: [], npc: [], pickups: { p: 3 }, mat: 'p',
+    },
+    {
+      id: 'sub_b7', name: 'Sublevel B7: the Valuables Vault', code: 'B7', seed: 157, gravity: 24, interior: true, hidden: true, bound: 13,
+      blurb: 'Important objects and machines. In the middle, a giant ant-farm brain holding a memory of Diane.',
+      sky: ['#14120a', '#14120a'], fog: '#14120a', fogFar: 400, sun: '#fff4d0', ambient: '#a89a78',
+      ground: ['#5a5446', '#665e4e', '#4e483c'], accent: '#ffd84d', spawn: { x: 0, z: 10 },
+      room: { w: 27, d: 27, h: 6, wall: '#6a6050', trim: '#2e2a20', style: 'lab' },
+      fixed: [['antbrain', 0, -7, 0]].concat([-9, -3, 3, 9].map(x => ['curioshelf', x, -12.5, 0]), [-8, -2, 4].map(z => ['curioshelf', -12.5, z, Math.PI / 2]), [-8, -2, 4].map(z => ['curioshelf', 12.5, z, -Math.PI / 2]), [['goldorb', -7, 2, 0], ['goldorb', 7, 2, 0], ['voidcrystal', -7, 7, 0], ['voidcrystal', 7, 7, 0]]),
+      props: [], npc: [], pickups: { k: 3, c: 3 }, mat: 'c',
+    },
+    {
+      id: 'sub_b10', name: 'Sublevel B10: the Rick Prime room', code: 'B10', seed: 160, gravity: 24, interior: true, hidden: true, bound: 13,
+      blurb: 'Rick\'s secret base for hunting Rick Prime: maps, screens, red string and a lot of empty bottles. Shut down after "Unmortricken".',
+      sky: ['#0a0a10', '#0a0a10'], fog: '#0a0a10', fogFar: 400, sun: '#ffd0c8', ambient: '#806878',
+      ground: ['#2e2e36', '#36363e', '#28282e'], accent: '#ff4a4a', spawn: { x: 0, z: 10 },
+      room: { w: 27, d: 27, h: 6, wall: '#34343e', trim: '#1a1a20', style: 'lab' },
+      fixed: [['f_tvwall', 0, -12.4, 0], ['bigcomputer', -8, -11, 0], ['mapboard', -12.6, -4, Math.PI / 2], ['mapboard', -12.6, 4, Math.PI / 2], ['mapboard', 12.6, -4, -Math.PI / 2], ['mapboard', 12.6, 4, -Math.PI / 2], ['in_desk', 0, -6, Math.PI], ['barrel', 9, -10, 0], ['bottlerack', 9, 8, -Math.PI / 2]],
+      props: [], npc: [], pickups: { k: 2 }, mat: 'k',
+    },
+    {
+      id: 'sub_b15', name: "Sublevel B15: Jiro's", code: 'B15', seed: 165, gravity: 24, interior: true, hidden: true, bound: 13,
+      blurb: 'A sushi restaurant, under the garage. The top-rated restaurant in all the sublevels, ahead of Luigi\'s.',
+      sky: ['#1a1410', '#1a1410'], fog: '#1a1410', fogFar: 400, sun: '#fff0d8', ambient: '#b8a080',
+      ground: ['#8a6a4a', '#9a7a58', '#7a5c3e'], accent: '#ff5a4a', spawn: { x: 0, z: 10 },
+      room: { w: 27, d: 27, h: 5, wall: '#e8dcc8', trim: '#5a3a22' },
+      fixed: [['in_counter', -3.6, -6, 0], ['in_counter', 0, -6, 0], ['in_counter', 3.6, -6, 0], ['in_bench', -3.6, -4, 0], ['in_bench', 0, -4, 0], ['in_bench', 3.6, -4, 0], ['lantern', -8, -10, 0], ['lantern', 8, -10, 0], ['in_table', -8, 4, 0], ['in_table', 8, 4, 0], ['in_plant', -11.5, -11.5, 0], ['in_plant', 11.5, -11.5, 0]],
+      props: [], npc: [['jiro', 1, 0, -8.5]], pickups: { f: 3 }, mat: 'f',
+    },
+    {
+      id: 'sub_b17', name: 'Sublevel B17: the dead prison', code: 'B17', seed: 167, gravity: 24, interior: true, hidden: true, bound: 13,
+      blurb: 'A prison full of prisoners who are, inexplicably, all dead. Past it, a storeroom of landline portals.',
+      sky: ['#0a0c0c', '#0a0c0c'], fog: '#0a0c0c', fogFar: 400, sun: '#d8e8e0', ambient: '#6a7a74',
+      ground: ['#3a3e3c', '#444846', '#323634'], accent: '#9affd8', spawn: { x: 0, z: 10 },
+      room: { w: 27, d: 27, h: 5, wall: '#4a504c', trim: '#1e2220', style: 'lab' },
+      fixed: [-9, -4.5, 0, 4.5].map(x => ['cellbars', x, -11, 0]).concat([-6, 0, 6].map(z => ['cellbars', -11.5, z, Math.PI / 2]), [[-9, -12, 0.3], [0, -12.2, 2.1], [-12.2, -1, 1.2], [-12.4, 5, 2.6]].map(([x, z, r]) => ['deadprisoner', x, z, r]),
+        [[8, -10], [10, -8], [8, -6], [10, -4], [8, -2]].map(([x, z], i) => ['landline', x, z, -Math.PI / 2 + i * 0.2])),
+      props: [], npc: [], pickups: { s: 2 }, mat: 's',
+    },
   ];
   MM.DIM_BY_ID = {};
   for (const d of MM.DIMS) MM.DIM_BY_ID[d.id] = d;
@@ -881,12 +982,25 @@
     labmachine:  { r: 1.8, h: 3.0, hp: 1e9, drop: {}, fixed: true },
     barrel:      { r: 1.0, h: 1.8, hp: 1e9, drop: {}, fixed: true },
     bottlerack:  { r: 1.6, h: 3.0, hp: 1e9, drop: {}, fixed: true },
+    // The sublevels and the rest of the house.
+    killerplant: { r: 0.9, h: 2.8, hp: 1e9, drop: {}, fixed: true },
+    globaflyn:   { r: 0.8, h: 2.6, hp: 1e9, drop: {}, fixed: true },
+    antbrain:    { r: 2.6, h: 4.5, hp: 1e9, drop: {}, fixed: true },
+    mapboard:    { r: 1.6, h: 2.6, hp: 1e9, drop: {}, fixed: true, box: [-1.6, 1.6, -0.15, 0.15] },
+    cellbars:    { r: 2.0, h: 3.0, hp: 1e9, drop: {}, fixed: true, box: [-2.0, 2.0, -0.15, 0.15] },
+    deadprisoner:{ r: 0.4, h: 0.6, hp: 1e9, drop: {}, fixed: true, arch: true },
+    landline:    { r: 0.4, h: 1.3, hp: 1e9, drop: {}, fixed: true },
+    titanicposter: { r: 0.1, h: 0.1, hp: 1e9, drop: {}, fixed: true, arch: true },
+    golfbag:     { r: 0.3, h: 1.1, hp: 1e9, drop: {}, fixed: true },
   });
 
   // Landmarks are solid, can't be destroyed, and each has its own model.
   for (const l of MM.LANDMARKS) MM.PROPS[l.model] = { r: l.r, h: l.h, hp: 1e9, drop: {}, fixed: true };
   // Rings on the floor that mark a spot: you walk over them.
   MM.PROPS.lm_marker = { r: 0.6, h: 0.1, hp: 1e9, drop: {}, fixed: true, arch: true };
+  // Doors set into a wall (and Rick's elevator doors): you walk up to them, not into them.
+  MM.PROPS.lm_walldoor = { r: 0.6, h: 2.2, hp: 1e9, drop: {}, fixed: true, arch: true };
+  MM.PROPS.lm_elevator = { r: 1.2, h: 3.2, hp: 1e9, drop: {}, fixed: true, arch: true };
 
   // NPCs. hostile ones chase and bite; the rest are locals you can talk to (F).
   //   human: built like a player, from these look options.  fly: hover height.
@@ -1022,6 +1136,23 @@
         skin: '#e8c8a8', hairColor: '#8a6a4a', topColor: '#6a8aa8', shirtColor: '#f2f2f2', pantsColor: '#4a4a5a', shoeColor: '#2a2a2a', accColor: '#2a2a2a' } },
       names: ['Gordon Lunas, the Man on the Moon'],
       talk: ['I am the man on the moon. It is lonely. I am thinking of a career change. Guidance counselling.', 'The flag is real. The footprints are real. The reptile footprints... we do not talk about those.'] },
+    // ----- The Smith house's defences (shared/house.js) -----
+    killbot: { name: 'Kill bot', hp: 140, speed: 4.6, hostile: false, dmg: 14, drop: { s: 3 }, r: 0.7, h: 2.3 },
+    boomdrone: { name: 'Boombox drone', hp: 50, speed: 5.5, hostile: false, dmg: 5, drop: { s: 2 }, r: 0.5, h: 0.8, fly: 3.2, voice: true,
+      talk: ['THIS IS $\'S HOUSE. GET OFF MY LAWN.', 'YOU ARE BEING RECORDED BY $. HE IS NOT HAPPY.', '$ SAYS: WUBBA LUBBA DUB DUB, INTRUDER.', 'TURN BACK. THIS IS YOUR ONLY WARNING. ALSO YOUR SECOND.'] },
+    yardplant: { name: 'Carnivorous plant', hp: 90, speed: 0.8, hostile: false, dmg: 10, drop: { g: 2 }, r: 0.9, h: 2.2 },
+    hologram: { name: 'Hologram Rick', hp: 9999, speed: 0, hostile: false, dmg: 0, drop: {}, r: 0.5, h: 1.9, decoy: true, human: { fixed: 'genius' },
+      talk: ['I am a hologram. Hit me. Go on.', 'The real one is somewhere else, laughing.'] },
+    fungusclone: { name: 'Fungus clone', hp: 60, speed: 1.8, hostile: false, dmg: 0, drop: { g: 3 }, r: 0.6, h: 1.4,
+      talk: ['It\'s me! The real one. Not a fungus.', 'Beth? Beth, I\'m home. In a normal voice.', 'I... WILL... um. Hi!', 'Why is everyone looking at me like that?'] },
+    funguseater: { name: 'Fungus clone (hungry)', hp: 320, speed: 3.4, hostile: true, dmg: 15, drop: { g: 8, m: 1 }, r: 1.6, h: 3.4 },
+    // ----- Under the Smith garage -----
+    maneater: { name: 'Killer plant', hp: 70, speed: 0.6, hostile: true, dmg: 9, drop: { g: 2 }, r: 0.9, h: 2.2 },
+    jiro: { name: 'Jiro', hp: 80, speed: 1.5, hostile: false, dmg: 0, drop: { f: 2 }, r: 0.6, h: 1.7,
+      human: { species: ['human'], top: ['tshirt'], acc: ['headband'], look: { hair: 'bald', brow: 'normal', eyes: 'tired', mouth: 'flat', face: 'round', height: 0.95, width: 0.95, head: 1.0,
+        skin: '#f0d0a8', hairColor: '#d8d8d8', topColor: '#f6f6f2', shirtColor: '#f6f6f2', pantsColor: '#2a2a2a', shoeColor: '#2a2a2a', accColor: '#f6f6f2' } },
+      names: ['Jiro'],
+      talk: ['Sit. Eat. Do not ask what fish. It is the best fish.', 'Luigi\'s? Pasta, under a garage. Disgraceful.', 'Rick-san eats here every Tuesday. He never pays. He is Rick-san.', 'Seventy years I make sushi. Thirty of them in a sublevel.'] },
     mooncrab: { name: 'Moon Crab', hp: 40, speed: 5, hostile: true, dmg: 6, drop: { c: 2 }, r: 0.8, h: 1.0 },
     moonminer: { name: 'Miner', hp: 50, speed: 2.5, hostile: false, dmg: 0, drop: { c: 3 }, r: 0.6, h: 1.8,
       human: { species: ['robot', 'human'], top: ['armor', 'vest'], acc: ['goggles', 'headband', 'cap'] },

@@ -324,6 +324,10 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 .keys { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
 .keys kbd { background: #0e1328; border: 2px solid #000; border-radius: 6px; padding: 0 6px; font: 700 13px var(--font); }
 #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 22px; color: var(--portal); background: var(--bg); }
+/* House defences: a grid of big buttons, each with what it does */
+.deflist { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; max-height: 60vh; overflow: auto; }
+.defbtn { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 3px; white-space: normal; height: auto; padding: 8px 10px; }
+.defbtn span { font-size: 12px; opacity: 0.8; font-weight: 400; line-height: 1.3; }
 </style>
 </head>
 <body>
@@ -433,6 +437,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 <script src="shared/curios.js"></script>
 <script src="shared/races.js"></script>
 <script src="shared/cast.js"></script>
+<script src="shared/house.js"></script>
 <script src="shared/protocol.js"></script>
 <script src="sim/host.js"></script>
 <script src="sim/bot.js"></script>

@@ -166,9 +166,10 @@
         pickups: [...this.pickups.values()].map(pk => [pk.id, pk.c, r2(pk.x), r2(pk.y), r2(pk.z), pk.n]),
         npcs: [...this.npcs.values()].map(n => this.npcRow(n)),
         portals: [...this.portals.values()].map(po => this.portalRow(po)),
-        turrets: [...this.turrets.values()].map(t => [t.id, t.owner, r2(t.x), r2(t.y), r2(t.z)]),
+        turrets: [...this.turrets.values()].map(t => [t.id, t.owner, r2(t.x), r2(t.y), r2(t.z), t.big ? 1 : 0]),
         pairs: [...this.players.values()].flatMap(p => (p.pp || []).map((P, c) => P ? Object.assign({ o: p.id, c }, P) : null).filter(Boolean)),
         event: this.event ? { name: this.event.E.name, text: this.event.E.text, left: r2(this.event.until - this.host.time) } : null,
+        house: this.host.houseRow(this),
       };
     }
     portalRow(po) { return { id: po.id, x: r2(po.x), y: r2(po.y), z: r2(po.z), r: r2(po.r), d: po.destDim, col: po.col, st: po.st || 'swirl', ttl: r2(po.until - this.host.time) }; }
@@ -179,6 +180,7 @@
       this.tickProjectiles(dt, now);
       this.tickNpcs(dt, now);
       this.tickTurrets(dt, now);
+      if (this.house) this.host.tickHouse(this, now);
       this.tickPortals(now);
       if (this.players.size) this.tickEvents(now);
       // Props grow back a minute after they are destroyed.
@@ -256,6 +258,10 @@
         pr.life -= dt;
         let hit = null;
         const shooter = pr.owner ? this.host.players.get(pr.owner) : null;
+        if (this.house && this.house.shield > now && !MM.inHouse(ox, oz) && MM.inHouse(pr.x, pr.z) && !(shooter && this.host.houseAllows(this, shooter))) {
+          this.ev({ k: 'hit', id: pr.id, x: r2(pr.x), y: r2(pr.y), z: r2(pr.z) });
+          continue;
+        }
         for (const p of this.players.values()) {
           if (p.dead || p.id === pr.owner || (shooter && !this.host.canHurt(shooter, p))) continue;   // shots pass through people not fighting
           const s = this.host.scaleOf(p);
@@ -431,32 +437,46 @@
         const owner = n.owner && now < n.ownerUntil ? this.host.players.get(n.owner) : null;
         if (n.owner && !owner) { n.owner = 0; this.ev({ k: 'nfree', n: n.id }); }
         if (now < n.stun || now < n.dance) { n.y = MM.heightAt(this.dimId, n.x, n.z) + (T.fly || 0); continue; }
-        if (owner && owner.inst === this) {
-          // A follower: fight whatever is near its friend, otherwise tag along.
+        if (owner && (owner.inst === this || n.guardAt)) {
+          // A follower: fight whatever is near its friend, otherwise tag along. A guard (the
+          // house's kill bots, drones and plants) keeps to its post and goes for intruders.
+          const post = n.guardAt;
           let best = null, bd = 12 * 12, isNpc = true;
+          if (post && T.speed > 0) for (const p of this.players.values()) {
+            if (p === owner || p.dead || !this.visible(p, now) || this.host.houseAllows(this, p) || !this.host.canHurt(owner, p)) continue;
+            if (!MM.inHouse(p.x, p.z) && dist2(p.x, p.z, post.x, post.z) > 14 * 14) continue;
+            const d = dist2(p.x, p.z, n.x, n.z);
+            if (d < bd * 4) { bd = d; best = p; isNpc = false; }
+          }
+          if (T.voice && now > (n.sayT || 0)) { n.sayT = now + 6 + Math.random() * 4; this.ev({ k: 'say', n: n.id, by: owner.id, text: pick(MM.NPCS.boomdrone.talk).replace('$', n.voice || 'Rick') }); }
           for (const m of this.npcs.values()) {
             if (m === n || !m.T.hostile || (m.owner && now < m.ownerUntil)) continue;
             const d = dist2(m.x, m.z, n.x, n.z);
             if (d < bd) { bd = d; best = m; }
           }
-          for (const p of this.players.values()) {
+          if (!best || isNpc) for (const p of this.players.values()) {
             if (p === owner || !this.visible(p, now) || !this.host.canHurt(owner, p)) continue;
             const d = dist2(p.x, p.z, n.x, n.z);
             if (d < Math.min(bd, 7 * 7)) { bd = d; best = p; isNpc = false; }
           }
+          if (T.decoy) best = null;
           if (best) {
             goal = best; speed *= 1.5;
             if (bd < (T.r + 1.3) ** 2 && now >= n.cd) {
               n.cd = now + 1.0;
               this.ev({ k: 'bite', n: n.id });
-              if (isNpc) this.hurtNpc(best, 8, owner); else this.host.hurtPlayer(this, best, 6, owner, 'follower');
+              if (isNpc) this.hurtNpc(best, T.dmg || 8, owner); else this.host.hurtPlayer(this, best, T.dmg || 6, owner, n.type === 'meeseeks' ? 'follower' : n.type);
             }
-          } else if (dist2(owner.x, owner.z, n.x, n.z) > 9) { goal = { x: owner.x - Math.sin(owner.r) * 2, z: owner.z - Math.cos(owner.r) * 2 }; speed = Math.max(speed, owner.st.speed); }
+          } else if (post) { if (dist2(post.x, post.z, n.x, n.z) > 4) goal = post; }
+          else if (dist2(owner.x, owner.z, n.x, n.z) > 9) { goal = { x: owner.x - Math.sin(owner.r) * 2, z: owner.z - Math.cos(owner.r) * 2 }; speed = Math.max(speed, owner.st.speed); }
         } else if (T.hostile || (n.angry && now < n.angryUntil)) {
           // Monsters mind their own business: they go for you only if you come close
           // (or hit them), and give up once you are well away from their patch.
-          let best = null, bd = MM.AGGRO_RANGE * MM.AGGRO_RANGE;
-          if (n.angry && now < n.angryUntil) { const p = this.host.players.get(n.angry); if (p && p.inst === this && !p.dead) best = p, bd = dist2(p.x, p.z, n.x, n.z); }
+          let best = null, bd = MM.AGGRO_RANGE * MM.AGGRO_RANGE, decoy = null;
+          // A hologram draws them off.
+          for (const m of this.npcs.values()) if (m.T.decoy && now < m.ownerUntil && dist2(m.x, m.z, n.x, n.z) < bd) { decoy = m; break; }
+          if (decoy) { goal = decoy; if (dist2(decoy.x, decoy.z, n.x, n.z) < (T.r + 1.1) ** 2 && now >= n.cd) { n.cd = now + 1.2; this.ev({ k: 'bite', n: n.id }); } }
+          else if (n.angry && now < n.angryUntil) { const p = this.host.players.get(n.angry); if (p && p.inst === this && !p.dead) best = p, bd = dist2(p.x, p.z, n.x, n.z); }
           else if (dist2(n.x, n.z, n.home.x, n.home.z) < MM.LEASH * MM.LEASH) for (const p of this.players.values()) {
             if (!this.visible(p, now)) continue;
             const d = dist2(p.x, p.z, n.x, n.z);
@@ -538,18 +558,20 @@
           const d = dist2(p.x, p.z, t.x, t.z);
           if (d < bd) { bd = d; best = p; isNpc = false; }
         }
+        const reach = t.big ? 45 : 26;
+        if (bd === 26 * 26) bd = reach * reach;
         for (const n of this.npcs.values()) {
-          if (!n.T.hostile) continue;
+          if (!n.T.hostile || (n.owner && now < n.ownerUntil)) continue;
           const d = dist2(n.x, n.z, t.x, t.z);
           if (d < bd) { bd = d; best = n; isNpc = true; }
         }
         if (!best) continue;
-        t.cd = now + 0.45;
+        t.cd = now + (t.big ? 1.2 : 0.45);
         const ty = isNpc ? best.y + best.T.h / 2 : best.y + 1;
         const ox = t.x, oy = t.y + 1.3, oz = t.z;
         const dx = best.x - ox, dy = ty - oy, dz = best.z - oz, l = Math.hypot(dx, dy, dz) || 1;
         t.aim = Math.atan2(dx, dz);
-        this.host.fireProjectile(this, { owner: t.owner, kind: 'turret', x: ox + dx / l, y: oy + dy / l, z: oz + dz / l, dx: dx / l, dy: dy / l, dz: dz / l, speed: 55, range: 30, dmg: 6 });
+        this.host.fireProjectile(this, { owner: t.owner, kind: 'turret', x: ox + dx / l, y: oy + dy / l, z: oz + dz / l, dx: dx / l, dy: dy / l, dz: dz / l, speed: t.big ? 70 : 55, range: t.big ? 50 : 30, dmg: t.big ? 18 : 6 });
       }
     }
 
@@ -774,6 +796,8 @@
         case 'rs': this.onRespawn(p); break;
         case 'pi': this.send(p, { t: 'pong', c: m.c }); break;
         case 'use': this.onUse(p, m.l, m.task); break;
+        case 'hd': this.onDefense(p, m.o, m.d); break;
+        case 'lk': if (p.wardrobeUntil > this.time) { p.look = MM.sanitizeLook(m.look); p.inst.ev({ k: 'look', id: p.id, look: p.look }); } break;
         case 'talk': this.onTalk(p, m.n); break;
         case 'ans': this.onAnswer(p, m.a); break;
         case 'ship': this.onShip(p, m.on); break;
@@ -819,7 +843,7 @@
       const p = {
         id: this.nextId++, conn: c.conn, bot: c.bot, token,
         name: MM.sanitizeName(m.name), home, clone, look: MM.sanitizeLook(m.look), arch: m.arch, A, pvp: m.pvp !== false,
-        prog, inv: prog.inv, st: null,
+        prog, inv: prog.inv, st: null, hacked: {},
         inst: null, ep: 0, x: 0, y: 0, z: 0, r: 0, a: 0, lastSt: this.time, strikes: 0,
         hp: A.hp, maxHp: A.hp, dead: false, respawnAt: 0, ship: false,
         charges: 0, chargeAt: 0,
@@ -1137,7 +1161,9 @@
       if (!p.dead || this.time < p.respawnAt) return;
       p.dead = false; p.hp = p.maxHp;
       p.fx = { shield: 0, sprint: 0, sob: 0, shrink: 0, guilt: 0, prot: this.time + MM.SPAWN_PROTECT, daze: 0, cuff: 0, cloak: 0 };
-      const s = MM.spawnPoint(p.inst.dimId);
+      let s = MM.spawnPoint(p.inst.dimId);
+      // A backup body from the cloning vat: you wake up in the garage.
+      if (p.backup && p.backup === p.inst.dimId) { s = { x: -15.6, y: MM.heightAt(p.inst.dimId, -15.6, 27.5), z: 27.5 }; p.backup = null; this.toast(p, 'You wake up in a backup body, in the garage.'); }
       this.teleport(p, s.x, s.y + 0.1, s.z);
       p.inst.ev({ k: 'resp', id: p.id });
       this.dirty(p);
@@ -1264,6 +1290,12 @@
       if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2 || !MM.sameFloor(l, p.y)) return;
       p.cdUse = this.time + 1;
       if (p.ship && MM.DIM_BY_ID[l.door.dim].interior) { this.toast(p, 'Park your ship first (B).'); return; }
+      // Rick's things answer to their own Rick only (any other Rick has to hack them first).
+      if (this.labClosed(p, l)) return;
+      if (l.rick && !this.rickMay(p, this.earthOfHere(p))) { this.rickRefuse(p, l); return; }
+      // Blast doors: the house's doors only open for whoever put them down (and their team).
+      const Hs = p.inst.house;
+      if (Hs && Hs.doors > this.time && ['home', 'backdoor', 'sidedoor', 'trapdoor'].some(a => MM.isAt(l, a)) && !this.houseAllows(p.inst, p)) { this.toast(p, 'Blast doors. Every door and window of the house is sealed.'); return; }
       if (p.arch === 'tommy' && l.dim === 'froopy') { this.toast(p, 'The way out will not open for you. Only a magic chalk door, drawn by a Rick (or Evil Morty), can take Tommy out of Froopyland.'); return; }
       const from = p.inst, ox = p.x, oz = p.z;
       // Every Earth shares the insides (the Smith house, Rick's lab...). Remember which Earth you
@@ -1274,7 +1306,7 @@
       else if (p.doorBack && MM.DIM_BY_ID[p.doorBack].variantOf === dest) { dest = p.doorBack; p.doorBack = null; }
       if (here.earthOf && dest === 'suburbia') dest = here.earthOf;   // up from an Atlantis: its own Earth's beach
       p.inst.ev({ k: 'kiosk', id: p.id });
-      this.travel(p, dest, { x: l.door.x, z: l.door.z });
+      this.travel(p, dest, l.door.y !== undefined ? { x: l.door.x, z: l.door.z, y: l.door.y } : { x: l.door.x, z: l.door.z });
       this.bringTeam(p, from, ox, oz);
     }
 
@@ -1606,6 +1638,159 @@
       this.dirty(p);
     }
 
+    // ----- Rick's house: whose it is, hacking it, and its defences (shared/house.js) -----
+    // Which Earth's house you are at: this Earth, or (inside the house, the garage, the lab,
+    // the sublevels) the Earth you came in from.
+    earthOfHere(p) {
+      const D = p.inst.dim;
+      if (D.interior || D.pocket) return p.doorBack || 'suburbia';
+      return MM.worldOf(p.inst.dimId) === 'earth' && !D.timeline ? p.inst.dimId : null;
+    }
+    // Each Earth's house is its own Rick's (C-137's is Rick C-137's; clones count, they are him).
+    rickOwns(p, earth) { return p.arch === 'genius' && !!earth && MM.castHome('genius', p.home) === earth; }
+    rickMay(p, earth) { return this.rickOwns(p, earth) || (p.arch === 'genius' && !!earth && (p.hacked && p.hacked[earth] || 0) > this.time); }
+    // Not yours: anyone but a Rick is told no; another Rick starts hacking (stay close).
+    rickRefuse(p, l) {
+      const earth = this.earthOfHere(p);
+      if (p.arch !== 'genius') { this.toast(p, 'That is Rick\'s. Only a Rick can use it.'); return; }
+      if (p.hack && p.hack.earth === earth) { this.toast(p, 'Still hacking... stay close.'); return; }
+      p.hack = { earth, inst: p.inst, x: p.x, z: p.z, until: this.time + MM.HACK_TIME };
+      this.priv(p, { k: 'hack', t: MM.HACK_TIME });
+      this.toast(p, 'This is another Rick\'s ' + (l ? l.name : 'stuff') + '. Hacking it... stay close for ' + MM.HACK_TIME + ' seconds.');
+      const R = this.cast.get(MM.castKey('genius', earth)), o = R && R.player && this.players.get(R.player);
+      if (o && o !== p) this.toast(o, p.name + ' is hacking your garage!');
+    }
+    tickHack(p) {
+      const H = p.hack;
+      if (!H || this.time < H.until) return;
+      p.hack = null;
+      if (p.dead || p.inst !== H.inst || dist2(p.x, p.z, H.x, H.z) > 4 * 4) { this.toast(p, 'Hack interrupted: you moved away.'); return; }
+      (p.hacked || (p.hacked = {}))[H.earth] = this.time + MM.HACK_FOR;
+      this.toast(p, 'Hacked! Another Rick\'s house is yours to use for ' + Math.round(MM.HACK_FOR / 60) + ' minutes.');
+      this.priv(p, { k: 'hacked' });
+    }
+    // Who the house lets in while its defences are up: whoever put them up, their team, and
+    // anyone (a Rick) with the right to use the house.
+    houseAllows(inst, p) {
+      const H = inst.house;
+      if (!H) return true;
+      if (p.id === H.by) return true;
+      const by = this.players.get(H.by);
+      if (by && by.team && by.team === p.team) return true;
+      return this.rickMay(p, inst.dimId);
+    }
+    // The retracted lab: the garage's things fold into the walls for everyone but the house's people.
+    labClosed(p, l) {
+      const H = p.inst.house;
+      if (!H || !(H.lab > this.time) || !['garage', 'workbench', 'plumbus', 'mbox', 'battery', 'trapdoor', 'housecon'].some(a => MM.isAt(l, a)) || this.houseAllows(p.inst, p)) return false;
+      this.toast(p, 'The lab has folded itself into the walls. Nothing here but a normal garage.');
+      return true;
+    }
+    houseRow(inst) {
+      const H = inst.house, now = this.time, t = v => Math.max(0, r2((v || 0) - now));
+      return H ? { s: t(H.shield), d: t(H.doors), g: t(H.grid), l: t(H.lab), by: H.by } : null;
+    }
+    // "House, forcefield!" At the console, or anywhere near the house if it is your own.
+    onDefense(p, id, d) {
+      const D = MM.DEFENSES[id], now = this.time;
+      if (!D || p.dead || now < (p.cdDef || 0)) return;
+      p.cdDef = now + 0.5;
+      const earth = this.earthOfHere(p);
+      if (!earth) { this.toast(p, 'There is no house of yours here.'); return; }
+      const con = MM.LANDMARKS.find(l => l.dim === p.inst.dimId && MM.isAt(l, 'housecon'));
+      const atCon = con && dist2(con.x, con.z, p.x, p.z) < (con.r + MM.USE_RADIUS + 2) ** 2;
+      const own = this.rickOwns(p, earth);
+      if (!this.rickMay(p, earth)) { if (atCon) this.rickRefuse(p, con); else this.toast(p, 'That is another Rick\'s house.'); return; }
+      const outside = !p.inst.dim.interior && !p.inst.dim.pocket;
+      if (!atCon && !(own && (!outside || MM.inHouse(p.x, p.z) || dist2(p.x, p.z, MM.HOUSE.x, MM.HOUSE.z) < MM.VOICE_RANGE ** 2))) { this.toast(p, 'Go to the console in the garage' + (own ? ', or get closer to the house.' : '.')); return; }
+      // Things that happen to the house need you out at the house; the rest work anywhere.
+      if (D.dur && !outside) { this.toast(p, 'Say it outside, by the house: you are indoors.'); return; }
+      const inst = p.inst;
+      const H = outside ? (inst.house || (inst.house = { by: p.id, cd: {} })) : { cd: p.houseCd || (p.houseCd = {}) };
+      if ((H.cd[id] || 0) > now) { this.toast(p, D.name + ': ready again in ' + Math.ceil(H.cd[id] - now) + ' s.'); return; }
+      H.cd[id] = now + D.cd;
+      if (outside) H.by = p.id;
+      const until = now + D.dur, at = (x, z) => { const [cx, cz] = MM.collideProps(inst.dimId, x, z, 0.8, null); return { x: cx, z: cz }; };
+      const guard = (type, x, z, opts) => {
+        const n = inst.spawnNpc(type, true, { at: at(x, z), until: until + 1 });
+        n.owner = p.id; n.ownerUntil = until; n.guardAt = { x: n.x, z: n.z };
+        Object.assign(n, opts || {});
+        return n;
+      };
+      switch (id) {
+        case 'shield': H.shield = until; break;
+        case 'doors': H.doors = until; break;
+        case 'grid': H.grid = until; break;
+        case 'lab': H.lab = until; break;
+        case 'turrets':
+        case 'cannon': {
+          const g = MM.heightAt(inst.dimId, -13.5, 16.5);
+          const spots = id === 'cannon' ? [[-14.5, 28.55, 6.8]] : [[-18.5, 13, 7.6], [-8.5, 13, 7.6], [-18.5, 20, 7.6], [-8.5, 20, 7.6], [-6.9, 17.1, 3.2]];
+          for (const [x, z, y] of spots) {
+            const t = { id: this.ent(), owner: p.id, x, y: g + y, z, hp: id === 'cannon' ? 200 : 80, until, cd: now + 1, aim: 0, big: id === 'cannon' };
+            inst.turrets.set(t.id, t);
+            inst.ev({ k: 'tu+', t: [t.id, t.owner, r2(t.x), r2(t.y), r2(t.z), t.big ? 1 : 0] });
+          }
+          break;
+        }
+        case 'bots': for (const [x, z] of [[-6, 14], [-6, 22], [-24, 30]]) guard('killbot', x, z); break;
+        case 'drones': for (const [x, z] of [[-10, 10], [-26, 18], [-8, 30]]) guard('boomdrone', x, z, { voice: p.name }); break;
+        case 'plants': for (const [x, z] of [[-26, 16], [-30, 24], [-24, 26], [-34, 18]]) guard('yardplant', x, z); break;
+        case 'holo': guard('hologram', p.x + Math.sin(p.r) * 3, p.z + Math.cos(p.r) * 3, { name: 'Hologram ' + p.name }); break;
+        case 'fungus': {
+          // A fungus clone that copies your voice. Destroy it in time, or it starts eating.
+          const n = inst.spawnNpc('fungusclone', true, { at: at(p.x + Math.sin(p.r) * 3, p.z + Math.cos(p.r) * 3), until: now + 600 });
+          n.name = 'Fungus ' + p.name;
+          inst.ev({ k: 'say', n: n.id, by: p.id, text: 'Hey, it\'s me, ' + p.name + '. The real one. Totally not a fungus.' });
+          this.later(D.dur, () => {
+            if (!inst.npcs.has(n.id)) return;
+            inst.npcs.delete(n.id); inst.ev({ k: 'npc-', id: n.id });
+            const e = inst.spawnNpc('funguseater', true, { at: { x: n.x, z: n.z }, until: this.time + 240 });
+            inst.ev({ k: 'say', n: e.id, by: p.id, text: 'I WILL EAT YOUR WORLD!' });
+            for (const o of inst.players.values()) this.toast(o, 'A fungus clone was not destroyed in time. It is eating the world. Kill it!');
+          });
+          break;
+        }
+        case 'vat': p.hp = p.maxHp; p.backup = earth; this.dirty(p); break;
+        case 'stash': p.inv.grenade = (p.inv.grenade || 0) + 1; p.inv.turret = (p.inv.turret || 0) + 1; this.dirty(p); break;
+        case 'shipbay': {
+          if (!p.st.ship) { this.toast(p, 'There is no ship of yours down there yet (build a ship hull first).'); H.cd[id] = 0; return; }
+          if (!outside) { this.toast(p, 'The ship bay is under the garage floor: go out to the garage.'); H.cd[id] = 0; return; }
+          this.teleport(p, -14.5, MM.heightAt(inst.dimId, -14.5, 28.55) + 14, 28.55);
+          this.onShip(p, true);
+          p.kbUntil = now + 1;
+          break;
+        }
+        case 'tele': {
+          const S = MM.TELE_SPOTS[d !== undefined && MM.TELE_SPOTS[d] ? d : Math.floor(Math.random() * MM.TELE_SPOTS.length)];
+          if (!outside) { this.toast(p, 'The teleporter is in the garage: go out to it.'); H.cd[id] = 0; return; }
+          const ox = p.x, oz = p.z;
+          inst.ev({ k: 'kiosk', id: p.id });
+          this.teleport(p, S.x, MM.heightAt(inst.dimId, S.x, S.z) + 0.2, S.z);
+          for (const o of inst.players.values()) if (o !== p && o.team && o.team === p.team && dist2(o.x, o.z, ox, oz) < 8 * 8) this.teleport(o, S.x + 2, MM.heightAt(inst.dimId, S.x + 2, S.z) + 0.2, S.z);
+          this.toast(p, 'Teleported to ' + S.name + '.');
+          break;
+        }
+        case 'wardrobe': p.wardrobeUntil = now + 120; this.priv(p, { k: 'wardrobe' }); break;
+      }
+      inst.ev({ k: 'house', h: outside ? this.houseRow(inst) : null, say: D.say, by: p.id, id });
+      this.progress(p, 'use', 'house_' + id);
+    }
+    // What the house's defences do, every tick: the dome keeps people out, the grid cuts.
+    tickHouse(inst, now) {
+      const H = inst.house;
+      if (!H) return;
+      for (const p of inst.players.values()) {
+        if (p.dead || this.houseAllows(inst, p)) continue;
+        if (H.shield > now && MM.inHouse(p.x, p.z)) {
+          const dx = p.x - MM.HOUSE.x, dz = p.z - MM.HOUSE.z, l = Math.hypot(dx, dz) || 1, R = MM.HOUSE.r + 1.5;
+          this.teleport(p, MM.HOUSE.x + dx / l * R, Math.max(p.y, MM.heightAt(inst.dimId, MM.HOUSE.x + dx / l * R, MM.HOUSE.z + dz / l * R) + 0.2), MM.HOUSE.z + dz / l * R);
+          if (now > (p.cdShieldMsg || 0)) { p.cdShieldMsg = now + 4; this.toast(p, 'A forcefield. Somebody does not want you in that house.'); }
+        }
+        if (H.grid > now && MM.inGarage(p.x, p.z) && p.y < MM.heightAt(inst.dimId, p.x, p.z) + 5 && this.tickN % 10 === 0) this.hurtPlayer(inst, p, 5, this.players.get(H.by) || null, 'lasergrid');
+      }
+    }
+
     // ----- Daily life at landmarks -----
     onUse(p, lid, taskId) {
       if (MM.helpless(p.arch, p.prog.up)) { const l = MM.LANDMARK_BY_ID[lid]; if (l && l.door) this.onDoor(p, lid); else this.toast(p, MM.HELPLESS_TEXT); return; }
@@ -1613,6 +1798,9 @@
       if (p.dead || !l || l.dim !== p.inst.dimId || this.time < p.cdUse) return;
       if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2 || !MM.sameFloor(l, p.y)) return;
       p.cdUse = this.time + 1;
+      if (this.labClosed(p, l)) return;
+      if (l.rick && !this.rickMay(p, this.earthOfHere(p))) { this.rickRefuse(p, l); return; }
+      if (MM.isAt(l, 'housecon')) { this.priv(p, { k: 'hmenu', own: this.rickOwns(p, this.earthOfHere(p)) }); return; }
       const mine = Object.keys(MM.TASKS).filter(t => MM.isAt(l, MM.TASKS[t].at) && MM.taskFor(t, p.arch));
       const id = taskId && mine.includes(taskId) ? taskId : mine[0];
       if (!id) { if (l.door) this.onDoor(p, lid); else this.toast(p, 'Nothing for you to do at the ' + l.name + '. You could still build things here (C).'); return; }
@@ -1624,7 +1812,7 @@
       if (T.heal) p.hp = p.maxHp;
       if (T.summon) this.summonMeeseeks(p, 1, 45);
       if (T.effect === 'borrowgun') { p.borrow = 2; this.dirty(p); }   // Rick's gun: two charges, no recharging
-      let text = T.text;
+      let text = T.texts ? pick(T.texts) : T.text;
       // Earth TVs are normal until a Rick "fixes" them with Xanthenite (for this copy of the world).
       if (T.effect === 'fixtv') p.inst.cable = this.time + 600;
       if (id === 'watchtv' && p.inst.cable > this.time) text = pick(['Interdimensional cable! Ball Fondlers, then Real Fake Doors, then a man who is also a pizza.', 'Two Brothers. The plot is a lot. You cannot look away.', 'Ants in my Eyes Johnson! He cannot see a thing. Prices so low.']);
@@ -1785,6 +1973,7 @@
           p.chargeAt = p.charges < p.st.gun.charges ? now + p.st.gun.recharge : 0;
           this.dirty(p);
         }
+        if (p.hack) this.tickHack(p);
         if (p.arch === 'mutant' && !p.dead && p.hp < p.maxHp && this.tickN % 10 === 0) { p.hp = Math.min(p.maxHp, p.hp + 1); this.dirty(p); }
         // World rules: the living flesh heals you; the toxic air hurts (never below a tenth).
         const q = p.inst && p.inst.dim.quirk;
