@@ -2344,21 +2344,26 @@
 
   // ---------- Portals ----------
   const portalGeo = new T.CircleGeometry(1, 48);
-  C.portalMesh = function (color, size) {
+  C.PORTAL_STYLES = { swirl: 0, ring: 1, spiral: 2, storm: 3 };
+  C.portalMesh = function (color, size, style) {
     const m = new T.ShaderMaterial({
       transparent: true, side: T.DoubleSide, depthWrite: false,
-      uniforms: { col: { value: new T.Color(color) }, t: { value: Math.random() * 10 }, open: { value: 1 } },
+      uniforms: { col: { value: new T.Color(color) }, t: { value: Math.random() * 10 }, open: { value: 1 }, style: { value: C.PORTAL_STYLES[style] || 0 } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-      fragmentShader: `uniform vec3 col; uniform float t; uniform float open; varying vec2 vUv;
+      fragmentShader: `uniform vec3 col; uniform float t; uniform float open; uniform float style; varying vec2 vUv;
         void main(){
           vec2 p = (vUv - 0.5) * 2.0; float r = length(p); float a = atan(p.y, p.x);
-          float wob = 0.9 + 0.06 * sin(a * 7.0 + t * 4.0) + 0.04 * sin(a * 13.0 - t * 6.0);
+          float wob = style > 0.5 && style < 1.5 ? 0.92 : 0.9 + 0.06 * sin(a * 7.0 + t * 4.0) + 0.04 * sin(a * 13.0 - t * 6.0);
           float edge = wob * open;
           if (r > edge) discard;
-          float sw = sin(a * 3.0 + r * 14.0 - t * 6.0) * 0.5 + 0.5;
+          float sw;
+          if (style < 0.5) sw = sin(a * 3.0 + r * 14.0 - t * 6.0) * 0.5 + 0.5;                                  // swirl (the show)
+          else if (style < 1.5) sw = 0.25 + 0.15 * sin(a * 2.0 - t * 2.0 + r * 4.0);                             // ring: calm centre
+          else if (style < 2.5) sw = smoothstep(0.35, 0.65, fract(a / 6.2831 * 4.0 + r * 2.5 - t * 0.7));       // spiral arms
+          else sw = fract(sin(dot(floor(p * 16.0 + vec2(t * 7.0, -t * 5.0)), vec2(12.9898, 78.233))) * 43758.5453);   // static storm
           vec3 c = mix(col * 0.55, col, sw);
-          c = mix(c, vec3(1.0), smoothstep(0.35, 0.0, r) * 0.55);
-          float rim = smoothstep(edge - 0.16, edge, r);
+          c = mix(c, vec3(1.0), smoothstep(0.35, 0.0, r) * (style > 0.5 && style < 1.5 ? 0.15 : 0.55));
+          float rim = smoothstep(edge - (style > 0.5 && style < 1.5 ? 0.3 : 0.16), edge, r);
           c = mix(c, col * 1.4 + 0.2, rim);
           if (r > edge - 0.035) c = vec3(0.07);
           gl_FragColor = vec4(c, 1.0);

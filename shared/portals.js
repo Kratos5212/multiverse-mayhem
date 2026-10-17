@@ -1,5 +1,5 @@
 // Multiverse Mayhem: the portal gun's short-range mode, played like Valve's Portal.
-// Shoot a blue portal and an orange one onto any floor, wall, roof or cliff in the same
+// Shoot one portal and then its partner onto any floor, wall, roof or cliff in the same
 // world; step into one and you come out of the other, keeping your speed ("speedy thing
 // goes in, speedy thing comes out"). Anyone can use anyone's pair. Shared by the client
 // (aiming, prediction) and the server (checks).
@@ -8,8 +8,7 @@
   const MM = root.MM || (root.MM = {});
 
   MM.PAIR_RANGE = 260;        // how far the gun reaches in this mode
-  MM.PAIR_COLORS = ['#3a9aff', '#ff8a2a'];
-  MM.PAIR_NAMES = ['Blue', 'Orange'];
+  // Colours come from the owner's look (MM.pairColors): green for a Rick unless changed.
   MM.PAIR_MAX_SPEED = 32;     // fling speed cap
 
   // Who can shoot them: anyone carrying a real portal gun.

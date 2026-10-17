@@ -583,8 +583,10 @@
     face: ['round', 'long', 'wide'],
     top: ['labcoat', 'tshirt', 'tank', 'polo', 'sweater', 'armor', 'vest', 'none'],
     acc: ['none', 'goggles', 'antennae', 'tophat', 'headband', 'eyepatch', 'halo', 'crown', 'cap'],
+    // How your portals look: Rick's classic green swirl, a hard ring, spiral arms, or static.
+    portalStyle: ['swirl', 'ring', 'spiral', 'storm'],
     nums: { height: [0.8, 1.3], width: [0.75, 1.35], head: [0.8, 1.45] },
-    colors: ['skin', 'hairColor', 'topColor', 'shirtColor', 'pantsColor', 'shoeColor', 'accColor', 'portalColor'],
+    colors: ['skin', 'hairColor', 'topColor', 'shirtColor', 'pantsColor', 'shoeColor', 'accColor', 'portalColor', 'portalColor2'],
   };
 
   MM.defaultLook = function () {
@@ -592,7 +594,7 @@
       species: 'human', hair: 'rick', brow: 'uni', eyes: 'tired', mouth: 'flat', face: 'long', top: 'labcoat', acc: 'none',
       height: 1.15, width: 0.95, head: 1.1,
       skin: '#f2d2b6', hairColor: '#b9d4e0', topColor: '#f4f6f8', shirtColor: '#7fb2d6', pantsColor: '#6b4f2c',
-      shoeColor: '#3a2a1a', accColor: '#444444', portalColor: '#39ff6a',
+      shoeColor: '#3a2a1a', accColor: '#444444', portalColor: '#39ff6a', portalColor2: '', portalStyle: 'swirl',
     };
   };
 
@@ -637,7 +639,7 @@
   MM.sanitizeLook = function (raw) {
     const out = MM.defaultLook();
     if (!raw || typeof raw !== 'object') return out;
-    for (const k of ['species', 'hair', 'brow', 'eyes', 'mouth', 'face', 'top', 'acc']) {
+    for (const k of ['species', 'hair', 'brow', 'eyes', 'mouth', 'face', 'top', 'acc', 'portalStyle']) {
       if (typeof raw[k] === 'string' && MM.LOOK[k].includes(raw[k])) out[k] = raw[k];
     }
     for (const k in MM.LOOK.nums) {
@@ -648,6 +650,15 @@
       if (typeof raw[k] === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw[k])) out[k] = raw[k].toLowerCase();
     }
     return out;
+  };
+
+  // The two ends of your portal pair: your portal colour, and the second colour if you picked
+  // one (otherwise a deeper shade of the same, so both ends stay yours: green for a Rick).
+  MM.pairColors = function (look) {
+    const a = (look && look.portalColor) || '#39ff6a';
+    let b = look && look.portalColor2;
+    if (!b) { const n = parseInt(a.slice(1), 16), f = v => Math.round(v * 0.62).toString(16).padStart(2, '0'); b = '#' + f(n >> 16 & 255) + f(n >> 8 & 255) + f(n & 255); }
+    return [a, b];
   };
 
   // Names: letters, digits, spaces and a little punctuation, 2-20 characters.

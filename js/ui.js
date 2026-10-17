@@ -111,7 +111,8 @@
       Face: [['eyes', 'Eyes'], ['brow', 'Brows'], ['mouth', 'Mouth']],
       Hair: [['hair', 'Style'], ['hairColor', 'Colour (or feathers)', COLORS]],
       Outfit: [['top', 'Top'], ['topColor', 'Top / coat colour', COLORS], ['shirtColor', 'Shirt underneath', COLORS], ['pantsColor', 'Pants', COLORS], ['shoeColor', 'Shoes', COLORS]],
-      Extras: [['acc', 'Accessory'], ['accColor', 'Accessory colour', COLORS], ['portalColor', 'Portal and gun glow', PORTALS]],
+      Extras: [['acc', 'Accessory'], ['accColor', 'Accessory colour', COLORS]],
+      Portals: [['portalColor', 'Portal and gun glow', PORTALS], ['portalColor2', 'Second end of your portal pair (blank: a deeper shade)', PORTALS], ['portalStyle', 'Portal style']],
     };
     let tab = 'Body';
     const tabs = $('lookTabs');
@@ -130,8 +131,9 @@
           box.append(el('input', { type: 'range', min: lo, max: hi, step: 0.01, value: profile.look[key], 'aria-label': label, oninput: e => { profile.look[key] = Number(e.target.value); onChange(); } }));
         } else {
           const sws = el('div', { class: 'swatches' });
+          if (key === 'portalColor2') sws.append(el('button', { class: 'chip', 'aria-pressed': String(!profile.look.portalColor2), onclick: () => { profile.look.portalColor2 = ''; renderLook(); onChange(); } }, 'Auto'));
           for (const c of palette) sws.append(el('button', { class: 'sw', style: 'background:' + c, 'aria-label': label + ' ' + c, 'aria-pressed': String(profile.look[key] === c), onclick: () => { profile.look[key] = c; renderLook(); onChange(); } }));
-          sws.append(el('input', { type: 'color', value: profile.look[key], 'aria-label': 'Custom ' + label, onchange: e => { profile.look[key] = e.target.value; renderLook(); onChange(); } }));
+          sws.append(el('input', { type: 'color', value: profile.look[key] || MM.pairColors(profile.look)[1], 'aria-label': 'Custom ' + label, onchange: e => { profile.look[key] = e.target.value; renderLook(); onChange(); } }));
           box.append(sws);
         }
         panel.append(box);

@@ -142,7 +142,7 @@
         event: this.event ? { name: this.event.E.name, text: this.event.E.text, left: r2(this.event.until - this.host.time) } : null,
       };
     }
-    portalRow(po) { return { id: po.id, x: r2(po.x), y: r2(po.y), z: r2(po.z), r: r2(po.r), d: po.destDim, col: po.col, ttl: r2(po.until - this.host.time) }; }
+    portalRow(po) { return { id: po.id, x: r2(po.x), y: r2(po.y), z: r2(po.z), r: r2(po.r), d: po.destDim, col: po.col, st: po.st || 'swirl', ttl: r2(po.until - this.host.time) }; }
 
     // ----- The tick -----
     tick(dt) {
@@ -1085,8 +1085,9 @@
       const now = this.time;
       const dest = this.instanceWithRoom(destDim, this.instances.get(destDim + '#' + inst.idx));
       const spot = MM.randomSpot(destDim, Math.random, 10, 70);
-      const a = { id: this.ent(), x, y: MM.heightAt(inst.dimId, x, z), z, r, destDim, destKey: dest.key, col, owner, until: now + MM.PORTAL_TTL };
-      const b = { id: this.ent(), x: spot.x, y: spot.y, z: spot.z, r: Math.random() * 6.28, destDim: inst.dimId, destKey: inst.key, col, owner, until: now + MM.PORTAL_TTL };
+      const op = this.players.get(owner), st = op && op.look.portalStyle || 'swirl';
+      const a = { id: this.ent(), x, y: MM.heightAt(inst.dimId, x, z), z, r, destDim, destKey: dest.key, col, st, owner, until: now + MM.PORTAL_TTL };
+      const b = { id: this.ent(), x: spot.x, y: spot.y, z: spot.z, r: Math.random() * 6.28, destDim: inst.dimId, destKey: inst.key, col, st, owner, until: now + MM.PORTAL_TTL };
       a.link = b.id; b.link = a.id;
       inst.portals.set(a.id, a); dest.portals.set(b.id, b);
       inst.ev({ k: 'po+', po: inst.portalRow(a) });

@@ -62,7 +62,7 @@
     return C.meshOf(s.build(), 0.04);
   })();
   menuScene.add(pedestal);
-  const menuPortal = C.portalMesh(profile.look.portalColor, 1.5);
+  const menuPortal = C.portalMesh(profile.look.portalColor, 1.5, profile.look.portalStyle);
   menuPortal.position.set(0, 1.3, -1.8);
   menuScene.add(menuPortal);
   const menuCam = new T.PerspectiveCamera(32, 1, 0.1, 100);
@@ -72,6 +72,7 @@
     preview = C.buildAvatar(profile.look, profile.arch, { thick: 0.025 });
     menuScene.add(preview.root);
     menuPortal.material.uniforms.col.value.set(profile.look.portalColor);
+    menuPortal.material.uniforms.style.value = C.PORTAL_STYLES[profile.look.portalStyle] || 0;
   }
   function renderMenu(dt) {
     if (previewDirty && (previewT -= dt) <= 0) { previewDirty = false; rebuildPreview(); }
@@ -265,7 +266,7 @@
   function addPortal(po) {
     if (G.portals.has(po.id)) return;
     const g = new T.Group();
-    const mesh = C.portalMesh(po.col, 1.25);
+    const mesh = C.portalMesh(po.col, 1.25, po.st);
     mesh.position.y = 1.7;
     g.add(mesh);
     const d = MM.DIM_BY_ID[po.d];
@@ -292,23 +293,26 @@
     removePair(key);
     const P = { x: e.x, y: e.y, z: e.z, nx: e.nx, ny: e.ny, nz: e.nz };
     const g = new T.Group();
-    const mesh = C.portalMesh(MM.PAIR_COLORS[e.c], 0.85);
+    const look = lookOf(e.o), col = MM.pairColors(look)[e.c];
+    const mesh = C.portalMesh(col, 0.85, look && look.portalStyle);
     mesh.renderOrder = 3;
     // Valve-style: a hard, glowing oval rim around the swirl.
-    const rim = new T.Mesh(pairRimGeo || (pairRimGeo = new T.RingGeometry(0.86, 1.0, 48)), new T.MeshBasicMaterial({ color: MM.PAIR_COLORS[e.c], side: T.DoubleSide, fog: false }));
+    const rim = new T.Mesh(pairRimGeo || (pairRimGeo = new T.RingGeometry(0.86, 1.0, 48)), new T.MeshBasicMaterial({ color: e.c ? '#ffffff' : col, side: T.DoubleSide, fog: false }));
     rim.scale.set(0.85, 0.85 * 1.35, 1); rim.position.z = 0.01;
     g.add(mesh, rim);
     mesh.userData.rim = rim;
     g.position.set(P.x, P.y, P.z);
     g.lookAt(P.x + P.nx, P.y + P.ny, P.z + P.nz);
     scene.add(g);
-    G.pairs.set(key, { o: e.o, c: e.c, P, g, mesh, born: now() });
+    G.pairs.set(key, { o: e.o, c: e.c, P, g, mesh, col, born: now() });
   }
   let pairRimGeo = null;
+  const lookOf = id => id === G.myId ? profile.look : G.players.get(id) && G.players.get(id).info.look;
   function removePair(key) { const q = G.pairs.get(key); if (q) { scene.remove(q.g); q.mesh.material.dispose(); q.mesh.userData.rim.material.dispose(); G.pairs.delete(key); } }
   function removePairsOf(o) { removePair(o + ':0'); removePair(o + ':1'); }
   // Aim with the crosshair and shoot the next portal of your pair (R, right click, or the
-  // touch button): blue, then orange, then blue again (which moves the old blue one).
+  // touch button): the first end, then its partner, then the first again (which moves it). Both
+  // ends take your portal colours: green for a Rick unless you change them.
   function shootPair() {
     if (!canAct() || pickled()) return;
     if (G.you.ship) { UI.toast('Land first (B) to shoot portals.'); return; }
@@ -327,7 +331,8 @@
     send({ t: 'pp', c, x: r2(S.x), y: r2(S.y), z: r2(S.z), nx: r2(S.nx), ny: r2(S.ny), nz: r2(S.nz) });
     // The shot: a streak of the portal's colour from the gun to the wall.
     const gx = G.me.x, gy = G.me.y + 1.4, gz = G.me.z, n = Math.min(40, Math.ceil(hit.t / 2));
-    for (let i = 0; i <= n; i++) { const k = i / n; fx.glow.emit(gx + (S.x - gx) * k, gy + (S.y - gy) * k, gz + (S.z - gz) * k, 0, 0, 0, MM.PAIR_COLORS[c], 0.35, 0.35, 0); }
+    const pc = MM.pairColors(profile.look)[c];
+    for (let i = 0; i <= n; i++) { const k = i / n; fx.glow.emit(gx + (S.x - gx) * k, gy + (S.y - gy) * k, gz + (S.z - gz) * k, 0, 0, 0, pc, 0.35, 0.35, 0); }
     G.me.aimT = 1; G.me.yaw = G.camYaw;
     if (G.meAv) G.meAv.attackT = 0.2;
     C.sfx('plasma', 0.6);
@@ -343,12 +348,12 @@
       // Through a wall portal into a wall portal: turn the way the exit faces, like in Portal.
       if (MM.pairKind(A) === 'wall' && MM.pairKind(B) === 'wall') G.camYaw += Math.atan2(B.nx, B.nz) - Math.atan2(-A.nx, -A.nz);
       else if (MM.pairKind(B) === 'wall') G.camYaw = Math.atan2(B.nx, B.nz);
-      fx.burst(me.x, me.y + 1, me.z, MM.PAIR_COLORS[q.c], 18, 5, 0.5, 0.5, 2);
+      fx.burst(me.x, me.y + 1, me.z, q.col, 18, 5, 0.5, 0.5, 2);
       me.x = ex.x; me.y = ex.y; me.z = ex.z; me.vx = ex.vx; me.vy = ex.vy; me.vz = ex.vz;
       me.grounded = false; me.kbT = 1.1;
       G.transitCool = now() + 0.35;
       send({ t: 'pt', o: q.o, c: q.c });
-      fx.burst(me.x, me.y + 1, me.z, MM.PAIR_COLORS[1 - q.c], 18, 5, 0.5, 0.5, 2);
+      fx.burst(me.x, me.y + 1, me.z, other.col, 18, 5, 0.5, 0.5, 2);
       C.sfx('warp', 0.5);
       return;
     }
@@ -651,7 +656,7 @@
       case 'pp': {
         addPair(e);
         if (e.o !== G.myId) sfxAt('plasma', e.x, e.z, 0.5);
-        fx.burst(e.x, e.y, e.z, MM.PAIR_COLORS[e.c], 16, 4, 0.5, 0.5, 0);
+        fx.burst(e.x, e.y, e.z, MM.pairColors(lookOf(e.o))[e.c], 16, 4, 0.5, 0.5, 0);
         break;
       }
       case 'pt': {
@@ -979,8 +984,9 @@
     slots.scan.hidden = !(G.st && G.st.scanner);
     const canPair = !!(G.prog && MM.canPair(profile.arch, G.prog.up));
     slots.pair.hidden = !canPair; $('tPair').hidden = !canPair;
-    slots.pair.style.setProperty('--pc', MM.PAIR_COLORS[G.pairNext || 0]);
-    $('tPair').style.setProperty('--pc', MM.PAIR_COLORS[G.pairNext || 0]);
+    const pcs = MM.pairColors(profile.look);
+    slots.pair.style.setProperty('--pc', pcs[G.pairNext || 0]);
+    $('tPair').style.setProperty('--pc', pcs[G.pairNext || 0]);
     // Only Ricks and Evil Morty know how to make a Time Crystal: no slot for everyone else.
     slots.timecrystal.hidden = !(y.inv.timecrystal > 0) && !!(G.prog && MM.canKnow(profile.arch, G.prog, 'timecrystal'));
     const st = G.st;
@@ -1773,7 +1779,7 @@
       q.mesh.userData.tick(dt);
       const op = Math.min(1, (t - q.born) * 4);
       q.mesh.material.uniforms.open.value = op; q.mesh.userData.rim.scale.set(0.85 * op, 0.85 * 1.35 * op, 1);
-      if (Math.random() < 0.15) fx.glow.emit(q.P.x + (Math.random() - 0.5) * 1.4, q.P.y + (Math.random() - 0.5) * 1.8, q.P.z + (Math.random() - 0.5) * 1.4, q.P.nx, q.P.ny, q.P.nz, MM.PAIR_COLORS[q.c], 0.25, 0.4, 0);
+      if (Math.random() < 0.15) fx.glow.emit(q.P.x + (Math.random() - 0.5) * 1.4, q.P.y + (Math.random() - 0.5) * 1.8, q.P.z + (Math.random() - 0.5) * 1.4, q.P.nx, q.P.ny, q.P.nz, q.col, 0.25, 0.4, 0);
     }
     for (const po of G.portals.values()) {
       po.mesh.userData.tick(dt);
