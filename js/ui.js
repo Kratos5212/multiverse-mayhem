@@ -156,7 +156,7 @@
   let onModalClose = null;
   UI.modal = function (title, build, onClose) {
     const box = $('modalBox');
-    box.textContent = '';
+    box.textContent = ''; box.classList.remove('travel');
     box.append(el('h2', null, el('span', { text: title }), el('button', { class: 'btn', 'aria-label': 'Close', onclick: () => UI.closeModal() }, '✕')));
     build(box);
     $('modal').hidden = false;

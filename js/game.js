@@ -414,6 +414,7 @@
       renderer.setClearColor(dim.fog);
     }
     G.dimId = w.dim; G.inst = w.inst; G.ep = w.ep;
+    noteVisit(w.dim);
     G.alive = MM.genProps(w.dim).map(() => true);
     for (const [i, hp] of w.props) { G.alive[i] = hp > 0; if (hp <= 0) G.world.setAlive(i, false); }
     if (!changed) for (let i = 0; i < G.alive.length; i++) G.world.setAlive(i, G.alive[i]);
@@ -1219,7 +1220,18 @@
     draw(); caption();
     return wrap;
   }
-  function openDims(mode) {
+  // Where to go: search, tabs (recent, Earths, worlds, other times, outside the Curve, the
+  // map) and a card per world in its own sky colours, with who is there and, if you can't go
+  // this way, why not.
+  const recentDims = UI.load('recentDims', []);
+  function noteVisit(id) {
+    const D = MM.DIM_BY_ID[id];
+    if (!D || D.hidden || D.interior || D.planets) return;
+    const i = recentDims.indexOf(id); if (i >= 0) recentDims.splice(i, 1);
+    recentDims.unshift(id); recentDims.length = Math.min(recentDims.length, 8);
+    UI.save('recentDims', recentDims);
+  }
+  function openDims(mode, tabWas, queryWas) {
     G.modalMode = mode;
     const why = id => MM.travelWhy(mode === 'gun' ? 'portal' : mode, G.dimId, id, travelOpts(mode));
     const go = id => {
@@ -1232,33 +1244,63 @@
     };
     const S = MM.DIM_BY_ID[G.dimId].station;
     const title = mode === 'station' ? S.name : mode === 'ship' ? 'Fly your ship' : G.you.chMax && G.you.ch > 0 ? 'Portal gun' : 'Borrowed portal gun';
+    const homes = [MM.homeDimId(profile.home), 'suburbia'].concat(MM.WORLD_IDS.filter(id => MM.DIM_BY_ID[id].variantOf === 'suburbia' && !MM.DIM_BY_ID[id].timeline))
+      .concat(G.pop ? Object.keys(G.pop.d).filter(id => MM.HOME_RE.test(id) && G.pop.d[id] > 0) : []);
+    const TABS = {
+      Recent: () => recentDims.filter(id => MM.DIM_BY_ID[id]),
+      Earths: () => homes,
+      Worlds: () => MM.WORLD_IDS.filter(id => { const D = MM.DIM_BY_ID[id]; return !D.timeline && !D.outsideCurve && !D.pocket && D.variantOf !== 'suburbia' && id !== 'suburbia'; }),
+      'Other times': () => MM.WORLD_IDS.filter(id => MM.DIM_BY_ID[id].timeline),
+      'Outside the Curve': () => MM.WORLD_IDS.filter(id => MM.DIM_BY_ID[id].outsideCurve && !MM.DIM_BY_ID[id].timeline),
+      Map: null,
+    };
+    let tab = tabWas || (recentDims.length > 1 ? 'Recent' : 'Worlds'), query = queryWas || '';
     openModal('dims', title, box => {
+      box.classList.add('travel');
       const others = travelModes().filter(x => x !== mode);
       if (others.length) {
-        const tabs = el('div', { class: 'chips' });
-        for (const o of others) tabs.append(el('button', { class: 'btn', onclick: () => { UI.closeModal(); openDims(o); } }, o === 'station' ? 'Use the station' : o === 'ship' ? 'Fly the ship' : 'Use the portal gun'));
-        box.append(tabs);
+        const sw = el('div', { class: 'chips' });
+        for (const o of others) sw.append(el('button', { class: 'btn', onclick: () => { UI.closeModal(); openDims(o); } }, o === 'station' ? 'Use the station' : o === 'ship' ? 'Fly the ship' : 'Use the portal gun'));
+        box.append(sw);
       }
-      box.append(curveMap(go));
-      // Home dimensions: yours, and those of everyone online (their Earth, their twist).
-      const homes = [MM.homeDimId(profile.home)].concat(G.pop ? Object.keys(G.pop.d).filter(id => MM.HOME_RE.test(id) && G.pop.d[id] > 0) : [])
-        .filter((id, i, a) => id !== 'suburbia' && id !== G.dimId && a.indexOf(id) === i);
-      for (const outside of ['home', false, 'time', true]) {
-        const ids = outside === 'home' ? homes : MM.WORLD_IDS.filter(id => { const D = MM.DIM_BY_ID[id]; return (outside === 'time' ? !!D.timeline : !D.timeline && !!D.outsideCurve === outside) && id !== G.dimId && !D.pocket; });
-        if (!ids.length) continue;
-        const list = el('div', { class: 'list' });
-        for (const id of ids) {
-          const d = MM.DIM_BY_ID[id], n = G.pop ? G.pop.d[id] || 0 : 0, w = why(id);
-          list.append(el('div', { class: 'row dim' + (w ? ' locked' : '') },
-            el('div', { class: 't' }, el('b', { text: d.name + '  ' + d.code }), el('small', { text: w || d.blurb + ' · ' + n + ' here' })),
-            el('button', { class: 'btn go', disabled: w ? 'disabled' : null, onclick: () => go(id) }, mode === 'gun' ? 'Open' : mode === 'ship' ? 'Fly' : 'Go')));
-        }
-        box.append(el('h3', { text: outside === 'home' ? 'Home dimensions' : outside === 'time' ? 'Other times' : outside ? 'Outside the Central Finite Curve' : 'Inside the Central Finite Curve' }), list);
-      }
+      const search = el('input', { type: 'search', class: 'tsearch', placeholder: 'Search worlds (name or code)…', value: query, 'aria-label': 'Search worlds' });
+      const tabs = el('div', { class: 'ttabs', role: 'tablist' }), body = el('div', { class: 'tbody' });
+      box.append(search, tabs, body);
+      const card = id => {
+        const d = MM.DIM_BY_ID[id];
+        if (!d) return null;
+        const n = G.pop ? G.pop.d[id] || 0 : 0, w = id === G.dimId ? 'You are here.' : why(id), mine = id === MM.homeDimId(profile.home);
+        const c = el('button', { class: 'tcard' + (w ? ' locked' : ''), style: 'background: linear-gradient(160deg, ' + d.sky[0] + ', ' + d.sky[1] + ' 70%, ' + d.ground[1] + ')', onclick: () => go(id), title: w || d.blurb, 'aria-label': d.name + (w ? ': ' + w : '') },
+          el('span', { class: 'tname', text: (mine ? '★ ' : '') + d.name }),
+          el('span', { class: 'tcode', text: d.code + (n ? ' · ' + n + ' here' : '') }),
+          el('span', { class: 'tblurb', text: w || d.blurb }));
+        return c;
+      };
+      const render = () => {
+        tabs.textContent = ''; body.textContent = '';
+        for (const t in TABS) tabs.append(el('button', { role: 'tab', 'aria-selected': String(!query && t === tab), onclick: () => { tab = t; query = ''; search.value = ''; render(); } }, t));
+        if (!query && tab === 'Map') { body.append(curveMap(go)); return; }
+        let ids;
+        if (query) {
+          const q = query.toLowerCase();
+          ids = MM.WORLD_IDS.concat(homes).filter((id, i, a) => a.indexOf(id) === i && MM.DIM_BY_ID[id] && !MM.DIM_BY_ID[id].pocket)
+            .filter(id => (MM.DIM_BY_ID[id].name + ' ' + MM.DIM_BY_ID[id].code).toLowerCase().includes(q));
+        } else ids = TABS[tab]();
+        ids = ids.filter((id, i, a) => a.indexOf(id) === i);
+        // Where you can go first, then the rest; busy worlds before quiet ones.
+        const pop = id => G.pop ? G.pop.d[id] || 0 : 0;
+        if (tab !== 'Recent' || query) ids.sort((a, b) => (!!why(a) - !!why(b)) || (pop(b) - pop(a)));
+        const grid = el('div', { class: 'tgrid' });
+        for (const id of ids) { const c = card(id); if (c) grid.append(c); }
+        body.append(ids.length ? grid : el('p', { class: 'note', text: query ? 'No world called that.' : 'Nowhere yet. Go somewhere and it shows up here.' }));
+      };
+      search.oninput = () => { query = search.value.trim(); render(); };
+      render();
       const fee = S && !S.free.includes(profile.arch) ? Object.keys(S.fee).map(k => S.fee[k] + ' ' + MM.MATERIALS[k].name).join(', ') : '';
       box.append(el('p', { class: 'note', text: mode === 'station' ? 'Step through the station portal' + (fee ? ' for ' + fee : ' (free for you)') + '.'
-        : mode === 'ship' ? 'The Moon is a short hop. Other planets need the Turbo Engine; other dimensions need the Dimension Drive (15 s cooldown).'
+        : mode === 'ship' ? 'Fly straight up to reach space and the planets nearby. Other dimensions need the Dimension Drive (15 s cooldown).'
         : 'Opens a portal in front of you for ' + MM.PORTAL_TTL + ' s. Anyone can walk through it, so your friends (and enemies) can follow.' }));
+      if (!isTouch) setTimeout(() => search.focus(), 50);
     });
   }
   // The workbench: everything you could ever build, and exactly why you can or can't yet.

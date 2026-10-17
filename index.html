@@ -238,6 +238,24 @@ input[type=range] { width: 100%; accent-color: var(--portal); }
 .curvecap .t { min-width: 0; display: flex; flex-direction: column; }
 .curvecap small { opacity: .8; }
 .row.locked { opacity: .55; }
+/* Travel: search, tabs, world cards */
+#modalBox.travel { width: min(880px, 96vw); }
+.tsearch { width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 12px; border: 3px solid var(--line); background: #0d1226; color: #fff; font: inherit; font-size: 16px; margin: 6px 0; }
+.ttabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.ttabs button { border: 3px solid var(--line); background: #1c2444; color: #cfd8ff; border-radius: 999px; padding: 6px 12px; font: inherit; font-weight: 700; cursor: pointer; }
+.ttabs button[aria-selected="true"] { background: var(--portal); color: #062a12; }
+.tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.tcard { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: 104px; padding: 10px 12px; border: 3px solid var(--line); border-radius: 14px; color: #fff; text-align: left; font: inherit; cursor: pointer; box-shadow: 0 4px 0 var(--line); overflow: hidden; }
+.tcard::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 20%, rgba(8,10,24,.78)); pointer-events: none; }
+.tcard > * { position: relative; z-index: 1; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); }
+.tcard .tname { font-weight: 800; font-size: 15px; line-height: 1.15; }
+.tcard .tcode { font-size: 12px; opacity: .9; font-weight: 700; color: #e8ffd8; }
+.tcard .tblurb { font-size: 11.5px; line-height: 1.3; opacity: .9; margin-top: auto; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.tcard:hover { transform: translateY(-1px); outline: 3px solid var(--portal); }
+.tcard:focus-visible { outline: 3px solid #fff; }
+.tcard.locked { filter: saturate(.35) brightness(.75); cursor: not-allowed; }
+.tcard.locked .tblurb { color: #ffd0c0; }
+@media (max-width: 600px), (max-height: 460px) { .tgrid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } .tcard { min-height: 88px; } }
 .row.done { opacity: .6; }
 .row.cur { outline: 3px solid var(--portal); outline-offset: -1px; }
 .row.later { opacity: .75; }
