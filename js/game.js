@@ -74,6 +74,9 @@
     menuPortal.material.uniforms.col.value.set(profile.look.portalColor);
     menuPortal.material.uniforms.style.value = C.PORTAL_STYLES[profile.look.portalStyle] || 0;
   }
+  // Sculpted characters (scripts/models/, built by scripts/sculpt.js) load in the background;
+  // every canon-looking Rick built after that uses the sculpt up close.
+  C.loadSculpt('genius', 'assets/characters/rick.mms').then(() => { previewDirty = true; }).catch(e => console.warn('No sculpted Rick:', e.message));
   function renderMenu(dt) {
     if (previewDirty && (previewT -= dt) <= 0) { previewDirty = false; rebuildPreview(); }
     renderer.setScissorTest(false);
