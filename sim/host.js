@@ -58,7 +58,8 @@
     for (const k of ['kills', 'ko', 'talk', 'smash', 'errand']) p.cnt[k] = num(c[k], 1e7);
     if (Array.isArray(raw.errands)) p.errands = raw.errands.filter(e => e && MM.DIM_BY_ID[e.dim] && MM.NPCS[e.npc] && MM.MATERIALS[e.m] && e.rew && typeof e.rew === 'object')
       .slice(0, 3).map(e => ({ id: num(e.id, 1e9), dim: e.dim, npc: e.npc, m: e.m, n: Math.max(1, num(e.n, 20)), from: String(e.from || '').slice(0, 30), rew: cleanMats(e.rew) }));
-    if (raw.tasks && typeof raw.tasks === 'object') for (const k in raw.tasks) if (MM.TASKS[k]) p.tasks[k] = num(raw.tasks[k], 1e15);
+    if (raw.tasks && typeof raw.tasks === 'object') for (const k in raw.tasks) if (MM.TASKS[k] || (MM.RACE_BY_ID && MM.RACE_BY_ID[k.replace(/^race_/, '')])) p.tasks[k] = num(raw.tasks[k], 1e15);
+    if (raw.best && typeof raw.best === 'object' && MM.RACE_BY_ID) { p.best = {}; for (const k in raw.best) if (MM.RACE_BY_ID[k] && typeof raw.best[k] === 'number' && raw.best[k] > 0 && raw.best[k] < 1e4) p.best[k] = Math.round(raw.best[k] * 10) / 10; }
     if (raw.inv && typeof raw.inv === 'object') {
       for (const k of MM.MAT_IDS) p.inv[k] = num(raw.inv[k], 9999);
       for (const g of MM.GADGET_IDS) p.inv[g] = Math.min(MM.RECIPES[g].max, num(raw.inv[g], 99));
@@ -824,6 +825,7 @@
       if (p.strikes > 0 && (this.tickN % 60 === 0)) p.strikes -= 1;
       p.x = x; p.y = y; p.z = z; p.r = m.r; p.a = m.a === MM.ANIM.dead ? 0 : m.a;
       p.lastSt = now;
+      if (p.race || MM.racesIn(p.inst.dimId).length) this.raceStep(p);
       // Pick up anything in reach.
       for (const pk of p.inst.pickups.values()) {
         if (dist2(pk.x, pk.z, p.x, p.z) < MM.PICKUP_RADIUS * MM.PICKUP_RADIUS && Math.abs(pk.y - p.y) < 3) {
@@ -1204,6 +1206,35 @@
       p.kbUntil = this.time + 1.5;
       this.bringTeam(p, from, ox, oz);
       this.toast(p, 'Lightspeed! ' + MM.DIM_BY_ID[d].name + ' is dead ahead. Fly into it to land.');
+    }
+
+    // Ring races (shared/races.js): through the first ring starts the clock, each ring in
+    // order, the last one before time runs out pays (once every MM.RACE_CD seconds).
+    raceStep(p) {
+      const now = this.time, list = MM.racesIn(p.inst.dimId);
+      const near = (R, i) => { const q = MM.ringAt(R, i, p.inst.dimId); return (p.x - q.x) ** 2 + (p.y + 1 - q.y) ** 2 + (p.z - q.z) ** 2 < R.r * R.r; };
+      const fits = R => !p.dead && (R.ship ? p.ship : !p.ship);
+      if (p.race) {
+        const R = MM.RACE_BY_ID[p.race.id];
+        if (!list.includes(R) || !fits(R)) { p.race = null; this.priv(p, { k: 'race', id: null }); this.toast(p, R.name + ': you left the race.'); return; }
+        if (now > p.race.t0 + R.time) { p.race = null; this.priv(p, { k: 'race', id: null }); this.toast(p, R.name + ': out of time. The first ring starts it again.'); return; }
+        if (!near(R, p.race.next)) return;
+        p.race.next++;
+        if (p.race.next < R.rings.length) { this.priv(p, { k: 'race', id: R.id, next: p.race.next, left: r2(p.race.t0 + R.time - now) }); return; }
+        const t = Math.round((now - p.race.t0) * 10) / 10, best = (p.prog.best || (p.prog.best = {}))[R.id], wall = this.wall();
+        p.race = null;
+        if (!best || t < best) p.prog.best[R.id] = t;
+        const paid = (p.prog.tasks['race_' + R.id] || 0) <= wall;
+        if (paid) { p.prog.tasks['race_' + R.id] = wall + MM.RACE_CD * 1000; for (const k in R.give) p.inv[k] = (p.inv[k] || 0) + R.give[k]; }
+        this.priv(p, { k: 'race', id: null, done: R.id, t, best: p.prog.best[R.id], record: !best || t < best, give: paid ? R.give : null });
+        this.dirty(p);
+        return;
+      }
+      for (const R of list) if (fits(R) && near(R, 0)) {
+        p.race = { id: R.id, t0: now, next: 1 };
+        this.priv(p, { k: 'race', id: R.id, next: 1, left: R.time });
+        return;
+      }
     }
 
     // ----- Crafting -----

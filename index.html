@@ -208,6 +208,9 @@ input[type=range] { width: 100%; accent-color: var(--portal); }
 #tPair svg, .s-pair svg { color: var(--pc, #3a9aff); }
 #tDown { right: 98px; bottom: 74px; width: 50px; height: 50px; }
 #tLight { right: 98px; bottom: 136px; width: 56px; height: 56px; }
+/* The race clock, top middle. */
+#raceHud { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 112px); left: 50%; transform: translateX(-50%); z-index: 6; padding: 6px 14px; border-radius: 999px; border: 3px solid var(--line); background: #141b36; color: #fff; font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; box-shadow: 0 3px 0 var(--line); pointer-events: none; }
+#raceHud.hurry { background: #6a1a28; color: #ffd84d; }
 #tLight svg { color: #8fe8ff; }
 /* Lightspeed: stars stretched into lines, a white flash in the middle. */
 #lightspeed { position: fixed; inset: 0; pointer-events: none; z-index: 30; opacity: 0;
@@ -301,6 +304,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 </head>
 <body>
 <div id="lightspeed" aria-hidden="true"></div>
+<div id="raceHud" hidden role="status" aria-live="off"></div>
 <canvas id="view"></canvas>
 <div id="loading">Opening a portal…</div>
 
@@ -402,6 +406,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 <script src="shared/interiors.js"></script>
 <script src="shared/portals.js"></script>
 <script src="shared/curios.js"></script>
+<script src="shared/races.js"></script>
 <script src="shared/protocol.js"></script>
 <script src="sim/host.js"></script>
 <script src="sim/bot.js"></script>

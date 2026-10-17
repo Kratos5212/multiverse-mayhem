@@ -8,6 +8,7 @@ require('../shared/layouts.js');
 require('../shared/interiors.js');
 require('../shared/portals.js');
 require('../shared/curios.js');
+require('../shared/races.js');
 require('../shared/protocol.js');
 require('../sim/host.js');
 const MM = require('../sim/bot.js');
@@ -743,6 +744,26 @@ test('worlds, their dimensions and timelines; lightspeed from space', () => {
   p.x = P.x; p.y = P.y + P.r; p.z = P.z; host.time += 5;
   host.message(c, '{"t":"land","d":"featherhold_ic"}');
   assert.strictEqual(p.inst.dimId, 'featherhold_ic', 'landed');
+});
+
+test('ring races: through the first ring to start, every ring in order, a prize and a record', () => {
+  assert.ok(MM.racesIn('shrimpearth').some(R => R.id === 'streetrun'), 'every Earth has the street sprint');
+  assert.ok(MM.racesIn('sp_c137').some(R => R.id === 'slalom'), 'the space race is in the sky over Earth');
+  const host = new MM.Host();
+  const { p } = join(host, 'sidekick', { dim: 'suburbia' });
+  const R = MM.RACE_BY_ID.streetrun, at = i => { const q = MM.ringAt(R, i, 'suburbia'); p.x = q.x; p.y = q.y - 1; p.z = q.z; host.raceStep(p); };
+  const s0 = p.inv.s || 0;
+  at(0);
+  assert.strictEqual(p.race && p.race.id, 'streetrun', 'started');
+  at(3);
+  assert.strictEqual(p.race.next, 1, 'rings count only in order');
+  for (let i = 1; i < R.rings.length; i++) { host.time += 2; at(i); }
+  assert.strictEqual(p.race, null, 'finished');
+  assert.strictEqual(p.inv.s, s0 + R.give.s, 'paid');
+  assert.ok(p.prog.best.streetrun > 0, 'a best time');
+  // Too slow: the clock runs out.
+  at(0); host.time += R.time + 1; at(1);
+  assert.strictEqual(p.race, null, 'out of time');
 });
 
 test('every world has something to do, and some worlds have their own rules', () => {

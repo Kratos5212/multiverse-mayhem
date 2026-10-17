@@ -407,6 +407,7 @@
       if (G.world) { scene.remove(G.world.group); G.world.dispose(); }
       G.world = C.buildDimension(w.dim, settings.quality);
       scene.add(G.world.group);
+      buildRaceRings(w.dim);
       const dim = MM.DIM_BY_ID[w.dim];
       scene.fog = new T.Fog(dim.fog, 40, dim.fogFar);
       const skyU = G.world.group.children[0].material.uniforms;
@@ -835,8 +836,62 @@
     n.w = new T.Vector3(x + (Math.random() - 0.5) * 0.6, y, z);
   }
 
+  // ----- Ring races (shared/races.js) -----
+  // Every race in this world: its rings glowing in its colour, the start ring with a sign.
+  // While you race, the next ring is bright and the rest fade; the clock runs at the top.
+  function buildRaceRings(dimId) {
+    G.raceRings = [];
+    for (const R of MM.racesIn(dimId)) {
+      const geo = new T.TorusGeometry(R.r, Math.max(0.18, R.r * 0.07), 8, 32);
+      R.rings.forEach((_, i) => {
+        const q = MM.ringAt(R, i, dimId), n = MM.ringAt(R, (i + 1) % R.rings.length, dimId);
+        const m = new T.Mesh(geo, new T.MeshBasicMaterial({ color: R.color, transparent: true, opacity: i ? 0.35 : 0.9, fog: false }));
+        m.position.set(q.x, q.y, q.z);
+        m.lookAt(n.x, n.y, n.z);
+        if (!i) {
+          const tag = C.makeTag(R.name, '', (R.ship ? 'By ship' : 'On foot') + ' · through here to start', R.color);
+          tag.draw(-1);
+          tag.sprite.position.set(q.x, q.y + R.r + 1.2, q.z); tag.sprite.scale.multiplyScalar(R.ship ? 4 : 1.6);
+          G.world.group.add(tag.sprite);
+        }
+        G.world.group.add(m);
+        G.raceRings.push({ R, i, m });
+      });
+    }
+  }
+  function updateRace() {
+    const r = G.race, hud = $('raceHud');
+    for (const g of G.raceRings || []) {
+      const on = r && r.id === g.R.id, next = on && g.i === r.next;
+      g.m.material.opacity = on ? (next ? 1 : g.i < r.next ? 0.08 : 0.3) : g.i ? 0.25 : 0.9;
+      const s = next || (!r && !g.i) ? 1 + Math.sin(now() * 5) * 0.06 : 1;
+      g.m.scale.set(s, s, s);
+    }
+    if (!r) { hud.hidden = true; return; }
+    const R = MM.RACE_BY_ID[r.id], left = Math.max(0, r.end - now());
+    hud.hidden = false;
+    hud.textContent = R.name + ' · ring ' + (r.next + 1) + '/' + R.rings.length + ' · ' + left.toFixed(1) + ' s';
+    hud.classList.toggle('hurry', left < 10);
+  }
+  function onRace(e) {
+    if (e.id) {
+      const first = !G.race || G.race.id !== e.id;
+      G.race = { id: e.id, next: e.next, end: now() + e.left };
+      C.sfx(first ? 'warp' : 'pickup', 0.6);
+      if (first) UI.toast(MM.RACE_BY_ID[e.id].name + ': go! ' + MM.RACE_BY_ID[e.id].blurb, 2500);
+      return;
+    }
+    G.race = null;
+    if (e.done) {
+      const R = MM.RACE_BY_ID[e.done], got = e.give ? Object.keys(e.give).map(k => '+' + e.give[k] + ' ' + MM.MATERIALS[k].icon).join(' ') : '';
+      UI.banner(R.name + (e.record ? ': new record!' : ': finished!'), e.t + ' s (best ' + e.best + ' s). ' + (got || 'No prize again so soon, but the time counts.'));
+      C.sfx('craft');
+    }
+  }
+
   function onPrivate(e) {
     const me = G.me;
+    if (e.k === 'race') { onRace(e); return; }
     if (e.k === 'tp') { me.x = e.x; me.y = e.y; me.z = e.z; me.vx = me.vy = me.vz = 0; G.ep = e.ep; }
     else if (e.k === 'kb') { me.vx += e.vx; me.vz += e.vz; me.vy = Math.max(me.vy, e.vy); me.grounded = false; me.kbT = 0.7; C.ragdoll(G.meAv, e.vx, e.vz, Math.min(1, Math.hypot(e.vx, e.vz) / 14 + 0.2)); }
     else if (e.k === 'toast') UI.toast(e.text, 3500);
@@ -2120,6 +2175,7 @@
     updateOthers(dt);
     flushDetail();
     if (!vr.on) updateCamera(dt);
+    updateRace();
     camera.getWorldPosition(camWorld);
     G.world.update(dt, clock.elapsedTime, camWorld);
     fx.update(dt);
