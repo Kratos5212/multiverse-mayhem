@@ -38,14 +38,14 @@
   // How they look there: the show's look, with the dimension's twist (shrimp people on Shrimp
   // Earth, barbarians on Cronenberged Earth, cats in a cat dimension...).
   const SPECIES = { shrimpearth: 'shrimp', teddyearth: 'teddy' };
-  const TWIST_SPECIES = { cats: 'cat', robots: 'robot', aliens: 'alien', blobs: 'blob', CT: 'cat' };
+  const TWIST_SPECIES = { cats: 'cat', robots: 'robot', aliens: 'alien', blobs: 'blob', CT: 'cat', PI: 'pickle' };
   MM.castLook = function (arch, dimId) {
     const L = MM.canonLook(arch), D = MM.DIM_BY_ID[dimId] || {};
     const human = L.species === 'human';
     if (human && SPECIES[dimId]) L.species = SPECIES[dimId];
     if (human && TWIST_SPECIES[D.twist]) L.species = TWIST_SPECIES[D.twist];
     // ...in that species' own colours.
-    const SKIN = { shrimp: '#f2895c', teddy: '#b8865a', cat: '#c98a4a', robot: '#aab2ba', alien: '#8fd86a', blob: '#e07a85' };
+    const SKIN = { shrimp: '#f2895c', teddy: '#b8865a', cat: '#c98a4a', robot: '#aab2ba', alien: '#8fd86a', blob: '#e07a85', pickle: '#7cbf3a' };
     if (human && SKIN[L.species]) L.skin = SKIN[L.species];
     if (dimId === 'c500a' && arch === 'joe') { L.top = 'vest'; L.topColor = '#1a1a1e'; L.shirtColor = '#f6f6f2'; L.acc = 'goggles'; L.accColor = '#1a1a1e'; }   // a movie star, in shades
     if (dimId === 'fascistearth') { L.shirtColor = '#3a3a3a'; if (L.top !== 'labcoat') L.topColor = '#3a3a3a'; L.accColor = '#c8273a'; }
@@ -55,6 +55,10 @@
     if (D.twist === 'IC') { L.skin = '#d4e6f2'; L.hairColor = '#f2f8fc'; }
     if (D.twist === 'DK') { L.shirtColor = '#2a2a3a'; L.pantsColor = '#1e1e28'; }
     if (D.twist === 'JG') { L.topColor = '#4a8a3a'; L.shirtColor = '#5a9a46'; }
+    if (D.twist === 'NE') { L.shirtColor = '#ff3ad8'; L.pantsColor = '#1a1a2a'; L.accColor = '#3af8ff'; if (L.acc === 'none') L.acc = 'goggles'; }
+    if (D.twist === 'DE') { L.acc = 'tophat'; L.accColor = '#6a4a2a'; if (L.top !== 'labcoat') { L.top = 'vest'; L.topColor = '#8a5a2a'; } }
+    if (D.twist === 'GO') { L.shirtColor = '#ffd84d'; L.pantsColor = '#c8a83a'; if (L.top !== 'labcoat') L.topColor = '#ffd84d'; else L.topColor = '#fff4c8'; }
+    if (D.twist === 'FU') { L.skin = '#e0d4c0'; L.hairColor = '#a87a5a'; }
     return MM.sanitizeLook(L);
   };
   // How each can travel on their own: by portal (in their portal colour), by ship, on wings, or

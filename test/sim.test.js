@@ -731,6 +731,7 @@ test('space: fly up out of the atmosphere, see the planets, land on the Moon', (
 });
 
 test('worlds, their dimensions and timelines; lightspeed from space', () => {
+  const featherhold_ic = MM.WORLD_BY_ID.birdworld.dims.find(d => MM.DIM_BY_ID[d].twist);
   // Every place you can portal to belongs to a world (pockets aside); every world has a
   // parallel dimension; timelines hang off one dimension of one world.
   for (const id of MM.WORLD_IDS) if (!MM.DIM_BY_ID[id].pocket) assert.ok(MM.worldOf(id), id + ' belongs to a world');
@@ -754,23 +755,23 @@ test('worlds, their dimensions and timelines; lightspeed from space', () => {
   const { c, p } = join(host, 'genius', { dim: 'suburbia' });
   Object.assign(p.prog.up, { hull: 1, engine: 1 }); host.restat(p);
   host.message(c, '{"t":"ship","on":true}');
-  host.message(c, '{"t":"ls","d":"featherhold_ic"}');
+  host.message(c, JSON.stringify({ t: 'ls', d: featherhold_ic }));
   assert.strictEqual(p.inst.dimId, 'suburbia', 'not from the ground');
   p.y = MM.heightAt('suburbia', p.x, p.z) + MM.ORBIT_ALT + 5;
   host.message(c, '{"t":"orbit"}');
   assert.ok(MM.DIM_BY_ID[p.inst.dimId].planets);
-  host.message(c, '{"t":"ls","d":"featherhold_ic"}');
+  host.message(c, JSON.stringify({ t: 'ls', d: featherhold_ic }));
   assert.ok(MM.DIM_BY_ID[p.inst.dimId].planets[0].dim === 'suburbia', 'no Dimension Drive yet');
   Object.assign(p.prog.up, { drive: 1 }); host.restat(p); host.time += 20;
   host.message(c, '{"t":"ls","d":"fedearth"}');
   assert.ok(MM.DIM_BY_ID[p.inst.dimId].planets[0].dim === 'suburbia', 'another timeline needs the Quantum Drive');
-  host.message(c, '{"t":"ls","d":"featherhold_ic"}');
+  host.message(c, JSON.stringify({ t: 'ls', d: featherhold_ic }));
   const S = MM.DIM_BY_ID[p.inst.dimId];
-  assert.strictEqual(S.planets[0].dim, 'featherhold_ic', 'in space by the parallel Bird World');
+  assert.strictEqual(S.planets[0].dim, featherhold_ic, 'in space by the parallel Bird World');
   const P = S.planets[0];
   p.x = P.x; p.y = P.y + P.r; p.z = P.z; host.time += 5;
-  host.message(c, '{"t":"land","d":"featherhold_ic"}');
-  assert.strictEqual(p.inst.dimId, 'featherhold_ic', 'landed');
+  host.message(c, JSON.stringify({ t: 'land', d: featherhold_ic }));
+  assert.strictEqual(p.inst.dimId, featherhold_ic, 'landed');
 });
 
 test('the multiverse in space: every Earth sees the solar system, each kind of parallel has its own universe, Atlantis is under the sea, realms have no sky', () => {
@@ -788,11 +789,14 @@ test('the multiverse in space: every Earth sees the solar system, each kind of p
   // Atlantis is not a planet: up from it is the sky over its Earth.
   assert.strictEqual(MM.spaceDimOf('atlantis').id, 'sp_c137');
   assert.strictEqual(MM.spaceDimOf('atl_shrimpearth').id, 'sp_shrimpearth');
-  for (const k of ['c137', 'tw_IC', 'tw_CR', 'tw_TY']) assert.ok(!MM.DIM_BY_ID['sp_' + k].planets.some(P => MM.worldOf(P.dim) === 'atlantis'), 'no Atlantis planet in ' + k);
+  for (const k of ['c137'].concat(Object.keys(MM.PARALLEL_BY_K).map(K => 'tw_' + K).filter(k => MM.DIM_BY_ID['sp_' + k]))) assert.ok(!MM.DIM_BY_ID['sp_' + k].planets.some(P => MM.worldOf(P.dim) === 'atlantis'), 'no Atlantis planet in ' + k);
   // A parallel dimension is its own universe: the same twist on the other worlds around it.
-  const I = MM.spaceDimOf('featherhold_ic');
+  const ice = MM.DIMS.find(d => d.twist === 'IC' && MM.WORLD_BY_ID[MM.worldOf(d.id)] && !MM.WORLD_BY_ID[MM.worldOf(d.id)].realm && MM.worldOf(d.id) !== 'atlantis'), I = MM.spaceDimOf(ice.id);
   assert.ok(I.planets.length >= 3 && I.planets.every(P => MM.DIM_BY_ID[P.dim].twist === 'IC'));
-  assert.strictEqual(MM.spaceDimOf('squanch_cr').planets[0].dim, 'meatlands', 'Cronenberged Earth is in the middle of the Cronenberg universe');
+  // Only one Cronenberged Earth: no Cronenberg parallels anywhere else; its other timeline is the cured one.
+  assert.ok(!MM.DIMS.some(d => d.twist === 'CR' || d.twist === 'cronen'));
+  assert.deepStrictEqual(MM.timelinesOf('meatlands'), ['curedearth']);
+  assert.ok(MM.npcListOf('curedearth').some(n => n[0] === 'neighbor') && !MM.npcListOf('curedearth').some(n => n[0] === 'meatblob'), 'the people are normal again');
   // The solar system is a short hop: a ship with no Turbo Engine gets there.
   const host = new MM.Host();
   const { c, p } = join(host, 'genius', { dim: 'suburbia' });
@@ -920,6 +924,111 @@ test('battery inside battery: the Microverse, Zeep\'s Miniverse, Kyle\'s Teenyve
   host.message(c, '{"t":"use","l":"acidvat"}');
   assert.ok(p.fx.cloak > host.time, 'hidden');
   assert.deepStrictEqual(MM.castOf('c500a').sort(), ['genius', 'joe', 'surgeon']);
+});
+
+test('rides on the shared clock: board, ride, get off at the end; seats fill up', () => {
+  const host = new MM.Host();
+  const a = join(host, 'genius', { dim: 'suburbia' }), b = join(host, 'sidekick', { dim: 'suburbia', home: 'Q-9' });
+  host.travel(a.p, 'anatomy', { x: 46, z: -2 }); host.travel(b.p, 'anatomy', { x: 46, z: -2 });
+  for (const q of [a, b]) q.p.x = 46, q.p.z = -2;
+  a.c.sent.length = 0;
+  host.message(a.c, '{"t":"fun","a":"ride","l":"ride_spleen"}');
+  host.message(b.c, '{"t":"fun","a":"ride","l":"ride_spleen"}');
+  assert.ok(a.p.ride && b.p.ride, 'both on board');
+  assert.strictEqual(a.p.ride.t0, b.p.ride.t0, 'the same train');
+  assert.notStrictEqual(a.p.ride.seat, b.p.ride.seat, 'different seats');
+  const R = MM.RIDE_BY_ID.spleen;
+  run(host, a.p.ride.t0 - host.time + MM.rideDur(R) / 2);
+  assert.ok(a.p.y > MM.heightAt('anatomy', a.p.x, a.p.z) + 0.5, 'up on the track');
+  run(host, MM.rideDur(R) / 2 + 1);
+  assert.ok(!a.p.ride, 'off at the end');
+  assert.strictEqual(a.p.prog.rides.spleen, 1);
+  // A Ferris wheel: one gondola, once round.
+  host.travel(a.p, 'suburbia', { x: 60, z: 311 }); a.p.x = 60; a.p.z = 311;
+  host.message(a.c, '{"t":"fun","a":"ride","l":"ride_pierwheel"}');
+  assert.ok(a.p.ride);
+  run(host, a.p.ride.t0 - host.time + MM.RIDE_BY_ID.pierwheel.wheel.rev / 2);
+  assert.ok(a.p.y > 20, 'at the top of the wheel');
+});
+
+test('shooting galleries, fishing, dancing, Roy, jump pads and the passport', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'suburbia' });
+  const l = MM.LANDMARK_BY_ID.beachbooth;
+  host.teleport(p, l.x, 0.4, l.z); p.x = l.x; p.z = l.z;
+  host.message(c, '{"t":"fun","a":"gallery","l":"beachbooth"}');
+  run(host, 0.5);
+  const tg = [...p.inst.npcs.values()].filter(n => n.gal === 'beachbooth');
+  assert.ok(tg.length >= 3, 'targets up');
+  for (const n of tg) p.inst.hurtNpc(n, 5, p);
+  run(host, MM.GALLERIES.beachbooth.secs + 1);
+  assert.ok(p.prog.best.beachbooth >= 3, 'scored');
+  // Fishing at the pier: a catch, logged.
+  const f = MM.LANDMARK_BY_ID.pierfish;
+  host.teleport(p, f.x, 0.4, f.z); p.x = f.x; p.z = f.z;
+  host.message(c, '{"t":"mg","g":"fish","l":"pierfish","s":2}');
+  assert.ok(Object.keys(p.prog.fish).length === 1, 'caught something');
+  host.message(c, '{"t":"mg","g":"fish","l":"pierfish","s":2}');
+  assert.strictEqual(Object.values(p.prog.fish).reduce((x, y) => x + y, 0), 1, 'one cast at a time');
+  // Dancing at the Sonic Stage (it has to be the right game at the right place).
+  const st = MM.LANDMARK_BY_ID.sonicstage;
+  host.travel(p, 'suburbia', { x: st.x, z: st.z + 10 }); p.x = st.x; p.z = st.z + 10;
+  run(host, 4);   // (results are rate limited)
+  host.message(c, JSON.stringify({ t: 'mg', g: 'roy', l: 'sonicstage', s: 90 }));
+  assert.ok(!p.prog.best['roy:sonicstage'], 'no Roy at the stage');
+  host.message(c, JSON.stringify({ t: 'mg', g: 'dance', l: 'sonicstage', s: 88 }));
+  assert.strictEqual(p.prog.best['dance:sonicstage'], 88);
+  // A jump pad lets you fly.
+  const [px, pz] = MM.PADS.froopy[0];
+  host.travel(p, 'froopy', { x: px, z: pz }); p.x = px; p.z = pz;
+  run(host, 0.2);
+  host.message(c, JSON.stringify({ t: 'st', x: px, y: p.y + 6, z: pz, r: 0, a: 2, ep: p.ep }));
+  assert.ok(p.y > MM.heightAt('froopy', px, pz) + 5, 'up in the air');
+  // The passport stamped every dimension visited.
+  assert.ok(p.prog.stamps.includes('suburbia') && p.prog.stamps.includes('froopy'));
+});
+
+test('Anatomy Park: in through a hole of the corpse floating over Earth, out through its gate', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'suburbia' });
+  Object.assign(p.prog.up, { hull: 1 }); host.restat(p);
+  host.message(c, '{"t":"ship","on":true}');
+  p.y = MM.heightAt('suburbia', p.x, p.z) + MM.ORBIT_ALT + 5;
+  host.message(c, '{"t":"orbit"}');
+  const S = p.inst.dim, P = S.planets.find(q => q.body);
+  assert.ok(P, 'the corpse floats above Earth');
+  const nose = MM.BODY.holes.findIndex(h => h[0] === 'lnostril'), w = MM.bodyPoint(MM.BODY, MM.BODY.holes[nose][2], [P.x, P.y, P.z]);
+  p.x = w[0]; p.y = w[1]; p.z = w[2]; host.time += 5;
+  host.message(c, JSON.stringify({ t: 'land', d: 'anatomy', h: nose }));
+  assert.strictEqual(p.inst.dimId, 'anatomy', 'in through the nose');
+  assert.ok(!p.ship);
+  for (const t of ['parkguest', 'drbloom', 'hepc', 'annie']) assert.ok(MM.npcListOf('anatomy').some(n => n[0] === t), t + ' is in the park');
+  assert.ok(MM.ridesIn('anatomy').length >= 6, 'rides');
+  const g = MM.LANDMARK_BY_ID.apgate_lnostril;
+  host.teleport(p, g.x, MM.heightAt('anatomy', g.x, g.z), g.z); p.x = g.x; p.z = g.z; host.time += 2;
+  host.message(c, '{"t":"door","l":"apgate_lnostril"}');
+  assert.ok(MM.DIM_BY_ID[p.inst.dimId].planets && p.ship, 'back out in space, in the ship');
+  assert.ok(MM.travelWhy('portal', 'suburbia', 'anatomy') === '', 'a portal gets you there too');
+});
+
+test('easter eggs: spots to walk up to, cameos to talk to, things to say', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'suburbia' });
+  const E = MM.EGG_BY_ID.szechuan;
+  host.teleport(p, E.x, MM.heightAt('suburbia', E.x, E.z), E.z); run(host, 0.2);
+  host.message(c, JSON.stringify({ t: 'st', x: E.x, y: p.y, z: E.z, r: 0, a: 0, ep: p.ep }));
+  run(host, 0.6);
+  host.message(c, JSON.stringify({ t: 'st', x: E.x, y: p.y, z: E.z, r: 0, a: 0, ep: p.ep }));
+  assert.ok(p.prog.eggs.includes('szechuan'), 'found the Szechuan Sauce');
+  host.message(c, '{"t":"c","text":"wubba lubba dub dub!"}');
+  assert.ok(p.prog.eggs.includes('wubba'));
+  host.travel(p, 'blips', { x: 14, z: 10 });
+  const k = [...p.inst.npcs.values()].find(n => n.type === 'krombopulos');
+  assert.ok(k, 'Krombopulos Michael is at Blips and Chitz');
+  p.x = k.x; p.z = k.z + 1; host.time += 2;
+  host.message(c, JSON.stringify({ t: 'talk', n: k.id }));
+  assert.ok(p.prog.eggs.includes('krombopulos'));
+  for (const E2 of MM.EGGS) if (E2.kind !== 'say') assert.ok(MM.DIM_BY_ID[E2.dim === '@earth' ? 'suburbia' : E2.dim], E2.id + ' is somewhere real');
 });
 
 test('ring races: two or more people at the start pad start one; every ring in order; the winner takes double', () => {

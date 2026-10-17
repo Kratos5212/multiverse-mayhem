@@ -37,6 +37,7 @@
     down: '<path d="M6 5l6 6 6-6M6 11l6 6 6-6"/>',
     light: '<path d="M3 12h7M5 7l6 3M5 17l6-3M14 12h7M13 9l3-3M13 15l3 3"/><circle cx="12" cy="12" r="1.6"/>',
     talk: '<path d="M4 5h16v11H9l-5 4z"/>',
+    emote: '<circle cx="12" cy="12" r="9"/><path d="M8 14a5 5 0 0 0 8 0M9 9.5h.01M15 9.5h.01"/>',
     gadget: '<circle cx="11" cy="14" r="6"/><path d="M11 8V5h4M15 5l3-2"/>',
   };
   const icon = name => {

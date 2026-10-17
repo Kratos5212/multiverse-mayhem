@@ -118,6 +118,54 @@
     return { root, spin, gondolas, base: g + W.h };
   }
 
+  // Easter eggs you can walk up to (shared/fun.js): small things, tucked away, with a glint.
+  const EGG_MODELS = {
+    pencil(s) {
+      s.add(P.cyl, '#ffd84d', [0, 0.3, 0], [0, 0, Math.PI / 2], [0.06, 0.55, 0.06]);
+      s.add(P.cone, '#f0d8b0', [0.36, 0.3, 0], [0, 0, -Math.PI / 2], [0.06, 0.16, 0.06]);
+      s.add(P.cyl, '#ff8ac8', [-0.3, 0.3, 0], [0, 0, Math.PI / 2], [0.065, 0.08, 0.065]);
+      for (const z of [-0.04, 0.04]) s.add(P.sphereLo, '#111', [0.05, 0.34, z + 0.03], null, [0.02, 0.02, 0.02]);
+    },
+    sauce(s) {
+      s.add(P.cyl, '#f4f0e8', [0, 0.08, 0], null, [0.12, 0.16, 0.12]);
+      s.add(P.cyl, '#c8302a', [0, 0.165, 0], null, [0.11, 0.02, 0.11]);
+      s.add(P.box, '#ffd84d', [0, 0.08, 0.121], null, [0.08, 0.06, 0.005]);
+    },
+    billboard(s) {
+      for (const x of [-2.6, 2.6]) s.add(P.cylLo, '#5a5a62', [x, 2.5, 0], null, [0.15, 5, 0.15]);
+      s.add(P.box, '#f4f0e8', [0, 5.6, 0], null, [7, 3.2, 0.2]);
+      s.add(P.sphere, '#c8282a', [-2, 5.6, 0.12], null, [0.9, 0.9, 0.2]);
+      s.add(P.box, '#3a2a1a', [-2, 6.6, 0.13], null, [0.08, 0.4, 0.02]);
+      for (let i = 0; i < 3; i++) s.add(P.box, '#2a2a30', [1, 6.4 - i * 0.6, 0.13], null, [3.4 - i * 0.6, 0.3, 0.02]);
+    },
+    tv(s) {
+      s.add(P.box, '#2a2a30', [0, 0.9, 0], null, [1.6, 1.2, 0.8]);
+      s.add(P.box, '#ffd84d', [0, 0.95, 0.41], null, [1.3, 0.9, 0.02], true);
+      s.add(P.sphereLo, '#c8282a', [-0.3, 0.95, 0.43], null, [0.18, 0.18, 0.02], true);
+      s.add(P.sphereLo, '#c8282a', [0.3, 0.95, 0.43], null, [0.18, 0.18, 0.02], true);
+      for (const x of [-0.6, 0.6]) s.add(P.cylLo, '#5a5a62', [x, 0.15, 0], null, [0.04, 0.3, 0.04]);
+    },
+    jar(s) {
+      s.add(P.cyl, '#bfe8ff', [0, 0.25, 0], null, [0.18, 0.5, 0.18], true);
+      s.add(P.cyl, '#5a5a62', [0, 0.52, 0], null, [0.19, 0.05, 0.19]);
+      s.add(P.sphereLo, '#ff8ac8', [0, 0.25, 0], null, [0.1, 0.12, 0.1], true);
+    },
+  };
+  C.makeEggs = function (dimId, scene) {
+    const group = new T.Group();
+    const eggs = MM.eggsIn(dimId).map(E => {
+      const s = new C.Shape({ smooth: false });
+      (EGG_MODELS[E.model] || EGG_MODELS.jar)(s);
+      const m = C.meshOf(s.build(), 0.02);
+      m.position.set(E.x, E.y !== undefined ? E.y : MM.heightAt(dimId, E.x, E.z), E.z);
+      if (E.model === 'billboard') m.rotation.y = Math.PI / 6;
+      group.add(m);
+      return { E, m };
+    });
+    scene.add(group);
+    return { eggs, dispose() { scene.remove(group); } };
+  };
+
   C.makeRides = function (dimId, scene) {
     const group = new T.Group(); group.name = 'rides';
     const rides = MM.ridesIn(dimId).map(R => {

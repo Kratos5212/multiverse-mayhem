@@ -1085,6 +1085,8 @@
           this.dirty(p);
         }
       }
+      // Walking up to an easter egg.
+      if (now >= (p.eggT || 0)) { p.eggT = now + 0.5; for (const E of MM.eggsIn(p.inst.dimId)) if (dist2(E.x, E.z, p.x, p.z) < (E.r || 3.5) ** 2) this.findEgg(p, E.id); }
       // Walking into a landmark counts for "go there" steps.
       if (now >= (p.lmT || 0)) for (const l of (p.lmT = now + 0.25, MM.LANDMARKS)) if (l.dim === p.inst.dimId && dist2(l.x, l.z, p.x, p.z) < (l.r + MM.USE_RADIUS) ** 2 && MM.sameFloor(l, p.y)) this.progress(p, 'at', l.id);
     }
@@ -1971,6 +1973,32 @@
       this.progress(p, 'play', m.g);
       this.dirty(p);
     }
+    // An easter egg (shared/fun.js): the first time counts, and pays a little.
+    findEgg(p, id) {
+      const E = MM.EGG_BY_ID[id], eggs = p.prog.eggs || (p.prog.eggs = []);
+      if (!E || eggs.includes(id)) return;
+      eggs.push(id);
+      p.inv.k = (p.inv.k || 0) + 3;
+      this.priv(p, { k: 'egg', id, n: eggs.length, total: MM.EGGS.length });
+      p.progDirty = true; this.dirty(p);
+    }
+    // Things you can say: the chat's easter eggs.
+    sayEgg(p, text) {
+      const E = MM.EGGS.find(q => q.kind === 'say' && q.re.test(text));
+      if (!E) return;
+      const inst = p.inst, now = this.time;
+      if (now < (p.cdSay || 0)) return;
+      p.cdSay = now + 8;
+      if (E.id === 'wubba') inst.ev({ k: 'burp', id: p.id });
+      else if (E.id === 'schwifty') { for (const o of inst.players.values()) if (dist2(o.x, o.z, p.x, p.z) < 30 * 30 && !o.dead) inst.ev({ k: 'em', id: o.id, e: 1 }); }
+      else if (E.id === 'showme') inst.ev({ k: 'cromulon', id: p.id, x: r2(p.x), z: r2(p.z) });
+      else if (E.id === 'picklerick') inst.ev({ k: 'pickle', id: p.id, t: 20 });
+      else if (E.id === 'meeseeks' && !p.dead && !p.inst.dim.planets) { if (now >= (p.cdSeeks || 0)) { p.cdSeeks = now + 60; this.summonMeeseeks(p, 1, 20); } }
+      else if (E.id === 'plumbus') this.priv(p, { k: 'toast', text: 'First they take the dinglebop, smooth it out with schleem, then the schleem is repurposed. The grumbo is shaved away. That leaves the fleeb.' });
+      else if (E.id === 'riggity') inst.ev({ k: 'burp', id: p.id });
+      this.findEgg(p, E.id);
+    }
+
     // Every dimension you set foot in, stamped in your passport; milestones pay.
     stampPassport(p, dimId) {
       const id = MM.stampOf(dimId);
@@ -2037,6 +2065,8 @@
       if (n.owner === p.id && n.ownerUntil > now) { say(pick(['We are with you.', 'Yes, friend?', 'Point us at someone.'])); return; }
       if (n.angry === p.id && n.angryUntil > now) { say(pick(['Oh, NOW you want to talk?', 'Get away from me!', 'I am still mad at you.'])); return; }
       if (!n.talkedBy.has(p.id)) { n.talkedBy.add(p.id); this.progress(p, 'talk'); }
+      const egg = MM.EGGS.find(E => E.kind === 'npc' && E.npc === n.type);
+      if (egg) this.findEgg(p, egg.id);
       // Errands: hand over the goods if this local is the one waiting for them.
       for (const e of p.prog.errands) {
         if (e.dim === inst.dimId && e.npc === n.type && (p.inv[e.m] || 0) >= e.n) {
@@ -2141,6 +2171,7 @@
       if (!clean) return;
       const msg = JSON.stringify({ t: 'c', id: p.id, name: p.name, home: p.home, dim: p.inst.dimId, text: clean });
       for (const o of this.players.values()) this.send(o, msg);
+      this.sayEgg(p, clean);
     }
 
     youState(p) {

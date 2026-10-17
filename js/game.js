@@ -442,6 +442,8 @@
       G.life = C.makeLife(w.dim, scene, settings.quality);
       if (G.rides) G.rides.dispose();
       G.rides = C.makeRides(w.dim, scene);
+      if (G.eggs) G.eggs.dispose();
+      G.eggs = C.makeEggs(w.dim, scene);
       const dim = MM.DIM_BY_ID[w.dim];
       scene.fog = new T.Fog(dim.fog, 40, dim.fogFar);
       camera.far = dim.planets ? 3200 : 1500; camera.updateProjectionMatrix();
@@ -843,7 +845,15 @@
         abilityFx(e.a, p, e.id);
         break;
       }
-      case 'em': { const p = G.players.get(e.id); if (p) { p.emoteT = e.e === 1 ? 6 : 2.5; p.emoteKind = e.e; } break; }
+      case 'em': {
+        if (e.id === G.myId) { G.me.emoteT = e.e === 1 ? 6 : 2.5; G.me.emoteKind = e.e; break; }
+        const p = G.players.get(e.id); if (p) { p.emoteT = e.e === 1 ? 6 : 2.5; p.emoteKind = e.e; }
+        break;
+      }
+      // The chat's easter eggs.
+      case 'burp': { const p = posOf(e.id); if (p) { fx.puff(p.x, p.y + 1.7, p.z, '#9aff6a', 14, 2, 1.2, 0.8); numAt(p.x, p.y + 2.6, p.z, '*BUUURP*', '#9aff6a', true); sfxAt('bite', p.x, p.z); } break; }
+      case 'cromulon': cromulon(e.x, e.z); break;
+      case 'pickle': pickleFor(e.id, e.t); break;
       case 'dodge': { const p = posOf(e.id); if (p) { numAt(p.x, p.y + 2.4, p.z, 'DODGE!', '#5ff8ff', false); sfxAt('dodge', p.x, p.z); } break; }
       case 'kiosk': { const p = posOf(e.id); if (p) fx.burst(p.x, p.y + 1, p.z, '#ffd84d', 25, 6, 0.6, 0.5, 2); break; }
       case 'timestop': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1.2, p.z, '#8fd8ff', 90, 14, 1.2, 1.4, 0); fx.burst(p.x, p.y + 1.2, p.z, '#ffffff', 30, 8, 0.8, 1.0, 0); } C.sfx('ability'); if (e.id === G.myId) UI.toast('Time stopped. Someone will have noticed.', 3000); break; }
@@ -967,6 +977,13 @@
     const me = G.me;
     if (e.k === 'race') { onRace(e); return; }
     if (e.k === 'hmenu') { openDefenses(e.own); return; }
+    if (e.k === 'egg') {
+      const E = MM.EGG_BY_ID[e.id];
+      if (G.prog) (G.prog.eggs || (G.prog.eggs = [])).push(e.id);
+      UI.banner('🥚 Easter egg: ' + E.name + ' (' + e.n + '/' + e.total + ')', E.text + ' +3 Schmeckles');
+      C.sfx('cheer');
+      return;
+    }
     if (e.k === 'catch') { UI.banner('You caught ' + e.name + '!', ['A tiddler.', 'A decent one.', 'A big one!', 'A MONSTER!'][e.size] + (e.n > 1 ? ' (' + e.n + ' caught so far)' : ' First one!')); C.sfx('cheer'); return; }
     if (e.k === 'stamp') {
       const D = MM.DIM_BY_ID[e.d];
@@ -1356,6 +1373,41 @@
     for (const p of MM.propsNear(G.dimId, me.x, me.z, 3)) { if (!SEATS.has(p.type)) continue; const d = Math.hypot(p.x - me.x, p.z - me.z); if (d < bd) { bd = d; best = p; } }
     me.sit = best ? { x: best.x, z: best.z, y: best.y + 0.45 * best.s, yaw: best.rot } : { x: me.x, z: me.z, y: me.y - 0.25, yaw: me.yaw };
     me.vx = me.vz = me.vy = 0;
+  }
+  // "Show me what you got": a Cromulon's giant head rises over the horizon for a while.
+  function cromulon(x, z) {
+    const s = new C.Shape({ smooth: false });
+    s.add(C.prim.sphere, '#f2c8b0', [0, 0, 0], null, [22, 30, 20]);
+    for (const sx of [-1, 1]) { s.add(C.prim.sphere, '#ffffff', [sx * 8, 6, 17], null, [6, 6, 3]); s.add(C.prim.sphere, '#1a1a1a', [sx * 8, 5, 19.5], null, [2.4, 2.4, 1]); s.add(C.prim.box, '#5a3a2a', [sx * 8, 13, 17], [0, 0, sx * 0.2], [9, 1.5, 2]); }
+    s.add(C.prim.sphere, '#3a0d16', [0, -12, 17], null, [9, 4, 3]);
+    s.add(C.prim.sphere, '#e0b098', [0, -1, 20], null, [3, 5, 3]);
+    const head = C.meshOf(s.build(), 0.4);
+    const a = Math.random() * Math.PI * 2;
+    head.position.set(x + Math.sin(a) * 140, MM.heightAt(G.dimId, x, z) + 10, z + Math.cos(a) * 140);
+    head.lookAt(x, head.position.y, z);
+    scene.add(head);
+    UI.banner('SHOW ME WHAT YOU GOT!', 'A Cromulon heard you. It wants to see what you got. (Dance! G)');
+    const t0 = now();
+    const rise = () => {
+      const t = now() - t0;
+      head.position.y = MM.heightAt(G.dimId, x, z) - 20 + Math.min(1, t / 3) * 60 - Math.max(0, t - 12) * 20;
+      if (t < 15 && G.dimId) requestAnimationFrame(rise); else scene.remove(head);
+    };
+    rise();
+  }
+  // "Pickle Rick!": turned into a pickle for a while.
+  function pickleFor(id, secs) {
+    const swap = (getAv, setAv, look, arch) => {
+      const old = getAv();
+      if (!old) return;
+      const pk = C.buildAvatar(Object.assign({}, look, { species: 'pickle', skin: '#7cbf3a', hairColor: '#4a7a22' }), arch);
+      pk.root.position.copy(old.root.position);
+      scene.remove(old.root); scene.add(pk.root); setAv(pk);
+      fx.burst(old.root.position.x, old.root.position.y + 1, old.root.position.z, '#7ad85a', 30, 6, 0.6, 0.6, 2);
+      setTimeout(() => { const cur = getAv(); if (cur !== pk) return; const back = C.buildAvatar(look, arch); back.root.position.copy(pk.root.position); scene.remove(pk.root); pk.dispose(); scene.add(back.root); setAv(back); if (id === G.myId && G.prog) C.setGear(back, myGear()); }, secs * 1000);
+    };
+    if (id === G.myId) swap(() => G.meAv, a => { G.meAv = a; }, profile.look, profile.arch);
+    else { const p = G.players.get(id); if (p) swap(() => p.av, a => { const tag = p.tag.sprite; a.root.add(tag); p.av = a; collectOutlines(a); }, p.info.look, p.info.arch); }
   }
   // The server's clock (for the rides' trains).
   function serverNow() { return now() - (G.offset || 0); }
@@ -1757,6 +1809,10 @@
       box.append(el('p', { class: 'note', text: 'Fish caught: ' + (Object.keys(fish).length ? Object.keys(fish).map(k => k + ' ×' + fish[k]).join(', ') : 'none yet (fish at the beach by the pier, on frozen lakes, in the Teenyverse)') + '.' }));
       const scores = Object.keys(best).filter(k => MM.GALLERIES[k] || /^(dance|roy):/.test(k));
       if (scores.length) box.append(el('p', { class: 'note', text: 'Best scores: ' + scores.map(k => (MM.GALLERIES[k] ? MM.GALLERIES[k].name + ' ' + best[k] + ' hits' : /^roy/.test(k) ? 'Roy ' + best[k] + ' years' : 'Dancing ' + best[k] + '%')).join(' · ') }));
+      const eggs = pg.eggs || [];
+      box.append(el('h3', { text: '🥚 Easter eggs: ' + eggs.length + ' of ' + MM.EGGS.length }));
+      box.append(el('p', { class: 'note', text: (eggs.length ? 'Found: ' + eggs.map(id => MM.EGG_BY_ID[id].name).join(', ') + '. ' : '') + 'Hidden things from the show, cameos to meet, and things to say in chat. ' +
+        MM.EGGS.filter(E => !eggs.includes(E.id)).length + ' left.' }));
       const st = G.st;
       box.append(el('h3', { text: 'You' }), el('p', { class: 'note', text: 'Health ' + st.maxHp + ' · speed ' + st.speed.toFixed(1) + ' · damage ×' + st.dmg.toFixed(2) +
         (st.fly ? ' · ' + (st.fly === 'jet' ? 'jetpack' : 'wings') : '') + (st.gun ? ' · portal gun ×' + st.gun.charges : '') + (st.ship ? ' · ship' + (st.ship.drive ? ' with dimension drive' : '') + (st.ship.quantum ? ' with quantum drive' : '') : '') }));
@@ -2001,6 +2057,7 @@
   $('tTalk').addEventListener('pointerdown', () => interact());
   $('tShip').addEventListener('pointerdown', () => toggleShip());
   $('tPair').addEventListener('pointerdown', () => shootPair());
+  $('tEmote').addEventListener('pointerdown', () => emoteBar());
   $('bJournal').onclick = () => openJournal();
   // Offline progress lives in this browser: save it when the page goes away.
   window.addEventListener('pagehide', () => { if (G.net && G.net.host) G.net.host.saveAll(); });

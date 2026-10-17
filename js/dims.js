@@ -2475,6 +2475,48 @@
       s.add(P.sphere, '#ff5a8a', [3.4, 0.7, 2], null, [0.7, 0.7, 0.7]);
       s.add(P.cyl, '#8a6a4a', [0, 0.2, 0], null, [4, 0.4, 4]);
     },
+    // A neon arcade: a black box outlined in pink and cyan light, a big sign and pinball inside.
+    lm_tw_ne(s) {
+      s.add(P.box, '#14102a', [0, 3, 0], null, [10, 6, 7]);
+      for (const [y, c] of [[0.1, '#ff3ad8'], [5.95, '#3af8ff']]) for (const z of [-3.5, 3.5]) s.add(P.box, c, [0, y, z], null, [10.1, 0.12, 0.12], true);
+      for (const x of [-5, 5]) s.add(P.box, '#ff3ad8', [x, 3, 3.5], null, [0.12, 6, 0.12], true);
+      s.add(P.box, '#3af8ff', [0, 7, 3.4], null, [6, 1.4, 0.1], true);
+      s.add(P.box, '#1a1a2e', [0, 1.3, 3.6], null, [2, 2.6, 0.08]);
+      for (const x of [-3, 3]) { s.add(P.box, '#ff3ad8', [x, 0.9, 4.4], [-0.25, 0, 0], [1, 0.3, 2], true); s.add(P.box, '#2a2a3a', [x, 0.45, 4.4], null, [0.9, 0.9, 1.8]); }
+    },
+    // A saloon: false front, swinging doors, a balcony, a hitching rail.
+    lm_tw_de(s) {
+      s.add(P.box, '#a8743a', [0, 2.5, 0], null, [10, 5, 7]);
+      s.add(P.box, '#c8945a', [0, 5.6, 3.4], null, [10, 2.4, 0.3]);
+      s.add(P.box, '#3a2a1a', [0, 6, 3.6], null, [6, 0.8, 0.05]);
+      s.add(P.box, '#8a5a2a', [0, 3.4, 4.4], null, [10, 0.2, 2]);
+      for (const x of [-4.8, -1.6, 1.6, 4.8]) s.add(P.cylLo, '#6a4a2a', [x, 1.7, 5.3], null, [0.12, 3.4, 0.12]);
+      for (const sx of [-1, 1]) s.add(P.box, '#c8945a', [sx * 0.45, 1.3, 3.55], [0, sx * 0.3, 0], [0.8, 1.2, 0.06]);
+      s.add(P.box, '#6a4a2a', [0, 0.9, 7], null, [6, 0.12, 0.12]);
+    },
+    // A giant pickle jar with a pickle in it (it may be watching you).
+    lm_tw_pi(s) {
+      s.add(P.cyl, '#b8e0a8', [0, 4, 0], null, [3.6, 8, 3.6], true);
+      s.add(P.cyl, '#d8d8d0', [0, 8.3, 0], null, [3.7, 0.6, 3.7]);
+      s.add(P.capsule, '#4a8a2a', [0, 3.8, 0], [0.15, 0, 0.1], [1.4, 5.5, 1.4]);
+      for (let i = 0; i < 10; i++) s.add(P.sphereLo, '#3a7a1a', [Math.sin(i * 2.1) * 1.2, 1.8 + i * 0.5, Math.cos(i * 2.1) * 1.2], null, [0.25, 0.25, 0.25]);
+      for (const sx of [-1, 1]) { s.add(P.sphereLo, '#fff', [sx * 0.45, 5.4, 1.25], null, [0.35, 0.35, 0.2]); s.add(P.sphereLo, '#111', [sx * 0.45, 5.4, 1.4], null, [0.12, 0.12, 0.08]); }
+      s.add(P.box, '#3a1a12', [0, 4.7, 1.32], null, [0.9, 0.12, 0.08]);
+    },
+    // A golden vault: open doors, a mountain of coins inside, and a statue of nobody in particular.
+    lm_tw_go(s) {
+      s.add(P.box, '#c8a83a', [0, 3, -1], null, [10, 6, 6]);
+      s.add(P.cyl, '#e8c84a', [0, 2.6, 2.1], [Math.PI / 2, 0, 0], [2.6, 0.4, 2.6]);
+      s.add(P.hemi, '#ffd84d', [0, 0, 4.5], null, [4, 2.2, 3], true);
+      for (let i = 0; i < 20; i++) s.add(P.cyl, '#ffe066', [Math.sin(i * 2.4) * 3.5, 0.1 + (i % 4) * 0.4, 4.5 + Math.cos(i * 2.4) * 2.2], [0.3 * i, 0, 0.2], [0.35, 0.06, 0.35], true);
+      s.add(P.capsule, '#ffd84d', [-4, 3, 4], null, [0.5, 3, 0.5]); s.add(P.sphere, '#ffd84d', [-4, 5, 4], null, [0.6, 0.6, 0.6]);
+    },
+    // A fairy ring: a circle of giant mushrooms around a glowing patch of spores.
+    lm_tw_fu(s) {
+      for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, h = 2 + (i % 3) * 1.4; s.add(P.cyl, '#f0e8d8', [Math.cos(a) * 5, h / 2, Math.sin(a) * 5], null, [0.35, h, 0.35]); s.add(P.hemi, i % 2 ? '#c84a3a' : '#a87a5a', [Math.cos(a) * 5, h, Math.sin(a) * 5], null, [1.4, 0.9, 1.4]); }
+      s.add(P.cyl, '#d8ffb0', [0, 0.05, 0], null, [3.2, 0.06, 3.2], true);
+      for (let i = 0; i < 12; i++) s.add(P.sphereLo, '#f0ffd0', [Math.sin(i * 1.9) * 2, 0.6 + (i % 4) * 0.6, Math.cos(i * 1.9) * 2], null, [0.12, 0.12, 0.12], true);
+    },
     lm_tw_ty(s) {
       s.add(P.box, '#ff5a5a', [0, 2.5, 0], null, [9, 5, 7]);
       s.add(P.box, '#ffd84d', [0, 2.5, 3.52], null, [9.02, 1, 0.1]);
@@ -3572,7 +3614,7 @@
     teddy: ['#b07a4a', '#c88a52', '#8a5a34', '#d8a870'], shrimp: ['#ff8a6a', '#f47a5a', '#ff9d7d', '#ee6e50'] };
   C.npcLook = function (type, seed) {
     const H = MM.NPCS[type].human, r = MM.rng(seed >>> 0);
-    if (H.fixed) return MM.canonLook(H.fixed);
+    if (H.fixed) return Object.assign(MM.canonLook(H.fixed), H.look || {});
     if (H.variant) { const L = MM.variantLook(H.variant, r); if (H.top) L.top = H.top; if (H.acc) L.acc = H.acc; return L; }
     const pk = a => a[Math.floor(r() * a.length)];
     const col = () => '#' + Math.floor(r() * 0xffffff).toString(16).padStart(6, '0');

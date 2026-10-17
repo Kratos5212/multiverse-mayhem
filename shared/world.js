@@ -58,6 +58,16 @@
       extra: [['fleshpillar', 30], ['eyestalk', 40], ['bonearch', 10], ['pustule', 40]],
       npc: [['meatblob', 11], ['fleshmonk', 4]], pickups: { s: 8, g: 14 }, mat: 'g',
     },
+    // The other timeline of Cronenberged Earth: the cure worked backwards. The planet is still
+    // meat, teeth and eyes; the people turned back into perfectly normal people.
+    {
+      id: 'curedearth', variantOf: 'suburbia', timeline: true, name: 'Cronenberged Earth (cured timeline)', code: 'PRIME ✚', quirk: 'regen',
+      blurb: 'A timeline where Rick\'s cure worked backwards: the whole planet is still flesh, teeth and eyeballs, but every Cronenberg turned back into a perfectly normal person. They mow lawns of meat and wave at you from houses with gums. Nobody talks about it.',
+      sky: ['#5a1a2c', '#e8a0a8'], fog: '#a85a68', fogFar: 190, sun: '#fff0e0', ambient: '#c8909a',
+      ground: ['#d06878', '#e08a92', '#b04a5e'], accent: '#a8e8ff',
+      extra: [['fleshpillar', 18], ['eyestalk', 24], ['pustule', 20], ['bonearch', 6]],
+      npc: [['neighbor', 10], ['schoolkid', 3], ['cop', 2], ['fleshmonk', 2]], pickups: { s: 10, g: 10 }, mat: 'g',
+    },
     {
       id: 'bazaar', flat: 128, name: 'Alien Bazaar', code: 'B-9000', seed: 9001, gravity: 20, amp: 4, scale: 0.015,
       blurb: 'An alien night market. Everything is for sale, especially things that should not be.',
@@ -604,6 +614,8 @@
   ];
   MM.DIM_BY_ID = {};
   for (const d of MM.DIMS) MM.DIM_BY_ID[d.id] = d;
+  // Easter eggs (shared/fun.js): the cameo characters live in their own places.
+  if (MM.EGGS) for (const E of MM.EGGS) if (E.kind === 'npc' && MM.DIM_BY_ID[E.dim]) MM.DIM_BY_ID[E.dim].npc.push([E.npc, 1, E.x, E.z]);
   // Alternate Earths share the home street plan (same seed, same streets) with their own twist.
   function fillVariant(d) {
     const B = MM.DIM_BY_ID[d.variantOf];
@@ -719,24 +731,32 @@
   ];
   // Every world has at least one parallel dimension. These are the ones the show never got to.
   const PARALLEL = [
-    { k: 'CR', label: 'Cronenberg dimension', blurb: n => n + ', from a dimension where Rick\'s love potion got loose. Everything has too many teeth.', hue: -30, sat: 1.2, light: 0.9, extra: [['pustule', 12], ['eyestalk', 8]], npc: [['meatblob', 5]] },
     { k: 'MR', label: 'mirror dimension', blurb: n => n + ', the other way round, colours and all. The locals swear it is you who is backwards.', hue: 180, sat: 1, light: 1 },
     { k: 'IC', label: 'ice age dimension', blurb: n => n + ', in a dimension where its sun is a little further away. Everything is frozen.', hue: 0, sat: 0.25, light: 1.35, extra: [['crystal', 14]] },
     { k: 'DK', label: 'dark dimension', blurb: n => n + ' where the sun went out a long time ago. Everyone just got used to it.', hue: 0, sat: 0.8, light: 0.45, extra: [['lamp', 16]] },
     { k: 'JG', label: 'jungle dimension', blurb: n => n + ', where the jungle got everything back.', hue: 40, sat: 1.25, light: 0.95, extra: [['seedtree', 12], ['fungus', 10]] },
     { k: 'CT', label: 'cat dimension', blurb: n => n + ', where everyone is a cat. Nobody remembers it ever being different.', hue: 15, sat: 1, light: 1.05, npc: [['catfolk', 8]] },
+    { k: 'NE', label: 'neon dimension', blurb: n => n + ' where it is always night and everything is lit in neon. Very cool. Very loud.', hue: 250, sat: 1.5, light: 0.55, wash: ['#3a1a6a', 0.35], extra: [['partylight', 16], ['speaker', 5], ['arcade', 4]], npc: [['neonkid', 7]] },
+    { k: 'DE', label: 'Wild West dimension', blurb: n => n + ', in a dimension that never got past 1880. Saloons, tumbleweeds and duels at noon.', hue: 25, sat: 0.8, light: 1.08, wash: ['#d8a060', 0.4], extra: [['cactus', 16], ['redmesa', 5], ['barrel', 6]], npc: [['cowpoke', 7]] },
+    { k: 'PI', label: 'pickle dimension', blurb: n => n + ' where everyone turned themselves into a pickle. Funniest thing they ever saw.', hue: 70, sat: 1.15, light: 1.0, wash: ['#7ac84a', 0.3], extra: [['fern', 10]], npc: [['picklefolk', 8]] },
+    { k: 'GO', label: 'gold dimension', blurb: n => n + ' in a dimension where everything is made of gold. Gold is worthless here. Dirt is very expensive.', hue: 45, sat: 1.6, light: 1.15, wash: ['#ffd84d', 0.45], extra: [['goldorb', 12]], npc: [['richfolk', 7]] },
+    { k: 'FU', label: 'fungus dimension', blurb: n => n + ', grown over with mushrooms the size of houses. The spores are friendly. Mostly.', hue: -50, sat: 1.0, light: 0.85, wash: ['#a87ab0', 0.25], extra: [['mushroom', 22], ['fungus', 14]], npc: [['sporefolk', 7]] },
     { k: 'TY', label: 'toy dimension', blurb: n => n + ' in a dimension made of plastic and candy. Everything squeaks.', hue: -10, sat: 1.6, light: 1.12, extra: [['lollipop', 10], ['candyrock', 6]] },
   ];
   MM.PARALLEL_BY_K = {};
   for (const T of PARALLEL) MM.PARALLEL_BY_K[T.k] = T;
   // Each kind of parallel dimension has a place of its own and something to do there.
   MM.TWIST_SPOTS = {
-    CR: { name: 'The Flesh Shrine', model: 'lm_tw_cr', task: ['Feed the Flesh Shrine', { g: 3 }, 'It ate the scraps you offered, and then it purred. Best not to think about it.'] },
     MR: { name: 'The Great Mirror', model: 'lm_tw_mr', task: ['Shake hands with your reflection', { k: 2, m: 1 }, 'Your reflection shook your left hand with its right. It seemed nicer than you. Suspicious.'] },
     IC: { name: 'The Frozen Lake', model: 'lm_tw_ic', task: ['Go ice fishing', { c: 2 }, 'You caught a fish frozen mid-sentence. It finished the sentence when it thawed. It was rude.'], heal: true },
     DK: { name: 'The Last Lighthouse', model: 'lm_tw_dk', task: ['Relight the lighthouse', { p: 2, s: 1 }, 'For a moment the whole dark dimension could see. Everyone said thanks, then went back to the dark.'] },
     JG: { name: 'The Overgrown Temple', model: 'lm_tw_jg', task: ['Explore the overgrown temple', { m: 1, s: 2 }, 'Vines, snakes, a booby trap, and at the very end a Mega Seed in a little bowl. Classic.'] },
     CT: { name: 'The Great Scratching Post', model: 'lm_tw_ct', task: ['Nap in a sunbeam', { f: 2 }, 'You napped for nine hours. Nobody thought this was strange. You feel amazing.'], heal: true },
+    NE: { name: 'The Neon Arcade', model: 'lm_tw_ne', task: ['Play neon pinball', { k: 2, p: 1 }, 'Multiball! The whole arcade lit up and the machine played a song about you. You are now a minor celebrity here.'] },
+    DE: { name: 'The Saloon', model: 'lm_tw_de', task: ['Belly up to the bar', { f: 2 }, 'A sarsaparilla, a long stare-down with a cowboy, and a duel at noon you both decided to skip.'], heal: true },
+    PI: { name: 'The Giant Pickle Jar', model: 'lm_tw_pi', task: ['Take a dip in the brine', { g: 2, f: 1 }, 'You come out crunchier. Somewhere, a Rick would be proud.'], heal: true },
+    GO: { name: 'The Golden Vault', model: 'lm_tw_go', task: ['Dive into the gold coins', { k: 4 }, 'You swam in coins like a cartoon duck. Here they are worthless, so you took some home.'] },
+    FU: { name: 'The Spore Ring', model: 'lm_tw_fu', task: ['Breathe in the spores', { p: 2, c: 1 }, 'For a moment you were connected to every mushroom in the dimension. They think you are fine.'] },
     TY: { name: 'The Giant Toy Box', model: 'lm_tw_ty', task: ['Wind up the giant toy', { s: 3 }, 'The giant tin robot marched once round the box and fell over. The crowd went wild.'] },
   };
   const tint = (hex, h, sat, light) => {
@@ -758,7 +778,7 @@
     return d;
   };
   for (const [id, of, name, code, blurb, look] of TIMELINES) derive(MM.DIM_BY_ID[of], id, Object.assign({ name, code, blurb, timeline: true, timelineOf: of }, look));
-  MM.DIM_BY_ID.splitearth.timelineOf = 'suburbia'; MM.DIM_BY_ID.dinoearth.timelineOf = 'suburbia';
+  MM.DIM_BY_ID.splitearth.timelineOf = 'suburbia'; MM.DIM_BY_ID.dinoearth.timelineOf = 'suburbia'; MM.DIM_BY_ID.curedearth.timelineOf = 'meatlands';
   // Every world that is not one of a kind gets parallel dimensions, three of them (a world the
   // show already gave some, like Earth, keeps its own). Each has its own twist, its own look,
   // its own place and its own thing to do (MM.TWIST_SPOTS).
@@ -766,14 +786,21 @@
     const B = MM.DIM_BY_ID[W.prime];
     W.dims = [W.prime].concat(W.dims || []);
     if (W.dims.length > 1 || B.interior || W.unique || W.solar) return;
+    let hw = 2166136261; for (const ch of W.id) { hw ^= ch.charCodeAt(0); hw = Math.imul(hw, 16777619); }
+    const rw = MM.rng(hw >>> 0), kinds = PARALLEL.slice();
+    for (let a = kinds.length - 1; a > 0; a--) { const b = Math.floor(rw() * (a + 1)); [kinds[a], kinds[b]] = [kinds[b], kinds[a]]; }
     for (let j = 0; j < 3; j++) {
-      const T = PARALLEL[(i + j * 3) % PARALLEL.length], t = c => tint(c, T.hue, T.sat, T.light);
+      // Its colours: the world's, turned (and washed with the twist's own colour, so even a grey
+      // moon turns gold in the gold dimension).
+      const T = kinds[j], mix = (a, b, k) => '#' + [0, 1, 2].map(i => Math.round(parseInt(a.substr(1 + i * 2, 2), 16) * (1 - k) + parseInt(b.substr(1 + i * 2, 2), 16) * k).toString(16).padStart(2, '0')).join('');
+      const t = c => T.wash ? mix(tint(c, T.hue, T.sat, T.light), T.wash[0], T.wash[1]) : tint(c, T.hue, T.sat, T.light);
       const id = W.prime + '_' + T.k.toLowerCase();
       if (MM.DIM_BY_ID[id]) continue;
       const d = derive(B, id, { name: W.name + ' (' + T.label + ')', code: B.code + '/' + T.k, twist: T.k, blurb: T.blurb(W.name),
         sky: B.sky.map(t), fog: t(B.fog), ground: B.ground.map(t), ambient: t(B.ambient), extra: T.extra || [], npc: T.npc || [] });
       W.dims.push(d.id);
       const S = MM.TWIST_SPOTS[T.k], l = { id: id + '_twist', dim: id, name: S.name, x: -58, z: -58, r: 6, h: 8, model: S.model, alias: 'twist_' + T.k, rot: Math.PI / 4 };
+      if (T.k === 'IC') { l.game = 'fish'; l.fish = 'ice'; }   // the frozen lake: real ice fishing
       MM.LANDMARKS.push(l); MM.LANDMARK_BY_ID[l.id] = l;
     }
   });
@@ -1173,6 +1200,62 @@
     fungusclone: { name: 'Fungus clone', hp: 60, speed: 1.8, hostile: false, dmg: 0, drop: { g: 3 }, r: 0.6, h: 1.4,
       talk: ['It\'s me! The real one. Not a fungus.', 'Beth? Beth, I\'m home. In a normal voice.', 'I... WILL... um. Hi!', 'Why is everyone looking at me like that?'] },
     funguseater: { name: 'Fungus clone (hungry)', hp: 320, speed: 3.4, hostile: true, dmg: 15, drop: { g: 8, m: 1 }, r: 1.6, h: 3.4 },
+    // ----- Cameos (easter eggs: shared/fun.js) -----
+    krombopulos: { name: 'Krombopulos Michael', hp: 120, speed: 2.6, hostile: false, dmg: 0, drop: { k: 3 }, r: 0.6, h: 1.9,
+      human: { species: ['alien'], top: ['vest'], acc: ['goggles'], look: { hair: 'bald', brow: 'normal', eyes: 'wide', mouth: 'grin', face: 'long', height: 1.1, width: 1.1, head: 1.15, skin: '#c87ad8', topColor: '#3a3a42', shirtColor: '#5a5a62', pantsColor: '#2a2a32', shoeColor: '#1a1a1a', accColor: '#1a1a1a' } },
+      names: ['Krombopulos Michael'], talk: ['Oh boy, here I go killing again!', 'I just love killing. Any target, any time.', 'You want a gun? I know a guy. It\'s me. I\'m the guy.'] },
+    noobnoob: { name: 'Noob-Noob', hp: 60, speed: 2, hostile: false, dmg: 0, drop: { s: 1 }, r: 0.6, h: 1.7,
+      human: { species: ['alien'], top: ['tshirt'], acc: ['cap'], look: { hair: 'bald', brow: 'normal', eyes: 'wide', mouth: 'grin', face: 'round', height: 0.95, width: 1.0, head: 1.2, skin: '#8ac86a', topColor: '#d8d8d8', shirtColor: '#d8d8d8', pantsColor: '#3a4a6a', shoeColor: '#1a1a1a', accColor: '#3a4a6a' } },
+      names: ['Noob-Noob'], talk: ['I\'m just the janitor. But they call me Noob-Noob!', 'Did someone say party? I was not invited to the party.', 'Mop, mop, mop.'] },
+    lizardmorty: { name: 'Lizard Morty', hp: 60, speed: 2.6, hostile: false, dmg: 0, drop: { g: 2 }, r: 0.6, h: 1.6,
+      human: { fixed: 'sidekick', look: { skin: '#6ab84a' } }, names: ['Lizard Morty'], talk: ['I\'m a lizard. Morty. A Lizard Morty.', 'It\'s fine. It\'s really fine.', 'Hsss. Sorry. Habit.'] },
+    gearhead: { name: 'Gearhead', hp: 90, speed: 2.4, hostile: false, dmg: 0, drop: { s: 4 }, r: 0.6, h: 1.8,
+      human: { species: ['robot'], top: ['vest'], acc: ['none'], look: { hair: 'bald', brow: 'angry', eyes: 'wide', mouth: 'grin', face: 'round', height: 1.0, width: 1.0, head: 1.1, skin: '#c8a83a', topColor: '#6a4a2a', shirtColor: '#8a6a3a', pantsColor: '#5a4a3a', shoeColor: '#2a2a2a', accColor: '#2a2a2a' } },
+      names: ['Revolio "Gearhead" Clockberg Jr.'], talk: ['I am Revolio Clockberg Jr. Everyone calls me Gearhead. I hate it.', 'Rick? I would never betray Rick. Again. Twice.', 'Do NOT touch my gear.'] },
+    tammy: { name: 'Tammy', hp: 70, speed: 2.6, hostile: false, guard: true, dmg: 12, drop: { k: 2 }, r: 0.6, h: 1.75,
+      human: { species: ['human'], top: ['tshirt'], acc: ['none'], look: { hair: 'ponytail', brow: 'normal', eyes: 'normal', mouth: 'grin', face: 'round', height: 1.0, width: 0.9, head: 1.0, skin: '#f2d2b6', hairColor: '#c8402a', topColor: '#5ab0e8', shirtColor: '#5ab0e8', pantsColor: '#3a3a5a', shoeColor: '#f2f2f2', accColor: '#c8402a' } },
+      names: ['Tammy'], talk: ['Oh my God, I love weddings! Totally normal guest here.', 'I am not a Federation agent. Why would you even ask that?', 'Birdperson is soooo dreamy.'] },
+    jessica: { name: 'Jessica', hp: 50, speed: 2.6, hostile: false, dmg: 0, drop: { f: 1 }, r: 0.6, h: 1.7,
+      human: { species: ['human'], top: ['tshirt'], acc: ['none'], look: { hair: 'ponytail', brow: 'normal', eyes: 'normal', mouth: 'grin', face: 'round', height: 0.95, width: 0.9, head: 1.0, skin: '#f8dcc4', hairColor: '#d8502a', topColor: '#f2a03a', shirtColor: '#f2a03a', pantsColor: '#3a4a7a', shoeColor: '#f2f2f2', accColor: '#d8502a' } },
+      names: ['Jessica'], talk: ['Oh, hi! Are you a friend of Morty\'s?', 'Morty is sweet. A little weird. Mostly weird.', 'Brad and I are just friends. Like, mostly.'] },
+    glootie: { name: 'Glootie', hp: 50, speed: 2.4, hostile: false, dmg: 0, drop: { k: 1 }, r: 0.6, h: 1.6,
+      human: { species: ['alien'], top: ['tshirt'], acc: ['none'], look: { hair: 'bowl', brow: 'none', eyes: 'wide', mouth: 'grin', face: 'round', height: 0.9, width: 0.95, head: 1.2, skin: '#8ad86a', hairColor: '#5aa84a', topColor: '#f2f2f2', shirtColor: '#f2f2f2', pantsColor: '#3a3a42', shoeColor: '#1a1a1a', accColor: '#1a1a1a' } },
+      names: ['Glootie'], talk: ['Do not develop my app.', 'Hi! I\'m Glootie. Do not develop my app.', 'The app is fine. Do not develop it.'] },
+    pibbles: { name: 'Shrimply Pibbles', hp: 60, speed: 1.6, hostile: false, dmg: 0, drop: { c: 2 }, r: 0.6, h: 1.7,
+      human: { species: ['shrimp'], top: ['vest'], acc: ['none'], look: { hair: 'bald', brow: 'normal', eyes: 'tired', mouth: 'flat', face: 'long', height: 1.0, width: 0.95, head: 1.1, skin: '#d87ac8', topColor: '#3a3a5a', shirtColor: '#f2f2f2', pantsColor: '#3a3a5a', shoeColor: '#1a1a1a', accColor: '#1a1a1a' } },
+      names: ['Shrimply Pibbles'], talk: ['I have a dream... of a new heart.', 'Excuse me. Do you happen to be a heart donor? Your heart looks very compatible.', 'Bloobity bloo.'] },
+    eyeholesman: { name: 'The Eyeholes Man', hp: 150, speed: 4, hostile: false, guard: true, dmg: 16, drop: { f: 3 }, r: 0.7, h: 1.9,
+      human: { species: ['blob'], top: ['none'], acc: ['none'], look: { hair: 'bald', brow: 'angry', eyes: 'wide', mouth: 'open', face: 'round', height: 1.1, width: 1.2, head: 1.2, skin: '#5a8ae8', topColor: '#5a8ae8', shirtColor: '#5a8ae8', pantsColor: '#4a7ad8', shoeColor: '#4a7ad8', accColor: '#5a8ae8' } },
+      names: ['The Eyeholes Man'], talk: ['GET THE HELL OUT OF HERE! These are MY Eyeholes!', 'Do you have Eyeholes? Give me the Eyeholes.', 'EYEHOLES!'] },
+    gazorpfield: { name: 'Gazorpazorpfield', hp: 70, speed: 1.4, hostile: false, dmg: 0, drop: { f: 2 }, r: 0.7, h: 1.4,
+      human: { species: ['cat'], top: ['none'], acc: ['none'], look: { hair: 'bald', brow: 'angry', eyes: 'sleepy', mouth: 'grin', face: 'wide', height: 0.9, width: 1.35, head: 1.2, skin: '#f2902a', topColor: '#f2902a', shirtColor: '#f2902a', pantsColor: '#e8802a', shoeColor: '#e8802a', accColor: '#f2902a' } },
+      names: ['Gazorpazorpfield'], talk: ['I hate Mondays.', 'Give me my enchiladas, Jon.', 'Jon, you\'re a dumbass.'] },
+    // ----- The people of the parallel dimensions -----
+    neonkid: { name: 'Neon kid', hp: 30, speed: 3.4, hostile: false, dmg: 0, drop: { k: 1 }, r: 0.6, h: 1.8,
+      human: { species: ['human', 'robot', 'alien'], top: ['vest', 'tshirt'], acc: ['goggles', 'antennae', 'none'], eyes: ['visor', 'normal'], colors: { topColor: '#ff3ad8', shirtColor: '#3af8ff', pantsColor: '#1a1a2a', accColor: '#3af8ff' } },
+      names: ['Glowstick', 'Synth', 'Pixel', 'Laser Lisa', 'Chrome'],
+      talk: ['The sun? Never heard of it. Is it a band?', 'Everything here hums. You get used to it. Then you need it.', 'Wanna race? Everyone here has a hoverboard. Except you.'],
+      moods: { line: 55, gift: 12, trade: 10, errand: 10, buff: 8, dance: 8 } },
+    cowpoke: { name: 'Cowpoke', hp: 50, speed: 3, hostile: false, guard: true, dmg: 10, drop: { s: 2 }, r: 0.6, h: 1.9,
+      human: { species: ['human'], top: ['vest'], acc: ['tophat'], colors: { topColor: '#8a5a2a', shirtColor: '#e8d8b8', pantsColor: '#4a4a6a', shoeColor: '#3a2a1a', accColor: '#6a4a2a' } },
+      names: ['Dusty Pete', 'Calamity Rick', 'Sheriff Morty', 'Ol\' Jerry', 'Tumbleweed Tess'],
+      talk: ['This here dimension ain\'t big enough for the two of us. It is, actually. It\'s quite big.', 'Portal guns? We call \'em green holes. Folks fall in them sometimes.', 'Duel at noon? I\'m busy at noon. How about 12:15.'],
+      moods: { line: 55, gift: 12, trade: 10, errand: 12, buff: 6, angry: 5 } },
+    picklefolk: { name: 'Pickle person', hp: 30, speed: 2.4, hostile: false, dmg: 0, drop: { g: 1, f: 1 }, r: 0.5, h: 1.2,
+      human: { species: ['pickle'], top: ['none'], acc: ['none'], skin: '#7cbf3a' },
+      names: ['Pickle Rick (no, another one)', 'Gherkin Gary', 'Dill Doug', 'Brine Betty', 'Sour Steve'],
+      talk: ['I turned myself into a pickle! Everyone here did. It was a whole trend.', 'I\'m Pickle... someone. I forget who I was before.', 'Watch out for rats. They are a real problem when you are a pickle.'],
+      moods: { line: 60, gift: 12, trade: 8, errand: 10, buff: 8 } },
+    richfolk: { name: 'Gold dimension local', hp: 40, speed: 2.6, hostile: false, dmg: 0, drop: { k: 3 }, r: 0.6, h: 1.8,
+      human: { species: ['human'], top: ['labcoat', 'vest'], acc: ['tophat', 'crown'], colors: { topColor: '#ffd84d', shirtColor: '#fff4c8', pantsColor: '#c8a83a', accColor: '#ffd84d' } },
+      names: ['Lord Goldsby', 'Lady Ingot', 'Sir Bullion', 'Mr. Glitters'],
+      talk: ['Gold? Pfft. It is everywhere. Do you have any dirt? I will pay.', 'My house is gold. My dog is gold. My dog is very heavy.', 'Do not touch the statues. They are not statues.'],
+      moods: { line: 55, gift: 18, trade: 12, errand: 10, buff: 5 } },
+    sporefolk: { name: 'Spore person', hp: 40, speed: 2.2, hostile: false, dmg: 0, drop: { g: 2 }, r: 0.6, h: 1.7,
+      human: { species: ['alien', 'blob'], top: ['none', 'vest'], acc: ['cap', 'none'], skin: '#d8c8a8', colors: { topColor: '#a87a5a', accColor: '#c84a3a' } },
+      names: ['Morel', 'Chanterelle', 'Shroomy', 'Puffball'],
+      talk: ['We are all connected, under the ground. Hello from all of us.', 'Breathe deep. No, deeper. There. Now you are one of us, a little.', 'The rain comes and we grow. That is the whole plan.'],
+      moods: { line: 55, gift: 14, trade: 8, errand: 10, buff: 10 } },
     // ----- Anatomy Park's people -----
     parkguest: { name: 'Park guest', hp: 30, speed: 2.8, hostile: false, dmg: 0, drop: { g: 1 }, r: 0.6, h: 1.8,
       human: { species: ['human', 'alien', 'blob', 'insect', 'birdfolk'], top: ['tshirt', 'polo', 'vest'], acc: ['cap', 'none', 'goggles'] },
@@ -2001,7 +2084,6 @@
   const TWISTS = [
     { k: 'plain', blurb: 'Another Earth where the Smiths live. It is almost exactly like the others. Almost.', npc: [['neighbor', 10], ['schoolkid', 4]] },
     { k: 'plain', blurb: 'An Earth one tiny decision away from C-137. Nobody here can tell which decision.', npc: [['neighbor', 10], ['cop', 2]] },
-    { k: 'cronen', blurb: 'The love potion happened here too. The neighbours are Cronenbergs now.', sky: ['#3d0a1c', '#c4485f'], ground: ['#c9576b', '#e07a85', '#9c3a4e'], npc: [['meatblob', 6], ['fleshmonk', 3]], extra: [['fleshpillar', 18], ['eyestalk', 14], ['pustule', 14]] },
     { k: 'fascist', blurb: 'A fascist Earth: grey skies, banners, and a Rick in a robe somewhere in charge.', sky: ['#6a6e78', '#b8b0a8'], ground: ['#5a6a4a', '#647454', '#506040'], npc: [['fascistsoldier', 7], ['neighbor', 4]], extra: [['banner', 24], ['watchtower', 5]] },
     { k: 'shrimp', blurb: 'An Earth where everyone evolved from shrimp.', sky: ['#ff9f86', '#ffe2d4'], npc: [['shrimpfolk', 12]], extra: [['shrimpstatue', 5]] },
     { k: 'teddy', blurb: 'An Earth of teddy bear people.', npc: [['teddyfolk', 12]], extra: [['teddystatue', 5], ['honeypot', 12]] },
@@ -2057,7 +2139,7 @@
   // Earth's sea, not a planet: fly up from it and you are above that Earth. A parallel
   // dimension (the ice dimension, the cat dimension...) has its own universe: the same twist
   // on every world, and its own version of Earth where the show has one (Cronenberged Earth).
-  MM.TWIST_EARTH = { CR: 'meatlands' };
+  MM.TWIST_EARTH = {};
   MM.spaceKey = dimId => {
     const D = MM.DIM_BY_ID[dimId];
     if (D.earthOf) return MM.spaceKey(D.earthOf);

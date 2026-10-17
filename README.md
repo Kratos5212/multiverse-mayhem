@@ -58,7 +58,7 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | Enter | Chat button | Chat with the whole multiverse |
 | Tab | Chart button | Leaderboard, players here, invite to your team, mute |
 | V or mouse wheel | Eye button | Switch between first and third person |
-| G |  | Wave |
+| G | EMOTE | Emotes: wave, dance, laugh, point, cheer, facepalm (then 1-6), or sit down (7) on the spot |
 | Esc | Menu button | Settings and leave |
 
 **Ctrl and the browser:** Ctrl is "down" in the ship. While you play, the game keeps Ctrl shortcuts (Ctrl+R, Ctrl+S, Ctrl+F...) from the browser; Ctrl+W asks before closing, and in **Full screen** (Esc menu) it is caught too. After you close a menu the mouse goes straight back to the game. **F** uses what you are looking at, so in the garage you get the workbench in front of you, not the garage.
@@ -167,7 +167,7 @@ Every world is laid out like a real place (`shared/layouts.js`): roads and squar
 | Planet Squanch | A purple party planet of huts and lights | Squanchians | Neon Plasma | |
 | Gazorpazorp | Red mesas, bones, angry brutes | Gazorpians (hostile) | Meat Goo | |
 | Froopyland | Cotton-candy trees, lollipops, solid rainbows | Froopies | Sky Feather | |
-| Anatomy Park | A theme park inside a man: blood cells, bones, arteries | Diseases (hostile) | Meat Goo | Pirates of the Pancreas |
+| Anatomy Park | A theme park inside a giant corpse floating in space | Park guests, staff, Dr. Xenon Bloom, Annie, Hepatitis C, Poncho | Meat Goo | Six rides, the Hepatitis A Blaster, the gift shop, the Uvula Bandstand |
 | Pizza-Phone-Chair Dimension | Giant chairs, phones and pizza boxes; *outside the Central Finite Curve* | Pizza, phone and chair people | Scrap | |
 | Post-Apocalyptic Earth | Desert wrecks, scrap towers, cacti | Raiders (hostile) | Scrap | |
 | The Microverse | A tiny, hopeful civilisation inside Rick's car battery | Microversians | Moon Crystal | Gooble Box Power Plant |
@@ -209,7 +209,7 @@ Every prop except the landmarks can be destroyed. Wrecking things and beating ot
 
 ### Your home dimension
 
-The **home dimension** you type on the character screen (Y-231, J-19...) is a real place. Every code is its own alternate Earth with the Smith street plan and its own twist from the show: a Cronenberg Earth, a fascist one, shrimp or teddy or cat people, robots, aliens keeping humans as pets, candy, jungle, an Earth where the sun went out, the pizza-and-furniture one, a wasteland, or a dog-ruled one. The same code is always the same place, for everyone. Ricks, Mortys, Summers, Beths, Jerrys and Evil Mortys start in their own Earth; **C-137** is the show's Earth.  Home dimensions show up in the travel menu under Earth's dimensions: yours (marked ★), and those of everyone online.
+The **home dimension** you type on the character screen (Y-231, J-19...) is a real place. Every code is its own alternate Earth with the Smith street plan and its own twist from the show: a fascist one, shrimp or teddy or cat people, robots, aliens keeping humans as pets, candy, jungle, an Earth where the sun went out, the pizza-and-furniture one, a wasteland, or a dog-ruled one. The same code is always the same place, for everyone. Ricks, Mortys, Summers, Beths, Jerrys and Evil Mortys start in their own Earth; **C-137** is the show's Earth.  Home dimensions show up in the travel menu under Earth's dimensions: yours (marked ★), and those of everyone online.
 
 ### Teams
 
@@ -236,7 +236,8 @@ South of every Earth's towns there is a sandy **beach** and the sea. Swim out an
 The multiverse has three layers, and they are different things:
 
 * **Worlds** are places: Earth, the Moon, Bird World, Gazorpazorp, Planet Squanch, the Citadel, Snake Planet, Atlantis, the Dream World, the planets of the solar system and the rest (33 of them).
-* **Dimensions** are parallel versions of a world. Earth's include Earth C-137, Fascist Earth, Shrimp Earth, Teddy Earth, C-500A (Beth and Jerry never married, so there is no Morty or Summer: Beth is a heart surgeon, Jerry a movie star), Doofus Rick's Earth, Cronenberged Earth, the wasteland, Snowball's dog world, the pizza-and-furniture one, the Zigerion simulation, and everyone's home Earth. Every other world has **three** parallel dimensions: a Cronenberg, mirror, ice age, dark, jungle, cat or toy version (Bird World in an ice age, Gazorpazorp made of plastic...). Each kind has a place of its own with something to do: the Flesh Shrine, the Great Mirror, ice fishing on the Frozen Lake, relighting the Last Lighthouse, the Overgrown Temple, a nap at the Great Scratching Post, winding up the Giant Toy Box.
+* **Dimensions** are parallel versions of a world. Earth's include Earth C-137, Fascist Earth, Shrimp Earth, Teddy Earth, C-500A (Beth and Jerry never married, so there is no Morty or Summer: Beth is a heart surgeon, Jerry a movie star), Doofus Rick's Earth, Cronenberged Earth, the wasteland, Snowball's dog world, the pizza-and-furniture one, the Zigerion simulation, and everyone's home Earth. Every other world has **three** parallel dimensions, picked for that world from eleven kinds: mirror, ice age, dark, jungle, cat, toy, neon, Wild West, pickle, gold and fungus (Bird World in neon, the Moon in the Wild West or made of gold, Gazorpazorp full of pickle people, Unity's planet under giant mushrooms...). Each kind has its own look, locals and a place with something to do: the Great Mirror, ice fishing on the Frozen Lake, relighting the Last Lighthouse, the Overgrown Temple, a nap at the Great Scratching Post, winding up the Giant Toy Box, neon pinball at the Neon Arcade, the Saloon, a dip in the Giant Pickle Jar, diving into the Golden Vault, the Spore Ring.
+* **Cronenbergs happened once.** Cronenberged Earth is the only Cronenberg dimension: the one from "Rick Potion #9". It has one other timeline, the **cured timeline**, where Rick's cure worked backwards: the planet is still flesh, teeth and eyeballs, but every Cronenberg turned back into a perfectly normal person, mowing lawns of meat.
 * **One of a kind:** the Citadel, Blips and Chitz, the Dream World, the Story Train, Interdimensional Cable and Beyond the Curve exist once in the whole multiverse, so they have no parallels.
 * **Timelines** are other times of one dimension: Earth C-137 65 million years ago, the split timeline from "A Rickle in Time", and Earth under the Federation; the Citadel under President Morty; Bird World after the wedding.
 
@@ -247,9 +248,9 @@ There is no public portal on Earth. To get around you need one of these:
 * **A portal gun.** Ricks own one; Morty has a borrowed one with one charge; Evil Morty's is gold. Anyone else can borrow (steal) Rick's from the workbench in his garage (two jumps, no recharge), grab a charge from a gun owner they knock out, or build their own when their life path allows it. A portal goes to any world, dimension or timeline.
 * **Somebody else's portal.** Portals stay open for a while and anyone can walk through, so a team can follow whoever has the gun.
 * **A portal station.** The Citadel's portal station (free for Ricks and Mortys, 3 Schmeckles for everyone else) and Interdimensional Customs at the Federation (free for troopers).
-* **Your ship.** Fly anywhere on a world (Earth is one big world: the suburb, Downtown, D.C. and Area 51). To leave it, fly **straight up**: at 250 m you leave the atmosphere and are in space, with your planet below and the other worlds of your universe all around it. Above every Earth: the Moon, the **solar system** (the Sun far off, then Mercury, Venus, Mars, Jupiter, Saturn with its rings and its moon Titan, Uranus, Neptune and Pluto) and, further across the galaxy, Bird World, Gazorpazorp, Squanch, the Purge Planet, Unity's planet, Planet Gear, the Bazaar, the Federation, Snake Planet and the rest. Each kind of parallel dimension is a universe of its own (fly up from Bird World in the ice age and you see the ice-age Gazorpazorp and Planet Gear; Cronenberged Earth sits in the middle of the Cronenberg universe). Atlantis is under the sea, not a planet: fly up from it and you are over its Earth. Realms (a dream, the Story Train, beyond the Curve) have no sky to fly out of. Fly into a planet to land on it: the Moon and the solar system need only the ship, the rest of the galaxy the Turbo Engine.
+* **Your ship.** Fly anywhere on a world (Earth is one big world: the suburb, Downtown, D.C. and Area 51). To leave it, fly **straight up**: at 250 m you leave the atmosphere and are in space, with your planet below and the other worlds of your universe all around it. Above every Earth: the Moon, the **solar system** (the Sun far off, then Mercury, Venus, Mars, Jupiter, Saturn with its rings and its moon Titan, Uranus, Neptune and Pluto) and, further across the galaxy, Bird World, Gazorpazorp, Squanch, the Purge Planet, Unity's planet, Planet Gear, the Bazaar, the Federation, Snake Planet and the rest. Each kind of parallel dimension is a universe of its own (fly up from Bird World in the ice age and you see the ice-age Gazorpazorp and Planet Gear). Floating in Earth's space is **Anatomy Park**: a giant corpse in blue boxers. Fly your ship into any of its holes (mouth, nostrils, ears, nipples, navel, the front door or the back door) to enter the park at that hole's gate. Atlantis is under the sea, not a planet: fly up from it and you are over its Earth. Realms (a dream, the Story Train, beyond the Curve) have no sky to fly out of. Fly into a planet to land on it: the Moon and the solar system need only the ship, the rest of the galaxy the Turbo Engine.
 * **Lightspeed.** Out in space, press **L** (or **LIGHT** on a phone) and pick where to go: the stars streak, and you come out in space by that world, dimension or timeline with its planet dead ahead. Another dimension needs the **Dimension Drive**, another timeline the **Quantum Drive**.
-* **Doors.** The Microverse is inside the car battery in Rick's garage; Anatomy Park is inside Ruben, in a tent on Earth; Froopyland is behind Rick's chalk door. Only the doors go there.
+* **Doors.** The Microverse is inside the car battery in Rick's garage; Anatomy Park is inside the corpse floating over Earth (see above), and its gates take you back out to your ship; Froopyland is behind Rick's chalk door. Only the doors go there.
 
 **The portal pair** (R or right click, for anyone with a portal gun): a short-range mode like Valve's Portal, with the same portals as for other worlds (same size, swirl and colours). Shoot one end onto a floor, wall, roof or cliff, then the other, or into thin air; walk in one and come out the other at the same speed. Anyone can use anyone's pair. Both ends take your **portal colours** (green for Rick, as in the show): pick the colour, the second end's colour and the style (swirl, ring, spiral, static) in the character creator's **Portals** tab.
 
@@ -315,6 +316,25 @@ Harry Herpson High, the Horse Hospital, Merpal's Mall, Shoney's, the White House
 **Every other building you can do things at has an inside too**, drawn in the game from a floor plan (no download): the Forge, the Bazaar shipyard and black market, the Moon refinery, the Aerie, the Council of Ricks chamber, Morty Daycare, Snowball's palace, Needful Things, Dr. Wong's office, the TV store, the Capitol, the Pentagon, the snake jazz club, the giants' castle, Mr. Nimbus's palace, the Squanch club, the raiders' garage, the Federation forms office, the Gear temple, Hangar 18 (with the saucer under a tarp), Real Fake Doors, Ants in my Eyes Johnson's, the plumbus factory, the dream school, the Gazorpian throne room and the dinosaur council. Each has its own look, the thing it is about (a furnace, the council's ring table, a throne, a wall of TVs...), furniture and people; what you do outside works inside too, and every room has something of its own to do.
 
 Buildings outside collide as their real footprint (a turned box) instead of a circle, for players, locals and the camera, and Rick's open garage and the back yard collide as their walls.
+
+### Things to do: rides, games and hanging out
+
+Worlds are for hanging out in, so there is plenty to do besides fighting (`shared/fun.js`).
+
+* **Rides.** Real rides with trains that leave on a timetable everyone shares, so friends ride together and others watch you go by: Anatomy Park's Pirates of the Pancreas (a boat), Spleen Mountain (a coaster), Bladder Falls (a flume), the Colon Express, the Heart Wheel and the Bronchial Tubes slide; the Big Froopy Slide in Froopyland; the Citadel Monorail; the Great Gear Wheel on Planet Gear; and the Beach Wheel on the pier of every Earth. Walk to a ride's gate and press **F**: you take the next seat. Your first ride on each pays 3 Schmeckles.
+* **Shooting galleries.** The Hepatitis A Blaster (Anatomy Park), the beach booth on Earth, the Federation's target range, Blips and Chitz Blaster and the Purge Night booth: 30 seconds, moving targets, a high score.
+* **Mini-games.** Fishing off the Earth pier, on the Frozen Lake (ice age) or in the Teenyverse's river pool; dance-offs (hit the arrows to the beat, and the crowd judges you) at the Sonic Stage in Area 51 (judged by the Cromulons), Squanchy's Party Hut, the Purge festival stage, the Uvula Bandstand and the Blips and Chitz dance machine; and Roy: A Life Well Lived at Blips and Chitz.
+* **Jump pads** fling you across Anatomy Park, Froopyland, the Moon and Planet Gear.
+* **Emotes and sitting.** **G** opens the emote bar: wave, dance, laugh, point, cheer, facepalm, or sit down on the spot.
+* **The passport.** Every dimension you visit stamps your passport (the Journal shows it). At 5, 10, 20, 40 and 80 stamps you earn a title and a reward, from Tourist to Interdimensional Legend. The Journal's fun log keeps your rides, best scores and fish.
+
+### Easter eggs
+
+22 things from the show are hidden around the multiverse, each worth 3 Schmeckles the first time; the Journal counts how many you have found:
+
+* **Things to find:** Pencilvester in the Smith house, a packet of Szechuan Sauce on Earth, the "Hungry for Apples?" billboard, Ball Fondlers on a TV in Interdimensional Cable, and Morty's Mind Blowers in Rick's lab.
+* **People to meet:** Krombopulos Michael, Noob-Noob, Lizard Morty, Revolio "Gearhead" Clockberg Jr., Tammy, Jessica, Glootie, Shrimply Pibbles, the Eyeholes Man and Gazorpazorpfield, each where you would expect them. Talk to them.
+* **Things to say in chat:** some lines from the show do something. Try *Wubba lubba dub dub*, *Show me what you got*, *I'm Pickle Rick!*, *I'm Mr. Meeseeks, look at me!*, *Get Schwifty*, *What is a plumbus?* and *Riggity riggity wrecked, son*.
 
 ### Ring races
 
@@ -394,9 +414,11 @@ The game looks **realistic** by default: lit surfaces, filmic colour, soft sun s
 | `shared/races.js` | Ring race courses |
 | `shared/cast.js` | The cast: who lives in each dimension |
 | `shared/house.js` | The Smith house's defences, and whose house it is |
+| `shared/fun.js` | Rides and their timetables, shooting galleries, mini-games, jump pads, the passport, easter eggs, and Anatomy Park's corpse |
 | `shared/protocol.js` | Every message a client may send, and the rate limits |
 | `sim/host.js` | The authoritative game host (runs on the server, and in the browser when offline) |
 | `sim/bot.js` | Bots that play through the same protocol as people |
+| `js/rides.js`, `js/minigames.js` | Rides (tracks, trains, wheels) and the easter eggs' models; fishing, dancing and Roy |
 | `js/` | The client: rendering (realistic or cartoon), characters, dimensions, life (`js/life.js`: birds, fish, animals, traffic), effects, sound, UI and game loop |
 | `server/server.js` | Web and WebSocket server with connection limits and security headers |
 | `test/` | `npm test` |

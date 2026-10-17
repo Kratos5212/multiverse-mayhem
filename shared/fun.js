@@ -174,6 +174,38 @@
     return D.timeline ? dimId : MM.dimensionOf(dimId);
   };
 
+  // ---------- Easter eggs ----------
+  // Things from the show to find: spots (walk up to them), cameos (talk to them) and things
+  // to say in chat. dim '@earth' = on every Earth.
+  MM.EGGS = [
+    { id: 'pencilvester', name: 'Pencilvester', kind: 'spot', dim: 'smithhouse', x: 6.6, z: -2.2, y: 0.85, model: 'pencil', text: '"Hey! It\'s me, Pencilvester!" A parasite from "Total Rickall". It has no bad memories with you. Suspicious.' },
+    { id: 'szechuan', name: 'Szechuan Sauce', kind: 'spot', dim: '@earth', x: 432, z: 14, model: 'sauce', text: 'A dipping cup of 1998 McDonald\'s Szechuan Sauce. Rick would go nine seasons for this.' },
+    { id: 'hungryapples', name: '"Hungry for Apples?"', kind: 'spot', dim: '@earth', x: 205, z: -36, r: 8, model: 'billboard', text: 'Jerry\'s ad campaign. It worked. Nobody knows why it worked. Jerry has never been prouder.' },
+    { id: 'ballfondlers', name: 'Ball Fondlers', kind: 'spot', dim: 'cableworld', x: 8, z: 26, model: 'tv', text: '"Ball Fondlers!" The best show on interdimensional cable. The Fondlers are back, and this time they are fondling... balls.' },
+    { id: 'mindjar', name: 'Morty\'s Mind Blowers', kind: 'spot', dim: 'ricklab', x: -6.4, z: -8.4, model: 'jar', text: 'A jar of memories Morty asked Rick to erase. One is just labelled "the closet". Do not open it.' },
+    { id: 'krombopulos', name: 'Krombopulos Michael', kind: 'npc', npc: 'krombopulos', dim: 'blips', x: 14, z: 8, text: '"Oh boy, here I go killing again!" The galaxy\'s friendliest assassin.' },
+    { id: 'noobnoob', name: 'Noob-Noob', kind: 'npc', npc: 'noobnoob', dim: 'citadel', x: -20, z: -20, text: 'Noob-Noob, the Vindicators\' janitor, mopping. He had a big night once.' },
+    { id: 'lizardmorty', name: 'Lizard Morty', kind: 'npc', npc: 'lizardmorty', dim: 'citadel', x: 24, z: 14, text: 'A Morty who is also a lizard. He is very calm about it.' },
+    { id: 'gearhead', name: 'Revolio "Gearhead" Clockberg Jr.', kind: 'npc', npc: 'gearhead', dim: 'gearworld', x: 12, z: -14, text: 'Gearhead. He sold out Rick to the Federation. Twice. He insists it was once.' },
+    { id: 'tammy', name: 'Tammy', kind: 'npc', npc: 'tammy', dim: 'featherhold', x: 10, z: 10, text: 'Tammy Guetermann, at Bird World. Totally just a normal guest. Not a Federation agent. Probably.' },
+    { id: 'jessica', name: 'Jessica', kind: 'npc', npc: 'jessica', dim: 'suburbia', x: 34, z: 8, text: 'Jessica, from Morty\'s school. Morty would like you to stop looking at her.' },
+    { id: 'glootie', name: 'Glootie', kind: 'npc', npc: 'glootie', dim: 'mancave', x: 3, z: -1, text: '"Do not develop my app." Glootie, Jerry\'s intern from "The Old Man and the Seat".' },
+    { id: 'pibbles', name: 'Shrimply Pibbles', kind: 'npc', npc: 'pibbles', dim: 'downtown', x: -30, z: 10, text: 'Shrimply Pibbles, the civil rights leader from "Interdimensional Cable 2", needs a new heart. Jerry\'s, ideally.' },
+    { id: 'eyeholes', name: 'The Eyeholes Man', kind: 'npc', npc: 'eyeholesman', dim: 'cableworld', x: -10, z: 22, text: '"Get the hell out of here! Eyeholes are MINE!"' },
+    { id: 'gazorpfield', name: 'Gazorpazorpfield', kind: 'npc', npc: 'gazorpfield', dim: 'gazorp', x: 14, z: 12, text: '"I hate Mondays." Gazorpazorpfield, wanting his enchiladas.' },
+    { id: 'wubba', name: 'Wubba lubba dub dub', kind: 'say', re: /wubba\s*lubba\s*dub\s*dub/i, text: 'It means "I am in great pain, please help me." Birdperson told everyone.' },
+    { id: 'schwifty', name: 'Get Schwifty', kind: 'say', re: /get\s*schwifty/i, text: 'Take off your pants and your panties, shit on the floor. Everyone near you dances.' },
+    { id: 'showme', name: 'Show me what you got', kind: 'say', re: /show\s*me\s*what\s*you\s*got/i, text: 'A Cromulon heard you. It wants to see what you got.' },
+    { id: 'picklerick', name: 'Pickle Rick!', kind: 'say', re: /pickle\s*rick/i, text: 'You turned yourself into a pickle. Funniest thing anyone has ever seen.' },
+    { id: 'meeseeks', name: 'I\'m Mr. Meeseeks!', kind: 'say', re: /i'?m\s*mr\.?\s*meeseeks/i, text: 'Look at me! A Meeseeks popped out to help with whatever you need.' },
+    { id: 'plumbus', name: 'Everyone has a plumbus', kind: 'say', re: /what\s*is\s*a\s*plumbus|how\s*.*plumbus\s*made/i, text: 'First they take the dinglebop, and they smooth it out with a bunch of schleem.' },
+    { id: 'riggity', name: 'Riggity riggity wrecked, son', kind: 'say', re: /riggity/i, text: 'Rikki-tikki-tavi, biatch! And that\'s the wa-a-ay the news goes!' },
+  ];
+  MM.EGG_BY_ID = {};
+  for (const E of MM.EGGS) MM.EGG_BY_ID[E.id] = E;
+  // The spot eggs in a dimension (every Earth has the '@earth' ones).
+  MM.eggsIn = dimId => { const D = MM.DIM_BY_ID[dimId]; return D ? MM.EGGS.filter(E => E.kind === 'spot' && (E.dim === dimId || (E.dim === '@earth' && D.regions && !D.timeline))) : []; };
+
   // ---------- Emotes ----------
   MM.EMOTES = ['Wave', 'Dance', 'Laugh', 'Point', 'Cheer', 'Facepalm'];
 
