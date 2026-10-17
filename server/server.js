@@ -31,6 +31,7 @@ require(path.join(ROOT, 'shared/interiors.js'));
 require(path.join(ROOT, 'shared/portals.js'));
 require(path.join(ROOT, 'shared/curios.js'));
 require(path.join(ROOT, 'shared/races.js'));
+require(path.join(ROOT, 'shared/cast.js'));
 require(path.join(ROOT, 'shared/protocol.js'));
 require(path.join(ROOT, 'sim/host.js'));
 const MM = require(path.join(ROOT, 'sim/bot.js'));

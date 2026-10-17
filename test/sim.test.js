@@ -9,6 +9,7 @@ require('../shared/interiors.js');
 require('../shared/portals.js');
 require('../shared/curios.js');
 require('../shared/races.js');
+require('../shared/cast.js');
 require('../shared/protocol.js');
 require('../sim/host.js');
 const MM = require('../sim/bot.js');
@@ -532,9 +533,12 @@ test('home dimensions: your code is a real Earth you start in, and there is only
   assert.ok(MM.genProps('h_Y231').length > 100 && MM.LANDMARK_BY_ID.h_Y231_home, 'a whole Earth with its own Smith house');
   const twin = MM.DIM_BY_ID.h_Y231;
   assert.strictEqual(MM.ensureHomeDim('h_Y231'), twin, 'the same code is always the same place');
-  const b = join(host, 'genius', { home: 'Y-231' });
+  const b = join(host, 'genius', { home: 'Y-231', taken: 'other' });
   assert.notStrictEqual(b.p.home, 'Y-231', 'only one Rick Y-231');
   assert.ok(/^Y-\d+$/.test(b.p.home));
+  const cl = join(host, 'genius', { home: 'Y-231' });
+  assert.ok(cl.p.clone && cl.p.home === 'Y-231' && cl.p.maxHp < a.p.maxHp, 'or a weaker clone of Rick Y-231');
+  assert.strictEqual(cl.p.inst.dimId, 'h_Y231', 'out of the lab under his garage');
   const m = join(host, 'sidekick', { home: 'Y-231' });
   assert.strictEqual(m.p.home, 'Y-231', 'Morty Y-231 is a different variant');
   const c137 = join(host, 'genius', { home: 'C-137' });
@@ -632,6 +636,7 @@ test('the freeze ray freezes whoever it hits', () => {
   const host = new MM.Host();
   const { c, p } = join(host, 'sidekick', { dim: 'suburbia' });
   const inst = p.inst;
+  inst.npcs.clear();   // just the one we aim at
   const n = inst.spawnNpc('neighbor', false, { at: { x: p.x, z: p.z + 6 } });
   n.y = p.y; n.tx = n.x; n.tz = n.z; n.wait = host.time + 100;
   p.inv.freeze = 1;
@@ -764,6 +769,40 @@ test('ring races: through the first ring to start, every ring in order, a prize 
   // Too slow: the clock runs out.
   at(0); host.time += R.time + 1; at(1);
   assert.strictEqual(p.race, null, 'out of time');
+});
+
+test('the cast: every dimension has its own people, each exists once, and players take them over', () => {
+  assert.deepStrictEqual(MM.castOf('shrimpearth'), ['genius', 'sidekick', 'teen', 'surgeon', 'joe']);
+  assert.ok(!MM.castOf('meatlands').includes('genius') && MM.castOf('meatlands').includes('surgeon'), 'Cronenberged Earth: Rick and Morty left');
+  assert.strictEqual(MM.castOf('featherhold')[0], 'birdfolk');
+  assert.strictEqual(MM.castLook('surgeon', 'shrimpearth').species, 'shrimp', 'Shrimp Beth is a shrimp');
+  const host = new MM.Host();
+  const castIn = (inst, arch) => [...inst.npcs.values()].filter(n => n.cast && n.cast.arch === arch && n.cast.origin === inst.dimId);
+  const sub = host.instance('suburbia', 0);
+  assert.strictEqual(castIn(sub, 'sidekick').length, 1, 'Morty C-137 is at home');
+  // Play Morty C-137: you are him, so there is no other Morty C-137 about.
+  const { c, p } = join(host, 'sidekick', { home: 'C-137' });
+  assert.strictEqual(p.cast.key, 'sidekick@suburbia');
+  assert.strictEqual(castIn(sub, 'sidekick').length, 0);
+  // A second Morty C-137 is a clone; leaving hands the real one back to the world.
+  const two = join(host, 'sidekick', { home: 'C-137' });
+  assert.ok(two.p.clone && !two.p.cast);
+  host.close(c);
+  assert.strictEqual(castIn(sub, 'sidekick').length, 1, 'back to being a local');
+  // Rick C-137 goes places: where someone can see him, through a green portal, Morty in tow.
+  const watcher = join(host, 'joe', { home: 'C-137' }).p;
+  const rick = host.cast.get('genius@suburbia'), morty = host.cast.get('sidekick@suburbia');
+  const rn = host.castNpc(rick), mn = host.castNpc(morty);
+  mn.x = rn.x + 2; mn.z = rn.z; rick.next = 0;
+  host.castTick();
+  assert.ok(rn.leave && rn.leave.pair, 'he opens a portal');
+  assert.strictEqual(rn.leave.pair.a.col, '#39ff6a', 'a green one');
+  assert.ok(mn.leave, 'and Morty goes too');
+  run(host, 7);
+  assert.notStrictEqual(rick.at, 'suburbia', 'off somewhere');
+  assert.strictEqual(morty.at, rick.at, 'together');
+  assert.ok(host.castNpc(rick), 'and there, as a local');
+  assert.ok(watcher.inst.dimId === 'suburbia');
 });
 
 test('every world has something to do, and some worlds have their own rules', () => {

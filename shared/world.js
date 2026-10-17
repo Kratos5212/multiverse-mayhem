@@ -535,7 +535,7 @@
     W.dims = [W.prime].concat(W.dims || []);
     if (W.dims.length === 1 && !B.interior) {
       const T = PARALLEL[i % PARALLEL.length], t = c => tint(c, T.hue, T.sat, T.light);
-      const d = derive(B, W.prime + '_' + T.k.toLowerCase(), { name: W.name + ' (' + T.label + ')', code: B.code + '/' + T.k, blurb: T.blurb(W.name),
+      const d = derive(B, W.prime + '_' + T.k.toLowerCase(), { name: W.name + ' (' + T.label + ')', code: B.code + '/' + T.k, twist: T.k, blurb: T.blurb(W.name),
         sky: B.sky.map(t), fog: t(B.fog), ground: B.ground.map(t), ambient: t(B.ambient), extra: T.extra || [], npc: T.npc || [] });
       W.dims.push(d.id);
     }
@@ -765,6 +765,8 @@
   //   human: built like a player, from these look options.  fly: hover height.
   //   talk: lines they say. moods: how likely each crazy reaction is (see sim/host.js).
   MM.NPCS = {
+    // Somebody from the cast of this dimension (shared/cast.js): drawn as their character.
+    cast:     { name: 'Someone', hp: 120, speed: 3.0, hostile: false, dmg: 0, drop: {}, r: 0.5, h: 1.9, talk: ['...'], cast: true },
     neighbor: { name: 'Neighbor', hp: 30, speed: 2.5, hostile: false, dmg: 0, drop: { s: 2 }, r: 0.6, h: 1.8,
       human: { species: ['human'], top: ['polo', 'sweater', 'tshirt', 'vest'], acc: ['none', 'none', 'cap'] },
       names: ['Gary', 'Brenda', 'Doug', 'Pam', 'Kevin', 'Linda', 'Todd', 'Marcy', 'Steve', 'Dale'],

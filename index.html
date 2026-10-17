@@ -337,6 +337,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
       <label class="grp"><span>Name</span><input class="field" id="name" maxlength="20" size="12" autocomplete="off" spellcheck="false"></label>
       <label class="grp"><span>Home dimension</span><input class="field" id="home" maxlength="7" size="6" autocomplete="off" spellcheck="false"></label>
       <label class="grp"><span>Start in</span><select class="field" id="startDim"></select></label>
+      <label class="grp" title="Every character exists once per dimension. If someone else already plays yours:"><span>If taken</span><select class="field" id="ifTaken"><option value="clone">Play a clone</option><option value="other">Another dimension</option></select></label>
       <button class="btn go" id="playOffline">Play offline with bots</button>
       <label class="grp"><span>Server</span><input class="field" id="server" placeholder="your-server.onrender.com" size="18" autocomplete="off" spellcheck="false"></label>
       <button class="btn gold" id="playOnline">Play online</button>
@@ -407,6 +408,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 <script src="shared/portals.js"></script>
 <script src="shared/curios.js"></script>
 <script src="shared/races.js"></script>
+<script src="shared/cast.js"></script>
 <script src="shared/protocol.js"></script>
 <script src="sim/host.js"></script>
 <script src="sim/bot.js"></script>

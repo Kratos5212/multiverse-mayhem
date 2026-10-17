@@ -127,6 +127,8 @@
     $('name').value = profile.name;
     $('home').value = profile.home;
     fillStarts();
+    $('ifTaken').value = profile.taken === 'other' ? 'other' : 'clone';
+    $('ifTaken').onchange = () => { profile.taken = $('ifTaken').value; UI.save('profile', profile); };
     // The Android app (Capacitor) serves the game from inside the app, so there is no server to prefill.
     const inApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
     const httpHosted = !inApp && /^https?:$/.test(location.protocol) && !/claude|artifact/.test(location.hostname);
@@ -190,7 +192,7 @@
     $('loading').hidden = false;
     $('loading').textContent = kind === 'online' ? 'Connecting to ' + (profile.server || location.host) + '…' : 'Opening a portal…';
     const h = {
-      open: () => G.net.send({ t: 'hello', v: MM.VERSION, name: profile.name, home: profile.home, look: profile.look, arch: profile.arch, dim: profile.startDim || undefined, tok: tokenFor(G.net), pvp: settings.pvp !== false }),
+      open: () => G.net.send({ t: 'hello', v: MM.VERSION, name: profile.name, home: profile.home, look: profile.look, arch: profile.arch, dim: profile.startDim || undefined, tok: tokenFor(G.net), pvp: settings.pvp !== false, taken: profile.taken === 'other' ? 'other' : 'clone' }),
       message: onMessage,
       close: reason => leave(reason),
     };
@@ -214,7 +216,7 @@
   }
 
   // ---------- Entities ----------
-  function archLabel(info) { return (info.bot ? 'bot · ' : '') + (info.title || MM.ARCHETYPES[info.arch].name); }
+  function archLabel(info) { return (info.bot ? 'bot · ' : '') + (info.clone ? 'clone · ' : '') + (info.title || MM.ARCHETYPES[info.arch].name); }
   function addPlayer(info) {
     if (info.id === G.myId || G.players.has(info.id)) return;
     const av = C.buildAvatar(info.look, info.arch, { ratsuit: !!(info.gear && info.gear.ratsuit) });
@@ -234,9 +236,25 @@
     G.players.delete(id);
   }
   function addNpc(row) {
-    const [id, type, x, y, z, r, hp, seed, name] = row;
+    const [id, type, x, y, z, r, hp, seed, name, arch, origin, ship] = row;
     if (G.npcs.has(id)) return;
-    const m = C.npcModel(type, seed);
+    let m;
+    if (arch && MM.ARCHETYPES[arch]) {
+      // One of the cast: their own character, in their dimension's look, and their name tag.
+      const av = C.buildAvatar(MM.castLook(arch, origin), arch);
+      m = { root: av.root, av };
+      if (ship) C.setShip(av, true);
+      const tag = C.makeTag(name, '', MM.ARCHETYPES[arch].name, UI.ARCH_COLORS[arch] || '#d6e4ff');
+      tag.draw(-1);
+      tag.sprite.scale.set(2.4, 0.6, 1);
+      tag.sprite.position.y = av.headY + 0.6;
+      m.root.add(tag.sprite);
+      m.root.position.set(x, y, z); m.root.rotation.y = r;
+      scene.add(m.root);
+      G.npcs.set(id, { id, type, name, cast: arch, m, tag, snaps: [{ t: -1, x, y, z, r }], x, y, z, r, hp, px: x, pz: z, speed: 0, t: Math.random() * 6, flags: 0, bubble: null });
+      return;
+    }
+    m = C.npcModel(type, seed);
     m.root.position.set(x, y, z); m.root.rotation.y = r;
     const NT = MM.NPCS[type];
     // Locals you can talk to wear a small name tag; monsters don't.
@@ -769,6 +787,7 @@
       case 'pk+': addPickup(e.p); break;
       case 'pk-': if (e.by === G.myId) { const m = G.pickups.get(e.id); if (m) fx.burst(m.position.x, m.position.y, m.position.z, '#ffd84d', 10, 4, 0.5, 0.4, 0); C.sfx('pickup'); } removePickup(e.id); break;
       case 'npc+': addNpc(e.n); break;
+      case 'nship': { const n = G.npcs.get(e.n); if (n && n.m.av) C.setShip(n.m.av, !!e.on); break; }
       case 'npc-': removeNpc(e.id, e.die); break;
       case 'po+': addPortal(e.po); break;
       case 'po-': removePortal(e.id); break;

@@ -104,6 +104,7 @@
         if (at && spread) [at.x, at.z] = MM.collideProps(this.dimId, at.x, at.z, 0.8, null);
         this.spawnNpc(type, false, at ? { at } : null);
       }
+      if (idx === 0) host.castHere(this);   // this dimension's own people (shared/cast.js)
       this.pickupSet = MM.pickupsOf(this.dimId);
       for (const k in this.pickupSet) for (let i = 0; i < this.pickupSet[k]; i++) this.spawnPickup(k, false);
       for (let i = MM.curioCount(this.dimId); i > 0; i--) this.spawnPickup('q:' + MM.pickCurio(this.dimId), false);
@@ -124,7 +125,28 @@
       if (announce) this.ev({ k: 'npc+', n: this.npcRow(n) });
       return n;
     }
-    npcRow(n) { return [n.id, n.type, r2(n.x), r2(n.y), r2(n.z), r2(n.r), Math.round(n.hp / n.T.hp * 100), n.seed, n.name]; }
+    npcRow(n) { const r = [n.id, n.type, r2(n.x), r2(n.y), r2(n.z), r2(n.r), Math.round(n.hp / n.T.hp * 100), n.seed, n.name]; if (n.cast) r.push(n.cast.arch, n.cast.origin, n.ship ? 1 : 0); return r; }
+    // One of the cast, here as a local (until a player takes them over).
+    spawnCastNpc(rec, at, announce) {
+      if (!at) {
+        // The Smiths are at home (Rick in his garage); everyone else somewhere around.
+        const l = MM.LANDMARKS.find(q => q.dim === this.dimId && MM.isAt(q, rec.arch === 'genius' ? 'garage' : 'home'));
+        if (l && MM.EARTH_ARCHS.includes(rec.arch)) {
+          // In front of it (its front faces rot), out of its walls.
+          const r = l.rot !== undefined ? l.rot : 0, d = (l.r || 5) + 2 + Math.random() * 3, side = (Math.random() - 0.5) * 6;
+          at = { x: l.x + Math.sin(r) * d + Math.cos(r) * side, z: l.z + Math.cos(r) * d - Math.sin(r) * side };
+          if (rec.arch === 'genius') at = { x: l.x + Math.sin(r) * 2 + Math.cos(r) * side * 0.4, z: l.z + Math.cos(r) * 2 - Math.sin(r) * side * 0.4 };   // in his garage
+          [at.x, at.z] = MM.collideProps(this.dimId, at.x, at.z, 0.8, null);
+        }
+      }
+      const n = this.spawnNpc('cast', false, at ? { at } : null);
+      n.cast = rec; n.name = MM.castLabel(rec.arch, rec.origin);
+      if (at && at.y !== undefined) n.y = at.y;
+      if (at) n.home = { x: n.x, z: n.z, y: n.y };
+      rec.npc = { inst: this, id: n.id };
+      if (announce) this.ev({ k: 'npc+', n: this.npcRow(n) });
+      return n;
+    }
 
     spawnPickup(kind, announce, at, count) {
       const s = at || MM.randomSpot(this.dimId, Math.random, 12, 165);
@@ -352,7 +374,8 @@
       let i = 0;
       for (const k in n.T.drop) this.spawnPickup(k, true, { x: n.x + (i++ - 0.5) * 1.4, z: n.z }, n.T.drop[k]);
       if (owner) { owner.prog.chaos += 2; this.host.progress(owner, 'kill', n.type); }
-      if (!n.temp) {
+      if (n.cast) { n.cast.npc = null; n.cast.downUntil = this.host.time + 90; n.cast.at = n.cast.origin; }
+      else if (!n.temp) {
         const type = n.type;
         this.host.later(25, () => { if (this.host.instances.get(this.key) === this) this.spawnNpc(type, true); });
       }
@@ -370,9 +393,40 @@
       return !p.dead && p.arch !== 'joe' && now >= p.fx.sob && now >= p.fx.prot && now >= p.fx.cloak;
     }
 
+    // A traveller of the cast on their way out (walking into their portal, or taking off) or
+    // coming in to land. True when that is all they do this tick.
+    castStep(n, dt, now) {
+      const L = n.leave;
+      if (L && L.kind === 'portal') {
+        const dx = L.x - n.x, dz = L.z - n.z, l = Math.hypot(dx, dz);
+        if (l < 1.2 || now > L.until) { this.castLeave(n); return true; }
+        const step = Math.min(l, n.T.speed * 1.3 * dt);
+        n.x += dx / l * step; n.z += dz / l * step; n.r = Math.atan2(dx, dz);
+        n.y = MM.heightAt(this.dimId, n.x, n.z);
+        return true;
+      }
+      if (L) { n.y += 10 * dt; if (now > L.until) this.castLeave(n); return true; }
+      if (n.land) {
+        const g = MM.heightAt(this.dimId, n.x, n.z);
+        n.y = Math.max(g, n.y - 9 * dt);
+        if (n.y <= g + 0.01) { n.land = false; if (n.ship) { n.ship = false; this.ev({ k: 'nship', n: n.id, on: 0 }); } }
+        return true;
+      }
+      return false;
+    }
+    castLeave(n) {
+      if (!this.npcs.has(n.id)) return;
+      this.npcs.delete(n.id);
+      this.ev({ k: 'npc-', id: n.id });
+      const L = n.leave, P = L.pair;
+      const at = P ? { x: P.b.x + Math.sin(P.b.r) * 2 + (Math.random() - 0.5), z: P.b.z + Math.cos(P.b.r) * 2 + (Math.random() - 0.5), inst: P.dest } : null;
+      this.host.castMove(n.cast, L.dest, L.kind, at);
+    }
+
     tickNpcs(dt, now) {
       for (const n of this.npcs.values()) {
         const T = n.T;
+        if ((n.leave || n.land) && this.castStep(n, dt, now)) continue;
         let goal = null, speed = T.speed;
         const owner = n.owner && now < n.ownerUntil ? this.host.players.get(n.owner) : null;
         if (n.owner && !owner) { n.owner = 0; this.ev({ k: 'nfree', n: n.id }); }
@@ -421,29 +475,55 @@
           const p = this.host.players.get(n.target);
           if (p && p.inst === this) { const dx = n.x - p.x, dz = n.z - p.z, l = Math.hypot(dx, dz) || 1; goal = { x: n.x + dx / l * 5, z: n.z + dz / l * 5 }; speed *= 2; }
         }
+        let wandering = false;
         if (!goal) {
-          if (now >= n.wait && dist2(n.x, n.z, n.tx, n.tz) < 1) {
-            n.wait = now + 1 + Math.random() * 4;
-            const a = Math.random() * 6.28, d = 4 + Math.random() * 14;
-            n.tx = Math.max(-MM.boundOf(this.dimId) + 25, Math.min(MM.boundOf(this.dimId) - 25, n.home.x + Math.cos(a) * d));
-            n.tz = Math.max(-MM.boundOf(this.dimId) + 25, Math.min(MM.boundOf(this.dimId) - 25, n.home.z + Math.sin(a) * d));
+          if (now >= n.wait && (dist2(n.x, n.z, n.tx, n.tz) < 1 || n.stuck > 1)) {
+            // Somewhere to walk to that you can actually get to (a few tries at a clear line),
+            // then stand a while looking about: at someone close by, or just around.
+            n.wait = now + 1.5 + Math.random() * 5; n.stuck = 0;
+            const lim = this.dim.interior ? MM.boundOf(this.dimId) - 1 : MM.boundOf(this.dimId) - 25, limZ = this.dim.interior ? MM.boundZOf(this.dimId) - 1 : MM.boundZOf(this.dimId) - 25;
+            const reach = this.dim.interior ? 6 : n.cast ? 12 : 16;
+            for (let t = 0; t < 6; t++) {
+              const a = Math.random() * 6.28, d = 3 + Math.random() * reach;
+              const tx = Math.max(-lim, Math.min(lim, n.home.x + Math.cos(a) * d)), tz = Math.max(-limZ, Math.min(limZ, n.home.z + Math.sin(a) * d));
+              if (this.clearPath(n.x, n.z, tx, tz, T.r) || t === 5) { n.tx = tx; n.tz = tz; break; }
+            }
+            let look = null, ld = 8 * 8;
+            for (const p of this.players.values()) { const d = dist2(p.x, p.z, n.x, n.z); if (d < ld) { ld = d; look = p; } }
+            n.r = look ? Math.atan2(look.x - n.x, look.z - n.z) : n.r + (Math.random() - 0.5) * 2.5;
           }
-          if (now >= n.wait) goal = { x: n.tx, z: n.tz };
+          if (now >= n.wait) { goal = { x: n.tx, z: n.tz }; wandering = true; }
         }
         if (goal) {
           const dx = goal.x - n.x, dz = goal.z - n.z, l = Math.hypot(dx, dz);
           if (l > 0.3) {
-            const step = Math.min(l, speed * dt);
+            const step = Math.min(l, speed * dt), ox = n.x, oz = n.z;
             let nx = n.x + dx / l * step, nz = n.z + dz / l * step;
             [nx, nz] = MM.collideProps(this.dimId, nx, nz, T.r, null);
             [nx, nz] = MM.collideWalls(this.dimId, nx, nz, T.r);
             const lim = MM.boundOf(this.dimId) - (this.dim.interior ? 0.8 : 15), limZ = MM.boundZOf(this.dimId) - (this.dim.interior ? 0.8 : 15);
             n.x = Math.max(-lim, Math.min(lim, nx)); n.z = Math.max(-limZ, Math.min(limZ, nz));
-            n.r = Math.atan2(dx, dz);
+            // Walking into a wall: after a moment, give up and go somewhere else.
+            const moved = Math.hypot(n.x - ox, n.z - oz);
+            if (wandering && moved < step * 0.3) n.stuck = (n.stuck || 0) + dt; else n.stuck = 0;
+            if (moved > 1e-3) n.r = Math.atan2(n.x - ox, n.z - oz);
           }
         }
         n.y = MM.heightAt(this.dimId, n.x, n.z) + (T.fly ? T.fly + Math.sin(now * 1.3 + n.id) * 0.8 : 0);
       }
+    }
+
+    // Can something of radius r walk straight from (x1, z1) to (x2, z2)?
+    clearPath(x1, z1, x2, z2, r) {
+      const l = Math.hypot(x2 - x1, z2 - z1), steps = Math.max(2, Math.ceil(l / 1.5));
+      for (let i = 1; i <= steps; i++) {
+        const x = x1 + (x2 - x1) * i / steps, z = z1 + (z2 - z1) * i / steps;
+        const [px, pz] = MM.collideProps(this.dimId, x, z, r, null);
+        if (Math.abs(px - x) + Math.abs(pz - z) > 0.05) return false;
+        const [wx, wz] = MM.collideWalls(this.dimId, x, z, r);
+        if (Math.abs(wx - x) + Math.abs(wz - z) > 0.05) return false;
+      }
+      return true;
     }
 
     // ----- Turrets -----
@@ -524,6 +604,7 @@
       this.nextId = 1;
       this.nextEnt = 1;
       this.timers = [];
+      this.cast = new Map();          // castKey -> { arch, origin, at, npc, player, next, downUntil }
       for (const d of MM.DIMS) this.instance(d.id, 0);
     }
 
@@ -546,6 +627,84 @@
       }
     }
 
+    // ----- The cast (shared/cast.js) -----
+    castRec(arch, origin) {
+      const key = MM.castKey(arch, origin);
+      let rec = this.cast.get(key);
+      if (!rec) { rec = { key, arch, origin, at: origin, npc: null, player: 0, next: this.time + 40 + Math.random() * 140, downUntil: 0 }; this.cast.set(key, rec); }
+      return rec;
+    }
+    castNpc(rec) {
+      if (!rec.npc) return null;
+      const inst = rec.npc.inst, n = this.instances.get(inst.key) === inst && inst.npcs.get(rec.npc.id);
+      if (!n) rec.npc = null;
+      return n || null;
+    }
+    // A dimension's first copy opens: its own people, and anyone visiting.
+    castHere(inst) {
+      for (const arch of MM.castOf(inst.dimId)) this.castRec(arch, inst.dimId);
+      for (const rec of this.cast.values()) if (rec.at === inst.dimId && !rec.player && !this.castNpc(rec) && this.time >= rec.downUntil) inst.spawnCastNpc(rec, null, false);
+    }
+    castUnspawn(rec) {
+      const n = this.castNpc(rec);
+      if (n) { rec.npc.inst.npcs.delete(n.id); rec.npc.inst.ev({ k: 'npc-', id: n.id }); }
+      rec.npc = null;
+    }
+    // Somewhere else now: there as a local if that place is open (arriving the way they left).
+    castMove(rec, dest, via, at) {
+      rec.at = dest; rec.npc = null;
+      rec.next = this.time + (dest === rec.origin ? 90 + Math.random() * 150 : 50 + Math.random() * 100);
+      const inst = at && at.inst || this.instances.get(dest + '#0');
+      if (!inst || rec.player) return;
+      const spot = at || MM.spawnPoint(dest);
+      const n = inst.spawnCastNpc(rec, { x: spot.x, z: spot.z }, false);
+      if (via === 'ship' || via === 'fly') { n.y += 45; n.land = true; n.ship = via === 'ship'; }
+      inst.ev({ k: 'npc+', n: inst.npcRow(n) });
+    }
+    // Where a traveller goes next: home if away; otherwise somewhere they can get to.
+    castDest(rec) {
+      if (rec.at !== rec.origin) return rec.origin;
+      const kind = MM.CAST_TRAVEL[rec.arch], here = MM.DIM_BY_ID[rec.at];
+      const ok = id => { const D = MM.DIM_BY_ID[id]; return id !== rec.at && D && !D.hidden && !D.pocket && !D.interior && !D.planets && (!D.outsideCurve || rec.arch === 'evilmorty'); };
+      let list = kind === 'portal' ? MM.WORLD_IDS.filter(ok) : MM.WORLD_IDS.filter(id => ok(id) && here.space && MM.DIM_BY_ID[id].space === here.space);
+      return list.length ? pick(list) : null;
+    }
+    // Every few seconds: the travellers go places. Where someone can see them, they open a
+    // portal and walk through it (Morty goes along with his Rick), or take off; where nobody is
+    // looking, they just go.
+    castTick() {
+      const now = this.time;
+      for (const rec of this.cast.values()) {
+        if (rec.player) continue;
+        const n = this.castNpc(rec);
+        if (!n) {
+          // Back on their feet a while after being knocked out, wherever they were.
+          if (!rec.npc && now >= rec.downUntil && rec.downUntil) { rec.downUntil = 0; const inst = this.instances.get(rec.at + '#0'); if (inst) { const m = inst.spawnCastNpc(rec, null, false); inst.ev({ k: 'npc+', n: inst.npcRow(m) }); } }
+          continue;
+        }
+        const kind = MM.CAST_TRAVEL[rec.arch];
+        if (!kind || kind === 'tag' || now < rec.next || n.leave) continue;
+        const dest = this.castDest(rec);
+        if (!dest) { rec.next = now + 120; continue; }
+        const inst = rec.npc.inst, seen = inst.players.size > 0;
+        if (kind === 'portal') {
+          const col = MM.castLook(rec.arch, rec.origin).portalColor;
+          const r = n.r, x = n.x + Math.sin(r) * 3, z = n.z + Math.cos(r) * 3;
+          const pair = seen ? this.openPortalPair(inst, x, z, r + Math.PI, dest, col, 0) : null;
+          const go = m => { m.leave = { kind, x, z, until: now + 6, dest, pair }; };
+          go(n);
+          // Morty goes with his Rick, if he is nearby.
+          if (rec.arch === 'genius') for (const m of inst.npcs.values()) if (m.cast && m.cast.arch === 'sidekick' && m.cast.origin === rec.origin && !m.cast.player && dist2(m.x, m.z, n.x, n.z) < 20 * 20) go(m);
+          if (!seen) for (const m of [...inst.npcs.values()]) if (m.leave && m.leave.dest === dest) inst.castLeave(m);
+        } else {
+          n.leave = { kind, until: now + (seen ? 4.5 : 0), dest };
+          n.ship = kind === 'ship';
+          if (seen) inst.ev({ k: 'nship', n: n.id, on: n.ship ? 1 : 0 });
+          else inst.castLeave(n);
+        }
+      }
+    }
+
     // ----- Connections -----
     connect(conn, meta) {
       const buckets = {};
@@ -562,6 +721,13 @@
       if (!p) return;
       this.save(p);
       if (p.token && this.tokens.get(p.token) === p) this.tokens.delete(p.token);
+      if (p.cast && p.cast.player === p.id) {
+        // The character carries on without you, where you left them.
+        const rec = p.cast, D = p.inst && p.inst.dim;
+        rec.player = 0;
+        if (D && !D.interior && !D.hidden && !D.planets && !p.dead) { rec.at = p.inst.dimId; rec.npc = null; const n = p.inst.spawnCastNpc(rec, { x: p.x, z: p.z }, false); p.inst.ev({ k: 'npc+', n: p.inst.npcRow(n) }); }
+        else { rec.at = rec.origin; const inst = this.instances.get(rec.origin + '#0'); if (inst) { const n = inst.spawnCastNpc(rec, null, false); inst.ev({ k: 'npc+', n: inst.npcRow(n) }); } }
+      }
       if (p.inst) { p.inst.players.delete(p.id); p.inst.ev({ k: 'leave', id: p.id }); p.inst.emptySince = this.time; }
       this.leaveTeam(p);
       this.players.delete(p.id);
@@ -639,15 +805,19 @@
       const prog = cleanProgress(m.arch, saved);
       if (prog.inv.grenade === undefined || (!saved && !prog.inv.grenade)) prog.inv.grenade = 1;
       for (const g of MM.GADGET_IDS) if (!prog.inv[g]) prog.inv[g] = prog.inv[g] || 0;
-      // One of each variant: only one Rick C-137 (or Morty Y-231...) at a time. A taken code
-      // gets you a fresh one from the same letter.
+      // One of each character: you take over your dimension's Rick C-137 (or Beth SH-1, or
+      // Birdperson). Taken already? Play one of his clones (weaker, out of the lab under the
+      // garage), or, if you asked for that, the same character from another dimension.
       const asked = MM.sanitizeHome(m.home);
-      let home = asked;
-      const taken = h => [...this.players.values()].some(o => o.arch === m.arch && o.home === h);
-      if (taken(home)) { const L = home.replace(/[^A-Z]/g, '') || 'X'; do home = L + '-' + (1 + Math.floor(Math.random() * 999)); while (taken(home)); }
+      let home = asked, clone = false;
+      const playing = h => { const r = this.cast.get(MM.castKey(m.arch, MM.castHome(m.arch, h))); return !!(r && r.player && this.players.has(r.player)); };
+      if (playing(home)) {
+        if (m.taken === 'other' || c.bot) { const L = home.replace(/[^A-Z]/g, '') || 'X'; let n = 0; do home = L + '-' + (1 + Math.floor(Math.random() * 999)); while (playing(home) && ++n < 200); }
+        else clone = true;
+      }
       const p = {
         id: this.nextId++, conn: c.conn, bot: c.bot, token,
-        name: MM.sanitizeName(m.name), home, look: MM.sanitizeLook(m.look), arch: m.arch, A, pvp: m.pvp !== false,
+        name: MM.sanitizeName(m.name), home, clone, look: MM.sanitizeLook(m.look), arch: m.arch, A, pvp: m.pvp !== false,
         prog, inv: prog.inv, st: null,
         inst: null, ep: 0, x: 0, y: 0, z: 0, r: 0, a: 0, lastSt: this.time, strikes: 0,
         hp: A.hp, maxHp: A.hp, dead: false, respawnAt: 0, ship: false,
@@ -664,16 +834,34 @@
       if (token) this.tokens.set(token, p);
       this.send(p, { t: 'hi', id: p.id, name: this.name, cap: this.cap, dims: MM.DIM_IDS, tok: token, you: { name: p.name, home: p.home, arch: p.arch } });
       this.log(`join ${p.name} (${p.id}) as ${p.arch}${p.bot ? ' [bot]' : ''}${saved ? ' (saved progress)' : ''}`);
-      // You start in your own world: the one your character lives in.
-      const starts = MM.startWorlds(m.arch, p.home);
+      // You start in your own world: the one your character lives in. As that dimension's
+      // character, you take over from them where they are.
+      const starts = MM.startWorlds(m.arch, p.home), origin = MM.castHome(m.arch, p.home);
       if (p.home !== asked && !p.bot) this.toast(p, A.name + ' ' + asked + ' is already here, so you are ' + A.name + ' ' + p.home + '.');
+      if (clone) {
+        this.toast(p, MM.castLabel(m.arch, origin) + ' is already being played, so you are one of the clones (a little weaker).');
+        const lab = MM.LANDMARKS.find(l => l.dim === origin && MM.isAt(l, 'trapdoor'));
+        this.travel(p, origin, lab ? { x: lab.x + 1.6, z: lab.z + 0.8 } : null, null, true);
+        return;
+      }
+      const rec = MM.castOf(origin).includes(m.arch) ? this.castRec(m.arch, origin) : null;
+      if (rec) {
+        const n = this.castNpc(rec), D = MM.DIM_BY_ID[rec.at];
+        const asked = m.dim && starts.includes(m.dim) ? m.dim : null;
+        const where = asked || (D && !D.interior && !D.hidden && !D.planets ? rec.at : origin);
+        const at = n && where === rec.at ? { x: n.x, z: n.z } : null, inst = at ? rec.npc.inst : null;
+        this.castUnspawn(rec);
+        rec.player = p.id; p.cast = rec; rec.at = where;
+        this.travel(p, where, at, inst, true);
+        return;
+      }
       this.travel(p, m.dim && starts.includes(m.dim) ? m.dim : starts[0], null, null, true);
     }
 
     restat(p) {
       const old = p.maxHp;
       p.st = MM.statsOf(p.arch, p.prog.up);
-      p.maxHp = p.st.maxHp;
+      p.maxHp = p.clone ? Math.round(p.st.maxHp * MM.CLONE_HP) : p.st.maxHp;
       if (old && p.maxHp > old && !p.dead) p.hp += p.maxHp - old;
       p.hp = Math.min(p.hp, p.maxHp);
       const max = p.st.gun ? p.st.gun.charges : 0;
@@ -683,7 +871,7 @@
 
     info(p) {
       const up = p.prog.up;
-      return { id: p.id, name: p.name, home: p.home, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '',
+      return { id: p.id, name: p.name, home: p.home, clone: p.clone ? 1 : 0, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '',
         gear: { ratsuit: !!up.ratsuit, wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs } };
     }
 
@@ -1111,6 +1299,7 @@
       inst.portals.set(a.id, a); dest.portals.set(b.id, b);
       inst.ev({ k: 'po+', po: inst.portalRow(a) });
       dest.ev({ k: 'po+', po: dest.portalRow(b) });
+      return { a, b, dest };
     }
 
     // Portal stations: the Citadel's public portals and Federation customs. Pay the fee
@@ -1437,7 +1626,7 @@
       for (const k in w) total += w[k];
       let r = Math.random() * total, mood = 'line';
       for (const k in w) { r -= w[k]; if (r <= 0) { mood = k; break; } }
-      const line = T.talk ? pick(T.talk) : '...';
+      const line = n.cast ? pick(MM.CAST_TALK[n.cast.arch] || ['...']) : T.talk ? pick(T.talk) : '...';
       const mat = inst.dim.mat;
       switch (mood) {
         case 'gift': {
@@ -1582,6 +1771,7 @@
         if (p.progDirty || this.tickN % 150 === 0) { p.progDirty = false; this.send(p, this.progState(p)); }
       }
       if (this.tickN % 150 === 0) this.broadcastPop();
+      if (this.tickN % 60 === 0) this.castTick();
       if (this.tickN % 300 === 0) for (const p of this.players.values()) if (p.saveDirty) this.save(p);
     }
 
