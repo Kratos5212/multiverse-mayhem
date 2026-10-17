@@ -39,6 +39,7 @@
     orbit: () => ({}),                                                          // fly out of the atmosphere
     land: m => (str(m.d, 24) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null,   // fly into a planet from space
     drive: m => (str(m.d, 16) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null, // dimension drive
+    ls: m => (str(m.d, 24) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null,    // lightspeed, from space
     door: m => (str(m.l, 32) && own(MM.LANDMARK_BY_ID, m.l)) ? { l: m.l } : null,  // walk through a door
     // Teams: invite a player, join the team of someone who invited you, or leave.
     tm: m => (['inv', 'join', 'leave'].includes(m.op) && (m.op === 'leave' || int(m.id, 0, 1e12))) ? { op: m.op, id: m.id | 0 } : null,
@@ -78,7 +79,7 @@
   MM.RATE = {
     all: [90, 45], st: [40, 20], f: [12, 6], c: [3, 0.5], cr: [6, 2], g: [6, 2],
     po: [3, 1], ki: [3, 1], ab: [4, 2], em: [4, 1], rs: [3, 1], pi: [5, 1], hello: [1, 0],
-    use: [4, 1], talk: [4, 1], ans: [4, 1], ship: [4, 1], drive: [3, 0.5], orbit: [2, 0.5], land: [3, 1], door: [3, 1], pvp: [3, 0.5], tm: [4, 0.5], uc: [3, 1], pp: [8, 3], pt: [8, 4],
+    use: [4, 1], talk: [4, 1], ans: [4, 1], ship: [4, 1], drive: [3, 0.5], ls: [3, 0.5], orbit: [2, 0.5], land: [3, 1], door: [3, 1], pvp: [3, 0.5], tm: [4, 0.5], uc: [3, 1], pp: [8, 3], pt: [8, 4],
   };
 
   // Animation states the client reports.

@@ -709,6 +709,41 @@ test('space: fly up out of the atmosphere, see the planets, land on the Moon', (
   assert.ok(p.ship && p.y > MM.heightAt('moon', p.x, p.z) + 100, 'coming in from high up, still in the ship');
 });
 
+test('worlds, their dimensions and timelines; lightspeed from space', () => {
+  // Every place you can portal to belongs to a world (pockets aside); every world has a
+  // parallel dimension; timelines hang off one dimension of one world.
+  for (const id of MM.WORLD_IDS) if (!MM.DIM_BY_ID[id].pocket) assert.ok(MM.worldOf(id), id + ' belongs to a world');
+  for (const W of MM.WORLDS) if (!MM.DIM_BY_ID[W.prime].interior) assert.ok(W.dims.length >= 2, W.name + ' has a parallel dimension');
+  assert.strictEqual(MM.worldOf('shrimpearth'), 'earth');
+  assert.strictEqual(MM.worldOf('h_X123'), 'earth', 'home Earths are Earth');
+  assert.deepStrictEqual(MM.timelinesOf('suburbia').sort(), ['dinoearth', 'fedearth', 'splitearth']);
+  assert.strictEqual(MM.worldOf('evilcitadel'), 'citadel');
+  assert.strictEqual(MM.dimensionOf('splitearth'), 'suburbia');
+  // Lightspeed only from space, in a ship; another dimension needs the Dimension Drive, another
+  // timeline the Quantum Drive.
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'suburbia' });
+  Object.assign(p.prog.up, { hull: 1, engine: 1 }); host.restat(p);
+  host.message(c, '{"t":"ship","on":true}');
+  host.message(c, '{"t":"ls","d":"featherhold_ic"}');
+  assert.strictEqual(p.inst.dimId, 'suburbia', 'not from the ground');
+  p.y = MM.heightAt('suburbia', p.x, p.z) + MM.ORBIT_ALT + 5;
+  host.message(c, '{"t":"orbit"}');
+  assert.ok(MM.DIM_BY_ID[p.inst.dimId].planets);
+  host.message(c, '{"t":"ls","d":"featherhold_ic"}');
+  assert.ok(MM.DIM_BY_ID[p.inst.dimId].planets[0].dim === 'suburbia', 'no Dimension Drive yet');
+  Object.assign(p.prog.up, { drive: 1 }); host.restat(p); host.time += 20;
+  host.message(c, '{"t":"ls","d":"fedearth"}');
+  assert.ok(MM.DIM_BY_ID[p.inst.dimId].planets[0].dim === 'suburbia', 'another timeline needs the Quantum Drive');
+  host.message(c, '{"t":"ls","d":"featherhold_ic"}');
+  const S = MM.DIM_BY_ID[p.inst.dimId];
+  assert.strictEqual(S.planets[0].dim, 'featherhold_ic', 'in space by the parallel Bird World');
+  const P = S.planets[0];
+  p.x = P.x; p.y = P.y + P.r; p.z = P.z; host.time += 5;
+  host.message(c, '{"t":"land","d":"featherhold_ic"}');
+  assert.strictEqual(p.inst.dimId, 'featherhold_ic', 'landed');
+});
+
 test('every world has something to do, and some worlds have their own rules', () => {
   for (const id of MM.WORLD_IDS) {
     const D = MM.DIM_BY_ID[id];

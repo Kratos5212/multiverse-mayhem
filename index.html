@@ -207,6 +207,35 @@ input[type=range] { width: 100%; accent-color: var(--portal); }
 #tPair { right: 20px; bottom: 210px; width: 56px; height: 56px; }
 #tPair svg, .s-pair svg { color: var(--pc, #3a9aff); }
 #tDown { right: 98px; bottom: 74px; width: 50px; height: 50px; }
+#tLight { right: 98px; bottom: 136px; width: 56px; height: 56px; }
+#tLight svg { color: #8fe8ff; }
+/* Lightspeed: stars stretched into lines, a white flash in the middle. */
+#lightspeed { position: fixed; inset: 0; pointer-events: none; z-index: 30; opacity: 0;
+  background: radial-gradient(circle at 50% 50%, #fff 0, rgba(170,235,255,.85) 6%, rgba(40,80,160,.25) 28%, rgba(0,0,20,0) 55%),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,0) 0deg 2.2deg, rgba(210,245,255,.9) 2.2deg 2.6deg, rgba(255,255,255,0) 2.6deg 5deg);
+  -webkit-mask: radial-gradient(circle, rgba(0,0,0,.9) 0 8%, #000 40%); mask: radial-gradient(circle, rgba(0,0,0,.9) 0 8%, #000 40%); }
+#lightspeed.on { animation: lightspeed 1.5s ease-out; }
+@keyframes lightspeed { 0% { opacity: 0; transform: scale(.5); } 20% { opacity: 1; } 75% { opacity: .95; transform: scale(2.4); } 100% { opacity: 0; transform: scale(3.2); } }
+@media (prefers-reduced-motion: reduce) { #lightspeed.on { animation-duration: .6s; } }
+/* Travel: where you are, the world strip, a world's header, timeline chips. */
+.tcrumb { margin: 2px 0 4px; font-size: 13px; color: #cfd8ff; }
+.tcrumb b { color: #fff; }
+.tworlds { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 2px 8px; }
+@media (max-width: 600px) { .tworlds { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; } }
+.tworld { flex: none; display: inline-flex; align-items: center; gap: 6px; border: 3px solid var(--line); background: #1c2444; color: #e8edff; border-radius: 12px; padding: 6px 10px; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+.tworld .ticon { font-size: 18px; line-height: 1; }
+.tworld[aria-selected="true"] { background: var(--portal); color: #062a12; }
+.twhead { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 2px; padding: 8px 12px; border-radius: 12px; background: #141b36; border: 2px solid var(--line); color: #cfd8ff; font-size: 13px; line-height: 1.35; }
+.twhead b { color: #fff; font-size: 16px; }
+.tsub { margin: 8px 2px 6px; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #9fb0e8; }
+.tdim { display: flex; flex-direction: column; gap: 6px; grid-column: span 2; }
+.tdim .tcard { min-height: 96px; }
+.ttl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ttl .tlab { font-size: 12px; font-weight: 800; color: #9fb0e8; }
+.tchip { border: 2px solid var(--line); border-radius: 999px; padding: 5px 10px; color: #fff; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; text-shadow: 0 1px 2px #000; }
+.tchip:hover { outline: 2px solid var(--portal); }
+.tchip.locked { filter: saturate(.35) brightness(.75); cursor: not-allowed; }
+@media (max-width: 600px) { .tdim { grid-column: span 1; } }
 #stick.sprint { box-shadow: 0 0 0 4px rgba(255,216,77,.85), 0 0 18px rgba(255,216,77,.6); }
 #tShip { right: 150px; bottom: 132px; width: 50px; height: 50px; background: rgba(95,248,255,.85) !important; color: #06303a; }
 /* Phones: the big round buttons cover fire, jump, skill, travel and the ship, so the slot bar
@@ -244,7 +273,7 @@ input[type=range] { width: 100%; accent-color: var(--portal); }
 .ttabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
 .ttabs button { border: 3px solid var(--line); background: #1c2444; color: #cfd8ff; border-radius: 999px; padding: 6px 12px; font: inherit; font-weight: 700; cursor: pointer; }
 .ttabs button[aria-selected="true"] { background: var(--portal); color: #062a12; }
-.tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; align-items: start; }
 .tcard { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: 104px; padding: 10px 12px; border: 3px solid var(--line); border-radius: 14px; color: #fff; text-align: left; font: inherit; cursor: pointer; box-shadow: 0 4px 0 var(--line); overflow: hidden; }
 .tcard::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 20%, rgba(8,10,24,.78)); pointer-events: none; }
 .tcard > * { position: relative; z-index: 1; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); }
@@ -271,6 +300,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 </style>
 </head>
 <body>
+<div id="lightspeed" aria-hidden="true"></div>
 <canvas id="view"></canvas>
 <div id="loading">Opening a portal…</div>
 
@@ -359,6 +389,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
     <button id="tShip" hidden aria-label="Ship" data-i="ship"><span class="l">SHIP</span></button>
     <button id="tPair" hidden aria-label="Portal pair" data-i="pair"><span class="l">PORTALS</span></button>
     <button id="tDown" hidden aria-label="Fly down" data-i="down"><span class="l">DOWN</span></button>
+    <button id="tLight" hidden aria-label="Lightspeed" data-i="light"><span class="l">LIGHT</span></button>
   </div>
 </div>
 

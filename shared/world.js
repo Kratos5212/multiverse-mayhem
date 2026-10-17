@@ -460,8 +460,95 @@
     for (const R of D.regions || []) { const P = MM.DIM_BY_ID[R.dim].pickups; for (const k in P) out[k] = (out[k] || 0) + P[k]; }
     return out;
   };
+  // ---------- Worlds, dimensions and timelines ----------
+  // A world is a place: a planet, a space station, a strange realm. Each world exists in
+  // parallel dimensions (Earth C-137, Cronenberged Earth, Shrimp Earth...), and a dimension can
+  // have other timelines (C-137's split timeline, or 65 million years ago). Getting around:
+  // between the worlds of one universe, fly your ship up into space and over to the planet;
+  // to another dimension, a portal, or lightspeed from space with the Dimension Drive; to
+  // another timeline, a portal, or lightspeed with the Quantum Drive.
+  MM.WORLDS = [
+    { id: 'earth', name: 'Earth', icon: '🌎', prime: 'suburbia', dims: ['fascistearth', 'shrimpearth', 'teddyearth', 'c500a', 'doofusearth', 'meatlands', 'wasteland', 'dogworld', 'pizzaworld', 'zigerion'], blurb: 'The Smiths\' planet. Every dimension has one, and most of them are a mess.' },
+    { id: 'moon', name: 'The Moon', icon: '🌕', prime: 'moon', blurb: 'Earth\'s moon. A short hop by ship.' },
+    { id: 'birdworld', name: 'Bird World', icon: '🪶', prime: 'featherhold', blurb: 'Birdperson\'s home planet: cliffs, nests and very serious birds.' },
+    { id: 'gazorp', name: 'Gazorpazorp', icon: '👽', prime: 'gazorp', blurb: 'The Gazorpians\' planet.' },
+    { id: 'squanch', name: 'Planet Squanch', icon: '🐱', prime: 'squanch', blurb: 'Squanchy\'s planet. Everyone squanches here.' },
+    { id: 'purge', name: 'Purge Planet', icon: '🔪', prime: 'purge', blurb: 'One night a year, anything goes.' },
+    { id: 'gear', name: 'Planet Gear', icon: '⚙️', prime: 'gearworld', blurb: 'Home of the Gearpeople. Everything turns.' },
+    { id: 'unity', name: 'Unity\'s Planet', icon: '🫧', prime: 'unityworld', blurb: 'A planet that is one mind.' },
+    { id: 'federation', name: 'Galactic Federation', icon: '🏛️', prime: 'federation', blurb: 'The Federation\'s capital planet.' },
+    { id: 'bazaar', name: 'Alien Bazaar', icon: '🛍️', prime: 'bazaar', blurb: 'A market planet.' },
+    { id: 'blips', name: 'Blips and Chitz', icon: '🕹️', prime: 'blips', blurb: 'The arcade, somewhere in the galaxy.' },
+    { id: 'citadel', name: 'The Citadel', icon: '🏙️', prime: 'citadel', blurb: 'The city of Ricks and Mortys, hidden between dimensions.' },
+    { id: 'snake', name: 'Snake Planet', icon: '🐍', prime: 'snakeplanet', blurb: 'Snakes, snake jazz and snake time travel.' },
+    { id: 'megaseed', name: 'Mega Seed World', icon: '🌱', prime: 'megaseed', blurb: 'Where the Mega Seeds grow.' },
+    { id: 'plumbus', name: 'Plumbubo Prime 51b', icon: '🔧', prime: 'plumbus', blurb: 'Where plumbuses come from.' },
+    { id: 'giant', name: 'Giant World', icon: '🫘', prime: 'giantland', blurb: 'Up the beanstalk.' },
+    { id: 'atlantis', name: 'Atlantis', icon: '🔱', prime: 'atlantis', blurb: 'Mr. Nimbus\'s sunken city.' },
+    { id: 'dream', name: 'The Dream World', icon: '💤', prime: 'dreamworld', realm: true, blurb: 'Inside a dream. Not a planet at all.' },
+    { id: 'storytrain', name: 'The Story Train', icon: '🚂', prime: 'storytrain', realm: true, blurb: 'An endless train of stories.' },
+    { id: 'toxic', name: 'The Toxic Dimension', icon: '☣️', prime: 'toxicworld', realm: true, blurb: 'Where everything toxic ends up.' },
+    { id: 'cable', name: 'Interdimensional Cable', icon: '📺', prime: 'cableworld', realm: true, blurb: 'The dimension of the commercials.' },
+    { id: 'hamster', name: 'Hamster-in-Butt World', icon: '🐹', prime: 'hamsterworld', blurb: 'It is exactly what it sounds like.' },
+    { id: 'beyond', name: 'Beyond the Curve', icon: 'Ω', prime: 'beyond', realm: true, blurb: 'Outside the Central Finite Curve.' },
+  ];
+  // Other timelines, as [id, of (the dimension), name, code, blurb, look].
+  const TIMELINES = [
+    ['fedearth', 'suburbia', 'Earth C-137, under the Federation', 'C-137 ⧗', 'From "The Rickshank Rickdemption": the Galactic Federation took over Earth. Bug-headed troopers on every corner, and Federation towers over the suburb.',
+      { sky: ['#8aa4c8', '#e4ecf4'], ground: ['#6aa04e', '#7ab05a', '#5a9044'], npc: [['fedguard', 6], ['neighbor', 6], ['fedclerk', 2]], extra: [['fedtower', 6]] }],
+    ['evilcitadel', 'citadel', 'The Citadel, under President Morty', 'CIT-1 ⧗', 'From "The Ricklantis Mixup": Evil Morty won the election. Same city, new management, and the Ricks are nervous.',
+      { sky: ['#1a1a2e', '#7a6a9a'], accent: '#ffd84d', npc: [['citmorty', 10], ['citrick', 3], ['citguard', 4]] }],
+    ['birdwedding', 'featherhold', 'Bird World, after the wedding', 'BW-1 ⧗', 'From "The Wedding Squanchers": the Federation crashed the wedding, and Bird World has been occupied since.',
+      { sky: ['#7a5a6a', '#e8c8b8'], npc: [['fedguard', 5], ['birdcitizen', 6]] }],
+  ];
+  // Every world has at least one parallel dimension. These are the ones the show never got to.
+  const PARALLEL = [
+    { k: 'CR', label: 'Cronenberg dimension', blurb: n => n + ', from a dimension where Rick\'s love potion got loose. Everything has too many teeth.', hue: -30, sat: 1.2, light: 0.9, extra: [['pustule', 12], ['eyestalk', 8]], npc: [['meatblob', 5]] },
+    { k: 'MR', label: 'mirror dimension', blurb: n => n + ', the other way round, colours and all. The locals swear it is you who is backwards.', hue: 180, sat: 1, light: 1 },
+    { k: 'IC', label: 'ice age dimension', blurb: n => n + ', in a dimension where its sun is a little further away. Everything is frozen.', hue: 0, sat: 0.25, light: 1.35, extra: [['crystal', 14]] },
+    { k: 'DK', label: 'dark dimension', blurb: n => n + ' where the sun went out a long time ago. Everyone just got used to it.', hue: 0, sat: 0.8, light: 0.45, extra: [['lamp', 16]] },
+    { k: 'JG', label: 'jungle dimension', blurb: n => n + ', where the jungle got everything back.', hue: 40, sat: 1.25, light: 0.95, extra: [['seedtree', 12], ['fungus', 10]] },
+    { k: 'CT', label: 'cat dimension', blurb: n => n + ', where everyone is a cat. Nobody remembers it ever being different.', hue: 15, sat: 1, light: 1.05, npc: [['catfolk', 8]] },
+  ];
+  const tint = (hex, h, sat, light) => {
+    const c = parseInt(hex.slice(1), 16); let r = (c >> 16) / 255, g = (c >> 8 & 255) / 255, b = (c & 255) / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    let H = 0, S = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    if (d) H = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    H = ((H * 60 + h) % 360 + 360) % 360; S = Math.min(1, S * sat); const L = Math.min(0.97, l * light);
+    const C2 = (1 - Math.abs(2 * L - 1)) * S, X2 = C2 * (1 - Math.abs((H / 60) % 2 - 1)), m = L - C2 / 2;
+    [r, g, b] = H < 60 ? [C2, X2, 0] : H < 120 ? [X2, C2, 0] : H < 180 ? [0, C2, X2] : H < 240 ? [0, X2, C2] : H < 300 ? [X2, 0, C2] : [C2, 0, X2];
+    return '#' + [r, g, b].map(v => Math.round((v + m) * 255).toString(16).padStart(2, '0')).join('');
+  };
+  // A dimension built on another: the same ground, the same buildings, its own look and people.
+  const derive = (B, id, extra) => {
+    const d = Object.assign({ variantOf: B.id, shapeOf: B.shapeOf || B.id, gravity: B.gravity, quirk: B.quirk, outsideCurve: B.outsideCurve, fogFar: B.fogFar, sun: B.sun, ambient: B.ambient, accent: B.accent, mat: B.mat, pickups: B.pickups }, extra, { id });
+    for (const k of ['sky', 'fog', 'ground']) if (!d[k]) d[k] = B[k];
+    d.npc = (extra.npc || []).concat(extra.keepNpc === false ? [] : B.npc.filter(n => n.length < 3).slice(0, 3));
+    MM.DIMS.push(d); MM.DIM_BY_ID[id] = d;
+    return d;
+  };
+  for (const [id, of, name, code, blurb, look] of TIMELINES) derive(MM.DIM_BY_ID[of], id, Object.assign({ name, code, blurb, timeline: true, timelineOf: of }, look));
+  MM.DIM_BY_ID.splitearth.timelineOf = 'suburbia'; MM.DIM_BY_ID.dinoearth.timelineOf = 'suburbia';
+  MM.WORLDS.forEach((W, i) => {
+    const B = MM.DIM_BY_ID[W.prime];
+    W.dims = [W.prime].concat(W.dims || []);
+    if (W.dims.length === 1 && !B.interior) {
+      const T = PARALLEL[i % PARALLEL.length], t = c => tint(c, T.hue, T.sat, T.light);
+      const d = derive(B, W.prime + '_' + T.k.toLowerCase(), { name: W.name + ' (' + T.label + ')', code: B.code + '/' + T.k, blurb: T.blurb(W.name),
+        sky: B.sky.map(t), fog: t(B.fog), ground: B.ground.map(t), ambient: t(B.ambient), extra: T.extra || [], npc: T.npc || [] });
+      W.dims.push(d.id);
+    }
+  });
   for (const d of MM.DIMS) if (d.variantOf) fillVariant(d);
   MM.fillVariant = fillVariant;
+  // Which world a dimension belongs to (alternate and home Earths are Earth), and which
+  // dimension a timeline is of.
+  MM.WORLD_BY_ID = {};
+  for (const W of MM.WORLDS) { MM.WORLD_BY_ID[W.id] = W; for (const id of W.dims) MM.DIM_BY_ID[id].world = W.id; W.timelines = {}; }
+  MM.worldOf = dimId => { const D = MM.DIM_BY_ID[dimId]; if (!D) return null; if (D.timelineOf) return MM.worldOf(D.timelineOf); return D.world || (D.variantOf ? MM.worldOf(D.variantOf) : null); };
+  MM.timelinesOf = dimId => MM.DIMS.filter(d => d.timelineOf === dimId).map(d => d.id);
+  MM.dimensionOf = dimId => { const D = MM.DIM_BY_ID[dimId]; return D && D.timelineOf ? D.timelineOf : dimId; };
   MM.DIM_IDS = MM.DIMS.map(d => d.id);
   // Dimensions you can portal or kiosk to (the garage and its rooms are reached through doors).
   MM.WORLD_IDS = MM.DIMS.filter(d => !d.hidden).map(d => d.id);
@@ -492,6 +579,13 @@
     if (B.pocket) return 'Only through its entrance: ' + (to === 'microverse' ? "the car battery in Rick's garage." : to === 'anatomy' ? 'Anatomy Park, inside Ruben, on Earth.' : 'the chalk door on Earth.');
     if (B.outsideCurve && !(method === 'portal' && o.gold)) return 'Outside the Central Finite Curve. Only a gold portal goes there.';
     if (method === 'portal' || method === 'station') return '';
+    // Lightspeed: from space, in your ship. Planets you can see you can just fly into.
+    if (method === 'light') {
+      if (!A.planets) return 'Lightspeed only works out in space: fly straight up first.';
+      if (A.planets.some(P => P.dim === to)) return o.engine ? '' : 'It is right there: fly into it. (Lightspeed to a planet you can see needs the Turbo Engine.)';
+      if (B.timeline || A.planets[0] && MM.DIM_BY_ID[A.planets[0].dim].timeline) return o.quantum ? '' : 'Another timeline: lightspeed through time needs the Quantum Drive.';
+      return o.drive || o.quantum ? '' : 'Another dimension: lightspeed needs the Dimension Drive.';
+    }
     if (method === 'ship') {
       if (A.space && A.space === B.space) {
         if (A.near && B.near) return o.hull ? '' : 'You need a ship.';
@@ -1086,7 +1180,7 @@
   // The roads joining the suburb to the other towns.
   MM.EARTH_LINKS = [[140, 0, 262, 0], [-140, 0, -262, 0], [0, -140, 0, -262]];
   function cellHeight(dim, x, z) {
-    const dimId = dim.id;
+    const dimId = dim.shapeOf || dim.id;   // a parallel dimension has the same lie of the land
     const r = Math.sqrt(x * x + z * z);
     let h = (MM.fbm(x * dim.scale, z * dim.scale, dim.seed, 4) - 0.5) * 2 * dim.amp;
     h *= smooth(14, 40, r);
@@ -1126,7 +1220,7 @@
     const dim = MM.DIM_BY_ID[dimId];
     const r = MM.rng(dim.seed);
     const out = [];
-    const layout = MM.LAYOUTS && MM.LAYOUTS[dimId];
+    const layout = MM.LAYOUTS && (MM.LAYOUTS[dimId] || MM.LAYOUTS[dim.shapeOf]);
     const free = (x, z, rad, tight) => {
       if (!dim.interior) {
         if (Math.hypot(x, z) < (layout ? 15 : 22) + rad) return false;   // a town keeps its square clear by itself

@@ -613,6 +613,7 @@
         case 'drive': this.onDrive(p, m.d); break;
         case 'orbit': this.onOrbit(p); break;
         case 'land': this.onLand(p, m.d); break;
+        case 'ls': this.onLight(p, m.d); break;
         case 'door': this.onDoor(p, m.l); break;
         case 'tm': this.onTeam(p, m); break;
         case 'uc': this.onCurio(p, m.id); break;
@@ -1185,6 +1186,24 @@
       p.kbUntil = this.time + 1.5;
       this.bringTeam(p, from, ox, oz);
       this.toast(p, 'Coming in to land on ' + MM.DIM_BY_ID[d].name + '. Shift to go down, B to step out on the ground.');
+    }
+
+    // Lightspeed, from space: to the space around another world, dimension or timeline, with
+    // the planet ahead of you. Land by flying into it.
+    onLight(p, d) {
+      const S = p.inst.dim, now = this.time;
+      if (p.dead || !p.ship || !S.planets || !MM.DIM_BY_ID[d] || now < (p.cdLight || 0)) return;
+      const sh = p.st.ship;
+      const why = MM.travelWhy('light', p.inst.dimId, d, { engine: sh.engine, drive: sh.drive, quantum: sh.quantum });
+      if (why) { this.toast(p, why); return; }
+      p.cdLight = now + (sh.quantum ? 4 : 10);
+      const T = MM.spaceDimOf(d), P = T.planets.find(q => q.dim === d) || T.planets[0];
+      const from = p.inst, ox = p.x, oz = p.z;
+      p.inst.ev({ k: 'warp', id: p.id });
+      this.travel(p, T.id, { x: P.x + P.r + 70, z: P.z, y: P.y + 25 });
+      p.kbUntil = this.time + 1.5;
+      this.bringTeam(p, from, ox, oz);
+      this.toast(p, 'Lightspeed! ' + MM.DIM_BY_ID[d].name + ' is dead ahead. Fly into it to land.');
     }
 
     // ----- Crafting -----

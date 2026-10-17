@@ -2278,14 +2278,14 @@
   // Big things in the sky that make each dimension recognisable.
   function skyDecor(dim, group) {
     const add = (shape, pos) => { const m = C.meshOf(shape.build(), 0); m.position.set(pos[0], pos[1], pos[2]); m.traverse(o => { if (o.material) { o.material = o.material.clone(); o.material.fog = false; } }); group.add(m); return m; };
-    if (dim.id === 'suburbia') {
+    if ((dim.shapeOf || dim.id) === 'suburbia') {
       for (let i = 0; i < 14; i++) {
         const s = new C.Shape();
         for (let j = 0; j < 4; j++) s.add(P.sphereLo, '#ffffff', [j * 9 - 13, Math.sin(j * 2) * 2, (j % 2) * 4], null, [9, 5, 7], true);
         const a = i / 14 * Math.PI * 2, d = 300 + (i % 3) * 60;
         add(s, [Math.cos(a) * d, 110 + (i % 4) * 25, Math.sin(a) * d]);
       }
-    } else if (dim.id === 'meatlands') {
+    } else if ((dim.shapeOf || dim.id) === 'meatlands') {
       const s = new C.Shape();
       s.add(P.sphere, '#fff2e0', [0, 0, 0], null, [60, 60, 60], true);
       s.add(P.sphere, '#e0b020', [0, 0, 44], null, [30, 30, 20], true);
@@ -2294,7 +2294,7 @@
       eye.lookAt(0, 0, 0);
       group.userData.eye = eye;
       group.add(stars(300, 560, '#ffb0c0', 2));
-    } else if (dim.id === 'bazaar') {
+    } else if ((dim.shapeOf || dim.id) === 'bazaar') {
       const s1 = new C.Shape(); s1.add(P.sphere, '#ffd36b', [0, 0, 0], null, [55, 55, 55], true);
       add(s1, [-250, 210, -330]);
       const s2 = new C.Shape(); s2.add(P.sphere, '#7affea', [0, 0, 0], null, [30, 30, 30], true);
@@ -2303,7 +2303,7 @@
       ring.position.set(-250, 210, -330); ring.rotation.set(1.2, 0.3, 0);
       group.add(ring);
       group.add(stars(900, 560, '#ffffff', 2));
-    } else if (dim.id === 'beyond') {
+    } else if ((dim.shapeOf || dim.id) === 'beyond') {
       // Far off: the wall of the Central Finite Curve, a golden helix of universes; everywhere
       // else, countless loose universes glowing in the dark.
       const h = new C.Shape();
@@ -2315,7 +2315,7 @@
       helix.rotation.z = 0.25;
       group.add(stars(1600, 560, '#ffe6a0', 2.5));
       group.add(stars(600, 560, '#c9a8ff', 2));
-    } else if (dim.id === 'citadel') {
+    } else if ((dim.shapeOf || dim.id) === 'citadel') {
       // The rest of the Citadel floating around you, and a planet.
       for (let i = 0; i < 7; i++) {
         const s = new C.Shape();
@@ -2329,7 +2329,7 @@
       const pl = new C.Shape(); pl.add(P.sphere, '#5a3aa8', [0, 0, 0], null, [90, 90, 90], true); pl.add(P.torus, '#b48aff', [0, 0, 0], [1.2, 0.2, 0], [130, 130, 0.5], true);
       add(pl, [-280, 260, -380]);
       group.add(stars(2000, 560, '#ffffff', 2));
-    } else if (dim.id === 'dogworld') {
+    } else if ((dim.shapeOf || dim.id) === 'dogworld') {
       for (let i = 0; i < 12; i++) {
         const s = new C.Shape();
         for (let j = 0; j < 4; j++) s.add(P.sphereLo, '#ffffff', [j * 9 - 13, Math.sin(j * 2) * 2, (j % 2) * 4], null, [9, 5, 7], true);
@@ -2340,7 +2340,7 @@
       const b = new C.Shape(); b.add(P.capsule, '#fff4dc', [0, 0, 0], [0, 0, Math.PI / 2], [12, 60, 12], true);
       for (const sx of [-1, 1]) for (const sy of [-1, 1]) b.add(P.sphere, '#fff4dc', [sx * 38, sy * 10, 0], null, [16, 16, 16], true);
       add(b, [220, 230, -360]).rotation.z = 0.3;
-    } else if (dim.id === 'megaseed') {
+    } else if ((dim.shapeOf || dim.id) === 'megaseed') {
       for (let i = 0; i < 10; i++) {
         const s = new C.Shape();
         s.add(P.cyl, '#5a3a6a', [0, 0, 0], null, [8, 160, 8], true);
@@ -2350,7 +2350,7 @@
       }
       const sun2 = new C.Shape(); sun2.add(P.sphere, '#ffe066', [0, 0, 0], null, [40, 40, 40], true);
       add(sun2, [150, 200, -400]);
-    } else if (dim.id === 'featherhold') {
+    } else if ((dim.shapeOf || dim.id) === 'featherhold') {
       for (let i = 0; i < 9; i++) {
         const s = new C.Shape();
         s.add(P.cone, '#b98c4e', [0, -14, 0], [Math.PI, 0, 0], [14, 26, 14], true);
@@ -2365,7 +2365,7 @@
         const a = i / 10 * Math.PI * 2 + 0.3;
         add(s, [Math.cos(a) * 340, 150 + (i % 3) * 20, Math.sin(a) * 340]);
       }
-    } else if (dim.id === 'moon') {
+    } else if ((dim.shapeOf || dim.id) === 'moon') {
       const s = new C.Shape();
       s.add(P.sphere, '#2f6fd8', [0, 0, 0], null, [80, 80, 80], true);
       for (let i = 0; i < 9; i++) s.add(P.sphereLo, '#3fae4a', [Math.sin(i * 2.3) * 55, Math.cos(i * 1.7) * 50, 45], null, [26, 18, 14], true);
@@ -2411,7 +2411,7 @@
         if (k > 0) tmp.lerp(paint(rp[0], rp[1], rp[2], P.t2), k);
       }
     }
-    if (dim.id === 'meatlands') {
+    if ((dim.shapeOf || dim.id) === 'meatlands') {
       const v = Math.abs(Math.sin(x * 0.11 + Math.sin(z * 0.07) * 3) * Math.cos(z * 0.09 + Math.sin(x * 0.05) * 2));
       if (v < 0.05) tmp.set('#7c1e34');
     }
@@ -2419,12 +2419,12 @@
       const gx = Math.abs(((x % 12) + 12) % 12 - 6), gz = Math.abs(((z % 12) + 12) % 12 - 6);
       if (gx > 5.8 || gz > 5.8) tmp.set('#5ff8ff');
     }
-    if (dim.id === 'bazaar') {
+    if ((dim.shapeOf || dim.id) === 'bazaar') {
       const gx = Math.abs(((x % 8) + 8) % 8 - 4), gz = Math.abs(((z % 8) + 8) % 8 - 4);
       if ((gx > 3.85 || gz > 3.85) && Math.hypot(x, z) < 60) tmp.set('#5ff8ff');
     }
-    if (dim.id === 'moon') { const d = y / 10; tmp.multiplyScalar(1 + Math.max(-0.35, Math.min(0.15, d * 0.3))); }
-    if (dim.id === 'featherhold') { const sl = Math.abs(MM.heightAt(dim.id, x + 1.5, z) - y) + Math.abs(MM.heightAt(dim.id, x, z + 1.5) - y); if (sl > 1.4) tmp.set(sl > 2.4 ? '#a27a42' : '#b98c4e'); else if (y > 6) tmp.lerp(new T.Color('#8fae4a'), 0.6); }
+    if ((dim.shapeOf || dim.id) === 'moon') { const d = y / 10; tmp.multiplyScalar(1 + Math.max(-0.35, Math.min(0.15, d * 0.3))); }
+    if ((dim.shapeOf || dim.id) === 'featherhold') { const sl = Math.abs(MM.heightAt(dim.id, x + 1.5, z) - y) + Math.abs(MM.heightAt(dim.id, x, z + 1.5) - y); if (sl > 1.4) tmp.set(sl > 2.4 ? '#a27a42' : '#b98c4e'); else if (y > 6) tmp.lerp(new T.Color('#8fae4a'), 0.6); }
     for (const l of P.lms) { if (Math.abs(x - l.x) > l.r + 3.5 || Math.abs(z - l.z) > l.r + 3.5) continue; const d = Math.hypot(x - l.x, z - l.z); if (d < l.r + 3.5) tmp.copy(P.side).lerp(P.base[1], 0.35); }
     return tmp;
   }
@@ -2706,7 +2706,7 @@
   // Public portal stations: the Citadel's green portal arch and Federation customs.
   function makeKiosk(dim, St) {
     St = St || { name: 'Portal Station', fee: {} };
-    const fed = dim && dim.id === 'federation';
+    const fed = dim && (dim.shapeOf || dim.id) === 'federation';
     const col = fed ? '#5fb4ff' : '#39ff6a', metal = fed ? '#c9ccd4' : '#59606e', dark = fed ? '#3c4a66' : '#2b303a';
     const s = new C.Shape();
     s.add(P.cyl, dark, [0, 0.25, 0], null, [3.6, 0.5, 3.6]);
