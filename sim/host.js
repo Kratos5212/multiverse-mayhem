@@ -840,7 +840,7 @@
         }
       }
       // Walking into a landmark counts for "go there" steps.
-      if (now >= (p.lmT || 0)) for (const l of (p.lmT = now + 0.25, MM.LANDMARKS)) if (l.dim === p.inst.dimId && dist2(l.x, l.z, p.x, p.z) < (l.r + MM.USE_RADIUS) ** 2) this.progress(p, 'at', l.id);
+      if (now >= (p.lmT || 0)) for (const l of (p.lmT = now + 0.25, MM.LANDMARKS)) if (l.dim === p.inst.dimId && dist2(l.x, l.z, p.x, p.z) < (l.r + MM.USE_RADIUS) ** 2 && MM.sameFloor(l, p.y)) this.progress(p, 'at', l.id);
     }
 
     fireProjectile(inst, o) {
@@ -1063,7 +1063,7 @@
     onDoor(p, lid) {
       const l = MM.LANDMARK_BY_ID[lid];
       if (p.dead || !l || !l.door || l.dim !== p.inst.dimId || this.time < p.cdUse) return;
-      if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2) return;
+      if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2 || !MM.sameFloor(l, p.y)) return;
       p.cdUse = this.time + 1;
       if (p.ship && MM.DIM_BY_ID[l.door.dim].interior) { this.toast(p, 'Park your ship first (B).'); return; }
       const from = p.inst, ox = p.x, oz = p.z;
@@ -1197,7 +1197,7 @@
       if (why) { this.toast(p, why); return; }
       if (R.at) {
         const l = MM.LANDMARK_BY_ID[R.at];
-        const here = MM.LANDMARKS.some(x => MM.isAt(x, R.at) && x.dim === p.inst.dimId && dist2(x.x, x.z, p.x, p.z) <= (x.r + MM.USE_RADIUS + 2) ** 2);
+        const here = MM.LANDMARKS.some(x => MM.isAt(x, R.at) && x.dim === p.inst.dimId && dist2(x.x, x.z, p.x, p.z) <= (x.r + MM.USE_RADIUS + 2) ** 2 && MM.sameFloor(x, p.y));
         if (!here) { this.toast(p, 'Build this at the ' + l.name + ' in ' + MM.DIM_BY_ID[l.dim].name + '.'); return; }
       }
       const cost = MM.recipeCost(p.arch, id);
@@ -1328,7 +1328,7 @@
       if (MM.helpless(p.arch, p.prog.up)) { const l = MM.LANDMARK_BY_ID[lid]; if (l && l.door) this.onDoor(p, lid); else this.toast(p, MM.HELPLESS_TEXT); return; }
       const l = MM.LANDMARK_BY_ID[lid];
       if (p.dead || !l || l.dim !== p.inst.dimId || this.time < p.cdUse) return;
-      if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2) return;
+      if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2 || !MM.sameFloor(l, p.y)) return;
       p.cdUse = this.time + 1;
       const mine = Object.keys(MM.TASKS).filter(t => MM.isAt(l, MM.TASKS[t].at) && MM.taskFor(t, p.arch));
       const id = taskId && mine.includes(taskId) ? taskId : mine[0];

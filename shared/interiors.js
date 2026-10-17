@@ -160,6 +160,29 @@
     return out;
   };
 
+  // The Smith house: two floors of the same 44 x 32 ft footprint, the plans the meshes were
+  // made from (assets/interiors/smith.recipe.json downstairs, smith2.recipe.json upstairs). The
+  // walls of each floor only stop you on that floor; the stairs get side walls of their own.
+  {
+    const D = MM.DIM_BY_ID.smithhouse, F = D.floors.y;
+    const down = { scale: 1.4, plan: { width: 44, height: 32, rooms: [
+      { x: 0, y: 14, w: 16, h: 18 }, { x: 16, y: 14, w: 12, h: 18 }, { x: 28, y: 14, w: 16, h: 18 }, { x: 0, y: 0, w: 16, h: 14 }, { x: 16, y: 0, w: 28, h: 14 },
+    ], doors: [{ x: 16, y: 23 }, { x: 20, y: 14 }, { x: 36, y: 14 }, { x: 16, y: 7 }] } };
+    const up = { scale: 1.4, plan: { width: 44, height: 32, rooms: [
+      { x: 0, y: 0, w: 16, h: 16 }, { x: 0, y: 16, w: 16, h: 16 }, { x: 16, y: 0, w: 12, h: 15.5 }, { x: 16, y: 15.5, w: 8, h: 16.5 },
+      { x: 24, y: 15.5, w: 4, h: 16.5 }, { x: 28, y: 0, w: 16, h: 12 }, { x: 28, y: 12, w: 16, h: 20 },
+    ], doors: [{ x: 16, y: 8 }, { x: 16, y: 24 }, { x: 20, y: 15.5 }, { x: 26, y: 15.5 }, { x: 28, y: 6 }, { x: 28, y: 13.75 }] } };
+    const S = D.floors.stair, lowZ = S.z0 + (S.z1 - S.z0) * 0.6 / F, headZ = S.z0 + (S.z1 - S.z0) * 2.4 / F;
+    D.walls = [].concat(
+      MM.planWalls(down).map(w => w.concat([-1, F - 0.5])),
+      MM.planWalls(up).map(w => w.concat([F - 0.5, 99])),
+      [
+        [S.x0, lowZ, S.x0, S.z1, 0.3, F - 0.5],        // the banister, while you are on the stairs
+        [S.x0, lowZ, S.x0, headZ, -1, 0.3],            // under the stairs: closed in where it is low
+        [S.x0, headZ, S.x1, headZ, -1, 0.3],
+      ]);
+  }
+
   // Build the dimensions, the way in (a door on the outside landmark), the way out, and the
   // things to do inside.
   for (const I of MM.INTERIORS) {

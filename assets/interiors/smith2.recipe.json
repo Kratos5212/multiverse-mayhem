@@ -1,0 +1,111 @@
+{
+  "kind": "floorplan",
+  "title": "Smith house upstairs v2",
+  "seed": 138,
+  "width": 44,
+  "height": 32,
+  "style": "cottage",
+  "furnish": true,
+  "furnishScale": "share",
+  "windows": true,
+  "wallDecor": true,
+  "floorStyle": "auto",
+  "view": "cutaway",
+  "contactShadows": true,
+  "rooms": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 16,
+      "h": 16,
+      "glyph": "B",
+      "items": [
+        {
+          "type": "platform-bed",
+          "wall": "W",
+          "at": 0.35
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 16,
+      "w": 16,
+      "h": 16,
+      "glyph": "B"
+    },
+    {
+      "x": 16,
+      "y": 0,
+      "w": 12,
+      "h": 15.5,
+      "glyph": "H"
+    },
+    {
+      "x": 16,
+      "y": 15.5,
+      "w": 8,
+      "h": 16.5,
+      "glyph": "H"
+    },
+    {
+      "x": 24,
+      "y": 15.5,
+      "w": 4,
+      "h": 16.5,
+      "glyph": "H"
+    },
+    {
+      "x": 28,
+      "y": 0,
+      "w": 16,
+      "h": 12,
+      "glyph": "H"
+    },
+    {
+      "x": 28,
+      "y": 12,
+      "w": 16,
+      "h": 20,
+      "glyph": "B"
+    }
+  ],
+  "doors": [
+    {
+      "x": 16,
+      "y": 8,
+      "room": 0,
+      "edge": "E"
+    },
+    {
+      "x": 16,
+      "y": 24,
+      "room": 1,
+      "edge": "E"
+    },
+    {
+      "x": 20,
+      "y": 15.5,
+      "room": 3,
+      "edge": "N"
+    },
+    {
+      "x": 26,
+      "y": 15.5,
+      "room": 4,
+      "edge": "N"
+    },
+    {
+      "x": 28,
+      "y": 6,
+      "room": 5,
+      "edge": "W"
+    },
+    {
+      "x": 28,
+      "y": 13.75,
+      "room": 6,
+      "edge": "W"
+    }
+  ]
+}

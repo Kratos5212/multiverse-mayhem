@@ -1,9 +1,9 @@
 {
   "kind": "floorplan",
-  "title": "Smith House ground floor",
+  "title": "Smith house ground floor v2",
   "seed": 137,
-  "width": 34,
-  "height": 26,
+  "width": 44,
+  "height": 32,
   "style": "cottage",
   "furnish": true,
   "furnishScale": "share",
@@ -16,16 +16,16 @@
   "rooms": [
     {
       "x": 0,
-      "y": 0,
-      "w": 18,
-      "h": 16,
+      "y": 14,
+      "w": 16,
+      "h": 18,
       "glyph": "L",
       "items": [
         {
           "type": "sofa",
           "at": [
             0.5,
-            0.7
+            0.62
           ],
           "facing": "N",
           "size": [
@@ -43,65 +43,104 @@
           "type": "armchair",
           "at": [
             0.15,
-            0.45
+            0.4
           ],
           "facing": "E"
+        },
+        {
+          "type": "coffee-table",
+          "at": [
+            0.5,
+            0.42
+          ]
         }
       ]
     },
     {
-      "x": 18,
-      "y": 0,
+      "x": 16,
+      "y": 14,
+      "w": 12,
+      "h": 18,
+      "glyph": "E",
+      "items": []
+    },
+    {
+      "x": 28,
+      "y": 14,
       "w": 16,
-      "h": 12,
+      "h": 18,
       "glyph": "D"
     },
     {
-      "x": 18,
-      "y": 12,
+      "x": 0,
+      "y": 0,
       "w": 16,
       "h": 14,
-      "glyph": "K"
+      "glyph": "B",
+      "items": [
+        {
+          "type": "platform-bed",
+          "wall": "S",
+          "at": 0.45
+        },
+        {
+          "type": "standing-desk",
+          "wall": "N",
+          "at": 0.3
+        }
+      ]
     },
     {
-      "x": 0,
-      "y": 16,
-      "w": 18,
-      "h": 10,
-      "glyph": "E"
+      "x": 16,
+      "y": 0,
+      "w": 28,
+      "h": 14,
+      "glyph": "K"
     }
   ],
   "doors": [
     {
-      "x": 6,
-      "y": 26,
-      "room": 3,
+      "x": 20,
+      "y": 32,
+      "room": 1,
       "edge": "S",
       "entry": true
     },
     {
-      "x": 12,
-      "y": 16,
-      "room": 3,
+      "x": 16,
+      "y": 23,
+      "room": 1,
+      "edge": "W"
+    },
+    {
+      "x": 20,
+      "y": 14,
+      "room": 1,
       "edge": "N"
     },
     {
-      "x": 18,
-      "y": 6,
-      "room": 0,
-      "edge": "E"
+      "x": 36,
+      "y": 14,
+      "room": 2,
+      "edge": "N"
     },
     {
-      "x": 26,
-      "y": 12,
-      "room": 1,
-      "edge": "S"
+      "x": 16,
+      "y": 7,
+      "room": 4,
+      "edge": "W"
     },
     {
-      "x": 18,
-      "y": 21,
+      "x": 0,
+      "y": 7,
       "room": 3,
-      "edge": "E"
+      "edge": "W"
+    },
+    {
+      "x": 36,
+      "y": 0,
+      "room": 4,
+      "edge": "N"
     }
   ]
 }

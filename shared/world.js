@@ -45,8 +45,8 @@
       ground: ['#5fae3e', '#78c24b', '#4c9636'], accent: '#ffffff',
       props: [['tree', 40], ['hedge', 20]], streets: { grid: 44, extent: 150 }, spawn: { x: 2, z: -3, spread: 5 },
       // Rick's things in his open garage (the interactive ones are landmarks).
-      fixed: [['spacecruiser', -13.0, 14.5, Math.PI / 2, 0.8], ['shelf', -17.2, 8.6, 0], ['washer', -13.4, 8.6, 0], ['curioshelf', -11.6, 16.5, Math.PI]],
-      npc: [['neighbor', 9], ['schoolkid', 4], ['butterbot', 1, -16.5, 11]], pickups: { s: 18, c: 2 }, mat: 's',
+      fixed: [['spacecruiser', -13.0, 33.0, Math.PI / 2, 0.8], ['shelf', -17.2, 27.1, 0], ['washer', -13.4, 27.1, 0], ['curioshelf', -11.6, 35.0, Math.PI]],
+      npc: [['neighbor', 9], ['schoolkid', 4], ['butterbot', 1, -16.5, 29.5]], pickups: { s: 18, c: 2 }, mat: 's',
     },
     {
       id: 'meatlands', flat: 140, name: 'Cronenberged Earth', code: 'PRIME', seed: 4242, gravity: 24, amp: 9, scale: 0.02, quirk: 'regen',
@@ -355,20 +355,20 @@
       ground: ['#6ac84a', '#7ad85a', '#5ab83e'], accent: '#ffb0d0',
       extra: [['flowerbed', 30]], npc: [['neighbor', 12]], pickups: { s: 18, k: 3 }, mat: 'k',
     },
-    // ----- Inside the Smith house (built with Mojulo, see assets/interiors) -----
+    // ----- Inside the Smith house: two floors, each a Mojulo floor plan (see shared/interiors.js
+    // for the plans and walls, assets/interiors/smith*.recipe.json for the recipes) -----
     {
-      id: 'smithhouse', name: 'Smith House', code: 'C-137', seed: 139, gravity: 24, interior: true, hidden: true, bound: 7.0, boundZ: 5.3,
-      blurb: 'The living room, the dining room where nobody talks, and the kitchen. The TV gets every channel in the multiverse.',
+      id: 'smithhouse', name: 'Smith House', code: 'C-137', seed: 139, gravity: 24, interior: true, hidden: true, bound: 9.05, boundZ: 6.5,
+      blurb: 'Downstairs: the living room, the dining room where nobody talks, the kitchen and Rick\'s room. Upstairs: Morty\'s room, Summer\'s room, Beth and Jerry\'s room and the bathroom.',
       sky: ['#2a2a30', '#2a2a30'], fog: '#2a2a30', fogFar: 400, sun: '#fff4e0', ambient: '#c0b8a8',
-      ground: ['#b88a5a', '#a87a4a', '#c89a6a'], accent: '#ffd84d', spawn: { x: -4.5, z: -3.6 },
-      // The rooms come from a Mojulo floor plan (34 x 26 ft, 1 ft = 0.427 m here). walls: the
-      // inside walls for collision, as [x1, z1, x2, z2] segments with gaps where the doors are.
-      room: { w: 14.5, d: 11.1, h: 4.27, mesh: 'assets/interiors/smith.mmg' },
-      walls: [
-        [0.43, 5.55, 0.43, 3.69], [0.43, 2.29, 0.43, -2.71], [0.43, -4.11, 0.43, -5.55],   // living | dining, hall | kitchen
-        [-7.25, -1.28, -2.83, -1.28], [-1.43, -1.28, 0.43, -1.28],                           // hall | living room
-        [0.43, 0.43, 3.14, 0.43], [4.54, 0.43, 7.25, 0.43],                                 // kitchen | dining
-      ],
+      ground: ['#b88a5a', '#a87a4a', '#c89a6a'], accent: '#ffd84d', spawn: { x: -0.85, z: -5.6 },
+      // 44 x 32 ft at 1 ft = 0.427 m. The upstairs mesh sits on the downstairs ceiling.
+      room: { w: 18.78, d: 13.65, h: 4.27, mesh: 'assets/interiors/smith.mmg', upper: 'assets/interiors/smith2.mmg' },
+      // The stairs run up the foyer by the dining room wall, from the front door to the
+      // upstairs hall; the stairwell has no floor upstairs.
+      floors: { y: 4.3, hole: [0.85, -6.83, 2.56, 0.21], stair: { x0: 0.64, x1: 2.56, z0: -5.55, z1: 0.21 } },
+      // Bathroom fixtures upstairs (Mojulo has no bathroom): [type, x, z, rot, scale, floor y].
+      fixed: [['bathtub', 8.75, 3.7, 0, 1, 4.3], ['toilet', 5.0, 6.35, Math.PI, 1, 4.3], ['bathsink', 6.7, 6.45, Math.PI, 1, 4.3], ['bathmirror', 6.7, 6.78, Math.PI, 1, 4.3]],
       props: [], npc: [], pickups: {}, mat: 's',
     },
     // ----- Rick's garage and what's under it: small indoor dimensions -----
@@ -651,6 +651,10 @@
     plumbuspile: { r: 1.2, h: 1.6, hp: 40, drop: { g: 1, p: 1 } },
     housedoor:   { r: 0.6, h: 2.4, hp: 1e9, drop: {}, fixed: true },
     washer:      { r: 0.75, h: 1.1, hp: 1e9, drop: {}, fixed: true },
+    bathtub:     { r: 0.9, h: 0.62, hp: 1e9, drop: {}, fixed: true },
+    toilet:      { r: 0.4, h: 0.8, hp: 1e9, drop: {}, fixed: true },
+    bathsink:    { r: 0.35, h: 0.95, hp: 1e9, drop: {}, fixed: true },
+    bathmirror:  { r: 0.05, h: 0.1, hp: 1e9, drop: {}, fixed: true, arch: true },
     clonetank:   { r: 1.0, h: 3.6, hp: 1e9, drop: {}, fixed: true },
     bigcomputer: { r: 2.2, h: 4.0, hp: 1e9, drop: {}, fixed: true },
     labmachine:  { r: 1.8, h: 3.0, hp: 1e9, drop: {}, fixed: true },
@@ -660,6 +664,8 @@
 
   // Landmarks are solid, can't be destroyed, and each has its own model.
   for (const l of MM.LANDMARKS) MM.PROPS[l.model] = { r: l.r, h: l.h, hp: 1e9, drop: {}, fixed: true };
+  // Rings on the floor that mark a spot: you walk over them.
+  MM.PROPS.lm_marker = { r: 0.6, h: 0.1, hp: 1e9, drop: {}, fixed: true, arch: true };
 
   // NPCs. hostile ones chase and bite; the rest are locals you can talk to (F).
   //   human: built like a player, from these look options.  fly: hover height.
@@ -1132,18 +1138,20 @@
       for (const p of out) if (Math.hypot(p.x - x, p.z - z) < p.r + rad + (tight ? 0.2 : 1.5)) return false;
       return true;
     };
-    const add = (type, x, z, rot, scale) => {
+    const add = (type, x, z, rot, scale, fy) => {
       const t = MM.PROPS[type];
-      out.push({ id: out.length, type, x, z, rot, s: scale, r: t.r * scale, h: t.h * scale, hp: Math.round(t.hp * scale) });
+      const p = { id: out.length, type, x, z, rot, s: scale, r: t.r * scale, h: t.h * scale, hp: Math.round(t.hp * scale) };
+      if (fy !== undefined) p.fy = fy;   // upstairs (see dim.floors)
+      out.push(p);
     };
     for (const l of MM.LANDMARKS) {
       // A town that is part of a bigger world plans around its own landmarks, in its own
       // coordinates; the bigger world gets them through that town's props.
       if (l.origin === dimId) { add(l.model, l.lx, l.lz, l.rot, 1); continue; }
       if (l.dim !== dimId || (dim.regions && l.origin)) continue;
-      add(l.model, l.x, l.z, l.rot !== undefined ? l.rot : dim.interior ? (l.z < -3 ? 0 : l.z > 3 ? Math.PI : l.x < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.atan2(-l.x, -l.z), 1);
+      add(l.model, l.x, l.z, l.rot !== undefined ? l.rot : dim.interior ? (l.z < -3 ? 0 : l.z > 3 ? Math.PI : l.x < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.atan2(-l.x, -l.z), 1, l.fy);
     }
-    for (const [type, x, z, rot, sc] of dim.fixed || []) add(type, x, z, rot, sc || 1);
+    for (const [type, x, z, rot, sc, fy] of dim.fixed || []) add(type, x, z, rot, sc || 1, fy);
     const onRoad = v => { const m = ((v % 44) + 44) % 44; return Math.min(m, 44 - m) < 7.5; };
     if (dim.streets) {
       // Blocks between streets every 44 m. Each block has two rows of houses back to back,
@@ -1211,7 +1219,7 @@
       for (const [x1, z1, x2, z2] of MM.EARTH_LINKS) roads.push({ x1, z1, x2, z2, w: 9, style: 'asphalt' });
       layoutCache[dimId] = { roads, plazas };
     }
-    for (const p of out) p.y = MM.heightAt(dimId, p.x, p.z);
+    for (const p of out) p.y = p.fy !== undefined ? p.fy : MM.heightAt(dimId, p.x, p.z);
     return (propCache[dimId] = out);
   };
 
@@ -1261,7 +1269,7 @@
     barn: [-4.5, 8.55, -6.3, 6.3], cityblock: [-3.7, 3.7, -3.7, 3.7], fedtower: [-4.5, 4.5, -4.5, 4.5], prisonblock: [-5.2, 5.2, -3.2, 3.2],
     gearhouse: [-3.22, 3.22, -3.09, 3.3], storefront: [-4.7, 4.7, -3.7, 3.9], skyscraper: [-5.7, 5.7, -5.7, 5.7], apartment: [-5.2, 5.2, -5.2, 5.6],
     officeblock: [-7.8, 7.8, -5.8, 6.4], hangar: [-7.6, 7.6, -9, 9.1], humanhouse: [-2.32, 2.32, -2.9, 2.9], factory: [-6, 6, -5, 5.11],
-    lm_home: [-6.7, 6.7, -5.3, 6.4], lm_garage: [-4.95, 4.95, -5.05, 5.2], lm_school: [-9.3, 9.3, -4.8, 5.2], lm_hospital: [-7.15, 7.15, -5.15, 5.4],
+    lm_home: [-7.1, 7.1, -5.1, 5.1], lm_garage: [-4.95, 4.95, -5.05, 5.2], lm_school: [-9.3, 9.3, -4.8, 5.2], lm_hospital: [-7.15, 7.15, -5.15, 5.4],
     lm_office: [-5.7, 5.7, -4.2, 4.6], lm_forge: [-6.1, 6.1, -5.5, 5.5], lm_shipyard: [-8, 8, -8, 8], lm_market: [-5.85, 5.85, -5.41, 6],
     lm_refinery: [-7, 7, -7, 7], lm_council: [-9, 9, -9, 9], lm_daycare: [-5.8, 7.04, -4.8, 6.5], lm_palace: [-9.34, 9.34, -5, 7.02],
     lm_gooble: [-7.2, 7.2, -5.2, 7.65], lm_fakedoors: [-4.7, 4.7, -3.7, 3.9], lm_antsjohnson: [-4.7, 4.7, -3.7, 3.9], lm_plumbusline: [-6, 6, -5, 5.11],
@@ -1276,6 +1284,13 @@
   MM.PROPS.lm_garage.walls = [[-4.5, -4.5, 4.5, -4.5], [-4.5, -4.5, -4.5, 4.5], [4.5, -4.5, 4.5, 4.5], [-4.5, 4.5, -3.4, 4.5], [2.2, 4.5, 3.05, 4.5], [4.15, 4.5, 4.5, 4.5]];
   delete MM.PROPS.lm_garage.box;
   MM.PROPS.lm_garage.boxR = 6.4;
+  // The Smiths' back yard: a brick wall round three sides (the house and the garage close the
+  // fourth), the shed in the corner and the big tree over the graves. Front = toward the house.
+  MM.PROPS.lm_backyard.walls = [[-13.5, -8.5, 13.5, -8.5], [-13.5, -8.5, -13.5, 8.0], [13.5, -8.5, 13.5, 8.9],
+    [-10, -6.8, -7, -6.8], [-10, -6.8, -10, -4.2], [-7, -6.8, -7, -4.2], [-10, -4.2, -7, -4.2],   // the shed
+    [9.3, -6.2, 9.7, -6.2], [9.3, -5.8, 9.7, -5.8], [9.3, -6.2, 9.3, -5.8], [9.7, -6.2, 9.7, -5.8]];   // the tree
+  MM.PROPS.lm_backyard.boxR = 16.3;
+  MM.PROPS.lm_backyard.noTop = true;   // the walls stop you, but there is nothing to stand on
 
   // How far from its centre a prop can block (its circle, or its box's far corner).
   MM.propReach = p => { const T = MM.PROPS[p.type]; if (T.walls) return T.boxR * (p.s || 1); if (!T.box) return p.r; if (!T.boxR) { const [x0, x1, z0, z1] = T.box; T.boxR = Math.hypot(Math.max(-x0, x1), Math.max(-z0, z1)); } return T.boxR * (p.s || 1); };
@@ -1309,10 +1324,14 @@
     return [x, z];
   };
   // Inside walls of a room (segments [x1, z1, x2, z2]): push a circle of radius rad out of them.
-  MM.collideWalls = function (dimId, x, z, rad) {
+  // Walls can belong to one floor of a house: [x1, z1, x2, z2, yFrom, yTo] only stops you
+  // while your feet are between yFrom and yTo (y left out: every wall counts).
+  MM.collideWalls = function (dimId, x, z, rad, y) {
     const W = MM.DIM_BY_ID[dimId].walls;
     if (!W) return [x, z];
-    for (const [x1, z1, x2, z2] of W) {
+    for (const w of W) {
+      if (w.length > 4 && y !== undefined && (y < w[4] || y >= w[5])) continue;
+      const [x1, z1, x2, z2] = w;
       const dx = x2 - x1, dz = z2 - z1, l2 = dx * dx + dz * dz || 1;
       const t = Math.max(0, Math.min(1, ((x - x1) * dx + (z - z1) * dz) / l2));
       const px = x1 + dx * t, pz = z1 + dz * t, ex = x - px, ez = z - pz, d2 = ex * ex + ez * ez, m = rad + 0.12;
@@ -1324,6 +1343,27 @@
     }
     return [x, z];
   };
+  // Houses with an upstairs (dim.floors: { y, hole: [x0, z0, x1, z1], stair: { x0, x1, z0, z1 } }):
+  // the floor you stand on at (x, z) for feet at y. The stair climbs from z0 (bottom) to z1
+  // (top, at the upper floor); the upper floor covers the house except the stairwell.
+  MM.floorAt = function (dimId, x, z, y) {
+    const D = MM.DIM_BY_ID[dimId], Fl = D && D.floors;
+    let g = MM.heightAt(dimId, x, z);
+    if (!Fl) return g;
+    const S = Fl.stair;
+    if (x > S.x0 && x < S.x1 && z > Math.min(S.z0, S.z1) - 0.05 && z < Math.max(S.z0, S.z1) + 0.05) {
+      const h = Math.max(0, Math.min(1, (z - S.z0) / (S.z1 - S.z0))) * Fl.y;
+      if (y >= h - 0.6) g = Math.max(g, h);
+    }
+    const H = Fl.hole;
+    if (y >= Fl.y - 0.6 && !(x > H[0] && x < H[2] && z > H[1] && z < H[3])) g = Math.max(g, Fl.y);
+    return g;
+  };
+  // Which floor you are on (0 downstairs, 1 upstairs).
+  MM.levelAt = (dimId, y) => { const Fl = MM.DIM_BY_ID[dimId].floors; return Fl && y > Fl.y * 0.55 ? 1 : 0; };
+  // A landmark upstairs (l.fy) only counts when you are up there too.
+  MM.sameFloor = (l, y) => l.fy === undefined || y === undefined || Math.abs(y - l.fy) < 2.6;
+
   // Props by 24 m grid cell, so collisions only look at what is near (Earth has well over a
   // thousand props). A prop sits in every cell its reach touches.
   const gridCache = {}, GRID = 24;

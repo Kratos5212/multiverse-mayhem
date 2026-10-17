@@ -513,6 +513,32 @@
       s.add(P.torus, '#9aa3ab', [0, 0.55, 0.39], null, [0.26, 0.26, 0.3]);
       s.add(P.cyl, '#9aa3ab', [0.25, 1.02, -0.22], [Math.PI / 2, 0, 0], [0.05, 0.04, 0.05]);
     },
+    // The Smiths' bathroom upstairs.
+    bathtub(s) {
+      s.add(P.box, '#f4f4f0', [0, 0.3, 0], null, [0.85, 0.6, 1.8]);
+      s.add(P.box, '#bfe4f4', [0, 0.5, 0], null, [0.65, 0.04, 1.6]);
+      s.add(P.box, '#e8e8e2', [0, 0.61, 0], null, [0.85, 0.04, 1.8]);
+      s.add(P.cylLo, '#b8bec4', [0, 0.9, 0.78], [Math.PI / 2, 0, 0], [0.03, 0.3, 0.03]);
+      s.add(P.cylLo, '#b8bec4', [0, 1.9, 0.86], null, [0.02, 2.0, 0.02]);   // shower riser
+      s.add(P.cylLo, '#b8bec4', [0, 2.9, 0.7], null, [0.14, 0.03, 0.14]);
+      s.add(P.box, '#9ad0e8', [-0.43, 1.6, 0], null, [0.02, 2.0, 1.8]);   // the curtain
+    },
+    toilet(s) {
+      s.add(P.box, '#f4f4f0', [0, 0.2, 0.05], null, [0.38, 0.4, 0.5]);
+      s.add(P.cyl, '#f4f4f0', [0, 0.42, 0.12], null, [0.24, 0.06, 0.28]);
+      s.add(P.cyl, '#e2e2dc', [0, 0.46, 0.12], null, [0.2, 0.02, 0.24]);
+      s.add(P.box, '#f4f4f0', [0, 0.62, -0.2], null, [0.46, 0.42, 0.2]);
+    },
+    bathsink(s) {
+      s.add(P.cyl, '#f4f4f0', [0, 0.4, 0], null, [0.12, 0.8, 0.12]);
+      s.add(P.box, '#f4f4f0', [0, 0.86, 0], null, [0.6, 0.12, 0.45]);
+      s.add(P.box, '#bfe4f4', [0, 0.92, 0.02], null, [0.42, 0.02, 0.28]);
+      s.add(P.cylLo, '#b8bec4', [0, 1.0, -0.16], null, [0.025, 0.2, 0.025]);
+    },
+    bathmirror(s) {
+      s.add(P.box, '#e2e2dc', [0, 1.75, 0], null, [0.7, 0.9, 0.04]);
+      s.add(P.box, '#cfe8f4', [0, 1.75, 0.025], null, [0.6, 0.8, 0.02], true);
+    },
     lm_plumbus(s) {
       s.add(P.cyl, '#6b6458', [0, 0.45, 0], null, [0.6, 0.9, 0.6]);
       s.add(P.capsule, '#f4a0b8', [0, 1.3, 0], [0, 0, 0.2], [0.22, 0.7, 0.22]);
@@ -635,10 +661,86 @@
       for (let y = 0; y < 4; y++) for (let i = 0; i < 8; i++) s.add(P.cyl, ['#3a6a2a', '#6a1a2a', '#ffd84d'][(i * 3 + y) % 3], [-1.7 + i * 0.48, 0.45 + y * 0.7, 0.3], [Math.PI / 2, 0, 0], [0.11, 0.6, 0.11], (i * 3 + y) % 3 === 2);
     },
     // ----- Landmarks -----
-    // The Smith family home: two storeys, tan siding, brown roof, porch with columns.
+    // The Smith family home: two storeys of cream siding under a brown roof, a porch with
+    // white columns, the front door a little left of the middle. The garage stands on its left
+    // (its own landmark); out the back, a door to the kitchen, and one on the garage side into
+    // Rick's room. Doors match the floor plan inside (shared/interiors.js).
     lm_home(s) {
-      suburbanHouse(s, { w: 12.5, d: 9.5, h: 6.0, stories: 2, wall: '#e6d2a8', trim: '#fbf6ea', roof: '#6b4a3a', door: '#7a3326', shutter: null, porch: true, chimney: true, winX: [-3.6, 3.6] });
-      s.add(P.box, '#c9b48c', [0, 0.05, 6.5], null, [1.4, 0.05, 3]);     // front path
+      const w = 14, d = 10, h = 6.4, wall = '#ecdcb4', trim = '#fbf6ea', roof = '#5e3f2e', door = '#7a3326';
+      suburbanHouse(s, { w, d, h, stories: 2, wall, trim, roof, door, shutter: '#4e6a3a', porch: false, chimney: true, winX: [-4.4, 3.4], doorX: -0.63, roofH: 3.6 });
+      // A porch across most of the front: deck, white columns and rail, its own little roof.
+      s.add(P.box, '#a89a84', [-0.4, 0.28, d / 2 + 1.25], null, [9.2, 0.18, 2.5]);
+      s.add(P.box, '#b8b0a2', [-0.63, 0.12, d / 2 + 2.8], null, [2.0, 0.22, 0.7]);                      // the step
+      for (const x of [-4.8, -2.0, 0.8, 3.8]) s.add(P.cyl, trim, [x, 1.85, d / 2 + 2.3], null, [0.12, 2.9, 0.12]);
+      for (const [x0, x1] of [[-4.8, -1.6], [0.4, 3.8]]) {
+        s.add(P.box, trim, [(x0 + x1) / 2, 0.95, d / 2 + 2.3], null, [x1 - x0, 0.08, 0.08]);
+        for (let x = x0 + 0.3; x < x1; x += 0.3) s.add(P.box, trim, [x, 0.66, d / 2 + 2.3], null, [0.04, 0.55, 0.04]);
+      }
+      s.add(P.box, roof, [-0.4, 3.45, d / 2 + 1.3], [-0.22, 0, 0], [9.6, 0.16, 2.9]);
+      s.add(P.box, trim, [-0.4, 3.22, d / 2 + 2.45], null, [9.6, 0.2, 0.12]);
+      // The back door to the kitchen, with steps down to the yard.
+      s.add(P.box, trim, [4.45, 1.6, -d / 2 - 0.03], null, [1.4, 2.5, 0.08]);
+      s.add(P.box, '#f4f0e6', [4.45, 1.55, -d / 2 - 0.07], null, [1.0, 2.2, 0.06]);
+      s.add(P.box, '#bfdcec', [4.45, 2.0, -d / 2 - 0.11], null, [0.6, 0.7, 0.02]);
+      s.add(P.box, '#b8b0a2', [4.45, 0.3, -d / 2 - 0.7], null, [2.0, 0.3, 1.3]);
+      // The side door into Rick's room, on the garage side.
+      s.add(P.box, trim, [-w / 2 - 0.03, 1.6, -2.8], null, [0.08, 2.5, 1.4]);
+      s.add(P.box, door, [-w / 2 - 0.07, 1.55, -2.8], null, [0.06, 2.2, 1.0]);
+      s.add(P.box, '#b8b0a2', [-w / 2 - 0.6, 0.25, -2.8], null, [1.1, 0.2, 1.6]);
+      // Back windows (kitchen, Summer's room, the bathroom).
+      for (const [x, y] of [[-3.6, 2.2], [1.6, 2.2], [-3.6, 5.2], [3.6, 5.2]]) {
+        s.add(P.box, '#fbfaf6', [x, y, -d / 2 - 0.03], null, [1.54, 1.44, 0.1]);
+        s.add(P.box, '#bfdcec', [x, y, -d / 2 - 0.08], null, [1.3, 1.2, 0.04]);
+        s.add(P.box, '#fbfaf6', [x, y, -d / 2 - 0.11], null, [0.07, 1.2, 0.03]);
+      }
+      s.add(P.box, '#c9b48c', [-0.63, 0.05, d / 2 + 4.6], null, [1.4, 0.05, 3]);     // front path
+      for (const x of [-6.2, 5.6]) s.add(P.sphere, '#3f8a34', [x, 0.6, d / 2 + 0.8], null, [1.1, 0.8, 0.8]);   // bushes by the porch
+    },
+    // The back yard: lawn, a grey brick wall round three sides, Rick's white shed with a brown
+    // roof in the far corner, the big tree, and under it the two graves where Rick and Morty
+    // buried this Earth's Rick and Morty ("Rick Potion #9"). Front (+z) = toward the house.
+    lm_backyard(s) {
+      const brick = '#8e8c88', cap = '#a8a6a0', mortar = '#77756f';
+      s.add(P.box, '#62b444', [0, 0.02, 0.2], null, [26.8, 0.04, 17.2]);
+      // The wall, 1.8 m, with piers every 3 m and a capping course.
+      const wallRun = (x1, z1, x2, z2) => {
+        const len = Math.hypot(x2 - x1, z2 - z1), a = Math.atan2(x2 - x1, z2 - z1);
+        s.add(P.box, brick, [(x1 + x2) / 2, 0.9, (z1 + z2) / 2], [0, a, 0], [0.3, 1.8, len]);
+        s.add(P.box, cap, [(x1 + x2) / 2, 1.85, (z1 + z2) / 2], [0, a, 0], [0.38, 0.1, len + 0.08]);
+        for (let y = 0.3; y < 1.8; y += 0.3) s.add(P.box, mortar, [(x1 + x2) / 2, y, (z1 + z2) / 2], [0, a, 0], [0.31, 0.03, len]);
+        const n = Math.max(1, Math.round(len / 3));
+        for (let i = 0; i <= n; i++) s.add(P.box, brick, [x1 + (x2 - x1) * i / n, 1.0, z1 + (z2 - z1) * i / n], [0, a, 0], [0.45, 2.0, 0.45]);
+      };
+      wallRun(-13.5, -8.5, 13.5, -8.5); wallRun(-13.5, -8.5, -13.5, 8.0); wallRun(13.5, -8.5, 13.5, 8.9);
+      // Rick's shed: white boards, a brown gable roof, a door facing the house.
+      const sx = -8.5, sz = -5.5;
+      s.add(P.box, '#f2efe6', [sx, 1.2, sz], null, [3.0, 2.4, 2.6]);
+      for (let x = -1.35; x <= 1.4; x += 0.3) s.add(P.box, '#dedad0', [sx + x, 1.2, sz + 1.31], null, [0.04, 2.4, 0.02]);
+      s.add(P.prism, '#6a4430', [sx, 2.4, sz], null, [3.6, 1.2, 3.2]);
+      s.add(P.box, '#8a6a4a', [sx + 0.4, 1.0, sz + 1.32], null, [1.0, 2.0, 0.04]);
+      s.add(P.box, '#bfdcec', [sx - 0.9, 1.6, sz + 1.32], null, [0.6, 0.5, 0.03]);
+      // The big tree, and the two graves in its shade: low mounds of turned earth.
+      const tx = 9.5, tz = -6;
+      s.add(P.cylLo, '#6e4a2c', [tx, 1.8, tz], null, [0.42, 3.6, 0.42]);
+      s.add(P.cylLo, '#6e4a2c', [tx + 0.6, 3.8, tz], [0, 0, -0.6], [0.2, 1.8, 0.2]);
+      s.add(P.cylLo, '#6e4a2c', [tx - 0.6, 3.9, tz + 0.1], [0.2, 0, 0.55], [0.2, 1.7, 0.2]);
+      for (const [x, y, z, r] of [[0, 5.8, 0, 3.0], [1.9, 5.3, 0.6, 2.0], [-1.9, 5.4, -0.3, 2.0], [0.4, 5.5, 1.9, 1.9], [-0.3, 5.4, -1.9, 1.9], [0.6, 7.3, 0.2, 2.0]]) s.add(P.sphere, y > 6.5 ? '#58b048' : '#47963a', [tx + x, y, tz + z], null, [r, r * 0.85, r]);
+      for (const gx of [6.3, 7.7]) {
+        s.add(P.box, '#6a4a30', [gx, 0.12, -4], null, [0.9, 0.24, 2.0]);
+        s.add(P.sphere, '#7a5838', [gx, 0.2, -4], null, [0.5, 0.18, 1.0]);
+      }
+      s.add(P.sphere, '#ff6a8a', [6.3, 0.34, -3.3], null, [0.12, 0.08, 0.12]);   // somebody left flowers
+      s.add(P.sphere, '#ffe066', [7.7, 0.34, -3.2], null, [0.12, 0.08, 0.12]);
+      s.add(P.box, '#8a6a4a', [10.8, 0.6, -2.2], [0, 0.4, -0.2], [0.08, 1.2, 0.4]);  // the shovel, still leaning there
+      // Bushes along the wall, a patio by the back door, a grill and two lawn chairs.
+      for (const [x, z] of [[-12.6, 2], [-12.6, -3], [12.6, 3.5], [-3, -7.6], [2.5, -7.6]]) s.add(P.sphere, '#3f8a34', [x, 0.55, z], null, [0.9, 0.7, 0.9]);
+      s.add(P.box, '#bcb4a6', [4.5, 0.05, 6.7], null, [4.5, 0.08, 3.4]);
+      s.add(P.cyl, '#2a2a2a', [2.6, 0.9, 6.1], null, [0.35, 0.3, 0.35]);
+      s.add(P.cylLo, '#2a2a2a', [2.6, 0.45, 6.1], null, [0.04, 0.9, 0.04]);
+      for (const x of [5.2, 6.6]) {
+        s.add(P.box, '#ffffff', [x, 0.42, 5.6], null, [0.6, 0.06, 0.6]);
+        s.add(P.box, '#ffffff', [x, 0.75, 5.32], [-0.3, 0, 0], [0.6, 0.65, 0.06]);
+      }
     },
     // Rick's garage: same siding and roof as the house, white sectional door, side window.
     // Rick's garage, standing open: thin walls you can walk between, the big door rolled up
@@ -2510,11 +2612,32 @@
       // the light baked in. We add a ceiling and a warm lamp for the characters.
       const g = new T.Group();
       C.loadMMG(R.mesh).then(geo => { const m = new T.Mesh(geo, C.mmgMat); m.name = 'roomMesh'; g.add(m); }).catch(e => console.warn('room mesh', e));
-      const ceil = new T.Mesh(new T.PlaneGeometry(R.w + 0.6, R.d + 0.6), new T.MeshBasicMaterial({ color: '#efe6d6' }));   // one-sided: seen from below only
-      ceil.rotation.x = Math.PI / 2; ceil.position.y = R.h + 0.02;
-      g.add(ceil);
+      const ceilMat = new T.MeshBasicMaterial({ color: '#efe6d6' });
+      // One-sided ceilings: seen from below only.
+      const ceiling = (x0, z0, x1, z1, y, parent) => {
+        const c = new T.Mesh(new T.PlaneGeometry(x1 - x0, z1 - z0), ceilMat);
+        c.rotation.x = Math.PI / 2; c.position.set((x0 + x1) / 2, y, (z0 + z1) / 2);
+        (parent || g).add(c);
+      };
+      const Fl = dim.floors, W = R.w / 2 + 0.3, D = R.d / 2 + 0.3;
+      if (!Fl) ceiling(-W, -D, W, D, R.h + 0.02);
+      else {
+        // Downstairs ceiling, open over the stairwell; the stairs; and the upstairs, which is
+        // only shown while you are up there (js/game.js).
+        const [hx0, hz0, hx1, hz1] = Fl.hole;
+        ceiling(-W, -D, hx0, D, Fl.y - 0.02); ceiling(hx1, -D, W, D, Fl.y - 0.02); ceiling(hx0, hz1, hx1, D, Fl.y - 0.02);
+        g.add(makeStairs(Fl));
+        const upper = new T.Group();
+        upper.name = 'roomUpper'; upper.position.y = Fl.y; upper.visible = false;
+        C.loadMMG(R.upper).then(geo => upper.add(new T.Mesh(geo, C.mmgMat))).catch(e => console.warn('upper mesh', e));
+        ceiling(-W, -D, W, D, R.h + 0.02, upper);
+        const lamp2 = new T.PointLight('#fff1d0', 0.5, 30);
+        lamp2.position.set(0, R.h - 1, 0);
+        upper.add(lamp2);
+        g.add(upper);
+      }
       const lamp = new T.PointLight('#fff1d0', 0.6, 40);
-      lamp.position.set(0, R.h - 1, 0);
+      lamp.position.set(0, (Fl ? Fl.y : R.h) - 1, 0);
       g.add(lamp);
       return g;
     }
@@ -2553,6 +2676,28 @@
     const lamp = new T.PointLight('#fff1d0', R.style === 'garage' ? 0.35 : 0.8, 40);
     lamp.position.set(0, h - 1.5, 0);
     g.add(lamp);
+    return g;
+  }
+
+  // A carpeted staircase between two floors (dim.floors.stair: x0..x1 wide, climbing from z0
+  // to z1), with a closed side underneath where it is low and a banister along the open side.
+  function makeStairs(Fl) {
+    const S = Fl.stair, s = new C.Shape(), n = 14, run = S.z1 - S.z0, dir = Math.sign(run), w = S.x1 - S.x0, cx = (S.x0 + S.x1) / 2;
+    const step = Math.abs(run) / n, rise = Fl.y / n;
+    for (let i = 0; i < n; i++) {
+      const z = S.z0 + dir * (i + 0.5) * step, y = (i + 1) * rise;
+      s.add(P.box, '#cdbb98', [cx, y - 0.04, z], null, [w, 0.08, step + 0.02]);                         // the tread (carpet)
+      s.add(P.box, '#f2ece0', [cx, y - rise / 2, z - dir * step / 2], null, [w, rise, 0.03]);            // the riser
+      if (y < 2.4) s.add(P.box, '#f2ece0', [S.x0 + 0.04, y / 2, z], null, [0.08, y, step + 0.01]);     // closed in where it is low
+      else s.add(P.box, '#f2ece0', [S.x0 + 0.04, y - 0.2, z], null, [0.08, 0.32, step + 0.01]);        // the stringer above your head
+      if (i % 2 === 0) s.add(P.box, '#f8f4ea', [S.x0 + 0.06, y + 0.45, z], null, [0.04, 0.9, 0.04]);      // spindles
+    }
+    // The banister along the open side, and its newel post at the bottom.
+    const len = Math.hypot(run, Fl.y), ang = Math.atan2(Fl.y, Math.abs(run));
+    s.add(P.box, '#6e4a2a', [S.x0 + 0.06, Fl.y / 2 + 0.92, (S.z0 + S.z1) / 2], [dir > 0 ? -ang : ang, 0, 0], [0.08, 0.07, len]);
+    s.add(P.box, '#6e4a2a', [S.x0 + 0.06, 0.55, S.z0 - dir * 0.05], null, [0.14, 1.1, 0.14]);
+    const g = C.meshOf(s.build(), 0.03);
+    g.traverse(o => { if (o.material && o.material.side === T.BackSide) o.visible = false; });
     return g;
   }
 

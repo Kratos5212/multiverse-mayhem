@@ -45,22 +45,37 @@
   // Each is a building in a dimension. Daily tasks happen there, and some recipes
   // can only be built at a particular one.
   MM.LANDMARKS = [
-    // rot: which way the front faces (PI/2 = toward +x). The Smith house and Rick's garage stand side by side on one lot.
-    { id: 'home', dim: 'suburbia', name: 'Smith House', x: -14, z: 25, r: 7, h: 10, model: 'lm_home', rot: Math.PI / 2, door: { dim: 'smithhouse', x: -4.69, z: -4.2 } },
-    // Inside the Smith house (a Mojulo floor plan: see assets/interiors). Spots marked with a ring.
-    { id: 'smithexit', dim: 'smithhouse', name: 'Front door', x: -4.69, z: -4.95, r: 0.8, h: 2.2, model: 'lm_marker', door: { dim: 'suburbia', x: -5.5, z: 25 } },
-    { id: 'smithtv', dim: 'smithhouse', name: 'The couch (interdimensional cable)', x: -3.41, z: 1.6, r: 0.8, h: 1.2, model: 'lm_marker' },
-    { id: 'smithtable', dim: 'smithhouse', name: 'Dining table', x: 3.84, z: 1.9, r: 0.8, h: 1.2, model: 'lm_marker' },
+    // rot: which way the front faces (PI/2 = toward +x). The Smith house and Rick's garage
+    // stand side by side on one lot, facing the street: the garage on the left of the house
+    // (+z), the back yard behind both (where Rick and Morty buried their other selves).
+    { id: 'home', dim: 'suburbia', name: 'Smith House', x: -13.5, z: 16.5, r: 7, h: 11, model: 'lm_home', rot: Math.PI / 2, door: { dim: 'smithhouse', x: -0.6, z: -5.6 } },
+    { id: 'backdoor', dim: 'suburbia', name: 'Back door (into the kitchen)', x: -19.7, z: 12.05, r: 0.8, h: 2.2, model: 'lm_marker', door: { dim: 'smithhouse', x: 5.97, z: 5.6 } },
+    { id: 'sidedoor', dim: 'suburbia', name: "Side door (into Rick's room)", x: -16.3, z: 24.6, r: 0.8, h: 2.2, model: 'lm_marker', door: { dim: 'smithhouse', x: -8.2, z: 3.84 } },
+    { id: 'backyard', dim: 'suburbia', name: 'The back yard', x: -28.5, z: 21.5, r: 8.5, h: 3, model: 'lm_backyard', rot: Math.PI / 2 },
+    { id: 'graves', dim: 'suburbia', name: 'Two graves under the tree', x: -31.5, z: 15.5, r: 1.4, h: 1, model: 'lm_marker' },
+    // Inside the Smith house: two floors, each a Mojulo floor plan (shared/interiors.js has the
+    // plans). fy: the floor a spot is on (4.3 = upstairs). Spots are marked with a ring.
+    { id: 'smithexit', dim: 'smithhouse', name: 'Front door', x: 0, z: -6.3, r: 0.8, h: 2.2, fy: 0, model: 'lm_marker', door: { dim: 'suburbia', x: -6.3, z: 17.1 } },
+    { id: 'smithback', dim: 'smithhouse', name: 'Back door (to the yard)', x: 5.97, z: 6.3, r: 0.8, h: 2.2, fy: 0, model: 'lm_marker', door: { dim: 'suburbia', x: -20.6, z: 12.05 } },
+    { id: 'smithside', dim: 'smithhouse', name: 'Side door (to the garage)', x: -8.9, z: 3.84, r: 0.8, h: 2.2, fy: 0, model: 'lm_marker', door: { dim: 'suburbia', x: -16.3, z: 25.3 } },
+    { id: 'smithtv', dim: 'smithhouse', name: 'The couch (interdimensional cable)', x: -5.97, z: -3.0, r: 0.8, h: 1.2, fy: 0, model: 'lm_marker' },
+    { id: 'smithtable', dim: 'smithhouse', name: 'Dining table', x: 5.97, z: -1.6, r: 0.8, h: 1.2, fy: 0, model: 'lm_marker' },
+    { id: 'smithkitchen', dim: 'smithhouse', name: 'The fridge', x: 7.4, z: 1.9, r: 0.8, h: 1.2, fy: 0, model: 'lm_marker' },
+    { id: 'rickroom', dim: 'smithhouse', name: "Rick's room", x: -5.2, z: 2.3, r: 0.8, h: 1.2, fy: 0, model: 'lm_marker' },
+    { id: 'mortyroom', dim: 'smithhouse', name: "Morty's room", x: -4.4, z: -3.4, r: 0.8, h: 1.2, fy: 4.3, model: 'lm_marker' },
+    { id: 'summerroom', dim: 'smithhouse', name: "Summer's room", x: -4.4, z: 3.4, r: 0.8, h: 1.2, fy: 4.3, model: 'lm_marker' },
+    { id: 'masterroom', dim: 'smithhouse', name: "Beth and Jerry's room", x: 4.6, z: -3.4, r: 0.8, h: 1.2, fy: 4.3, model: 'lm_marker' },
+    { id: 'bathroom', dim: 'smithhouse', name: 'The bathroom', x: 5.0, z: 3.6, r: 0.8, h: 1.2, fy: 4.3, model: 'lm_marker' },
     // Rick's garage stands open on the street: walk in through the big door. Inside, along
     // the back wall, the workbench; the ship, the battery, the hatch to the lab and the door
     // to the cellar. (Local garage coordinates turned to the street: front = +x.)
-    { id: 'garage', dim: 'suburbia', name: "Rick's Garage", x: -14.5, z: 12.5, r: 5.5, h: 6.5, model: 'lm_garage', rot: Math.PI / 2 },
-    { id: 'workbench', dim: 'suburbia', name: "Rick's Workbench", x: -18.0, z: 12.5, r: 1.6, h: 1.3, model: 'lm_workbench', alias: 'garage', rot: Math.PI / 2 },
-    { id: 'plumbus', dim: 'suburbia', name: 'Plumbus', x: -18.2, z: 15.2, r: 0.6, h: 1.6, model: 'lm_plumbus', rot: Math.PI / 2 },
-    { id: 'mbox', dim: 'suburbia', name: 'Meeseeks Box', x: -18.1, z: 9.1, r: 0.6, h: 1.4, model: 'lm_mbox', rot: Math.PI / 2 },
-    { id: 'battery', dim: 'suburbia', name: 'Microverse Battery', x: -11.6, z: 9.0, r: 0.8, h: 1.2, model: 'lm_battery', rot: 0, door: { dim: 'microverse', x: 0, z: 16 } },
-    { id: 'trapdoor', dim: 'suburbia', name: 'Hatch to the secret lab', x: -15.6, z: 9.6, r: 0.9, h: 0.3, model: 'lm_trapdoor', rot: Math.PI / 2, door: { dim: 'ricklab', x: 0, z: 6 } },
-    { id: 'cellardoor', dim: 'suburbia', name: 'Door to the wine cellar', x: -16.4, z: 16.75, r: 0.9, h: 3.4, model: 'lm_cellardoor', rot: Math.PI, door: { dim: 'cellar', x: 0, z: 6 } },
+    { id: 'garage', dim: 'suburbia', name: "Rick's Garage", x: -14.5, z: 31, r: 5.5, h: 6.5, model: 'lm_garage', rot: Math.PI / 2 },
+    { id: 'workbench', dim: 'suburbia', name: "Rick's Workbench", x: -18.0, z: 31, r: 1.6, h: 1.3, model: 'lm_workbench', alias: 'garage', rot: Math.PI / 2 },
+    { id: 'plumbus', dim: 'suburbia', name: 'Plumbus', x: -18.2, z: 33.7, r: 0.6, h: 1.6, model: 'lm_plumbus', rot: Math.PI / 2 },
+    { id: 'mbox', dim: 'suburbia', name: 'Meeseeks Box', x: -18.1, z: 27.6, r: 0.6, h: 1.4, model: 'lm_mbox', rot: Math.PI / 2 },
+    { id: 'battery', dim: 'suburbia', name: 'Microverse Battery', x: -11.6, z: 27.5, r: 0.8, h: 1.2, model: 'lm_battery', rot: 0, door: { dim: 'microverse', x: 0, z: 16 } },
+    { id: 'trapdoor', dim: 'suburbia', name: 'Hatch to the secret lab', x: -15.6, z: 28.1, r: 0.9, h: 0.3, model: 'lm_trapdoor', rot: Math.PI / 2, door: { dim: 'ricklab', x: 0, z: 6 } },
+    { id: 'cellardoor', dim: 'suburbia', name: 'Door to the wine cellar', x: -16.4, z: 35.25, r: 0.9, h: 3.4, model: 'lm_cellardoor', rot: Math.PI, door: { dim: 'cellar', x: 0, z: 6 } },
     { id: 'school', dim: 'suburbia', name: 'Harry Herpson High', x: 30, z: 22, r: 8.5, h: 8, model: 'lm_school', rot: Math.PI / 2, sign: { text: 'HARRY HERPSON HIGH SCHOOL', y: 6.95, z: 4.62, w: 9.5 } },
     { id: 'hospital', dim: 'suburbia', name: 'Horse Hospital', x: 30, z: -22, r: 7, h: 8, model: 'lm_hospital', rot: Math.PI / 2, sign: { text: 'HORSE HOSPITAL', y: 7.0, z: 5.1, w: 8 } },
     { id: 'office', dim: 'suburbia', name: 'Unemployment Office', x: -30, z: -22, r: 6.5, h: 7, model: 'lm_office', rot: -Math.PI / 2, sign: { text: 'UNEMPLOYMENT OFFICE', y: 6.4, z: 4.1, w: 8 } },
@@ -78,7 +93,7 @@
     // Ways into the pocket worlds, and back out.
     { id: 'anatomyentry', dim: 'suburbia', name: 'Anatomy Park (inside Ruben)', x: 66, z: -66, r: 5, h: 4, model: 'lm_anatomytent', door: { dim: 'anatomy', x: 0, z: 18 }, sign: { text: 'ANATOMY PARK', y: 4.4, z: 4.1, w: 6 } },
     { id: 'chalkdoor', dim: 'suburbia', name: "Rick's chalk door", x: -66, z: 66, r: 2.5, h: 3.5, model: 'lm_chalkdoor', door: { dim: 'froopy', x: 0, z: 16 } },
-    { id: 'microexit', dim: 'microverse', name: 'Out of the battery', x: 0, z: 10, r: 2.5, h: 4, model: 'lm_exitportal', door: { dim: 'suburbia', x: -12.6, z: 10.4 } },
+    { id: 'microexit', dim: 'microverse', name: 'Out of the battery', x: 0, z: 10, r: 2.5, h: 4, model: 'lm_exitportal', door: { dim: 'suburbia', x: -12.6, z: 28.9 } },
     { id: 'anatomyexit', dim: 'anatomy', name: "Out of Ruben", x: 0, z: 12, r: 2.5, h: 4, model: 'lm_exitportal', door: { dim: 'suburbia', x: 66, z: -58 } },
     { id: 'froopyexit', dim: 'froopy', name: 'Back through the chalk door', x: 0, z: 10, r: 2.5, h: 3.5, model: 'lm_chalkdoor', door: { dim: 'suburbia', x: -66, z: 58 } },
     { id: 'curveedge', dim: 'beyond', name: 'Edge of the Curve', x: 0, z: 62, r: 8, h: 12, model: 'lm_curveedge' },
@@ -87,9 +102,9 @@
     { id: 'plumbusline', dim: 'plumbus', name: 'Plumbus Production Line', x: 0, z: 40, r: 8, h: 9, model: 'lm_plumbusline', sign: { text: 'PLUMBUS CO.', y: 8.2, z: 5.6, w: 7 } },
     { id: 'megatree', dim: 'megaseed', name: 'Mega Seed Tree', x: 0, z: 36, r: 6, h: 24, model: 'lm_megatree' },
     // Inside Rick's garage (its own little dimension). door: walking through takes you there.
-    { id: 'ladder', dim: 'ricklab', name: 'Ladder up to the garage', x: 0, z: 9.5, r: 1.2, h: 5, model: 'lm_ladder', door: { dim: 'suburbia', x: -14.6, z: 9.8 } },
+    { id: 'ladder', dim: 'ricklab', name: 'Ladder up to the garage', x: 0, z: 9.5, r: 1.2, h: 5, model: 'lm_ladder', door: { dim: 'suburbia', x: -14.6, z: 28.3 } },
     { id: 'mindblowers', dim: 'ricklab', name: 'Mind Blowers', x: -8.5, z: -6, r: 1.4, h: 2.4, model: 'lm_mindblowers' },
-    { id: 'cellarexit', dim: 'cellar', name: 'Back to the garage', x: 0, z: 9.5, r: 1.4, h: 3.4, model: 'lm_cellardoor', door: { dim: 'suburbia', x: -16.4, z: 15.4 } },
+    { id: 'cellarexit', dim: 'cellar', name: 'Back to the garage', x: 0, z: 9.5, r: 1.4, h: 3.4, model: 'lm_cellardoor', door: { dim: 'suburbia', x: -16.4, z: 33.9 } },
     { id: 'winerack', dim: 'cellar', name: "Rick's private stash", x: 0, z: -8.5, r: 2.0, h: 3, model: 'lm_winerack' },
     // ----- Downtown (just outside Seattle) -----
     { id: 'mall', dim: 'downtown', name: "Merpal's Mall", x: -66, z: -22, r: 12, h: 9, model: 'lm_mall', rot: Math.PI / 2, sign: { text: "MERPAL'S MALL", y: 7.4, z: 8.1, w: 10 } },
@@ -179,6 +194,14 @@
     jobhunt: { at: 'office', name: 'Look for a job', cd: 120, give: { s: 1 }, text: 'They said they would call you. They will not call you.' },
     tv:      { at: 'smithtv', any: true, name: 'Watch interdimensional TV', cd: 90, heal: 1, give: {}, text: 'A show about a man who is also a ball. You feel restored.' },
     dinner:  { at: 'smithtable', name: 'Family dinner', cd: 180, heal: 1, give: { s: 2 }, text: 'Everyone argued. The mashed potatoes were good, though.' },
+    fridge:  { at: 'smithkitchen', any: true, name: 'Raid the fridge', cd: 120, heal: 1, give: {}, text: 'Leftover lasagna, a jar of something Rick labelled DO NOT, and juice. You had the lasagna.' },
+    rickbed: { at: 'rickroom', any: true, name: "Look under Rick's bed", cd: 240, give: { c: 2, s: 2 }, text: 'Crystals, a broken portal gun, and a shoebox marked "MEMORIES - DO NOT". You took the crystals.' },
+    homework:{ at: 'mortyroom', any: true, name: "Do Morty's homework", cd: 180, give: { k: 2 }, text: 'Math. Morty had drawn a sad face in every margin. You got a B. Rick says B is for Barely.' },
+    phone:   { at: 'summerroom', any: true, name: "Scroll on Summer's phone", cd: 150, give: { k: 1, p: 1 }, text: 'Forty-one notifications. Ethan is still a jerk. You liked a picture and made it worse.' },
+    wine:    { at: 'masterroom', any: true, name: "Find Beth's wine (and Jerry's sudoku)", cd: 200, heal: 1, give: { s: 1 }, text: 'A bottle under the bed and a sudoku with every square filled in with the number 7.' },
+    shower:  { at: 'bathroom', any: true, name: 'Take a shower', cd: 120, heal: 2, give: {}, text: 'Hot water, finally. Someone downstairs flushed. Cold water, finally.' },
+    graves:  { at: 'graves', any: true, name: 'Visit the graves in the back yard', cd: 300, give: { c: 1, m: 1 }, text: 'Here lie the Rick and Morty of this world. The ones you replaced. You brought flowers, and stood there a while.' },
+    garden:  { at: 'backyard', any: true, name: 'Do some gardening', cd: 150, heal: 1, give: { s: 1, f: 1 }, text: 'You weeded, you watered, and you did not dig too deep. Some things in this yard should stay buried.' },
     hug:     { at: 'home', name: 'Visit an old friend', cd: 120, heal: 1, give: { s: 2 }, text: 'They swear they have known you for years. It was lovely.' },
     forge:   { at: 'forge', name: 'Feed the forge', cd: 120, give: { g: 3 }, text: 'You fed it. It fed you back. Do not think about it.' },
     haggle:  { at: 'market', name: 'Haggle at the black market', cd: 120, give: { p: 2 }, text: 'You sold a "genuine" moon rock. It was a regular rock.' },

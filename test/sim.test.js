@@ -487,22 +487,40 @@ test('Earth is one world: the suburb, Downtown, D.C. and Area 51; the President 
   assert.ok([...p.inst.npcs.values()].some(n => n.type === 'timecop' && n.angry === p.id));
 });
 
-test('Smith house: in through the front door, watch TV on the couch, out again; inside walls block', () => {
+test('Smith house: two floors, stairs, upstairs rooms, the back door to the yard; the garage on its left', () => {
   const host = new MM.Host();
   const { c, p } = join(host, 'sidekick', { dim: 'suburbia' });
   near(host, c, p, 'home'); run(host, 1.2);
   host.message(c, '{"t":"door","l":"home"}');
   assert.strictEqual(p.inst.dimId, 'smithhouse');
-  near(host, c, p, 'smithtv'); run(host, 1.2);
+  near(host, c, p, 'smithtv'); p.y = 0; run(host, 1.2);
   host.message(c, '{"t":"use","l":"smithtv","task":"tv"}');
   assert.ok(p.prog.tasks.tv > 0, 'watched TV');
-  const [x] = MM.collideWalls('smithhouse', 0.43, 1, 0.4);
-  assert.ok(Math.abs(x - 0.43) >= 0.5, 'the wall between the living and dining rooms pushes you out');
-  assert.deepStrictEqual(MM.collideWalls('smithhouse', 0.43, 3.0, 0.4), [0.43, 3.0], 'the doorway is open');
-  near(host, c, p, 'smithexit'); run(host, 1.2);
-  host.message(c, '{"t":"door","l":"smithexit"}');
+  // Walls belong to their floor: the kitchen wall downstairs is open air upstairs.
+  const [, z0] = MM.collideWalls('smithhouse', 8, 0.85, 0.4, 0);
+  assert.ok(Math.abs(z0 - 0.85) >= 0.5, 'the kitchen wall stops you downstairs');
+  assert.deepStrictEqual(MM.collideWalls('smithhouse', 8, 0.85, 0.4, 4.3), [8, 0.85], 'upstairs it is the middle of a bedroom');
+  // The stairs climb from the front hall to the upstairs hall; the stairwell has no floor.
+  const S = MM.DIM_BY_ID.smithhouse.floors.stair, F = MM.DIM_BY_ID.smithhouse.floors.y;
+  assert.ok(MM.floorAt('smithhouse', 1.6, S.z0 + 0.01, 0) < 0.02, 'the bottom step');
+  assert.ok(Math.abs(MM.floorAt('smithhouse', 1.6, (S.z0 + S.z1) / 2, F / 2) - F / 2) < 0.05, 'halfway up');
+  assert.strictEqual(MM.floorAt('smithhouse', -5, 3, F), F, 'standing upstairs');
+  assert.strictEqual(MM.floorAt('smithhouse', -5, 3, 0), 0, 'downstairs, under the same spot');
+  // Upstairs rooms only work up there: Morty's room is right over the living room.
+  near(host, c, p, 'mortyroom'); p.y = 0; run(host, 1.2);
+  host.message(c, '{"t":"use","l":"mortyroom","task":"homework"}');
+  assert.ok(!p.prog.tasks.homework, "Morty's room is upstairs");
+  p.y = F; run(host, 1.2);
+  host.message(c, '{"t":"use","l":"mortyroom","task":"homework"}');
+  assert.ok(p.prog.tasks.homework > 0, "did Morty's homework");
+  // Out the back door into the yard, where the graves are.
+  near(host, c, p, 'smithback'); p.y = 0; run(host, 1.2);
+  host.message(c, '{"t":"door","l":"smithback"}');
   assert.strictEqual(p.inst.dimId, 'suburbia');
-  assert.ok(MM.LANDMARK_BY_ID.shrimpearth_home, 'alternate Earths keep their Smith house');
+  assert.ok(p.x < MM.LANDMARK_BY_ID.home.x - 5, 'behind the house');
+  const home = MM.LANDMARK_BY_ID.home, garage = MM.LANDMARK_BY_ID.garage;
+  assert.ok(garage.z > home.z + 10 && Math.abs(garage.x - home.x) < 2, 'the garage is on the left of the house, from the street');
+  assert.ok(MM.LANDMARK_BY_ID.shrimpearth_home && MM.LANDMARK_BY_ID.shrimpearth_backyard, 'alternate Earths keep their Smith house and yard');
 });
 
 test('home dimensions: your code is a real Earth you start in, and there is only one of each variant', () => {

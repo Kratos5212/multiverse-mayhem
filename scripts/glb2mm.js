@@ -1,6 +1,8 @@
 // Turns a binary glTF (.glb) exported from mojulo (unlit, per-vertex colours) into the game's
 // compact mesh format: one merged, indexed mesh with quantised positions, normals and colours.
 //   node scripts/glb2mm.js in.glb out.mmg [--scale 1.4] [--center | --origin x,z] [--floor0] [--info]
+//     [--hole x0,z0,x1,z1] (repeatable: drop the floor inside that box, e.g. a stairwell; final
+//     game coordinates) [--no-footing] (drop what hangs below the floor: an upper storey's footing)
 // Format (little endian): "MMG1", u32 header bytes, JSON header { verts, indices, min, max,
 // scale, bits }, then positions (u16 x3, quantised to min..max), normals (i8 x3), colours
 // (u8 x3), indices (u16 or u32). Everything is 4-byte aligned.
@@ -88,6 +90,25 @@ const shift = [org ? -org[0] : CENTER ? -(min[0] + max[0]) / 2 : 0, process.argv
 for (let i = 0; i < vc; i++) for (let k = 0; k < 3; k++) P[i * 3 + k] += shift[k];
 for (let k = 0; k < 3; k++) { min[k] += shift[k]; max[k] += shift[k]; }
 
+// Stairwells and footings: drop whole triangles (vertices stay, unreferenced).
+const holes = []; process.argv.forEach((a, i) => { if (a === '--hole') holes.push(process.argv[i + 1].split(',').map(Number)); });
+if (holes.length || process.argv.includes('--no-footing')) {
+  const keep = [];
+  for (let t = 0; t < I.length; t += 3) {
+    const a = I[t] * 3, b = I[t + 1] * 3, c = I[t + 2] * 3;
+    const ys = [P[a + 1], P[b + 1], P[c + 1]], cx = (P[a] + P[b] + P[c]) / 3, cz = (P[a + 2] + P[b + 2] + P[c + 2]) / 3;
+    if (process.argv.includes('--no-footing')) {
+      if (Math.min(...ys) < -0.02) continue;
+      // ...and the footing's top, one slab under the whole storey.
+      const xs = [P[a], P[b], P[c]], zs = [P[a + 2], P[b + 2], P[c + 2]];
+      if (Math.max(...ys.map(Math.abs)) < 0.03 && (Math.max(...xs) - Math.min(...xs) > 12 || Math.max(...zs) - Math.min(...zs) > 12)) continue;
+    }
+    if (Math.max(...ys) < 0.12 && holes.some(([x0, z0, x1, z1]) => cx > x0 && cx < x1 && cz > z0 && cz < z1)) continue;
+    keep.push(I[t], I[t + 1], I[t + 2]);
+  }
+  console.log('dropped', (I.length - keep.length) / 3, 'triangles');
+  I.length = 0; for (const v of keep) I.push(v);
+}
 const big = vc > 65535;
 const head = Buffer.from(JSON.stringify({ verts: vc, indices: I.length, min, max, big }));
 const hpad = (4 - (head.length % 4)) % 4;

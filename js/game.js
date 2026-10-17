@@ -1121,9 +1121,15 @@
     }
     return best;
   }
+  // The landmark you are closest to (by its edge), on your floor of the house.
   function nearLandmark() {
-    for (const l of MM.LANDMARKS) if (l.dim === G.dimId && Math.hypot(l.x - G.me.x, l.z - G.me.z) < l.r + MM.USE_RADIUS) return l;
-    return null;
+    let best = null, bd = Infinity;
+    for (const l of MM.LANDMARKS) {
+      if (l.dim !== G.dimId || !MM.sameFloor(l, G.me.y)) continue;
+      const d = Math.hypot(l.x - G.me.x, l.z - G.me.z) - l.r;
+      if (d < MM.USE_RADIUS && d < bd) { bd = d; best = l; }
+    }
+    return best;
   }
   function interact() {
     if (!canAct()) return;
@@ -1604,10 +1610,10 @@
   // ---------- Local movement ----------
   // Props: solid sideways, but you can stand on top of them.
   function groundAt(x, z, y) {
-    let g = MM.heightAt(G.dimId, x, z);
+    let g = MM.floorAt(G.dimId, x, z, y);   // the ground, or a house's floors and stairs
     const props = MM.propsNear(G.dimId, x, z, 0.5);
     for (const p of props) {
-      if (!G.alive[p.id] || MM.PROPS[p.type].arch) continue;
+      if (!G.alive[p.id] || MM.PROPS[p.type].arch || MM.PROPS[p.type].noTop) continue;
       const top = p.y + p.h * 0.92;
       if (y >= top - 0.6 && (x - p.x) ** 2 + (z - p.z) ** 2 < p.r * p.r) g = Math.max(g, top);
     }
@@ -1696,7 +1702,7 @@
     [nx, nz] = pushOut(nx, nz, ny, inShip ? 1.6 : 0.45);
     const lim = MM.boundOf(G.dimId) - (MM.DIM_BY_ID[G.dimId].interior ? 0 : 1), limZ = MM.boundZOf(G.dimId) - (MM.DIM_BY_ID[G.dimId].interior ? 0 : 1);
     nx = Math.max(-lim, Math.min(lim, nx)); nz = Math.max(-limZ, Math.min(limZ, nz));
-    [nx, nz] = MM.collideWalls(G.dimId, nx, nz, 0.4);
+    [nx, nz] = MM.collideWalls(G.dimId, nx, nz, 0.4, me.y);
     const g = groundAt(nx, nz, Math.max(ny, me.y)) + (inShip ? 0.4 : 0);
     if (inShip) { if (ny < g) { ny = g; me.vy = Math.max(0, me.vy); }
       // Increased height limit for space travel - much higher for interplanetary travel
@@ -1982,7 +1988,7 @@
     for (let s = 0.8; s <= dist; s += 0.4) {
       const px = tx - fx_ * s + rx * sh * s / dist, py = ty - fy * s, pz = tz - fz * s + rz * sh * s / dist;
       let hit = false;
-      if (MM.DIM_BY_ID[G.dimId].walls) { const [wx, wz] = MM.collideWalls(G.dimId, px, pz, 0.15); if (wx !== px || wz !== pz) hit = true; }
+      if (MM.DIM_BY_ID[G.dimId].walls) { const [wx, wz] = MM.collideWalls(G.dimId, px, pz, 0.15, me.y); if (wx !== px || wz !== pz) hit = true; }
       if (!hit) for (const p of G.camProps || []) {
         if (!G.alive[p.id] || py > p.y + p.h || py < p.y - 1) continue;
         const [qx, qz] = MM.pushOutOfProp(p, px, pz, 0.3);
@@ -1999,7 +2005,14 @@
     if (room) {
       // Keep the camera inside the walls and under the ceiling.
       const hx = room.w / 2 - 0.5, hz = room.d / 2 - 0.5;
-      cx = Math.max(-hx, Math.min(hx, cx)); cz = Math.max(-hz, Math.min(hz, cz)); cy = Math.min(room.h - 0.5, cy);
+      cx = Math.max(-hx, Math.min(hx, cx)); cz = Math.max(-hz, Math.min(hz, cz));
+      // A house with an upstairs: stay on your floor, and only show the upstairs when you are
+      // up there (downstairs you see the rooms with the upper floor lifted off).
+      const Fl = MM.DIM_BY_ID[G.dimId].floors, up = Fl && MM.levelAt(G.dimId, me.y) === 1;
+      if (up) cy = Math.max(Fl.y + 0.4, Math.min(Fl.y + room.h - 0.5, cy));
+      else cy = Math.min(Fl ? Fl.y - 0.3 : room.h - 0.5, cy);
+      if (G.upperFor !== G.world) { G.upperFor = G.world; G.upperRoom = G.world && G.world.group.getObjectByName('roomUpper'); }
+      if (G.upperRoom) G.upperRoom.visible = !!up;
     }
     if (G.shake > 0) { cx += (Math.random() - 0.5) * G.shake; cy += (Math.random() - 0.5) * G.shake; cz += (Math.random() - 0.5) * G.shake; G.shake = Math.max(0, G.shake - dt * 1.5); }
     camera.position.set(cx, cy, cz);
