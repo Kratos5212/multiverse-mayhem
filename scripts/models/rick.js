@@ -5,8 +5,11 @@
 //
 //   node scripts/sculpt.js scripts/models/rick.js assets/characters/rick.mms
 
-const SKIN = '#f0dccb', SKIN_D = '#d9bfa9', HAIR = '#b4d8e8', HAIR_D = '#8fb8cc', COAT = '#f4f7f8', COAT_D = '#d8dfe4',
-  SWEATER = '#a8d8ea', PANTS = '#6e4a2a', SHOE = '#2e2420', EYE = '#ffffff', PUPIL = '#1a1a1a', MOUTH = '#4a2a2a', DROOL = '#d8f2c8',
+// Colours as in the show's (and MultiVersus's) Rick: grey-beige skin, bright cyan hair and
+// unibrow, a cyan shirt, olive trousers with a dark belt and a gold buckle, slate shoes.
+const SKIN = '#ddd7c9', SKIN_D = '#b9b2a2', HAIR = '#6fd2df', HAIR_D = '#46aac2', HAIR_T = '#a8ecf2', COAT = '#f2f5f7', COAT_D = '#cfd8e0',
+  SWEATER = '#74d0dd', PANTS = '#686530', BELT = '#33444f', BUCKLE = '#e8c63a', SOCK = '#e6e8ea', SHOE = '#2b393f',
+  EYE = '#ffffff', PUPIL = '#1a1a1a', MOUTH = '#4a2a2a', DROOL = '#d8f2c8',
   GUN = '#d8dde2', GUN_D = '#9aa3ab', GUN_K = '#7d858e', FLUID = '#39ff6a';
 
 // Where the skeleton's joints are, in the rest pose.
@@ -42,26 +45,31 @@ function build(M, S) {
     M.add(H, S.cap([sx * 0.045, 2.137, 0.17], [sx * 0.1, 2.142, 0.154], 0.004), SKIN_D, { solo: true });
   }
   // The unibrow: one wiggly line right across.
-  M.add(H, S.cap([-0.135, 2.29, 0.13], [-0.05, 2.302, 0.175], 0.019), HAIR_D, { solo: true });
-  M.add(H, S.cap([-0.05, 2.302, 0.175], [0.04, 2.297, 0.178], 0.019), HAIR_D, { solo: true });
-  M.add(H, S.cap([0.04, 2.297, 0.178], [0.135, 2.292, 0.13], 0.019), HAIR_D, { solo: true });
+  M.add(H, S.cap([-0.14, 2.305, 0.13], [-0.05, 2.29, 0.178], 0.024), HAIR_D, { solo: true });
+  M.add(H, S.cap([-0.05, 2.29, 0.178], [0.04, 2.285, 0.18], 0.024), HAIR_D, { solo: true });
+  M.add(H, S.cap([0.04, 2.285, 0.18], [0.14, 2.3, 0.13], 0.024), HAIR_D, { solo: true });
   // The mouth (a long, flat frown) and the drool at its corner.
   M.carve(H, S.cap([-0.07, 2.045, 0.15], [0.065, 2.05, 0.15], 0.012), { k: 0.012 });
   M.add(H, S.cap([-0.066, 2.046, 0.158], [0.061, 2.051, 0.158], 0.008), MOUTH, { solo: true });
   M.add(H, S.cap([0.062, 2.045, 0.162], [0.068, 1.985, 0.15], 0.006, 0.008), DROOL, { solo: true });
   // Hair: a cap over the top and back, and spikes fanning up and backwards.
   M.add(H, S.ell([0, 2.33, -0.04], [0.185, 0.16, 0.2]), HAIR, { k: 0.03 });
+  M.add(H, S.ell([0, 2.2, -0.1], [0.185, 0.2, 0.13]), HAIR, { k: 0.03 });                  // the back of the head
+  for (const sx of [-1, 1]) M.add(H, S.ell([sx * 0.15, 2.27, -0.05], [0.05, 0.11, 0.12]), HAIR, { k: 0.03 });   // over the ears
   M.carve(H, S.ell([0, 2.3, 0.2], [0.17, 0.11, 0.1]), { k: 0.04 });   // keep the forehead bare
   const spikes = [
     [0, 0.95, -0.15, 0.18], [0.35, 0.85, -0.3, 0.17], [-0.35, 0.85, -0.3, 0.17], [0.7, 0.6, -0.35, 0.16], [-0.7, 0.6, -0.35, 0.16],
     [0.92, 0.25, -0.25, 0.15], [-0.92, 0.25, -0.25, 0.15], [0.5, 0.35, -0.8, 0.16], [-0.5, 0.35, -0.8, 0.16], [0, 0.45, -0.9, 0.17],
     [0.25, 0.9, 0.2, 0.14], [-0.25, 0.9, 0.2, 0.14], [0.6, 0.75, 0.1, 0.14], [-0.6, 0.75, 0.1, 0.14], [0.95, -0.05, -0.1, 0.12], [-0.95, -0.05, -0.1, 0.12],
+    [0.4, -0.2, -0.9, 0.13], [-0.4, -0.2, -0.9, 0.13], [0, -0.1, -1, 0.14], [0.8, -0.3, -0.5, 0.12], [-0.8, -0.3, -0.5, 0.12],
   ];
-  for (const [dx, dy, dz, l] of spikes) {
-    const n = Math.hypot(dx, dy, dz), ux = dx / n, uy = dy / n, uz = dz / n;
+  for (const [dx, dy, dz, l0] of spikes) {
+    const n = Math.hypot(dx, dy, dz), ux = dx / n, uy = dy / n, uz = dz / n, l = l0 * 1.35;
     const a = [ux * 0.13, 2.31 + uy * 0.1, -0.04 + uz * 0.14];
-    M.add(H, S.cap(a, [a[0] + ux * l, a[1] + uy * l, a[2] + uz * l], 0.045, 0.004), HAIR, { k: 0.025 });
+    M.add(H, S.cap(a, [a[0] + ux * l, a[1] + uy * l, a[2] + uz * l], 0.055, 0.004), HAIR, { k: 0.025 });
   }
+  // The tips catch the light.
+  M.paint(H, S.sphere([0, 2.62, -0.12], 0.17), HAIR_T, { soft: 0.06 });
   // ----- Torso: a thin old man in a light blue sweater under the lab coat, brown trousers,
   // the neck. -----
   const T = 'torso';
@@ -69,13 +77,14 @@ function build(M, S) {
   M.add(T, S.ell([0, 1.57, 0], [0.165, 0.25, 0.115]), SWEATER);                                       // chest
   M.add(T, S.ell([0, 1.33, 0.01], [0.15, 0.2, 0.115]), SWEATER, { k: 0.06 });                         // belly
   M.add(T, S.ell([0, 1.13, 0], [0.15, 0.1, 0.11]), PANTS, { k: 0.03 });                               // hips
-  M.paint(T, S.box([0, 1.2, 0], [0.3, 0.035, 0.3], 0.01), PANTS, { soft: 0.01 });                    // waistband
+  M.paint(T, S.box([0, 1.2, 0], [0.3, 0.035, 0.3], 0.01), BELT, { soft: 0.01 });                     // the belt
+  M.add(T, S.box([0, 1.2, 0.118], [0.032, 0.022, 0.008], 0.004), BUCKLE, { solo: true });                // and its gold buckle
   M.add(T, S.ell([0, 1.78, 0.02], [0.06, 0.03, 0.05]), SWEATER, { k: 0.03 });                          // collar
   // The coat: a shell over the body, open down the front, shoulders and collar.
   const coat = S.shell(S.ell([0, 1.5, -0.005], [0.2, 0.36, 0.142]), 0.011);
   M.add(T, coat, COAT, { k: 0.01 });
   for (const sx of [-1, 1]) M.add(T, S.ell([sx * 0.17, 1.76, 0], [0.085, 0.05, 0.1]), COAT, { k: 0.04 });   // shoulders
-  M.carve(T, S.box([0, 1.42, 0.15], [0.07, 0.4, 0.07], 0.03), { k: 0.02 });
+  M.carve(T, S.box([0, 1.42, 0.15], [0.105, 0.4, 0.07], 0.03), { k: 0.02 });                       // wide open at the front
   M.carve(T, S.box([0, 1.95, 0], [0.3, 0.1, 0.3], 0.01), { k: 0.02 });                                // open at the neck
   for (const sx of [-1, 1]) {
     M.add(T, S.cap([sx * 0.06, 1.77, 0.11], [sx * 0.085, 1.5, 0.14], 0.016, 0.01), COAT_D, { k: 0.012 });   // lapels
@@ -84,10 +93,11 @@ function build(M, S) {
   }
   M.add(T, S.ell([-0.13, 1.53, 0.135], [0.035, 0.004, 0.015]), COAT_D, { k: 0.006 });                     // breast pocket
   // Coat tails, flaring to just above the knee, open at the front and the hem.
-  M.add(T, S.shell(S.cap([0, 1.15, -0.01], [0, 0.6, -0.04], 0.19, 0.25), 0.011), COAT, { k: 0.02 });
-  M.carve(T, S.box([0, 0.9, 0.2], [0.06, 0.32, 0.12], 0.02), { k: 0.02 });
-  M.carve(T, S.box([0, 0.45, 0], [0.4, 0.17, 0.4], 0.0), { k: 0.01 });
-  M.carve(T, S.cap([0, 0.95, 0.26], [0, 0.66, 0.3], 0.07, 0.12), { k: 0.03 });                       // the front edges part
+  // Coat tails, flaring down to mid-calf, open at the front and the hem.
+  M.add(T, S.shell(S.cap([0, 1.15, -0.01], [0, 0.42, -0.06], 0.19, 0.28), 0.011), COAT, { k: 0.02 });
+  M.carve(T, S.box([0, 0.85, 0.22], [0.07, 0.42, 0.12], 0.02), { k: 0.02 });
+  M.carve(T, S.box([0, 0.2, 0], [0.5, 0.17, 0.5], 0.0), { k: 0.01 });
+  M.carve(T, S.cap([0, 0.95, 0.27], [0, 0.4, 0.33], 0.07, 0.17), { k: 0.03 });                       // the front edges part
 
   // ----- Arms: lab coat sleeves, cuffs, four-fingered hands. The right one holds the portal gun. -----
   for (const sx of [-1, 1]) {
@@ -97,7 +107,7 @@ function build(M, S) {
     M.add(up, S.sphere([x, 1.344, 0], 0.056), COAT, { k: 0.02 });
     M.add(fo, S.sphere([x, 1.344, 0], 0.057), COAT);
     M.add(fo, S.cap([x, 1.344, 0], [x, 0.97, 0.005], 0.056, 0.058), COAT, { k: 0.02 });
-    M.add(fo, S.cap([x, 0.985, 0.005], [x, 0.955, 0.005], 0.063), COAT_D, { k: 0.008 });               // cuff
+    M.add(fo, S.cap([x, 0.985, 0.005], [x, 0.955, 0.005], 0.058), SWEATER, { k: 0.008 });             // the shirt's cuff
     M.add(fo, S.cap([x, 0.97, 0.005], [x, 0.93, 0.005], 0.03), SKIN, { k: 0.01 });                     // wrist
     // The hand.
     M.add(fo, S.ell([x, 0.885, 0.01], [0.03, 0.05, 0.042]), SKIN, { k: 0.02 });
@@ -124,13 +134,13 @@ function build(M, S) {
   // ----- Legs: brown trousers, a knee joint, black shoes. -----
   for (const sx of [-1, 1]) {
     const th = sx < 0 ? 'legL' : 'legR', sh = sx < 0 ? 'shinL' : 'shinR', x = sx * 0.088;
-    M.add(th, S.sphere([x, 1.092, 0], 0.085), PANTS);
-    M.add(th, S.cap([x, 1.092, 0], [x, 0.5242, 0], 0.08, 0.068), PANTS, { k: 0.03 });
-    M.add(th, S.sphere([x, 0.5242, 0], 0.068), PANTS, { k: 0.02 });
-    M.add(sh, S.sphere([x, 0.5242, 0], 0.069), PANTS);
-    M.add(sh, S.cap([x, 0.5242, 0], [x, 0.11, 0.0], 0.066, 0.07), PANTS, { k: 0.02 });
-    M.add(sh, S.cap([x, 0.13, 0.0], [x, 0.1, 0.0], 0.074), PANTS, { k: 0.01 });                          // cuff
-    M.add(sh, S.ell([x, 0.055, 0.06], [0.07, 0.055, 0.15]), SHOE, { k: 0.02 });
+    M.add(th, S.sphere([x, 1.092, 0], 0.075), PANTS);
+    M.add(th, S.cap([x, 1.092, 0], [x, 0.5242, 0], 0.07, 0.058), PANTS, { k: 0.03 });
+    M.add(th, S.sphere([x, 0.5242, 0], 0.058), PANTS, { k: 0.02 });
+    M.add(sh, S.sphere([x, 0.5242, 0], 0.059), PANTS);
+    M.add(sh, S.cap([x, 0.5242, 0], [x, 0.15, 0.0], 0.056, 0.06), PANTS, { k: 0.02 });
+    M.add(sh, S.cap([x, 0.15, 0.0], [x, 0.085, 0.0], 0.045), SOCK, { k: 0.01 });                         // socks
+    M.add(sh, S.ell([x, 0.05, 0.065], [0.065, 0.05, 0.15]), SHOE, { k: 0.02 });
     M.add(sh, S.box([x, 0.012, 0.06], [0.072, 0.012, 0.155], 0.008), '#1a1410', { k: 0.006 });           // sole
   }
 }

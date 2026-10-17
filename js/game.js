@@ -14,6 +14,10 @@
   const profile = UI.load('profile', { name: '', home: '', arch: 'genius', look: null, server: '', startDim: 'suburbia' });
   if (!MM.ARCHETYPES[profile.arch]) profile.arch = 'genius';
   profile.look = profile.look ? MM.sanitizeLook(profile.look) : MM.canonLook(profile.arch);
+  // Rick's colours changed to match the show: a saved look still in the old canon colours
+  // becomes the new canon look (so the sculpted Rick is used).
+  if (profile.arch === 'genius' && profile.look.skin === '#f0dccb' && profile.look.hairColor === '#b4d8e8' && profile.look.pantsColor === '#6e4a2a')
+    Object.assign(profile.look, { skin: '#ddd7c9', hairColor: '#6fd2df', topColor: '#f2f5f7', shirtColor: '#74d0dd', pantsColor: '#686530', shoeColor: '#2b393f' });
   if (!profile.home) profile.home = 'ABDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random() * 23)] + '-' + Math.floor(Math.random() * 999 + 1);
   if (profile.startDim && !MM.DIM_BY_ID[profile.startDim]) profile.startDim = '';
   C.setVolume(settings.volume);
