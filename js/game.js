@@ -1065,6 +1065,7 @@
     mk('meeseeks', '4', 'Meeseeks', () => useGadget('meeseeks'));
     mk('timecrystal', '5', 'Time', () => useGadget('timecrystal'));
     mk('freeze', '6', 'Freeze', () => useGadget('freeze'));
+    mk('chalk', '7', 'Chalk', () => useGadget('chalk'));
     mk('items', 'I', 'Items', () => openInventory());
     mk('pair', 'R', 'Portals', () => shootPair());
     mk('scan', 'X', 'Scan', () => scan());
@@ -1094,6 +1095,7 @@
     $('tPair').style.setProperty('--pc', pcs[G.pairNext || 0]);
     // Only Ricks and Evil Morty know how to make a Time Crystal: no slot for everyone else.
     slots.timecrystal.hidden = !(y.inv.timecrystal > 0) && !!(G.prog && MM.canKnow(profile.arch, G.prog, 'timecrystal'));
+    slots.chalk.hidden = !(y.inv.chalk > 0) && !!(G.prog && MM.canKnow(profile.arch, G.prog, 'chalk'));
     const st = G.st;
     slots.portal.querySelector('.n').textContent = y.chMax ? String(y.ch) : y.bor ? String(y.bor) : '';
     $('tPortal').querySelector('.n').textContent = slots.portal.querySelector('.n').textContent;
@@ -1676,6 +1678,7 @@
       case 'Digit4': useGadget('meeseeks'); break;
       case 'Digit5': useGadget('timecrystal'); break;
       case 'Digit6': useGadget('freeze'); break;
+      case 'Digit7': useGadget('chalk'); break;
       case 'KeyI': openInventory(); break;
       case 'KeyV': toggleView(); break;
       case 'KeyG': emote(); break;

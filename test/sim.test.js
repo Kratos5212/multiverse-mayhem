@@ -829,6 +829,31 @@ test('Cronenberged Earth is all of Earth, Cronenberged; every Earth has a beach,
   assert.strictEqual(p.inst.dimId, 'shrimpearth');
 });
 
+test('King Tommy lives in Froopyland and only a magic chalk door, which only a Rick or Evil Morty can make, gets him out', () => {
+  assert.ok(MM.canKnow('genius', MM.newProgress('genius'), 'chalk') === null && MM.canKnow('evilmorty', MM.newProgress('evilmorty'), 'chalk') === null);
+  assert.ok(MM.canKnow('teen', MM.newProgress('teen'), 'chalk'), 'Summer cannot make it');
+  const host = new MM.Host();
+  const t = join(host, 'tommy');
+  assert.strictEqual(t.p.inst.dimId, 'froopy');
+  const exit = MM.LANDMARK_BY_ID.froopyexit;
+  t.p.x = exit.x; t.p.z = exit.z + 2; run(host, 1.2);
+  host.message(t.c, JSON.stringify({ t: 'door', l: 'froopyexit' }));
+  assert.strictEqual(t.p.inst.dimId, 'froopy', 'the way out does not open for him');
+  // Rick comes in, makes chalk and draws a door out; Tommy walks through it.
+  const r = join(host, 'genius', { home: 'C-137' });
+  host.travel(r.p, 'froopy', { x: 6, z: 0 });
+  r.p.inv.s = 5; r.p.inv.m = 2;
+  host.message(r.c, '{"t":"cr","g":"chalk"}');
+  assert.strictEqual(r.p.inv.chalk, 1);
+  r.p.r = 0;
+  host.message(r.c, '{"t":"g","g":"chalk","dx":0,"dy":0,"dz":1}');
+  const door = [...r.p.inst.portals.values()].find(po => po.chalk);
+  assert.ok(door, 'a chalk door');
+  t.p.x = door.x; t.p.z = door.z; t.p.y = door.y; t.p.portalCool = 0;
+  run(host, 0.2);
+  assert.notStrictEqual(t.p.inst.dimId, 'froopy', 'Tommy is free');
+});
+
 test('every world has something to do, and some worlds have their own rules', () => {
   for (const id of MM.WORLD_IDS) {
     const D = MM.DIM_BY_ID[id];

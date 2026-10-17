@@ -559,6 +559,7 @@
         if (now >= po.until) { this.portals.delete(po.id); this.ev({ k: 'po-', id: po.id }); continue; }
         for (const p of [...this.players.values()]) {
           if (p.dead || now < p.portalCool) continue;
+          if (p.arch === 'tommy' && !po.chalk) continue;   // only a chalk door lets Tommy through
           if (dist2(p.x, p.z, po.x, po.z) < (MM.PORTAL_RADIUS + (p.ship ? 1.2 : 0)) ** 2 && p.y < po.y + 3.5 && p.y > po.y - 1.5) {
             const dest = this.host.instances.get(po.destKey);
             const exit = dest && dest.portals.get(po.link);
@@ -1263,6 +1264,7 @@
       if (dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2 || !MM.sameFloor(l, p.y)) return;
       p.cdUse = this.time + 1;
       if (p.ship && MM.DIM_BY_ID[l.door.dim].interior) { this.toast(p, 'Park your ship first (B).'); return; }
+      if (p.arch === 'tommy' && l.dim === 'froopy') { this.toast(p, 'The way out will not open for you. Only a magic chalk door, drawn by a Rick (or Evil Morty), can take Tommy out of Froopyland.'); return; }
       const from = p.inst, ox = p.x, oz = p.z;
       // Every Earth shares the insides (the Smith house, Rick's lab...). Remember which Earth you
       // came in from, and the way out takes you back there instead of to C-137.
@@ -1537,6 +1539,16 @@
         this.fireProjectile(inst, { owner: p.id, kind: 'shrink', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 65, range: 70, dmg: 5, rad: 0.35 });
       } else if (g === 'freeze') {
         this.fireProjectile(inst, { owner: p.id, kind: 'freeze', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 55, range: 60, dmg: 4, rad: 0.4 });
+      } else if (g === 'chalk') {
+        // A door drawn in magic chalk: into Froopyland, or (there) back to where you came from.
+        if (inst.dim.interior || inst.dim.planets || inst.dim.hidden) { this.toast(p, 'Nowhere to draw a door here. Go outside.'); return; }
+        const out = inst.dimId === 'froopy', dest = out ? (p.chalkFrom && MM.DIM_BY_ID[p.chalkFrom] ? p.chalkFrom : 'suburbia') : 'froopy';
+        if (!out) p.chalkFrom = inst.dimId;
+        let x = p.x + Math.sin(p.r) * 3, z = p.z + Math.cos(p.r) * 3;
+        [x, z] = MM.collideProps(inst.dimId, x, z, 1.2, null);
+        const pair = this.openPortalPair(inst, x, z, p.r + Math.PI, dest, '#f4f4f0', p.id);
+        pair.a.chalk = pair.b.chalk = true; pair.a.st = pair.b.st = 'ring';
+        this.toast(p, out ? 'A chalk door out of Froopyland. Anyone can go through it, even Tommy.' : 'A chalk door into Froopyland. Anyone can follow you.');
       } else if (g === 'meeseeks') {
         this.summonMeeseeks(p, 1, 30);
       } else if (g === 'timecrystal') {

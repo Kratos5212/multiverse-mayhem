@@ -244,6 +244,7 @@
     fluid:    { cat: 'gadget', name: 'Portal Fluid', cost: { c: 2 }, gun: true, desc: 'Refills one portal gun charge right away.' },
     timecrystal: { cat: 'gadget', name: 'Time Crystal', cost: { c: 5, m: 2 }, max: 1, desc: 'Press 5: freeze time around you for 4 s. Illegal for third-dimensional beings, so the Time Cops will come for you.' },
     freeze:   { cat: 'gadget', name: 'Freeze Ray Shot', cost: { s: 3, c: 2 }, max: 3, desc: 'Press 6: one shot that freezes whoever it hits solid for a few seconds.' },
+    chalk:    { cat: 'gadget', name: 'Magic Chalk', cost: { s: 2, m: 1 }, max: 2, onlyFor: ['genius', 'evilmorty'], desc: 'Press 7: draw a door on the spot. Anywhere: it opens into Froopyland. In Froopyland: back out. Anyone can go through it, even Tommy.' },
     meeseeks: { cat: 'gadget', name: 'Meeseeks Box', cost: { k: 3, s: 1 }, max: 2, desc: 'Press it (4): a Mr. Meeseeks pops out and fights for you for 30 s.' },
     // Rick's own body upgrades (only Ricks know how): robot limbs and a built-in scanner.
     // Pickle Rick's rat suit, built from rat parts and scrap (in a sewer, anywhere really).
@@ -274,7 +275,7 @@
     quantum:  { cat: 'ship', name: 'Quantum Drive', cost: { c: 12, g: 8, p: 12, f: 8 }, at: 'shipyard', needs: 'drive', desc: 'Enable light speed travel for instant interstellar jumps.' },
   };
   MM.RECIPE_IDS = Object.keys(MM.RECIPES);
-  MM.GADGET_IDS = ['grenade', 'turret', 'shrink', 'meeseeks', 'timecrystal', 'freeze'];
+  MM.GADGET_IDS = ['grenade', 'turret', 'shrink', 'meeseeks', 'timecrystal', 'freeze', 'chalk'];
   // Recipes everyone knows, whoever they are.
   MM.COMMON = ['meeseeks', 'megabrain'];
   MM.CATS = { gadget: 'Gadgets', self: 'You', gun: 'Portal gun', ship: 'Ship' };
@@ -474,10 +475,27 @@
         { name: 'Freedom Fighter', desc: 'Defeat 3 players.', goal: { type: 'ko', n: 3 }, grants: ['engine', 'lasers', 'gunbuild'], title: true },
       ],
     },
+    // Tommy Lipnip, Beth's childhood friend, left in Froopyland as a kid. He survived, and became
+    // its king. He can only leave through a magic chalk door, which only a Rick (or Evil Morty)
+    // can draw.
+    tommy: {
+      name: 'King Tommy', hp: 150, speed: 6.5, jump: 9, weapon: 'punch', home: 'froopy', homes: ['froopy'],
+      temper: { fights: 'defend', hunts: [], chaos: 0.1 },
+      portal: null, knows: ['grenade', 'legs1', 'armor1'],
+      ability: { id: 'rage', name: 'Froopy Fury', cd: 16 },
+      blurb: 'Beth\'s childhood friend, lost in Froopyland since he was a kid. He survived. He is the king now. Do not ask what he ate.',
+      perk: 'Froopy Fury: tough and fast for a few seconds. Stuck in Froopyland until someone draws a magic chalk door.',
+      life: { normal: 'King of Froopyland', breakout: 'Free at last', daily: ['slide'] },
+      steps: [
+        { name: 'The king', desc: 'Go down the Big Froopy Slide.', goal: { type: 'use', task: 'slide', n: 1 }, grants: ['armor2'] },
+        { name: 'The way out', desc: 'Leave Froopyland through a magic chalk door.', goal: { type: 'dim', dim: 'suburbia' }, grants: ['legs2', 'hull'], title: true },
+      ],
+    },
     evilmorty: {
       name: 'Evil Morty', hp: 100, speed: 7.5, jump: 8.5, weapon: 'blaster', home: 'suburbia',
       temper: { fights: 'defend', hunts: ['genius'] }, homes: ['citadel'],
-      portal: { charges: 1, recharge: 30 }, knows: ['grenade', 'shrink', 'fluid', 'guncap1', 'gunfast', 'legs1', 'timecrystal'],
+      // As inventive as any Rick: he can build whatever a Rick can (but not a Rick's own body).
+      portal: { charges: 1, recharge: 30 }, knows: '*',
       ability: { id: 'scheme', name: 'Vanish', cd: 18, dur: 5 },
       blurb: 'A Morty with an eye patch and a plan. Quiet, patient, and always three steps ahead.',
       perk: 'Vanish: monsters and turrets lose track of you for 5 s. Starts with a golden portal gun that can leave the Central Finite Curve.',
@@ -664,6 +682,7 @@
     meeseeks: { species: 'human', hair: 'bald', brow: 'none', eyes: 'dots', mouth: 'open', face: 'long', top: 'none', acc: 'none', height: 1.3, width: 0.78, head: 1.2, skin: '#6ec4f0', hairColor: '#6ec4f0', topColor: '#6ec4f0', shirtColor: '#6ec4f0', pantsColor: '#6ec4f0', shoeColor: '#6ec4f0', accColor: '#444444', portalColor: '#5ff8ff' },
     squanchy: { species: 'cat', hair: 'bald', brow: 'none', eyes: 'wide', mouth: 'grin', face: 'round', top: 'none', acc: 'none', height: 1.0, width: 1.05, head: 1.2, skin: '#c98a4a', hairColor: '#8a5a2a', topColor: '#c98a4a', shirtColor: '#c98a4a', pantsColor: '#c98a4a', shoeColor: '#8a5a2a', accColor: '#444444', portalColor: '#ffd84d' },
     evilmorty: { species: 'human', hair: 'morty', brow: 'angry', eyes: 'normal', mouth: 'flat', face: 'round', top: 'tshirt', acc: 'eyepatch', height: 0.92, width: 0.95, head: 1.3, skin: '#fcd9bd', hairColor: '#6b3f1f', topColor: '#f8e04a', shirtColor: '#f8e04a', pantsColor: '#2e5fa8', shoeColor: '#f4f6f8', accColor: '#111111', portalColor: '#ffd84d' },
+    tommy: { species: 'human', hair: 'afro', brow: 'normal', eyes: 'wide', mouth: 'grin', face: 'wide', top: 'vest', acc: 'crown', height: 1.25, width: 1.3, head: 1.05, skin: '#f2c8a8', hairColor: '#6a4424', topColor: '#7a5a3a', shirtColor: '#ff8fc8', pantsColor: '#5a4a6a', shoeColor: '#3a2a1a', accColor: '#ffd84d', portalColor: '#f4f4f0' },
     picklerick: { species: 'pickle', hair: 'bald', brow: 'uni', eyes: 'tired', mouth: 'grin', face: 'long', top: 'none', acc: 'none', height: 0.9, width: 0.9, head: 1.0, skin: '#7cbf3a', hairColor: '#4a7a22', topColor: '#7cbf3a', shirtColor: '#7cbf3a', pantsColor: '#7cbf3a', shoeColor: '#4a7a22', accColor: '#444444', portalColor: '#39ff6a' },
   };
   MM.canonLook = arch => Object.assign(MM.defaultLook(), MM.CANON[arch] || {});
