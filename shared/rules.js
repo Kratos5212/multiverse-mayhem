@@ -143,6 +143,7 @@
   ];
   MM.LANDMARK_BY_ID = {};
   for (const l of MM.LANDMARKS) MM.LANDMARK_BY_ID[l.id] = l;
+  MM.SHIP_BOOST = 1.6;   // Shift in a ship: the afterburner
   MM.USE_RADIUS = 4;   // how close to a landmark's wall you must be to use it
   // A landmark counts as a recipe's station if it is that station or stands in for it.
   MM.isAt = (l, at) => l.id === at || l.alias === at;
@@ -567,7 +568,7 @@
       dmg: (up.blaster1 ? 1.3 : 1) * (up.blaster2 ? 1.4 : 1) * (up.megabrain ? 1.1 : 1) * (up.cyberarm ? 1.35 : 1),
       // Sprinting (Shift, or push the stick past its edge): a bit faster than walking, more
       // with better legs.
-      sprint: 1.3 * (up.legs1 ? 1.06 : 1) * (up.legs2 ? 1.06 : 1) * (up.cyberlegs ? 1.15 : 1),
+      sprint: 1.45 * (up.legs1 ? 1.06 : 1) * (up.legs2 ? 1.06 : 1) * (up.cyberlegs ? 1.15 : 1),
       scanner: !!up.scanner,
       cdMult: up.megabrain ? 0.7 : 1,
       cloak: !!up.cloak,

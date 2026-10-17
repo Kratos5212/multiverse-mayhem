@@ -168,6 +168,7 @@
     $('modal').hidden = true;
     const f = onModalClose; onModalClose = null;
     if (f) f();
+    if (UI.afterClose) UI.afterClose();   // the game takes the mouse back
   };
   UI.modalOpen = () => !$('modal').hidden;
   $('modal').addEventListener('pointerdown', e => { if (e.target.id === 'modal') UI.closeModal(); });
@@ -179,7 +180,7 @@
       add('W A S D', 'Move'); add('Mouse', 'Look (click the game to capture the mouse)'); add('Click', 'Fire / attack'); add('Space', 'Jump (hold to fly as a Birdfolk)');
       add('Q', 'Archetype ability'); add('E', 'Portal gun: open a portal to another dimension'); add('F', 'Use the Portal Kiosk (when standing at it)');
       add('F', 'Talk to locals, do daily tasks, go through doors (Rick\'s garage!), use the kiosk'); add('J', 'Journal: your life, your path, errands');
-      add('B', 'Board or leave your ship (Space up, Shift down; keep climbing for space)');
+      add('B', 'Board or leave your ship (Space up, Ctrl down, Shift boost; keep climbing for space)');
       add('L', 'Lightspeed, from space: to another world, dimension or timeline');
       add('1 2 3 4', 'Grenade / turret / shrink ray / Meeseeks Box'); add('C', 'Workbench: build gadgets and upgrades'); add('Enter', 'Chat with the whole multiverse');
       add('Tab', 'Players, leaderboard and mute'); add('V', 'First or third person (or scroll the mouse wheel)'); add('G', 'Emote (wave)'); add('Esc', 'Menu and settings');

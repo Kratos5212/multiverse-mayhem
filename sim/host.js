@@ -792,7 +792,7 @@
     speedOf(p) {
       const now = this.time;
       if (now < p.fx.cuff) return 1;
-      const base = p.ship ? p.st.ship.speed : p.st.speed * (p.st.fly ? 1.35 : 1) * (p.st.sprint || 1);   // the most you can go: sprinting
+      const base = p.ship ? p.st.ship.speed * MM.SHIP_BOOST : p.st.speed * (p.st.fly ? 1.35 : 1) * (p.st.sprint || 1);   // the most you can go: sprinting
       return base * (now < p.fx.sprint ? 1.8 : 1) * (now < p.fx.shrink ? 0.75 : 1) * (now < p.fx.guilt ? 0.6 : 1) * (now < p.fx.daze ? 0.5 : 1);
     }
 

@@ -320,7 +320,7 @@
   function shootPair() {
     if (!canAct() || pickled()) return;
     if (G.you.ship) { UI.toast('Land first (B) to shoot portals.'); return; }
-    if (!(G.prog && MM.canPair(profile.arch, G.prog.up))) { UI.toast('You need a portal gun for that. Ricks have one; anyone else can build or borrow one (J).', 3500); return; }
+    if (!(G.prog && MM.canPair(profile.arch, G.prog.up))) return;   // no gun: R does nothing
     if (now() < (G.pairCd || 0)) return;
     const ray = vr && vr.on ? vr.aimRay() : null;
     const o = ray ? ray.o : camWorld.clone(), d = ray ? ray.d : new T.Vector3();
@@ -940,7 +940,9 @@
     $('hpFill').dataset.lvl = y.hp / y.max > 0.5 ? 'ok' : y.hp / y.max > 0.25 ? 'mid' : 'low';
     $('hpText').textContent = Math.max(0, y.hp) + ' / ' + y.max;
     for (const k of MM.MAT_IDS) $('mat-' + k).textContent = y.inv[k] || 0;
-    $('charges').textContent = y.chMax ? 'Portal ' + '●'.repeat(y.ch) + '○'.repeat(Math.max(0, y.chMax - y.ch)) : 'No portal gun';
+    // Portal charges only for someone with a gun (their own or Rick's, borrowed).
+    $('charges').hidden = !y.chMax && !y.bor;
+    $('charges').textContent = y.chMax ? 'Portal ' + '●'.repeat(y.ch) + '○'.repeat(Math.max(0, y.chMax - y.ch)) : y.bor ? 'Borrowed gun ' + '●'.repeat(y.bor) : '';
     if (G.meAv && !!y.ship !== !!G.meAv.inShip) { C.setShip(G.meAv, y.ship, myGear()); if (y.ship) { G.me.vy = 0; G.me.grounded = false; } }
     $('chaos').textContent = y.chaos;
     $('kos').textContent = y.kills;
@@ -1073,6 +1075,11 @@
     slots.portal.querySelector('.n').textContent = y.chMax ? String(y.ch) : y.bor ? String(y.bor) : '';
     $('tPortal').querySelector('.n').textContent = slots.portal.querySelector('.n').textContent;
     slots.portal.classList.toggle('off', !(y.chMax && y.ch > 0) && !(y.bor > 0) && !nearKiosk() && !y.ship);
+    // No gun, no ship, no station: no travel button at all. Otherwise say what it does.
+    const gun = !!(y.chMax || y.bor), travel = gun || nearKiosk() || (y.ship && st && st.ship);
+    slots.portal.hidden = !travel; $('tPortal').hidden = !travel;
+    slots.portal.querySelector('.l').textContent = gun ? 'Portal' : nearKiosk() ? 'Station' : 'Travel';
+    tLabel('tPortal', gun ? 'PORTAL' : nearKiosk() ? 'STATION' : 'TRAVEL');
     slots.ship.hidden = !(st && st.ship);
     slots.ship.querySelector('.l').textContent = y.ship ? 'Land' : 'Ship';
     $('tShip').hidden = !(st && st.ship);
@@ -1164,8 +1171,7 @@
     const m = travelModes();
     if (m.length) return openDims(m[0]);
     if (G.you.chMax && G.you.ch <= 0) { UI.toast('Portal gun is recharging'); return; }
-    UI.toast(MM.DIM_BY_ID[G.dimId].station ? 'Walk up to the ' + MM.kioskOf(G.dimId).name + ' to travel.'
-      : 'No portal gun. Step through someone else\'s portal, fly a ship, find a portal station (the Citadel), borrow Rick\'s gun from his workbench, or build your own (J).', 5000);
+    if (MM.DIM_BY_ID[G.dimId].station) UI.toast('Walk up to the ' + MM.kioskOf(G.dimId).name + ' to travel.');
   }
   function lightspeedKey() {
     if (!canAct() || pickled()) return;
@@ -1188,13 +1194,19 @@
     }
     return best;
   }
-  // The landmark you are closest to (by its edge), on your floor of the house.
+  // The landmark you mean: close by, on your floor of the house, and the one you are looking
+  // at. A big place you are standing in (the garage, the back yard) gives way to the things
+  // in it (the workbench, the Meeseeks box...), so you can use what is in front of you.
   function nearLandmark() {
-    let best = null, bd = Infinity;
+    let best = null, bs = Infinity;
+    const fx = Math.sin(G.camYaw), fz = Math.cos(G.camYaw);
     for (const l of MM.LANDMARKS) {
       if (l.dim !== G.dimId || !MM.sameFloor(l, G.me.y)) continue;
-      const d = Math.hypot(l.x - G.me.x, l.z - G.me.z) - l.r;
-      if (d < MM.USE_RADIUS && d < bd) { bd = d; best = l; }
+      const dx = l.x - G.me.x, dz = l.z - G.me.z, d = Math.hypot(dx, dz), edge = d - l.r;
+      if (edge >= MM.USE_RADIUS) continue;
+      let score = l.r > 3 && d < l.r ? 3.5 : Math.max(0, d - Math.min(l.r, 1.2));
+      if (d > 0.6) score += (1 - (dx * fx + dz * fz) / d) * 1.2;   // behind you counts for less
+      if (score < bs) { bs = score; best = l; }
     }
     return best;
   }
@@ -1582,7 +1594,8 @@
         row('Graphics', el('div', { class: 'chips' }, ...['high', 'low'].map(q => el('button', { class: 'chip', 'aria-pressed': String(settings.quality === q), onclick: () => { settings.quality = q; applyQuality(); resize(); UI.save('settings', settings); openMenu(); } }, q)))),
         row('Options', el('div', { class: 'chips' },
           el('button', { class: 'chip', 'aria-pressed': String(settings.invert), onclick: () => { settings.invert = !settings.invert; UI.save('settings', settings); openMenu(); } }, 'Invert look'),
-          el('button', { class: 'chip', 'aria-pressed': String(settings.botChat), onclick: () => { settings.botChat = !settings.botChat; UI.save('settings', settings); openMenu(); } }, 'Show bot chat'))),
+          el('button', { class: 'chip', 'aria-pressed': String(settings.botChat), onclick: () => { settings.botChat = !settings.botChat; UI.save('settings', settings); openMenu(); } }, 'Show bot chat'),
+          isTouch ? null : el('button', { class: 'chip', 'aria-pressed': String(!!document.fullscreenElement), onclick: () => { toggleFullscreen(); UI.closeModal(); } }, 'Full screen'))),
         el('div', { class: 'chips' },
           el('button', { class: 'btn go', onclick: () => UI.closeModal() }, 'Resume'),
           el('button', { class: 'btn', onclick: () => UI.help() }, 'How to play'),
@@ -1615,6 +1628,9 @@
   window.addEventListener('keydown', e => {
     if (G.mode !== 'play') return;
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) return;
+    // Ctrl is "down" in the ship: keep Ctrl+W, Ctrl+R, Ctrl+S... from closing, reloading or
+    // saving the page while you play (Ctrl+W can only be caught in full screen, see lockKeys).
+    if (e.ctrlKey || e.metaKey) e.preventDefault();
     if (UI.modalOpen()) { if (e.key === 'Escape' || e.key === 'Tab') { e.preventDefault(); UI.closeModal(); } return; }
     if (e.key === 'Tab') { e.preventDefault(); openBoard(); return; }
     keys.add(e.code);
@@ -1645,6 +1661,24 @@
   });
   window.addEventListener('keyup', e => keys.delete(e.code));
   window.addEventListener('blur', () => { keys.clear(); mouseDown = false; touch.fire = false; touch.jump = false; });
+
+  // Take the mouse back for looking around (after a menu closes, so you don't have to click
+  // the game again). Only works inside a click or key press, which is when menus close.
+  function relock() {
+    if (G.mode !== 'play' || isTouch || UI.modalOpen() || chatOpen() || document.pointerLockElement || !canvas.requestPointerLock) return;
+    if (G.you && G.you.dead) return;
+    try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (_) {}
+  }
+  UI.afterClose = () => setTimeout(relock, 0);
+  // Full screen also lets the game keep Ctrl+W and friends (Ctrl is "down" in the ship).
+  function toggleFullscreen() {
+    const d = document;
+    if (d.fullscreenElement) { d.exitFullscreen().catch(() => {}); return; }
+    const p = d.documentElement.requestFullscreen && d.documentElement.requestFullscreen();
+    if (p && p.then) p.then(() => { if (navigator.keyboard && navigator.keyboard.lock) navigator.keyboard.lock(['KeyW', 'KeyR', 'KeyT', 'KeyN', 'KeyQ', 'KeyS', 'KeyD', 'KeyF']).catch(() => {}); }).catch(() => {});
+  }
+  // Closing the window by accident (Ctrl+W outside full screen) asks first.
+  window.addEventListener('beforeunload', e => { if (G.mode === 'play' && !G.leaving) { e.preventDefault(); e.returnValue = ''; } });
 
   // Mouse: pointer lock when the page allows it; otherwise drag to look.
   canvas.addEventListener('mousedown', e => {
@@ -1781,7 +1815,8 @@
     const mult = (fxb & 2 ? 1.8 : 1) * (fxb & 8 ? 0.75 : 1) * (fxb & 16 ? 0.6 : 1) * (fxb & 256 ? 0.5 : 1) * (fxb & 1024 ? 0.12 : 1);
     const shift = !chatOpen() && !UI.modalOpen() && (keys.has('ShiftLeft') || keys.has('ShiftRight'));
     me.sprinting = !inShip && !dead && il > 0.3 && (shift || touch.sprint) && iz > -0.2;
-    const speed = inShip ? st.ship.speed * mult : st.speed * mult * (st.fly && !me.grounded ? 1.3 : 1) * (me.sprinting ? st.sprint || 1.3 : 1);
+    me.boosting = inShip && !dead && (shift || touch.sprint);   // Shift in the ship: afterburner
+    const speed = inShip ? st.ship.speed * mult * (me.boosting ? MM.SHIP_BOOST : 1) : st.speed * mult * (st.fly && !me.grounded ? 1.3 : 1) * (me.sprinting ? st.sprint || 1.3 : 1);
     const sy = Math.sin(G.camYaw), cy = Math.cos(G.camYaw);
     const wx = (sy * iz - cy * ix) * speed, wz = (cy * iz + sy * ix) * speed;
     const accel = me.kbT > 0 ? 2 : inShip ? 5 : me.grounded ? 40 : 10;
@@ -1789,10 +1824,11 @@
     me.vx += (wx - me.vx) * k; me.vz += (wz - me.vz) * k;
     me.kbT = Math.max(0, me.kbT - dt);
     const jumpHeld = !chatOpen() && !UI.modalOpen() && (keys.has('Space') || touch.jump) && !dead;
-    const downHeld = !chatOpen() && !UI.modalOpen() && (shift || touch.down);
+    const ctrl = !chatOpen() && !UI.modalOpen() && (keys.has('ControlLeft') || keys.has('ControlRight'));
+    const downHeld = !chatOpen() && !UI.modalOpen() && (ctrl || touch.down);
     me.flying = false;
     if (inShip) {
-      // Ship: fly where you look. Space climbs, Shift dives.
+      // Ship: fly where you look. Space climbs, Ctrl dives, Shift boosts.
       const climb = (jumpHeld ? 1 : 0) - (downHeld ? 1 : 0) + (iz > 0 ? -Math.sin(G.camPitch) * iz * 0.8 : 0);
       me.vy += (climb * 12 - me.vy) * Math.min(1, dt * 4);
       me.grounded = false;

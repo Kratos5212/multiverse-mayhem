@@ -216,7 +216,7 @@ test('ship: boarding lifts the speed limit, and the dimension drive travels', ()
   assert.ok(p.st.ship, 'troopers start with a ship');
   run(host, 0.5);
   const x0 = p.x;
-  host.message(c, JSON.stringify({ t: 'st', x: x0 + 12, y: p.y, z: p.z, r: 0, a: 1, ep: p.ep }));
+  host.message(c, JSON.stringify({ t: 'st', x: x0 + 18, y: p.y, z: p.z, r: 0, a: 1, ep: p.ep }));
   assert.ok(p.x < x0 + 1, 'too fast on foot');
   host.message(c, '{"t":"ship","on":true}');
   run(host, 0.2);
