@@ -184,7 +184,7 @@
       L.road(-150, -80, 150, -80, 9, 'asphalt');
       L.path([[14, -10], [70, -40], [78, -40]], 8, 'asphalt');
       L.road(-60, -150, -60, 150, 9, 'asphalt');
-      L.road(60, 60, 60, 150, 9, 'asphalt');
+      L.road(60, 30, 60, 150, 9, 'asphalt');
       L.street(0, 16, 0, 90, { setback: 9, spacing: 9, types: 'cherrytree', jitter: 1 });
       L.street(0, 16, 0, 90, { setback: 26, spacing: 24, gap: 0.1, types: [['officeblock', 3], ['flagpole', 1]] });
       L.street(-150, 30, 150, 30, { setback: 12, spacing: 20, gap: 0.3, start: 40, types: [['officeblock', 2], ['apartment', 1]], lamps: { type: 'streetlamp', every: 22, offset: 6 } });
@@ -201,6 +201,7 @@
       L.road(-140, 60, 140, 60, 14, 'asphalt');
       L.road(0, 14, 0, 60, 8, 'asphalt');
       L.road(0, -14, 0, -26, 8, 'asphalt');
+      L.road(0, 60, 0, 142, 8, 'asphalt');   // the main gate, out to the road from the suburb
       L.street(-130, 60, -10, 60, { setback: 20, spacing: 24, sides: [1], types: 'hangar' });
       L.street(-130, 60, 130, 60, { setback: 11, spacing: 30, sides: [-1], gap: 0.3, types: [['jeep', 2], ['crate', 1]] });
       L.rows(60, -50, 40, 0, 20, 1, 'radar', 0);

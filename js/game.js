@@ -85,9 +85,10 @@
     menuPortal.material.uniforms.col.value.set(profile.look.portalColor);
     menuPortal.material.uniforms.style.value = C.PORTAL_STYLES[profile.look.portalStyle] || 0;
   }
-  // Sculpted characters (scripts/models/, built by scripts/sculpt.js) load in the background;
-  // every canon-looking Rick built after that uses the sculpt up close.
-  C.loadSculpt('genius', 'assets/characters/rick.mms').then(() => { previewDirty = true; }).catch(e => console.warn('No sculpted Rick:', e.message));
+  // Sculpted characters (scripts/models/: Rick by scripts/sculpt.js, the rest with Mojulo through
+  // scripts/mojulo-character.js) load in the background; every canon-looking character built after
+  // that uses its sculpt up close.
+  for (const [arch, file] of Object.entries(C.SCULPTED)) C.loadSculpt(arch, 'assets/characters/' + file + '.mms').then(() => { previewDirty = true; }).catch(e => console.warn('No sculpt for ' + arch + ':', e.message));
   function renderMenu(dt) {
     if (previewDirty && (previewT -= dt) <= 0) { previewDirty = false; rebuildPreview(); }
     renderer.setScissorTest(false);

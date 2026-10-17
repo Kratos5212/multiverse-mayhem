@@ -144,9 +144,16 @@
       }
       life.schools = [0, 1, 2, 3].map(() => ({ x: 0, z: 0, set: false }));
     }
-    // Animals in the woods, near the trees: deer, rabbits, squirrels and foxes on Earth,
-    // little six-legged critters anywhere else green.
-    const trees = MM.genProps(dimId).filter(p => TREES.has(p.type));
+    // Animals in the woods: deer, rabbits, squirrels and foxes in Earth's forests, little
+    // six-legged critters in the thickets anywhere else green. Never in a town: only trees in
+    // a wood count (a planted forest, or a thicket away from the roads and buildings).
+    const props = MM.genProps(dimId), woods = MM.forestsOf(dimId), roads = MM.layoutOf(dimId).roads;
+    const built = props.filter(p => !TREES.has(p.type) && p.r > 2);
+    const segDist = (x, z, rd) => { const dx = rd.x2 - rd.x1, dz = rd.z2 - rd.z1, l2 = dx * dx + dz * dz || 1, u = Math.max(0, Math.min(1, ((x - rd.x1) * dx + (z - rd.z1) * dz) / l2)); return Math.hypot(x - rd.x1 - dx * u, z - rd.z1 - dz * u); };
+    const allTrees = props.filter(p => TREES.has(p.type));
+    const trees = allTrees.filter(tr => woods.length ? woods.some(w => Math.hypot(tr.x - w.x, tr.z - w.z) < w.r - 3)
+      : !D.streets && allTrees.filter(o => Math.abs(o.x - tr.x) < 14 && Math.abs(o.z - tr.z) < 14).length >= 4
+        && !built.some(b => Math.hypot(b.x - tr.x, b.z - tr.z) < 18 + b.r) && !roads.some(rd => segDist(tr.x, tr.z, rd) < 12 + rd.w / 2));
     if (trees.length && !under && !D.cronen && !/dino/.test(dimId)) {
       const kinds = earth ? ['deer', 'rabbit', 'rabbit', 'squirrel', 'squirrel', 'fox'] : ['critter'];
       const n = Math.round(14 * k);
@@ -211,7 +218,7 @@
             b.a += dt * b.sp * 0.9;
             const x = F.x + Math.cos(b.a) * b.r, z = F.z + Math.sin(b.a) * b.r, y = gy + F.y + b.dy + Math.sin(t * 0.7 + b.ph) * 1.5;
             b.m.position.set(x, y, z);
-            b.m.rotation.y = -b.a + Math.PI * (b.sp > 0 ? 1 : 0);
+            b.m.rotation.y = -b.a + (b.sp < 0 ? Math.PI : 0);   // models face +z; moving round the circle at angle a heads along (-sin a, cos a)
             b.m.rotation.z = 0.25;
             const flap = Math.sin(t * 9 + b.ph) * 0.6;
             b.wl.rotation.z = flap; b.wr.rotation.z = -flap;
@@ -235,7 +242,7 @@
             const floor = H(x, z), top = under ? floor + 7 : MM.SEA_LEVEL - 0.8;
             const y = Math.min(top, Math.max(floor + 0.6, (under ? floor + 2.5 : MM.SEA_LEVEL - 2.2) + f.dy + Math.sin(t + f.a) * 0.4));
             f.m.position.set(x, y, z);
-            f.m.rotation.y = -f.a + (f.sp > 0 ? Math.PI : 0);
+            f.m.rotation.y = -f.a + (f.sp < 0 ? Math.PI : 0);
           }
         }
         // Animals: wander near a tree, bolt when you come close, settle down again.
@@ -245,7 +252,7 @@
             const near = life.trees.filter(p => { const d = Math.hypot(p.x - cam.x, p.z - cam.z); return d > 25 && d < 100; });
             if (!near.length) { A.m.visible = false; continue; }
             const tr = near[Math.floor(Math.random() * near.length)];
-            A.home = { x: tr.x + rnd(-5, 5), z: tr.z + rnd(-5, 5) }; A.x = A.tx = A.home.x; A.z = A.tz = A.home.z; A.m.visible = true;
+            A.home = { x: tr.x + rnd(-3, 3), z: tr.z + rnd(-3, 3) }; A.x = A.tx = A.home.x; A.z = A.tz = A.home.z; A.m.visible = true;
           }
           const dc = Math.hypot(A.x - cam.x, A.z - cam.z);
           let sp = A.speed;

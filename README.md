@@ -348,6 +348,14 @@ Glowing rings make race courses; go through the first one to start the clock, th
 
 Canon-looking characters use their sculpt up close; customised looks and far-away characters keep the built model.
 
+The rest of the cast is sculpted with [Mojulo](https://mojulo.com): Morty, Evil Morty, Summer, Beth, Jerry, Unity, Mr. Poopybutthole, Mr. Meeseeks, Squanchy, Birdperson, the Gromflomite trooper and King Tommy. Each one is a model in `scripts/models/` built from the shared parts in `scripts/models/kit.js` (head with eyes, brows, nose, ears and mouth; torso with shirt, collar and belt; sleeved arms and hands; legs and shoes). `scripts/mojulo-character.js` turns a model into a Mojulo workbench recipe (one field solid per body part and colour), and turns Mojulo's glTF export back into the game's per-part sculpt:
+
+    node scripts/mojulo-character.js spec scripts/models/morty.js morty.json      # the recipe to mint in Mojulo
+    node scripts/mojulo-character.js mms scripts/models/morty.js model.glb assets/characters/morty.mms
+    node scripts/mojulo-character.js preview scripts/models/morty.js out.mms     # a quick local build, no Mojulo
+
+Each sculpt is about 11,000 triangles. Pickle Rick and the Cronenberg mutant keep their built models.
+
 ### Adding a dimension
 
 1. Add an entry to `MM.DIMS` in `shared/world.js`: name, seed, gravity, colours, props, locals and monsters, material and loot.
@@ -399,7 +407,7 @@ Version numbers live in `version.json`. The APK is signed with the project key i
 
 ## Living worlds, and the look
 
-Birds wheel over every open world, fish swim in the sea (and all around you in Atlantis and on Neptune), deer, rabbits, squirrels and foxes live by the trees on Earth (little critters elsewhere) and run when you come close, and cars drive Earth's roads, keeping right and stopping for you. The roads between Earth's towns and down to the beach wind through the hills, with lane markings and power lines along them. All of it is scenery each player's game draws for itself.
+Birds wheel over every open world (always flying head first), fish swim in the sea (and all around you in Atlantis and on Neptune), deer, rabbits, squirrels and foxes live in the woods between Earth's towns (little critters in the thickets of other worlds), never in a town or on a road, and run when you come close, and cars drive Earth's roads, keeping right and stopping for you. The roads between Earth's towns and down to the beach wind through the hills, with lane markings and power lines along them. All of it is scenery each player's game draws for itself.
 
 The game looks **realistic** by default: lit surfaces, filmic colour, soft sun shadows around you on high quality, and thinner ink lines. The flat **cartoon** look (cel shading, thick outlines) is a choice in the menu's settings (**Look**), and applies on the next load.
 

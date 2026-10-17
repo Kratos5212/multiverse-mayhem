@@ -1717,7 +1717,7 @@
   // The roads joining the suburb to the other towns, and down to the beach: country roads that
   // wind a little through the hills (from, to, how far they swing out, and an S-bend), with
   // power lines along one side.
-  const ROUTES = [[140, 0, 262, 0, 16, 5], [-140, 0, -262, 0, -14, 6], [0, -140, 0, -262, 18, -5], [0, 140, 0, 288, 12, -7]];
+  const ROUTES = [[140, 0, 262, 0, 16, 5], [-140, 0, -250, 30, -14, 6], [0, -140, 0, -262, 18, -5], [0, 140, 0, 288, 12, -7]];
   MM.EARTH_ROUTES = ROUTES.map(([x1, z1, x2, z2, A, B]) => {
     const len = Math.hypot(x2 - x1, z2 - z1), ux = (x2 - x1) / len, uz = (z2 - z1) / len, n = Math.ceil(len / 8), pts = [];
     for (let i = 0; i <= n; i++) {
@@ -1772,6 +1772,9 @@
   const propCache = {}, layoutCache = {};
   // The roads and plazas of a planned world (empty for the rest).
   MM.layoutOf = function (dimId) { MM.genProps(dimId); return layoutCache[dimId] || { roads: [], plazas: [] }; };
+  // The woods of a world ({x, z, r}), where its wild animals live (only Earths plant them).
+  const forestCache = {};
+  MM.forestsOf = function (dimId) { MM.genProps(dimId); return forestCache[dimId] || []; };
   MM.genProps = function (dimId) {
     if (propCache[dimId]) return propCache[dimId];
     const dim = MM.DIM_BY_ID[dimId];
@@ -1839,6 +1842,28 @@
         if (Math.abs(b) < 140 && free(a + 6.3, b, 0.4)) add('streetlamp', a + 6.3, b, -Math.PI / 2, 1);
         if (Math.abs(b) < 140 && free(b, a - 6.3, 0.4)) add('streetlamp', b, a - 6.3, 0, 1);
       }
+    }
+    // Woods out in the countryside between Earth's towns, away from the roads: where the deer,
+    // foxes and rabbits live (js/life.js). Their own random stream, so the rest stays put.
+    if (dim.regions) {
+      const fr = MM.rng(dim.seed * 13 + 7), woods = [], span = MM.boundOf(dimId) - 60;
+      const treeType = (dim.props.find(([t]) => /tree|fern|fungus|mushroom/.test(t)) || ['tree'])[0];
+      for (let tries = 0; woods.length < 9 && tries < 200; tries++) {
+        const x = (fr() * 2 - 1) * span, z = (fr() * 2 - 1) * span, rad = 26 + fr() * 20;
+        if (z > MM.BEACH_Z - 50 - rad || Math.max(Math.abs(x), Math.abs(z)) < 175 + rad) continue;
+        if (dim.regions.some(R => Math.max(Math.abs(x - R.ox), Math.abs(z - R.oz)) < 175 + rad)) continue;
+        if (MM.EARTH_LINKS.some(q => segD(x, z, q) < 22 + rad)) continue;
+        if (woods.some(w => Math.hypot(w.x - x, w.z - z) < w.r + rad + 30)) continue;
+        woods.push({ x, z, r: rad });
+        const n = Math.round(rad * rad / 14);
+        for (let i = 0, k = 0; i < n && k < n * 6; k++) {
+          const a = fr() * Math.PI * 2, d = Math.sqrt(fr()) * rad, s = 0.8 + fr() * 0.6;
+          const tx = x + Math.cos(a) * d, tz = z + Math.sin(a) * d;
+          if (!free(tx, tz, MM.PROPS[treeType].r * s * 0.6, true)) continue;
+          add(treeType, tx, tz, fr() * Math.PI * 2, s); i++;
+        }
+      }
+      forestCache[dimId] = woods;
     }
     if (layout) {
       // Planned towns (shared/layouts.js) instead of random scatter.

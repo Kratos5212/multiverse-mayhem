@@ -54,6 +54,9 @@
     return { parts, joints: H.joints };
   };
   C.sculpts = {};
+  // Which characters have a sculpt (assets/characters/<file>.mms).
+  C.SCULPTED = { genius: 'rick', sidekick: 'morty', evilmorty: 'evilmorty', teen: 'summer', surgeon: 'beth', joe: 'jerry', hive: 'unity',
+    beanling: 'poopybutthole', meeseeks: 'meeseeks', squanchy: 'squanchy', birdfolk: 'birdperson', trooper: 'gromflomite', tommy: 'tommy' };
   C.loadSculpt = function (arch, url) {
     return fetch(url).then(r => { if (!r.ok) throw new Error(url + ': ' + r.status); return r.arrayBuffer(); })
       .then(ab => { C.sculpts[arch] = C.parseMMS(ab); return C.sculpts[arch]; });
