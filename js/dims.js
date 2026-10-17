@@ -513,6 +513,127 @@
       s.add(P.torus, '#9aa3ab', [0, 0.55, 0.39], null, [0.26, 0.26, 0.3]);
       s.add(P.cyl, '#9aa3ab', [0.25, 1.02, -0.22], [Math.PI / 2, 0, 0], [0.05, 0.04, 0.05]);
     },
+    // ----- Furniture and centrepieces for the drawn insides (shared/interiors.js) -----
+    in_sofa(s) {
+      s.add(P.box, '#6a5a8a', [0, 0.25, 0.05], null, [2.2, 0.5, 0.8]);
+      s.add(P.box, '#7a6a9a', [0, 0.62, -0.3], null, [2.2, 0.7, 0.25]);
+      for (const x of [-1.0, 1.0]) s.add(P.box, '#7a6a9a', [x, 0.45, 0.05], null, [0.25, 0.5, 0.8]);
+      for (const x of [-0.5, 0.5]) s.add(P.box, '#8a7aaa', [x, 0.55, 0.1], null, [0.95, 0.12, 0.6]);
+    },
+    in_table(s) {
+      s.add(P.box, '#8a5a32', [0, 0.75, 0], null, [2.8, 0.1, 1.6]);
+      for (const x of [-1.2, 1.2]) for (const z of [-0.65, 0.65]) s.add(P.box, '#6a4222', [x, 0.37, z], null, [0.1, 0.74, 0.1]);
+      for (const x of [-0.8, 0, 0.8]) for (const z of [-1.1, 1.1]) { s.add(P.box, '#7a4a2a', [x, 0.45, z], null, [0.45, 0.06, 0.45]); s.add(P.box, '#7a4a2a', [x, 0.75, z + Math.sign(z) * 0.2], null, [0.45, 0.6, 0.05]); }
+      s.add(P.cyl, '#e8e4dc', [0, 0.82, 0], null, [0.18, 0.04, 0.18]);
+    },
+    in_bed(s) {
+      s.add(P.box, '#6a4a32', [0, 0.25, 0], null, [1.8, 0.4, 2.2]);
+      s.add(P.box, '#f0ece2', [0, 0.5, 0.1], null, [1.7, 0.18, 2.0]);
+      s.add(P.box, '#5a8ac8', [0, 0.6, 0.35], null, [1.72, 0.08, 1.4]);
+      s.add(P.box, '#ffffff', [0, 0.65, -0.75], null, [1.2, 0.15, 0.4]);
+      s.add(P.box, '#6a4a32', [0, 0.7, -1.1], null, [1.8, 1.0, 0.1]);
+    },
+    in_desk(s) {
+      s.add(P.box, '#8a6a4a', [0, 0.74, 0], null, [1.6, 0.08, 0.8]);
+      for (const x of [-0.72, 0.72]) s.add(P.box, '#6a4a2a', [x, 0.37, 0], null, [0.08, 0.74, 0.74]);
+      s.add(P.box, '#2a2e36', [0, 1.05, -0.2], null, [0.6, 0.42, 0.05]);
+      s.add(P.box, '#5fb4ff', [0, 1.05, -0.17], null, [0.52, 0.34, 0.02], true);
+      s.add(P.box, '#3a3a40', [0, 0.45, 0.6], null, [0.5, 0.08, 0.5]);
+    },
+    in_shelf(s) {
+      s.add(P.box, '#6a4a2a', [0, 1.1, 0], null, [2.0, 2.2, 0.6]);
+      for (let y = 0.35; y < 2.1; y += 0.5) for (let i = 0; i < 6; i++) s.add(P.box, ['#c84848', '#4878c8', '#48a868', '#e8c848'][(i + Math.round(y * 2)) % 4], [-0.8 + i * 0.32, y + 0.17, 0.22], null, [0.22, 0.34, 0.2]);
+    },
+    in_counter(s) {
+      s.add(P.box, '#7a5a3a', [0, 0.5, 0], null, [3.6, 1.0, 1.0]);
+      s.add(P.box, '#d8d0c0', [0, 1.04, 0], null, [3.7, 0.08, 1.1]);
+      s.add(P.box, '#2a2e36', [1.2, 1.3, -0.2], null, [0.5, 0.4, 0.4]);
+      s.add(P.box, '#ffd84d', [-1.0, 1.15, 0.1], null, [0.3, 0.14, 0.3]);
+    },
+    in_plant(s) {
+      s.add(P.cyl, '#b86a3a', [0, 0.25, 0], null, [0.3, 0.5, 0.3]);
+      for (const [x, y, z, r] of [[0, 1.0, 0, 0.45], [0.2, 1.3, 0.1, 0.32], [-0.18, 1.25, -0.1, 0.3]]) s.add(P.sphere, '#3f9a3a', [x, y, z], null, [r, r, r]);
+    },
+    in_bench(s) {
+      s.add(P.box, '#8a6a4a', [0, 0.45, 0], null, [2.0, 0.08, 0.5]);
+      for (const x of [-0.85, 0.85]) s.add(P.box, '#5a4a3a', [x, 0.22, 0], null, [0.1, 0.44, 0.45]);
+    },
+    f_furnace(s) {
+      s.add(P.box, '#5a2a2a', [0, 1.5, 0], null, [3.4, 3.0, 2.6]);
+      s.add(P.box, '#3a1818', [0, 3.3, -0.3], null, [1.2, 1.2, 1.2]);
+      s.add(P.box, '#ff8a2a', [0, 1.0, 1.31], null, [1.6, 1.1, 0.04], true);
+      s.add(P.box, '#ffd84d', [0, 0.85, 1.33], null, [1.1, 0.6, 0.04], true);
+      for (const x of [-1.4, 1.4]) s.add(P.cyl, '#c8576b', [x, 1.6, 1.0], null, [0.25, 3.2, 0.25]);
+    },
+    f_anvil(s) {
+      s.add(P.box, '#4a4a4e', [0, 0.25, 0], null, [0.5, 0.5, 0.4]);
+      s.add(P.box, '#5a5a60', [0, 0.65, 0], null, [1.1, 0.3, 0.45]);
+      s.add(P.cyl, '#5a5a60', [0.6, 0.7, 0], [0, 0, Math.PI / 2], [0.15, 0.3, 0.15]);
+    },
+    f_stage(s) {
+      s.add(P.box, '#4a2a3a', [0, 0.27, 0], null, [7, 0.55, 4]);
+      s.add(P.box, '#ff5fd0', [0, 0.56, 1.98], null, [7, 0.04, 0.06], true);
+      s.add(P.box, '#2a1a2a', [0, 2.6, -1.9], null, [7, 4.2, 0.2]);
+      for (const x of [-2.6, 2.6]) { s.add(P.box, '#1a1a1e', [x, 1.2, -1.2], null, [0.9, 1.3, 0.7]); s.add(P.cyl, '#3a3a40', [x, 1.2, -0.84], [Math.PI / 2, 0, 0], [0.3, 0.03, 0.3]); }
+      s.add(P.cylLo, '#c8c8d0', [0, 1.1, 0.8], null, [0.03, 1.1, 0.03]);
+      s.add(P.sphere, '#2a2a2a', [0, 1.72, 0.8], null, [0.08, 0.1, 0.08]);
+      for (const x of [-2, 0, 2]) s.add(P.sphere, ['#ff5fd0', '#5ff8ff', '#ffd84d'][(x + 2) / 2], [x, 4.5, -1.6], null, [0.25, 0.25, 0.25], true);
+    },
+    f_conveyor(s) {
+      s.add(P.box, '#3a3a40', [0, 0.85, 0], null, [8, 0.15, 1.4]);
+      for (let x = -3.5; x <= 3.5; x += 1.75) s.add(P.box, '#5a5a62', [x, 0.4, 0], null, [0.15, 0.8, 1.2]);
+      for (let x = -3; x <= 3; x += 1.5) s.add(P.sphere, ['#ff8fc8', '#5ff8ff', '#b46aff'][Math.abs(Math.round(x)) % 3], [x, 1.1, 0], null, [0.3, 0.25, 0.3]);
+      s.add(P.box, '#8a8a92', [3.6, 1.6, 0], null, [0.8, 1.6, 1.6]);
+    },
+    f_vat(s) {
+      s.add(P.cyl, '#8a909a', [0, 1.1, 0], null, [1.3, 2.2, 1.3]);
+      s.add(P.cyl, '#5ff8ff', [0, 2.22, 0], null, [1.15, 0.06, 1.15], true);
+      for (const a of [0, 2.1, 4.2]) s.add(P.box, '#5ff8ff', [Math.cos(a) * 0.5, 2.6, Math.sin(a) * 0.5], [0.2, a, 0.1], [0.25, 0.8, 0.25], true);
+    },
+    f_ringtable(s) {
+      const n = 14;
+      for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; s.add(P.box, '#c8ccd8', [Math.sin(a) * 2.2, 0.8, Math.cos(a) * 2.2], [0, a, 0], [1.05, 0.1, 0.7]); s.add(P.box, '#4a5470', [Math.sin(a) * 3.0, 0.5, Math.cos(a) * 3.0], [0, a, 0], [0.5, 1.0, 0.1]); }
+      s.add(P.cyl, '#4a5470', [0, 0.4, 0], null, [1.2, 0.8, 1.2]);
+      s.add(P.sphere, '#5ff8ff', [0, 1.4, 0], null, [0.6, 0.6, 0.6], true);
+    },
+    f_podium(s) {
+      s.add(P.box, '#6a4a2a', [0, 0.6, 0], null, [1.0, 1.2, 0.7]);
+      s.add(P.box, '#8a6a4a', [0, 1.25, -0.05], [-0.25, 0, 0], [1.1, 0.08, 0.8]);
+      s.add(P.cyl, '#ffd84d', [0, 0.7, 0.36], [Math.PI / 2, 0, 0], [0.25, 0.03, 0.25]);
+    },
+    f_ballpit(s) {
+      for (const [x, z, w, d] of [[0, -2.3, 5, 0.3], [0, 2.3, 5, 0.3], [-2.4, 0, 0.3, 4.6], [2.4, 0, 0.3, 4.6]]) s.add(P.box, '#5fb4ff', [x, 0.3, z], null, [w, 0.6, d]);
+      for (let i = 0; i < 46; i++) { const x = ((i * 37) % 44) / 10 - 2.1, z = ((i * 53) % 40) / 10 - 2.0; s.add(P.sphere, ['#ff5f5f', '#ffd84d', '#5fb4ff', '#5fdc5f'][i % 4], [x, 0.35, z], null, [0.22, 0.22, 0.22]); }
+    },
+    f_throne(s) {
+      s.add(P.box, '#c8a040', [0, 0.25, 0], null, [2.4, 0.5, 2.0]);
+      s.add(P.box, '#a83838', [0, 0.85, 0.1], null, [1.4, 0.7, 1.2]);
+      s.add(P.box, '#c8a040', [0, 2.0, -0.6], null, [1.6, 3.0, 0.3]);
+      for (const x of [-0.75, 0.75]) s.add(P.box, '#c8a040', [x, 1.2, 0.1], null, [0.2, 0.6, 1.2]);
+      for (const x of [-0.6, 0, 0.6]) s.add(P.cone, '#ffd84d', [x, 3.7, -0.6], null, [0.18, 0.5, 0.18]);
+    },
+    f_tvwall(s) {
+      s.add(P.box, '#2a2a30', [0, 1.75, -0.2], null, [8, 3.5, 0.3]);
+      const cols = ['#5fb4ff', '#ff8fc8', '#5fdc5f', '#ffd84d', '#b46aff', '#ff8a4a'];
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 6; c++) { s.add(P.box, '#111114', [-3.3 + c * 1.32, 0.7 + r * 1.05, -0.02], null, [1.2, 0.9, 0.08]); s.add(P.box, cols[(r * 2 + c) % 6], [-3.3 + c * 1.32, 0.7 + r * 1.05, 0.03], null, [1.05, 0.75, 0.02], true); }
+    },
+    f_statue(s) {
+      s.add(P.box, '#d8d4c8', [0, 0.5, 0], null, [1.4, 1.0, 1.4]);
+      s.add(P.capsule, '#e8e4d8', [0, 1.9, 0], null, [0.35, 1.0, 0.35]);
+      s.add(P.sphere, '#e8e4d8', [0, 2.75, 0], null, [0.3, 0.32, 0.3]);
+    },
+    f_ufo(s) {
+      s.add(P.cyl, '#b8c0c8', [0, 1.4, 0], null, [4.2, 0.5, 4.2]);
+      s.add(P.sphere, '#9ac8e8', [0, 1.9, 0], null, [1.6, 1.0, 1.6]);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.sphere, '#5ff86a', [Math.sin(a) * 3.6, 1.35, Math.cos(a) * 3.6], null, [0.2, 0.2, 0.2], true); }
+      for (const a of [0.5, 2.6, 4.7]) s.add(P.cylLo, '#6a7078', [Math.sin(a) * 2.6, 0.6, Math.cos(a) * 2.6], [Math.cos(a) * 0.3, 0, -Math.sin(a) * 0.3], [0.08, 1.4, 0.08]);
+      s.add(P.box, '#6a7a5a', [1.5, 2.2, 0.5], [0.3, 0.4, 0.2], [3.2, 0.06, 2.6]);   // the tarp, half off
+    },
+    f_doorwall(s) {
+      s.add(P.box, '#e8dcc4', [0, 1.5, -0.2], null, [9, 3, 0.3]);
+      const cols = ['#8a3a2a', '#3a6a8a', '#e8e4dc', '#2a5a3a', '#c8a040', '#6a3a8a'];
+      for (let i = 0; i < 6; i++) { const x = -3.75 + i * 1.5; s.add(P.box, '#fbf6ea', [x, 1.15, -0.02], null, [1.15, 2.3, 0.08]); s.add(P.box, cols[i], [x, 1.1, 0.03], null, [0.95, 2.1, 0.05]); s.add(P.sphere, '#ffd84d', [x + 0.35, 1.1, 0.08], null, [0.06, 0.06, 0.06]); }
+    },
     // The Smiths' bathroom upstairs.
     bathtub(s) {
       s.add(P.box, '#f4f4f0', [0, 0.3, 0], null, [0.85, 0.6, 1.8]);
@@ -2641,6 +2762,7 @@
       g.add(lamp);
       return g;
     }
+    if (R.plan) return drawnRoom(R);
     const s = new C.Shape(), w = R.w, d = R.d, h = R.h;
     s.add(P.box, dim.ground[0], [0, -0.1, 0], null, [w, 0.2, d]);
     // Floor planks / tiles for a bit of texture.
@@ -2677,6 +2799,40 @@
     lamp.position.set(0, h - 1.5, 0);
     g.add(lamp);
     return g;
+  }
+
+  // A building's inside drawn from its floor plan (shared/interiors.js): a floor per room,
+  // the walls (inside ones from the plan, the front one with the way in), skirting, a ceiling
+  // and hanging lights. The furniture comes in as props.
+  function drawnRoom(R) {
+    const s = new C.Shape(), L = R.look, h = R.h, W = R.w, D = R.d, I = { plan: R.plan, scale: R.scale };
+    R.plan.rooms.forEach((r, i) => {
+      const a = MM.interiorXZ(I, r.x, r.y), b = MM.interiorXZ(I, r.x + r.w, r.y + r.h);
+      s.add(P.box, L.floor[i % 2], [(a.x + b.x) / 2, -0.05, (a.z + b.z) / 2], null, [Math.abs(b.x - a.x), 0.1, Math.abs(b.z - a.z)]);
+    });
+    const wall = (x1, z1, x2, z2) => {
+      const len = Math.hypot(x2 - x1, z2 - z1), ang = Math.atan2(x2 - x1, z2 - z1), mx = (x1 + x2) / 2, mz = (z1 + z2) / 2;
+      s.add(P.box, L.wall, [mx, h / 2, mz], [0, ang, 0], [0.2, h, len]);
+      s.add(P.box, L.trim, [mx, 0.15, mz], [0, ang, 0], [0.26, 0.3, len]);
+      s.add(P.box, L.trim, [mx, h - 0.1, mz], [0, ang, 0], [0.24, 0.2, len]);
+    };
+    for (const [x1, z1, x2, z2] of MM.planWalls(I)) wall(x1, z1, x2, z2);
+    const e = R.plan.doors.find(d => d.entry), ex = MM.interiorXZ(I, e.x, e.y).x, hw = W / 2, hd = D / 2, g = 0.9;
+    wall(-hw, hd, hw, hd); wall(-hw, -hd, -hw, hd); wall(hw, -hd, hw, hd);
+    wall(-hw, -hd, ex - g, -hd); wall(ex + g, -hd, hw, -hd);
+    s.add(P.box, L.wall, [ex, 2.6 + (h - 2.6) / 2, -hd], null, [2 * g, h - 2.6, 0.2]);
+    s.add(P.box, L.trim, [ex, 2.65, -hd], null, [2 * g + 0.3, 0.14, 0.3]);
+    s.add(P.box, shade(L.wall, 0.85), [0, h + 0.1, 0], null, [W + 0.4, 0.2, D + 0.4]);
+    for (let x = -W / 2 + W / 6; x < W / 2; x += W / 3) for (let z = -D / 2 + D / 4; z < D / 2; z += D / 2) {
+      s.add(P.cylLo, '#2a2a2a', [x, h - 0.25, z], null, [0.03, 0.5, 0.03]);
+      s.add(P.sphereLo, '#fff4c0', [x, h - 0.55, z], null, [0.2, 0.14, 0.2], true);
+    }
+    const grp = C.meshOf(s.build(), 0.05);
+    grp.traverse(o => { if (o.material && o.material.side === T.BackSide) o.visible = false; });
+    const lamp = new T.PointLight('#fff1d0', 0.7, 50);
+    lamp.position.set(0, h - 1.2, 0);
+    grp.add(lamp);
+    return grp;
   }
 
   // A carpeted staircase between two floors (dim.floors.stair: x0..x1 wide, climbing from z0

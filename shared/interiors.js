@@ -114,6 +114,102 @@
     },
   ];
 
+  // ----- Insides drawn in the game (no mesh): every other building you can do things at -----
+  // A plan from a template ('one' big room, 'two' rooms front and back, 'three': a front hall
+  // and two rooms behind), a look (wall and floor colours), and spots: { id, name, at: [fx, fy]
+  // (fractions of the plan), alias?, f: [prop, dx, dy (feet from the spot), rot?] (the thing
+  // the spot is about: a furnace, a throne...) }. Furniture fills the rest, by room glyph.
+  MM.INSIDE_LOOKS = {
+    meat: { wall: '#b0485c', floor: ['#8a3040', '#7a2838'], trim: '#5a1a28' },
+    bazaar: { wall: '#6a4a8a', floor: ['#4a3a5a', '#3e304e'], trim: '#2a1e3a' },
+    moon: { wall: '#c8ccd4', floor: ['#9aa0aa', '#8a909a'], trim: '#5a606a' },
+    citadel: { wall: '#d8dce8', floor: ['#a8b0c4', '#98a0b4'], trim: '#4a5470' },
+    palace: { wall: '#f0e0b0', floor: ['#c84848', '#b83838'], trim: '#c8a040' },
+    shop: { wall: '#e8dcc4', floor: ['#b89870', '#a88860'], trim: '#6a4a30' },
+    office: { wall: '#e4e4dc', floor: ['#9a9a92', '#8a8a82'], trim: '#5a5a52' },
+    marble: { wall: '#f2efe6', floor: ['#d8d4c8', '#c8c4b8'], trim: '#a89a70' },
+    military: { wall: '#7a8466', floor: ['#5a5e52', '#4e5246'], trim: '#3a3e32' },
+    club: { wall: '#3a2a4a', floor: ['#2a1e34', '#24182c'], trim: '#ff5fd0' },
+    sea: { wall: '#3a8aa8', floor: ['#2a6a88', '#245e7a'], trim: '#ffd84d' },
+    giant: { wall: '#a89878', floor: ['#7a6a52', '#6e5e48'], trim: '#4a3e2e' },
+    gear: { wall: '#8a7a5a', floor: ['#6a5a3a', '#5e4e30'], trim: '#c8a040' },
+    garage: { wall: '#7a6a5a', floor: ['#5a5a56', '#4e4e4a'], trim: '#3a2a1a' },
+    hangar: { wall: '#8a9098', floor: ['#6a7078', '#5e646c'], trim: '#3a4048' },
+    dream: { wall: '#b8a8e8', floor: ['#8a7ac8', '#7a6ab8'], trim: '#ffd84d' },
+    bird: { wall: '#c8a878', floor: ['#a8885a', '#98784e'], trim: '#6a4a2a' },
+    factory: { wall: '#d4c8d8', floor: ['#a89aac', '#988a9c'], trim: '#ff8fc8' },
+  };
+  // The furniture and the centrepieces (models in js/dims.js). box: footprint, front = +z.
+  const FURN = {
+    in_sofa: [1.1, 0.9, [-1.1, 1.1, -0.45, 0.45]], in_table: [1.2, 0.8, [-1.4, 1.4, -0.8, 0.8]], in_bed: [1.2, 0.7, [-0.9, 0.9, -1.1, 1.1]],
+    in_desk: [0.9, 0.8, [-0.8, 0.8, -0.4, 0.4]], in_shelf: [0.9, 2.2, [-1, 1, -0.35, 0.35]], in_counter: [1.4, 1.1, [-1.8, 1.8, -0.5, 0.5]],
+    in_plant: [0.4, 1.4], in_bench: [1.0, 0.5, [-1, 1, -0.3, 0.3]], f_furnace: [2.0, 3.5, [-1.8, 1.8, -1.4, 1.4]], f_anvil: [0.6, 0.9],
+    f_stage: [3.0, 0.55, [-3.5, 3.5, -2, 2]], f_conveyor: [2.5, 1.0, [-4, 4, -0.8, 0.8]], f_vat: [1.4, 2.5], f_ringtable: [2.6, 0.9],
+    f_podium: [0.7, 1.3], f_ballpit: [2.4, 0.45], f_throne: [1.3, 3.0, [-1.2, 1.2, -1, 0.9]], f_tvwall: [3, 3.5, [-4, 4, -0.4, 0.4]],
+    f_statue: [0.8, 3.0], f_ufo: [4, 3.0], f_doorwall: [3, 3, [-4.5, 4.5, -0.3, 0.3]],
+  };
+  for (const k in FURN) { const [r, h, box] = FURN[k]; MM.PROPS[k] = { r, h, hp: 1e9, drop: {}, fixed: true }; if (box) MM.PROPS[k].box = box; }
+  const INSIDES = [
+    ['forgein', 'forge', 'The Forge (inside)', 'meat', 'one', 44, 32, [['furnace', 'The furnace', [0.5, 0.35], 'forge', ['f_furnace', 0, -6, 0]], ['anvil', 'The anvil', [0.25, 0.65], null, ['f_anvil', 0, -3, 0]]], [['fleshmonk', 3]]],
+    ['shipyardin', 'shipyard', 'Bazaar Shipyard (inside)', 'bazaar', 'one', 56, 40, [['dock', 'Dry dock', [0.5, 0.4], 'shipyard', ['spacecruiser', 0, -9, 0]], ['parts', 'The parts counter', [0.82, 0.7], null, ['in_counter', 0, -4, 0]]], [['merchant', 2], ['tourist', 2]]],
+    ['marketin', 'market', 'The Black Market (inside)', 'bazaar', 'three', 50, 36, [['stalls', 'The back-room stalls', [0.5, 0.75], 'market', ['stall', 0, -6, 0]], ['fence', 'The fence (no questions asked)', [0.25, 0.25], null, ['in_counter', 0, -5, 0]], ['den', 'The party den', [0.75, 0.25], null, ['f_stage', 0, -6, 0]]], [['merchant', 3], ['tourist', 3]]],
+    ['refineryin', 'refinery', 'Crystal Refinery (inside)', 'moon', 'two', 48, 36, [['line', 'The sorting line', [0.5, 0.75], 'refinery', ['f_conveyor', 0, -5, 0]], ['vats', 'The crystal vats', [0.5, 0.25], null, ['f_vat', 0, -5, 0]]], [['moonminer', 4]]],
+    ['aeriein', 'aerie', 'The Aerie (inside)', 'bird', 'one', 44, 34, [['roost', 'The high roost', [0.5, 0.4], 'aerie', ['nest', 0, -6, 0]]], [['birdcitizen', 4]]],
+    ['councilin', 'council', 'Council of Ricks Chamber', 'citadel', 'three', 60, 42, [['chamber', 'The council table', [0.5, 0.72], 'council', ['f_ringtable', 0, -1, 0]], ['records', 'Hall of Records', [0.25, 0.22], null, ['in_shelf', 0, -6, 0]], ['vote', 'The voting booth', [0.75, 0.22], null, ['f_podium', 0, -5, 0]]], [['citrick', 6], ['citguard', 2]]],
+    ['daycarein', 'daycare', 'Morty Daycare (inside)', 'citadel', 'two', 46, 34, [['play', 'The ball pit', [0.5, 0.72], 'daycare', ['f_ballpit', 0, -2, 0]], ['naps', 'Nap time corner', [0.5, 0.25], null, ['in_bed', 0, -5, 0]]], [['citmorty', 8]]],
+    ['palacein', 'palace', "Snowball's Palace (inside)", 'palace', 'two', 54, 40, [['throne', "Snowball's throne", [0.5, 0.3], 'palace', ['f_throne', 0, -6, 0]], ['hall', 'The great hall', [0.5, 0.75], null, ['in_table', 0, 0, 0]]], [['dogcitizen', 5]]],
+    ['needfulin', 'needful', 'Needful Things (inside)', 'shop', 'one', 34, 26, [['shelves', 'The cursed shelves', [0.5, 0.35], 'needful', ['curioshelf', 0, -5, 0]]], [['neighbor', 1]]],
+    ['wongin', 'wong', "Dr. Wong's office (inside)", 'office', 'two', 34, 28, [['couch', 'The therapy couch', [0.5, 0.25], 'wong', ['in_sofa', 0, -4, 0]], ['waiting', 'Waiting room', [0.5, 0.72], null, ['in_bench', 0, -4, 0]]], [['neighbor', 2]]],
+    ['tvstorein', 'tvstore', 'TV store (inside)', 'shop', 'one', 40, 30, [['tvwall', 'The wall of TVs', [0.5, 0.3], 'tvstore', ['f_tvwall', 0, -6, 0]]], [['neighbor', 3]]],
+    ['capitolin', 'capitol', 'The Capitol (inside)', 'marble', 'three', 64, 44, [['floor', 'The Senate floor', [0.5, 0.75], 'capitol', ['f_podium', 0, -6, 0]], ['rotunda', 'The rotunda', [0.25, 0.22], null, ['f_statue', 0, -3, 0]], ['lobby', "The lobbyists' room", [0.75, 0.22], null, ['in_table', 0, -2, 0]]], [['secretservice', 3], ['neighbor', 4]]],
+    ['pentagonin', 'pentagon', 'The Pentagon (inside)', 'military', 'two', 60, 42, [['warroom', 'The war room', [0.5, 0.3], 'pentagon', ['f_ringtable', 0, -1, 0]], ['screens', 'The big screens', [0.5, 0.75], null, ['f_tvwall', 0, -7, 0]]], [['marine', 5]]],
+    ['snakeclubin', 'snakeclub', 'The Snake Jazz Club (inside)', 'club', 'one', 44, 32, [['stage', 'The jazz stage', [0.5, 0.3], 'snakeclub', ['f_stage', 0, -5, 0]], ['bar', 'The bar', [0.2, 0.7], null, ['in_counter', 0, -3, 0]]], [['snakefolk', 6]]],
+    ['giantcastlein', 'giantcastle', "The Giants' Castle (inside)", 'giant', 'one', 70, 50, [['court', "The giants' court", [0.5, 0.3], 'giantcastle', ['f_throne', 0, -7, 0, 2.2]], ['table', 'The giant dinner table', [0.5, 0.72], null, ['in_table', 0, 0, 0, 2.4]]], [['giant', 2]]],
+    ['nimbuspalacein', 'nimbuspalace', "Mr. Nimbus's Palace (inside)", 'sea', 'one', 56, 40, [['throne', 'The sea throne', [0.5, 0.3], 'nimbuspalace', ['f_throne', 0, -6, 0]]], [['merfolk', 5]]],
+    ['squanchclubin', 'squanchclub', 'The Squanch Club (inside)', 'club', 'one', 44, 32, [['dancefloor', 'The dance floor', [0.5, 0.45], 'squanchclub', ['f_stage', 0, -7, 0]], ['bar', 'The squanch bar', [0.82, 0.75], null, ['in_counter', 0, -3, 0]]], [['squanchcat', 7]]],
+    ['raidergaragein', 'raidergarage', "The Raiders' Garage (inside)", 'garage', 'one', 48, 34, [['bay', 'The car bay', [0.5, 0.45], 'raidergarage', ['car', 0, -6, Math.PI / 2]], ['tools', 'Tool wall', [0.15, 0.3], null, ['toolchest', 0, -4, 0]]], [['neighbor', 2], ['robotfolk', 1]]],
+    ['formsofficein', 'formsoffice', 'Federation Forms Office (inside)', 'office', 'two', 50, 36, [['window', 'Window 27-B', [0.5, 0.25], 'formsoffice', ['in_counter', 0, -4, 0]], ['queue', 'The queue', [0.5, 0.72], null, ['in_bench', 0, -3, 0]]], [['fedclerk', 5]]],
+    ['geartemplein', 'geartemple', 'The Gear Temple (inside)', 'gear', 'one', 46, 34, [['altar', 'The great gear', [0.5, 0.3], 'geartemple', ['biggear', 0, -6, 0]]], [['gearperson', 5]]],
+    ['hangar51in', 'hangar51', 'Hangar 18 (inside)', 'hangar', 'one', 64, 46, [['saucer', 'The saucer under the tarp', [0.5, 0.42], 'hangar51', ['f_ufo', 0, -7, 0]], ['crates', 'The crate stacks', [0.15, 0.25], null, ['crate', 0, -3, 0]]], [['marine', 4], ['labtech', 2]]],
+    ['fakedoorsin', 'fakedoors', 'Real Fake Doors (inside)', 'shop', 'one', 40, 30, [['doors', 'The wall of fake doors', [0.5, 0.3], 'fakedoors', ['f_doorwall', 0, -6, 0]]], [['adperson', 3]]],
+    ['antsjohnsonin', 'antsjohnson', "Ants in my Eyes Johnson's (inside)", 'shop', 'one', 40, 30, [['deals', 'Every TV on sale', [0.5, 0.3], 'antsjohnson', ['f_tvwall', 0, -6, 0]]], [['adperson', 3]]],
+    ['plumbuslinein', 'plumbusline', 'Plumbus Factory Floor', 'factory', 'one', 56, 40, [['line', 'The plumbus line', [0.5, 0.42], 'plumbusline', ['f_conveyor', 0, -5, 0]]], [['plumbusworker', 5]]],
+    ['dreamschoolin', 'dreamschool', 'Dream School (inside)', 'dream', 'three', 54, 40, [['exam', 'The exam room', [0.25, 0.22], 'dreamschool', ['in_desk', 0, -4, 0]], ['hallway', 'The endless hallway', [0.5, 0.75], null, ['in_bench', 0, -4, 0]], ['gym', 'The gym, in your underwear', [0.75, 0.22], null, ['f_stage', 0, -5, 0]]], [['dreamer', 4]]],
+    ['gazorpthronein', 'gazorpthrone', 'The Gazorpian Throne Room', 'palace', 'one', 50, 36, [['throne', 'The throne of the queen', [0.5, 0.3], 'gazorpthrone', ['f_throne', 0, -6, 0]]], [['alienfolk', 4]]],
+    ['dinocouncilin', 'dinocouncil', 'The Dinosaur Council (inside)', 'giant', 'one', 60, 44, [['ring', 'The council ring', [0.5, 0.45], 'dinocouncil', ['f_ringtable', 0, -1, 0, 1.6]]], [['dinosaur', 3]]],
+  ];
+  const TPL = {
+    one: (W, H) => ({ rooms: [{ x: 0, y: 0, w: W, h: H, glyph: 'D' }], doors: [{ x: W / 2, y: H, room: 0, edge: 'S', entry: true }] }),
+    two: (W, H) => { const m = Math.round(H * 0.45); return { rooms: [{ x: 0, y: m, w: W, h: H - m, glyph: 'L' }, { x: 0, y: 0, w: W, h: m, glyph: 'O' }], doors: [{ x: W / 2, y: H, room: 0, edge: 'S', entry: true }, { x: W / 2, y: m, room: 1, edge: 'S' }] }; },
+    three: (W, H) => { const m = Math.round(H * 0.45); return { rooms: [{ x: 0, y: m, w: W, h: H - m, glyph: 'H' }, { x: 0, y: 0, w: W / 2, h: m, glyph: 'O' }, { x: W / 2, y: 0, w: W / 2, h: m, glyph: 'L' }], doors: [{ x: W / 2, y: H, room: 0, edge: 'S', entry: true }, { x: W / 4, y: m, room: 1, edge: 'S' }, { x: W * 3 / 4, y: m, room: 2, edge: 'S' }] }; },
+  };
+  for (const [id, outside, name, look, tpl, W, H, spots, npc] of INSIDES) {
+    if (!MM.LANDMARK_BY_ID[outside]) continue;
+    const I = { id, outside, name, look, scale: 1.35, proc: true, plan: Object.assign({ width: W, height: H }, TPL[tpl](W, H)), npc };
+    I.spots = spots.map(([sid, sname, [fx, fy], alias, f]) => ({ id: sid, name: sname, x: Math.round(fx * W), y: Math.round(fy * H), alias: alias || undefined, f }));
+    MM.INTERIORS.push(I);
+  }
+  // Furniture for a drawn inside, by room glyph, kept clear of the spots and the doors:
+  // [prop, x, z, rot, scale] in game coordinates (dim.fixed).
+  MM.furnishInside = function (I) {
+    const out = [], k = 0.3048 * I.scale, P = I.plan;
+    const at = (px, py) => MM.interiorXZ(I, px, py);
+    const busy = (px, py, rad) => I.spots.some(s => Math.hypot(s.x - px, s.y - py) < rad + 7) || P.doors.some(d => Math.hypot(d.x - px, d.y - py) < rad + 5);
+    const put = (type, px, py, rot, sc) => { if (busy(px, py, 3)) return; const q = at(px, py); out.push([type, +q.x.toFixed(2), +q.z.toFixed(2), rot || 0, sc || 1]); };
+    // The thing a spot is about stands just behind it (plan north = +z), facing you.
+    for (const s of I.spots) if (s.f) { const [type, dx, dy, rot, sc] = s.f, q = at(s.x + dx, s.y + dy); out.push([type, +q.x.toFixed(2), +q.z.toFixed(2), (rot || 0) + (dy < 0 ? Math.PI : 0), sc || 1]); }
+    for (const r of P.rooms) {
+      const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+      // Plants in the corners, and something along the back wall.
+      for (const [px, py] of [[r.x + 2.5, r.y + 2.5], [r.x + r.w - 2.5, r.y + 2.5]]) put('in_plant', px, py, 0);
+      if (r.glyph === 'L') { put('in_sofa', cx - r.w * 0.25, cy + 2, Math.PI); put('in_sofa', cx + r.w * 0.25, cy + 2, Math.PI); }
+      if (r.glyph === 'D') { put('in_bench', r.x + 4, cy, Math.PI / 2); put('in_bench', r.x + r.w - 4, cy, -Math.PI / 2); }
+      if (r.glyph === 'O') { put('in_shelf', r.x + 4, r.y + 1.5, Math.PI); put('in_desk', cx - r.w * 0.28, cy, Math.PI); }
+      if (r.glyph === 'H') { put('in_bench', r.x + 6, r.y + r.h - 4, 0); put('in_bench', r.x + r.w - 6, r.y + r.h - 4, 0); }
+    }
+    return out;
+  };
+
   // Feet on the plan -> game coordinates (centred on the plan; plan +y is -z in the game,
   // which is how Mojulo's export comes out).
   MM.interiorXZ = (I, px, py) => {
@@ -202,9 +298,11 @@
       bound: hw - 0.35, boundZ: hh - 0.35, blurb: out.name + ', inside.',
       sky: ['#2a2a30', '#2a2a30'], fog: '#2a2a30', fogFar: 400, sun: '#fff4e0', ambient: '#c0b8a8',
       ground: ['#b8a88a', '#a8987a', '#c8b89a'], accent: '#ffd84d', spawn: inside,
-      room: { w: hw * 2, d: hh * 2, h: 3.25 * I.scale, mesh: 'assets/interiors/' + I.id.replace(/in$/, '') + '.mmg' },
+      room: I.proc ? { w: hw * 2, d: hh * 2, h: 3.25 * I.scale, plan: I.plan, scale: I.scale, look: MM.INSIDE_LOOKS[I.look] }
+        : { w: hw * 2, d: hh * 2, h: 3.25 * I.scale, mesh: 'assets/interiors/' + I.id.replace(/in$/, '') + '.mmg' },
       walls: MM.planWalls(I), props: [], npc: I.npc || [], pickups: {}, mat: 's', insideOf: out.id,
     };
+    if (I.proc) { d.fixed = MM.furnishInside(I); d.ground = MM.INSIDE_LOOKS[I.look].floor.concat(MM.INSIDE_LOOKS[I.look].floor[0]); }
     // Fixed spots for the people who live there: plan feet to game metres.
     d.npc = d.npc.map(n => n.length > 2 ? [n[0], n[1], MM.interiorXZ(I, n[2], n[3]).x, MM.interiorXZ(I, n[2], n[3]).z] : n);
     MM.DIMS.push(d); MM.DIM_BY_ID[I.id] = d; MM.DIM_IDS.push(I.id);

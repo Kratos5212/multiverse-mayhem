@@ -584,7 +584,8 @@ test('buildings have insides: in through the door, do things, out again; walls a
     near(host, c, p, out.id); run(host, 1.2);
     host.message(c, JSON.stringify({ t: 'door', l: out.id }));
     assert.strictEqual(p.inst.dimId, I.id, 'into ' + I.name);
-    assert.ok(MM.DIM_BY_ID[I.id].walls.length > 0);
+    assert.ok(I.plan.rooms.length === 1 || MM.DIM_BY_ID[I.id].walls.length > 0, I.name + ' has inside walls');
+    assert.ok(MM.LANDMARKS.some(l => l.dim === I.id && l.alias === I.outside), 'what you do outside ' + I.name + ' works inside too');
     assert.ok([...p.inst.npcs.values()].every(n => Math.abs(n.x) <= MM.boundOf(I.id) && Math.abs(n.z) <= MM.boundZOf(I.id)), 'locals are inside');
     near(host, c, p, I.id + '_exit'); run(host, 1.2);
     host.message(c, JSON.stringify({ t: 'door', l: I.id + '_exit' }));
