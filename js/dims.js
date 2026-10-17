@@ -641,17 +641,42 @@
       s.add(P.box, '#c9b48c', [0, 0.05, 6.5], null, [1.4, 0.05, 3]);     // front path
     },
     // Rick's garage: same siding and roof as the house, white sectional door, side window.
+    // Rick's garage, standing open: thin walls you can walk between, the big door rolled up
+    // under the eaves, the side door open, a concrete floor, beams and a hanging light.
+    // Collision is the walls only (MM.PROPS.lm_garage.walls), so you just walk in.
     lm_garage(s) {
-      const w = 9, d = 9, h = 3.6, wall = '#e6d2a8', trim = '#fbf6ea';
+      const w = 9, d = 9, h = 3.6, t = 0.2, wall = '#e6d2a8', inner = '#9c936e', trim = '#fbf6ea';
       s.add(P.box, '#4a443c', [0, 0.2, 0], null, [w + 0.2, 0.4, d + 0.2]);
-      s.add(P.box, wall, [0, 0.4 + h / 2, 0], null, [w, h, d]);
-      siding(s, w, h, d / 2 + 0.01, shade(wall, 0.9));
+      s.add(P.box, '#77776f', [0, 0.41, 0], null, [w - 0.3, 0.02, d - 0.3]);                        // concrete floor
+      const panel = (x, z, sx, sz) => { s.add(P.box, wall, [x, 0.4 + h / 2, z], null, [sx, h, sz]); };
+      panel(0, -d / 2 + t / 2, w, t);                                                                  // back
+      panel(-w / 2 + t / 2, 0, t, d); panel(w / 2 - t / 2, 0, t, d);                                  // sides
+      panel((-w / 2 + -3.4) / 2, d / 2 - t / 2, w / 2 - 3.4, t);                                       // front, left of the door
+      panel((2.2 + 3.05) / 2, d / 2 - t / 2, 0.85, t); panel((4.15 + w / 2) / 2, d / 2 - t / 2, 0.35, t);
+      s.add(P.box, wall, [-0.6, 0.4 + 3.1 + (h - 3.1) / 2, d / 2 - t / 2], null, [5.6, h - 3.1, t]);   // over the big door
+      s.add(P.box, wall, [3.6, 0.4 + 2.3 + (h - 2.3) / 2, d / 2 - t / 2], null, [1.1, h - 2.3, t]);    // over the side door
+      // Inside: khaki panelling, wooden studs, beams across.
+      for (const sx of [-1, 1]) s.add(P.box, inner, [sx * (w / 2 - t - 0.01), 0.4 + h / 2, 0], null, [0.02, h - 0.1, d - 0.5]);
+      s.add(P.box, inner, [0, 0.4 + h / 2, -d / 2 + t + 0.01], null, [w - 0.5, h - 0.1, 0.02]);
+      for (let i = -3; i <= 3; i++) s.add(P.box, '#6e5034', [i * 1.25, 0.4 + h / 2, -d / 2 + t + 0.06], null, [0.09, h, 0.09]);
+      for (let i = -3; i <= 3; i++) s.add(P.box, '#6e5034', [0, 0.4 + h - 0.12, i * 1.25], null, [w - 0.4, 0.14, 0.14]);
+      s.add(P.box, '#d8d2c4', [0, 0.4 + h + 0.02, 0], null, [w - 0.2, 0.06, d - 0.2]);                 // ceiling
+      s.add(P.cylLo, '#2a2a2a', [0, 0.4 + h - 0.45, 0], null, [0.02, 0.6, 0.02]);
+      s.add(P.sphere, '#fff6c8', [0, 0.4 + h - 0.8, 0], null, [0.16, 0.12, 0.16], true);               // the bulb
+      // Outside: siding on the walls beside the doors, corner trim, the gable roof, the
+      // rolled-up door under the eaves.
+      for (let y = 0.7; y < 0.4 + h; y += 0.32) {
+        s.add(P.box, shade(wall, 0.9), [(-w / 2 - 3.4) / 2 - 0.15, y, d / 2 + 0.01], null, [w / 2 - 3.4 + 0.3, 0.03, 0.02]);
+        if (y > 3.6) s.add(P.box, shade(wall, 0.9), [0.2, y, d / 2 + 0.01], null, [7.3, 0.03, 0.02]);
+      }
       for (const sx of [-1, 1]) for (const sz of [-1, 1]) s.add(P.box, trim, [sx * w / 2, 0.4 + h / 2, sz * d / 2], null, [0.22, h, 0.22]);
       gable(s, w, d, 0.4 + h, 2.4, '#6b4a3a', trim);
-      garageDoor(s, -0.6, d / 2, 5.6, 2.9, trim);
+      s.add(P.box, trim, [-0.6, 0.4 + 3.15, d / 2 + 0.02], null, [5.9, 0.12, 0.1]);                    // door frame
+      for (const sx of [-1, 1]) s.add(P.box, trim, [-0.6 + sx * 2.9, 0.4 + 1.55, d / 2 + 0.02], null, [0.12, 3.1, 0.1]);
+      s.add(P.box, '#f4f2ec', [-0.6, 0.4 + 2.95, d / 2 - 0.5], null, [5.4, 0.24, 0.9]);                 // the rolled-up door
+      s.add(P.box, trim, [3.6, 0.4 + 2.35, d / 2 + 0.02], null, [1.25, 0.1, 0.1]);
+      s.add(P.box, '#8a7a6a', [4.12, 0.4 + 1.1, d / 2 + 0.45], [0, 1.2, 0], [0.85, 2.1, 0.06]);         // side door, swung open
       win(s, w / 2, 2.4, -1.5, 1.2, 1.0, null, 1);
-      s.add(P.box, trim, [3.6, 1.5, d / 2 + 0.03], null, [1.1, 2.3, 0.08]);
-      s.add(P.box, '#8a7a6a', [3.6, 1.45, d / 2 + 0.07], null, [0.85, 2.1, 0.06]);
       s.add(P.box, '#b8b0a2', [0, 0.03, d / 2 + 3], null, [6, 0.06, 6]);   // driveway apron
     },
     // Harry Herpson High: red brick, white cornice, two rows of windows, a columned entrance, flagpole.
@@ -2093,45 +2118,109 @@
     return t;
   })();
   const terrainMat = new T.MeshToonMaterial({ vertexColors: true, gradientMap: C.gradientMap, map: grain });
-  function makeTerrain(dim) {
-    const size = MM.WORLD_HALF * 2 + 120, seg = 170;
+  const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  // The ground's colour at a point: the world's palette in noisy patches, painted floors and
+  // tiles where a world has them, paving around landmarks. In a composite world each town
+  // keeps its own ground (Area 51's desert), fading into the countryside at its edge.
+  function groundColor(dim, x, z, y, tmp, P) {
+    let pal = P.base;
+    const n = MM.fbm(x * 0.05, z * 0.05, dim.seed + 99, 3);
+    const paint = (c0, c1, c2, out) => { out.copy(c0).lerp(c1, Math.min(1, Math.max(0, (n - 0.35) * 3))); if (n < 0.38) out.lerp(c2, Math.min(1, (0.38 - n) * 6)); return out; };
+    paint(pal[0], pal[1], pal[2], tmp);
+    if (dim.regions) {
+      const at = MM.regionAt(dim.id, x, z);
+      if (at.R) {
+        const k = 1 - smooth(150, 196, Math.max(Math.abs(at.lx), Math.abs(at.lz)));
+        const rp = P.regions[at.R.dim];
+        if (k > 0) tmp.lerp(paint(rp[0], rp[1], rp[2], P.t2), k);
+      }
+    }
+    if (dim.id === 'meatlands') {
+      const v = Math.abs(Math.sin(x * 0.11 + Math.sin(z * 0.07) * 3) * Math.cos(z * 0.09 + Math.sin(x * 0.05) * 2));
+      if (v < 0.05) tmp.set('#7c1e34');
+    }
+    if (dim.tiles) {
+      const gx = Math.abs(((x % 12) + 12) % 12 - 6), gz = Math.abs(((z % 12) + 12) % 12 - 6);
+      if (gx > 5.8 || gz > 5.8) tmp.set('#5ff8ff');
+    }
+    if (dim.id === 'bazaar') {
+      const gx = Math.abs(((x % 8) + 8) % 8 - 4), gz = Math.abs(((z % 8) + 8) % 8 - 4);
+      if ((gx > 3.85 || gz > 3.85) && Math.hypot(x, z) < 60) tmp.set('#5ff8ff');
+    }
+    if (dim.id === 'moon') { const d = y / 10; tmp.multiplyScalar(1 + Math.max(-0.35, Math.min(0.15, d * 0.3))); }
+    if (dim.id === 'featherhold') { const sl = Math.abs(MM.heightAt(dim.id, x + 1.5, z) - y) + Math.abs(MM.heightAt(dim.id, x, z + 1.5) - y); if (sl > 1.4) tmp.set(sl > 2.4 ? '#a27a42' : '#b98c4e'); else if (y > 6) tmp.lerp(new T.Color('#8fae4a'), 0.6); }
+    for (const l of P.lms) { if (Math.abs(x - l.x) > l.r + 3.5 || Math.abs(z - l.z) > l.r + 3.5) continue; const d = Math.hypot(x - l.x, z - l.z); if (d < l.r + 3.5) tmp.copy(P.side).lerp(P.base[1], 0.35); }
+    return tmp;
+  }
+  function terrainPalette(dim) {
+    const pal = g => g.map(c => new T.Color(c));
+    const regions = {};
+    for (const R of dim.regions || []) regions[R.dim] = pal(MM.DIM_BY_ID[R.dim].ground);
+    return { base: pal(dim.ground), regions, side: new T.Color('#c9c4b6'), t2: new T.Color(), lms: MM.LANDMARKS.filter(l => l.dim === dim.id) };
+  }
+  // One square of ground, centred on (cx, cz).
+  function terrainPiece(dim, P, cx, cz, size, seg, exactNormals) {
     const g = new T.PlaneGeometry(size, size, seg, seg);
     g.rotateX(-Math.PI / 2);
+    g.translate(cx, 0, cz);
     const pos = g.attributes.position;
-    const cols = new Float32Array(pos.count * 3);
-    const c0 = new T.Color(dim.ground[0]), c1 = new T.Color(dim.ground[1]), c2 = new T.Color(dim.ground[2]);
-    const road = new T.Color('#55595e'), side = new T.Color('#c9c4b6'), tmp = new T.Color();
+    const cols = new Float32Array(pos.count * 3), tmp = new T.Color();
+    // Heights on the grid plus a one-cell border, so normals can come from neighbours
+    // (pieces then shade the same on both sides of a seam).
+    const N = seg + 3, step = size / seg, x0 = cx - size / 2 - step, z0 = cz - size / 2 - step, Hs = new Float32Array(N * N);
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) Hs[j * N + i] = MM.heightAt(dim.id, x0 + i * step, z0 + j * step);
+    const hAt = (x, z) => Hs[Math.round((z - z0) / step) * N + Math.round((x - x0) / step)];
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i), z = pos.getZ(i);
-      const y = MM.heightAt(dim.id, x, z);
+      const y = hAt(x, z);
       pos.setY(i, y);
-      const n = MM.fbm(x * 0.05, z * 0.05, dim.seed + 99, 3);
-      tmp.copy(c0).lerp(c1, Math.min(1, Math.max(0, (n - 0.35) * 3)));
-      if (n < 0.38) tmp.lerp(c2, Math.min(1, (0.38 - n) * 6));
-      if (dim.id === 'meatlands') {
-        const v = Math.abs(Math.sin(x * 0.11 + Math.sin(z * 0.07) * 3) * Math.cos(z * 0.09 + Math.sin(x * 0.05) * 2));
-        if (v < 0.05) tmp.set('#7c1e34');
-      }
-      if (dim.tiles) {
-        const gx = Math.abs(((x % 12) + 12) % 12 - 6), gz = Math.abs(((z % 12) + 12) % 12 - 6);
-        if (gx > 5.8 || gz > 5.8) tmp.set('#5ff8ff');
-      }
-      if (dim.id === 'bazaar') {
-        const gx = Math.abs(((x % 8) + 8) % 8 - 4), gz = Math.abs(((z % 8) + 8) % 8 - 4);
-        if ((gx > 3.85 || gz > 3.85) && Math.hypot(x, z) < 60) tmp.set('#5ff8ff');
-      }
-      if (dim.id === 'moon') { const d = y / 10; tmp.multiplyScalar(1 + Math.max(-0.35, Math.min(0.15, d * 0.3))); }
-      if (dim.id === 'featherhold') { const sl = Math.abs(MM.heightAt(dim.id, x + 1.5, z) - y) + Math.abs(MM.heightAt(dim.id, x, z + 1.5) - y); if (sl > 1.4) tmp.set(sl > 2.4 ? '#a27a42' : '#b98c4e'); else if (y > 6) tmp.lerp(new T.Color('#8fae4a'), 0.6); }
-      for (const l of MM.LANDMARKS) if (l.dim === dim.id) { const d = Math.hypot(x - l.x, z - l.z); if (d < l.r + 3.5) tmp.copy(side).lerp(new T.Color(dim.ground[1]), 0.35); }
+      groundColor(dim, x, z, y, tmp, P);
       cols[i * 3] = tmp.r; cols[i * 3 + 1] = tmp.g; cols[i * 3 + 2] = tmp.b;
     }
     g.setAttribute('color', new T.BufferAttribute(cols, 3));
-    g.computeVertexNormals();
-    // Tile the grain about every 5 m.
-    const uv = g.attributes.uv, rep = size / 5;
-    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * rep, uv.getY(i) * rep);
-    const m = new T.Mesh(g, terrainMat);
-    return m;
+    if (exactNormals) {
+      // Normals from the height field itself, so neighbouring pieces shade without seams.
+      const nor = g.attributes.normal;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), z = pos.getZ(i), hx = hAt(x + step, z) - hAt(x - step, z), hz = hAt(x, z + step) - hAt(x, z - step), l = Math.hypot(hx, 2 * step, hz);
+        nor.setXYZ(i, -hx / l, 2 * step / l, -hz / l);
+      }
+      nor.needsUpdate = true;
+    } else g.computeVertexNormals();
+    // Tile the grain about every 5 m (in world space, so pieces line up).
+    const uv = g.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) / 5, -pos.getZ(i) / 5);
+    return new T.Mesh(g, terrainMat);
+  }
+  function makeTerrain(dim) {
+    const B = MM.boundOf(dim.id), P = terrainPalette(dim);
+    if (B <= 260) return terrainPiece(dim, P, 0, 0, MM.WORLD_HALF * 2 + 120, 170, false);
+    // A big world (one Earth is 1.2 km across): ground in 160 m pieces, built around you as
+    // you go and dropped when far behind, so a phone never holds the whole planet.
+    const TILE = 160, SEG = 64, group = new T.Group(), tiles = new Map();
+    const lim = Math.ceil((B + 60) / TILE);
+    let checkT = 0;
+    group.userData.update = (dt, cam, force) => {
+      if (!force && (checkT -= dt) > 0) return;
+      checkT = 0.4;
+      const reach = force ? (dim.fogFar || 230) : (dim.fogFar || 230) + TILE, ci = Math.round(cam.x / TILE), cj = Math.round(cam.z / TILE);
+      let built = 0;
+      const want = [];
+      for (let i = -lim; i <= lim; i++) for (let j = -lim; j <= lim; j++) {
+        const cx = i * TILE, cz = j * TILE, d = Math.max(Math.abs(cx - cam.x), Math.abs(cz - cam.z)) - TILE / 2;
+        const k = i + ',' + j;
+        if (d < reach) { if (!tiles.has(k)) want.push([Math.abs(i - ci) + Math.abs(j - cj), k, cx, cz]); }
+        else if (d > reach + TILE * 1.5 && tiles.has(k)) { const m = tiles.get(k); group.remove(m); m.geometry.dispose(); tiles.delete(k); }
+      }
+      want.sort((a, b) => a[0] - b[0]);
+      for (const [, k, cx, cz] of want) {
+        if (!force && built >= 1) break;
+        const m = terrainPiece(dim, P, cx, cz, TILE, SEG, true);
+        tiles.set(k, m); group.add(m); built++;
+      }
+    };
+    group.userData.dispose = () => { for (const m of tiles.values()) m.geometry.dispose(); tiles.clear(); };
+    return group;
   }
 
   // ---------- Streets (Earth C-137) ----------
@@ -2752,7 +2841,8 @@
     const group = new T.Group();
     group.add(makeSky(dim));
     if (dim.interior) group.add(makeRoom(dim));
-    else { skyDecor(dim, group); group.add(makeTerrain(dim)); }
+    let terrain = null;
+    if (!dim.interior) { skyDecor(dim, group); terrain = makeTerrain(dim); group.add(terrain); }
     if (dim.streets) group.add(makeStreets(dim, MM.genProps(dimId)));
     const layout = MM.layoutOf(dimId);
     if (layout.roads.length || layout.plazas.length) group.add(makePaths(dim, layout));
@@ -2861,6 +2951,7 @@
       const tag = C.makeTag(l.name, '', '', '#ffd84d');
       tag.draw(-1);
       if (dim.room) { tag.sprite.scale.set(2.6, 0.65, 1); tag.sprite.position.set(l.x, Math.min(dim.room.h - 0.8, l.h + 0.7), l.z); }
+      else if (l.r < 2) { tag.sprite.scale.set(2.6, 0.65, 1); tag.sprite.position.set(l.x, MM.heightAt(dimId, l.x, l.z) + l.h + 0.8, l.z); }   // small things (inside Rick's garage)
       else { tag.sprite.scale.set(6, 1.5, 1); tag.sprite.position.set(l.x, MM.heightAt(dimId, l.x, l.z) + l.h + 2.2, l.z); }
       group.add(tag.sprite);
     }
@@ -2887,6 +2978,7 @@
         pack(s.set);
       },
       update(dt, t, camPos) {
+        if (camPos && terrain && terrain.userData.update) terrain.userData.update(dt, camPos, !terrain.children.length);
         if (camPos && (lodT -= dt) <= 0) { lodT = 0.1; updateLod(camPos); }
         kiosk.userData.ring.userData.tick(dt);
         kiosk.userData.ring.rotation.y = Math.sin(t * 0.5) * 0.3;

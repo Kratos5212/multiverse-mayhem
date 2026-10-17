@@ -272,6 +272,13 @@
   // ---------- Full character ----------
   // Every character is built twice: smooth for up close and plain for far away. Both sit
   // on the same joints, so one animation drives them; setDetail() shows one or the other.
+  // The sculpt is made for the canon colours and proportions; a customised character keeps the
+  // built model so its colours and shape still show.
+  function sculptFits(look, arch) {
+    const L = MM.sanitizeLook(look), K = MM.canonLook(arch);
+    for (const k of ['species', 'top', 'skin', 'topColor', 'shirtColor', 'pantsColor', 'hairColor', 'hair']) if (L[k] !== K[k]) return false;
+    return Math.abs(L.height - K.height) < 0.02 && Math.abs(L.width - K.width) < 0.02 && Math.abs(L.head - K.head) < 0.02;
+  }
   C.buildAvatar = function (look, arch, opts) {
     // Up close: smooth boxes on plain primitives (a few thousand triangles). Far: coarse.
     let av, lo;
@@ -288,6 +295,20 @@
       for (const m of av.parts[k].children.slice()) if (!joints.has(m)) av.lodNear.push(m);
       if (!lo.parts[k]) continue;
       for (const m of lo.parts[k].children.slice()) if (!loJoints.has(m)) { av.parts[k].add(m); av.lodFar.push(m); }
+    }
+    // A sculpted body (scripts/models/) replaces the close-up model, part by part, for the
+    // canon look. Far away it is still the simple one.
+    const sc = C.sculpts[arch];
+    if (sc && !(opts && opts.classic) && sculptFits(look, arch)) {
+      for (const name in sc.parts) {
+        const pivot = av.parts[name];
+        if (!pivot) continue;
+        for (const m of pivot.children.slice()) if (!joints.has(m) && av.lodNear.includes(m)) { pivot.remove(m); av.lodNear.splice(av.lodNear.indexOf(m), 1); }
+        const g = C.meshOf(sc.parts[name], (opts && opts.thick) || 0.022);
+        g.traverse(o => { o.userData.shared = true; });
+        pivot.add(g); av.lodNear.push(g);
+      }
+      av.sculpted = true;
     }
     av.near = null;
     av.setDetail = near => {

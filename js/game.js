@@ -1556,7 +1556,7 @@
   // Props: solid sideways, but you can stand on top of them.
   function groundAt(x, z, y) {
     let g = MM.heightAt(G.dimId, x, z);
-    const props = MM.genProps(G.dimId);
+    const props = MM.propsNear(G.dimId, x, z, 0.5);
     for (const p of props) {
       if (!G.alive[p.id] || MM.PROPS[p.type].arch) continue;
       const top = p.y + p.h * 0.92;
@@ -1565,7 +1565,7 @@
     return g;
   }
   function pushOut(x, z, y, rad) {
-    const props = MM.genProps(G.dimId);
+    const props = MM.propsNear(G.dimId, x, z, rad);
     for (const p of props) {
       if (!G.alive[p.id] || MM.PROPS[p.type].arch) continue;
       if (y >= p.y + p.h * 0.92 - 0.6) continue;
@@ -1608,7 +1608,7 @@
     me.vx += (wx - me.vx) * k; me.vz += (wz - me.vz) * k;
     me.kbT = Math.max(0, me.kbT - dt);
     const jumpHeld = !chatOpen() && !UI.modalOpen() && (keys.has('Space') || touch.jump) && !dead;
-    const downHeld = !chatOpen() && !UI.modalOpen() && (shift || keys.has('ControlLeft') || touch.down);
+    const downHeld = !chatOpen() && !UI.modalOpen() && (shift || touch.down);
     me.flying = false;
     if (inShip) {
       // Ship: fly where you look. Space climbs, Shift dives.
@@ -1780,6 +1780,10 @@
       const root = n.m.root;
       root.position.set(n.x, n.y, n.z);
       root.rotation.y = n.r;
+      // Locals far away (Earth has dozens) are lost in the haze: not drawn, not animated.
+      const nd = Math.hypot(n.x - G.me.x, n.z - G.me.z), big = MM.NPCS[n.type].h > 4;
+      root.visible = nd < (big ? fogFar : settings.quality === 'low' ? 70 : 110);
+      if (!root.visible) continue;
       if (n.m.av) { n.m.av.animate(dt, { speed: n.speed, anim: (n.flags & 4) ? MM.ANIM.emote : n.speed > 0.4 ? 1 : 0 }); wantDetail(n.m.av, n.x, n.z); }
       else {
         const md = root.userData.model;
@@ -1890,7 +1894,7 @@
     let d = dist;
     if ((G.camPropT -= dt) <= 0) {
       G.camPropT = 0.3;
-      G.camProps = MM.genProps(G.dimId).filter(p => (p.x - tx) ** 2 + (p.z - tz) ** 2 < (MM.propReach(p) + dist + 2) ** 2);
+      G.camProps = MM.propsNear(G.dimId, tx, tz, dist + 2).filter(p => (p.x - tx) ** 2 + (p.z - tz) ** 2 < (MM.propReach(p) + dist + 2) ** 2);
     }
     for (let s = 0.8; s <= dist; s += 0.4) {
       const px = tx - fx_ * s + rx * sh * s / dist, py = ty - fy * s, pz = tz - fz * s + rz * sh * s / dist;

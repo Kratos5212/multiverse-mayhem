@@ -60,10 +60,11 @@
   // The curios that turn up in a world (home dimensions share the show's Earth's).
   MM.curiosOf = dimId => {
     const D = MM.DIM_BY_ID[dimId], key = D && (D.home || D.variantOf) ? 'suburbia' : dimId;
-    return MM.CURIO_IDS.filter(id => MM.CURIOS[id].dims.includes(key) || MM.CURIOS[id].dims.includes(dimId));
+    const keys = [key, dimId].concat((D && D.regions || []).map(R => R.dim));   // Earth's towns are part of Earth
+    return MM.CURIO_IDS.filter(id => keys.some(k => MM.CURIOS[id].dims.includes(k)));
   };
   // How many lie around at once: a handful outside, one or two indoors.
-  MM.curioCount = dimId => { const D = MM.DIM_BY_ID[dimId]; return MM.curiosOf(dimId).length ? (D.interior ? 2 : 6) : 0; };
+  MM.curioCount = dimId => { const D = MM.DIM_BY_ID[dimId]; return MM.curiosOf(dimId).length ? (D.interior ? 2 : 6 * (1 + (D.regions ? D.regions.length : 0))) : 0; };
   MM.pickCurio = (dimId, rand) => {
     const ids = MM.curiosOf(dimId);
     let t = 0; for (const id of ids) t += MM.CURIOS[id].w;

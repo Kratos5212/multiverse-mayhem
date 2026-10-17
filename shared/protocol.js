@@ -10,7 +10,7 @@
   const num = (v, lo, hi) => (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi);
   const int = (v, lo, hi) => num(v, lo, hi) && Math.floor(v) === v;
   const str = (v, max) => typeof v === 'string' && v.length <= max;
-  const B = 400; // generous coordinate bound; the server clamps to the real world edge
+  const B = 700; // generous coordinate bound (Earth reaches 600 m); the server clamps to the real world edge
   const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
   // Client -> server. Each entry returns a clean copy of the message or null.

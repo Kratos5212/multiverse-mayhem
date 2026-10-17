@@ -34,6 +34,30 @@
   // Exports come unshaded (base colours only), so they take the game's own cel shading and
   // sit with everything else. Double-sided: the plan's walls are single sheets.
   C.mmgMat = new T.MeshToonMaterial({ vertexColors: true, gradientMap: C.gradientMap, side: T.DoubleSide });
+  // Sculpted characters (scripts/sculpt.js): one mesh per body part, lit and glowing, each
+  // around its joint. Ready to hang on the skeleton with C.meshOf (outlines included).
+  C.parseMMS = function (ab) {
+    const dv = new DataView(ab);
+    if (String.fromCharCode(dv.getUint8(0), dv.getUint8(1), dv.getUint8(2), dv.getUint8(3)) !== 'MMS1') throw new Error('not a sculpt');
+    const hl = dv.getUint32(4, true), H = JSON.parse(new TextDecoder().decode(new Uint8Array(ab, 8, hl))), base = 8 + hl;
+    const parts = {};
+    for (const name in H.parts) {
+      parts[name] = { lit: null, glow: null };
+      for (const kind of ['lit', 'glow']) {
+        const r = H.parts[name][kind];
+        if (!r) continue;
+        const g = C.parseMMG(ab.slice(base + r[0], base + r[0] + r[1]));
+        g.setAttribute('onrm', g.getAttribute('normal'));   // smooth already: the outline follows the normals
+        parts[name][kind] = g;
+      }
+    }
+    return { parts, joints: H.joints };
+  };
+  C.sculpts = {};
+  C.loadSculpt = function (arch, url) {
+    return fetch(url).then(r => { if (!r.ok) throw new Error(url + ': ' + r.status); return r.arrayBuffer(); })
+      .then(ab => { C.sculpts[arch] = C.parseMMS(ab); return C.sculpts[arch]; });
+  };
   C.loadMMG = function (url) {
     if (!cache.has(url)) cache.set(url, fetch(url).then(r => { if (!r.ok) throw new Error(url + ': ' + r.status); return r.arrayBuffer(); }).then(C.parseMMG));
     return cache.get(url);

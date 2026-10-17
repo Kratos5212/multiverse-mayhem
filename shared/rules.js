@@ -51,7 +51,16 @@
     { id: 'smithexit', dim: 'smithhouse', name: 'Front door', x: -4.69, z: -4.95, r: 0.8, h: 2.2, model: 'lm_marker', door: { dim: 'suburbia', x: -5.5, z: 25 } },
     { id: 'smithtv', dim: 'smithhouse', name: 'The couch (interdimensional cable)', x: -3.41, z: 1.6, r: 0.8, h: 1.2, model: 'lm_marker' },
     { id: 'smithtable', dim: 'smithhouse', name: 'Dining table', x: 3.84, z: 1.9, r: 0.8, h: 1.2, model: 'lm_marker' },
-    { id: 'garage', dim: 'suburbia', name: "Rick's Garage", x: -14.5, z: 12.5, r: 5.5, h: 6.5, model: 'lm_garage', rot: Math.PI / 2, door: { dim: 'rickgarage', x: -2, z: 4 } },
+    // Rick's garage stands open on the street: walk in through the big door. Inside, along
+    // the back wall, the workbench; the ship, the battery, the hatch to the lab and the door
+    // to the cellar. (Local garage coordinates turned to the street: front = +x.)
+    { id: 'garage', dim: 'suburbia', name: "Rick's Garage", x: -14.5, z: 12.5, r: 5.5, h: 6.5, model: 'lm_garage', rot: Math.PI / 2 },
+    { id: 'workbench', dim: 'suburbia', name: "Rick's Workbench", x: -18.0, z: 12.5, r: 1.6, h: 1.3, model: 'lm_workbench', alias: 'garage', rot: Math.PI / 2 },
+    { id: 'plumbus', dim: 'suburbia', name: 'Plumbus', x: -18.2, z: 15.2, r: 0.6, h: 1.6, model: 'lm_plumbus', rot: Math.PI / 2 },
+    { id: 'mbox', dim: 'suburbia', name: 'Meeseeks Box', x: -18.1, z: 9.1, r: 0.6, h: 1.4, model: 'lm_mbox', rot: Math.PI / 2 },
+    { id: 'battery', dim: 'suburbia', name: 'Microverse Battery', x: -11.6, z: 9.0, r: 0.8, h: 1.2, model: 'lm_battery', rot: 0, door: { dim: 'microverse', x: 0, z: 16 } },
+    { id: 'trapdoor', dim: 'suburbia', name: 'Hatch to the secret lab', x: -15.6, z: 9.6, r: 0.9, h: 0.3, model: 'lm_trapdoor', rot: Math.PI / 2, door: { dim: 'ricklab', x: 0, z: 6 } },
+    { id: 'cellardoor', dim: 'suburbia', name: 'Door to the wine cellar', x: -16.4, z: 16.75, r: 0.9, h: 3.4, model: 'lm_cellardoor', rot: Math.PI, door: { dim: 'cellar', x: 0, z: 6 } },
     { id: 'school', dim: 'suburbia', name: 'Harry Herpson High', x: 30, z: 22, r: 8.5, h: 8, model: 'lm_school', rot: Math.PI / 2, sign: { text: 'HARRY HERPSON HIGH SCHOOL', y: 6.95, z: 4.62, w: 9.5 } },
     { id: 'hospital', dim: 'suburbia', name: 'Horse Hospital', x: 30, z: -22, r: 7, h: 8, model: 'lm_hospital', rot: Math.PI / 2, sign: { text: 'HORSE HOSPITAL', y: 7.0, z: 5.1, w: 8 } },
     { id: 'office', dim: 'suburbia', name: 'Unemployment Office', x: -30, z: -22, r: 6.5, h: 7, model: 'lm_office', rot: -Math.PI / 2, sign: { text: 'UNEMPLOYMENT OFFICE', y: 6.4, z: 4.1, w: 8 } },
@@ -69,7 +78,7 @@
     // Ways into the pocket worlds, and back out.
     { id: 'anatomyentry', dim: 'suburbia', name: 'Anatomy Park (inside Ruben)', x: 66, z: -66, r: 5, h: 4, model: 'lm_anatomytent', door: { dim: 'anatomy', x: 0, z: 18 }, sign: { text: 'ANATOMY PARK', y: 4.4, z: 4.1, w: 6 } },
     { id: 'chalkdoor', dim: 'suburbia', name: "Rick's chalk door", x: -66, z: 66, r: 2.5, h: 3.5, model: 'lm_chalkdoor', door: { dim: 'froopy', x: 0, z: 16 } },
-    { id: 'microexit', dim: 'microverse', name: 'Out of the battery', x: 0, z: 10, r: 2.5, h: 4, model: 'lm_exitportal', door: { dim: 'rickgarage', x: 4.6, z: 5.4 } },
+    { id: 'microexit', dim: 'microverse', name: 'Out of the battery', x: 0, z: 10, r: 2.5, h: 4, model: 'lm_exitportal', door: { dim: 'suburbia', x: -12.6, z: 10.4 } },
     { id: 'anatomyexit', dim: 'anatomy', name: "Out of Ruben", x: 0, z: 12, r: 2.5, h: 4, model: 'lm_exitportal', door: { dim: 'suburbia', x: 66, z: -58 } },
     { id: 'froopyexit', dim: 'froopy', name: 'Back through the chalk door', x: 0, z: 10, r: 2.5, h: 3.5, model: 'lm_chalkdoor', door: { dim: 'suburbia', x: -66, z: 58 } },
     { id: 'curveedge', dim: 'beyond', name: 'Edge of the Curve', x: 0, z: 62, r: 8, h: 12, model: 'lm_curveedge' },
@@ -78,16 +87,9 @@
     { id: 'plumbusline', dim: 'plumbus', name: 'Plumbus Production Line', x: 0, z: 40, r: 8, h: 9, model: 'lm_plumbusline', sign: { text: 'PLUMBUS CO.', y: 8.2, z: 5.6, w: 7 } },
     { id: 'megatree', dim: 'megaseed', name: 'Mega Seed Tree', x: 0, z: 36, r: 6, h: 24, model: 'lm_megatree' },
     // Inside Rick's garage (its own little dimension). door: walking through takes you there.
-    { id: 'workbench', dim: 'rickgarage', name: "Rick's Workbench", x: 0, z: -6.6, r: 2.4, h: 1.3, model: 'lm_workbench', alias: 'garage' },
-    { id: 'plumbus', dim: 'rickgarage', name: 'Plumbus', x: -5.6, z: -6.4, r: 1.0, h: 1.6, model: 'lm_plumbus' },
-    { id: 'mbox', dim: 'rickgarage', name: 'Meeseeks Box', x: 5.6, z: -6.4, r: 0.9, h: 1.4, model: 'lm_mbox' },
-    { id: 'battery', dim: 'rickgarage', name: 'Microverse Battery', x: 6.4, z: 6.2, r: 1.1, h: 1.2, model: 'lm_battery', door: { dim: 'microverse', x: 0, z: 16 } },
-    { id: 'gdoor', dim: 'rickgarage', name: 'Garage door (outside)', x: 0, z: 8.2, r: 2.6, h: 4, model: 'lm_gdoor', door: { dim: 'suburbia', x: -7, z: 12.5 } },
-    { id: 'trapdoor', dim: 'rickgarage', name: 'Hatch to the secret lab', x: 6.3, z: -3.0, r: 1.2, h: 0.3, model: 'lm_trapdoor', door: { dim: 'ricklab', x: 0, z: 6 } },
-    { id: 'cellardoor', dim: 'rickgarage', name: 'Door to the wine cellar', x: -8.1, z: -3.4, r: 1.2, h: 3.4, model: 'lm_cellardoor', rot: Math.PI / 2, door: { dim: 'cellar', x: 0, z: 6 } },
-    { id: 'ladder', dim: 'ricklab', name: 'Ladder up to the garage', x: 0, z: 9.5, r: 1.2, h: 5, model: 'lm_ladder', door: { dim: 'rickgarage', x: 5, z: -1.4 } },
+    { id: 'ladder', dim: 'ricklab', name: 'Ladder up to the garage', x: 0, z: 9.5, r: 1.2, h: 5, model: 'lm_ladder', door: { dim: 'suburbia', x: -14.6, z: 9.8 } },
     { id: 'mindblowers', dim: 'ricklab', name: 'Mind Blowers', x: -8.5, z: -6, r: 1.4, h: 2.4, model: 'lm_mindblowers' },
-    { id: 'cellarexit', dim: 'cellar', name: 'Back to the garage', x: 0, z: 9.5, r: 1.4, h: 3.4, model: 'lm_cellardoor', door: { dim: 'rickgarage', x: -6, z: -3.4 } },
+    { id: 'cellarexit', dim: 'cellar', name: 'Back to the garage', x: 0, z: 9.5, r: 1.4, h: 3.4, model: 'lm_cellardoor', door: { dim: 'suburbia', x: -16.4, z: 15.4 } },
     { id: 'winerack', dim: 'cellar', name: "Rick's private stash", x: 0, z: -8.5, r: 2.0, h: 3, model: 'lm_winerack' },
     // ----- Downtown (just outside Seattle) -----
     { id: 'mall', dim: 'downtown', name: "Merpal's Mall", x: -66, z: -22, r: 12, h: 9, model: 'lm_mall', rot: Math.PI / 2, sign: { text: "MERPAL'S MALL", y: 7.4, z: 8.1, w: 10 } },
@@ -111,16 +113,6 @@
     { id: 'timerift', dim: 'splitearth', name: 'The Time Rift', x: 22, z: 0, r: 4, h: 9, model: 'lm_timerift' },
     { id: 'hangar51', dim: 'area51', name: 'Hangar 18', x: 60, z: 10, r: 13, h: 10, model: 'lm_hangar', rot: -Math.PI / 2, sign: { text: 'HANGAR 18', y: 8.2, z: 9.6, w: 6 } },
   ];
-  // Highways between the parts of Earth. Each part has an on-ramp to every other part,
-  // in a row on its north edge; you come out at the matching ramp at the other end.
-  const EARTH = [['suburbia', 'the Smith neighbourhood'], ['downtown', 'Downtown'], ['dc', 'Washington, D.C.'], ['area51', 'Area 51']];
-  const rampAt = (from, to) => { const others = EARTH.filter(e => e[0] !== from).map(e => e[0]); return { x: -64 + 64 * others.indexOf(to), z: -160 }; };
-  for (const [from] of EARTH) for (const [to, name] of EARTH) {
-    if (from === to) continue;
-    const a = rampAt(from, to), b = rampAt(to, from);
-    MM.LANDMARKS.push({ id: 'hw_' + from + '_' + to, dim: from, name: 'Highway to ' + name, x: a.x, z: a.z, r: 4.5, h: 7, model: 'lm_highway', rot: 0,
-      sign: { text: name.toUpperCase().replace(/^THE /, ''), y: 6.1, z: 0.4, w: 7 }, door: { dim: to, x: b.x, z: b.z + 10 } });
-  }
   MM.LANDMARK_BY_ID = {};
   for (const l of MM.LANDMARKS) MM.LANDMARK_BY_ID[l.id] = l;
   MM.USE_RADIUS = 4;   // how close to a landmark's wall you must be to use it

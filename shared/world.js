@@ -44,7 +44,9 @@
       sky: ['#5fb4ff', '#d9f3ff'], fog: '#cdeaff', fogFar: 230, sun: '#fff4dc', ambient: '#9fc6ff',
       ground: ['#5fae3e', '#78c24b', '#4c9636'], accent: '#ffffff',
       props: [['tree', 40], ['hedge', 20]], streets: { grid: 44, extent: 150 }, spawn: { x: 2, z: -3, spread: 5 },
-      npc: [['neighbor', 9], ['schoolkid', 4]], pickups: { s: 18, c: 2 }, mat: 's',
+      // Rick's things in his open garage (the interactive ones are landmarks).
+      fixed: [['spacecruiser', -13.0, 14.5, Math.PI / 2, 0.8], ['shelf', -17.2, 8.6, 0], ['washer', -13.4, 8.6, 0], ['curioshelf', -11.6, 16.5, Math.PI]],
+      npc: [['neighbor', 9], ['schoolkid', 4], ['butterbot', 1, -16.5, 11]], pickups: { s: 18, c: 2 }, mat: 's',
     },
     {
       id: 'meatlands', flat: 140, name: 'Cronenberged Earth', code: 'PRIME', seed: 4242, gravity: 24, amp: 9, scale: 0.02,
@@ -378,15 +380,60 @@
   // Alternate Earths share the home street plan (same seed, same streets) with their own twist.
   function fillVariant(d) {
     const B = MM.DIM_BY_ID[d.variantOf];
-    for (const k of ['seed', 'gravity', 'amp', 'scale', 'streets', 'spawn', 'flat']) if (d[k] === undefined) d[k] = B[k];
+    for (const k of ['seed', 'gravity', 'amp', 'scale', 'streets', 'spawn', 'flat', 'regions', 'bound', 'fixed']) if (d[k] === undefined) d[k] = B[k];
     d.props = (B.props || []).concat(d.extra || []);
     // The same buildings stand here too (minus the doors into this Earth's garage and the
     // highways): the Smith house, the school, the hospital. Tasks there work the same.
     for (const l of MM.LANDMARKS.slice()) if (l.dim === d.variantOf && !/^hw_/.test(l.id) && l.id !== 'anatomyentry' && l.id !== 'chalkdoor') {
-      const c = Object.assign({}, l, { id: d.id + '_' + l.id, alias: l.id, dim: d.id, door: undefined });
+      const c = Object.assign({}, l, { id: d.id + '_' + l.id, alias: l.id, dim: d.id });
+      // The same doors as the original (the Smith house, the school, Rick's lab hatch...),
+      // looked up live because building insides get their doors later (shared/interiors.js).
+      // Coming back out takes you home to this Earth (see Host.onDoor).
+      delete c.door;
+      Object.defineProperty(c, 'door', { get: () => l.door, enumerable: false });
       MM.LANDMARKS.push(c); MM.LANDMARK_BY_ID[c.id] = c;
     }
   }
+  // ----- One Earth -----
+  // The Smith neighbourhood, Downtown, Washington, D.C. and Area 51 are one world: the suburb
+  // in the middle, the others around it with countryside and roads in between. Each part is
+  // still planned on its own (its own seed and town plan) and placed at its offset; its
+  // landmarks move into the big world. Every Earth (the alternate ones, everyone's home
+  // dimension) is built the same way.
+  MM.EARTH_REGIONS = [
+    { dim: 'downtown', ox: 400, oz: 0, name: 'Downtown' },
+    { dim: 'dc', ox: -400, oz: 0, name: 'Washington, D.C.' },
+    { dim: 'area51', ox: 0, oz: -400, name: 'Area 51' },
+  ];
+  MM.REGION_HALF = 200;
+  MM.DIM_BY_ID.suburbia.regions = MM.EARTH_REGIONS;
+  MM.DIM_BY_ID.suburbia.bound = 600;
+  for (const R of MM.EARTH_REGIONS) { const D = MM.DIM_BY_ID[R.dim]; D.hidden = true; D.regionOf = 'suburbia'; }
+  for (const l of MM.LANDMARKS) {
+    const R = MM.EARTH_REGIONS.find(q => q.dim === l.dim);
+    if (!R) continue;
+    l.origin = R.dim; l.lx = l.x; l.lz = l.z;
+    if (l.rot === undefined) l.rot = Math.atan2(-l.x, -l.z);   // keep facing its own town's middle
+    l.x += R.ox; l.z += R.oz; l.dim = 'suburbia';
+  }
+  // Which part of a composite world a point is in: { R (null for the middle), lx, lz }.
+  MM.regionAt = function (dimId, x, z) {
+    const D = MM.DIM_BY_ID[dimId];
+    if (!D || !D.regions) return null;
+    for (const R of D.regions) { const lx = x - R.ox, lz = z - R.oz; if (Math.abs(lx) < MM.REGION_HALF && Math.abs(lz) < MM.REGION_HALF) return { R, lx, lz }; }
+    return { R: null, lx: x, lz: z };
+  };
+  // Who lives in a world, and what lies around: a composite world adds each part's own.
+  MM.npcListOf = function (dimId) {
+    const D = MM.DIM_BY_ID[dimId], out = D.npc.slice();
+    for (const R of D.regions || []) for (const [t, n, x, z] of MM.DIM_BY_ID[R.dim].npc) out.push(x !== undefined ? [t, n, x + R.ox, z + R.oz] : [t, n, R.ox, R.oz, 150]);
+    return out;
+  };
+  MM.pickupsOf = function (dimId) {
+    const D = MM.DIM_BY_ID[dimId], out = Object.assign({}, D.pickups);
+    for (const R of D.regions || []) { const P = MM.DIM_BY_ID[R.dim].pickups; for (const k in P) out[k] = (out[k] || 0) + P[k]; }
+    return out;
+  };
   for (const d of MM.DIMS) if (d.variantOf) fillVariant(d);
   MM.fillVariant = fillVariant;
   MM.DIM_IDS = MM.DIMS.map(d => d.id);
@@ -936,6 +983,7 @@
   MM.heightAt = function (dimId, x, z) {
     let h = baseHeight(dimId, x, z);
     for (const { l, y } of landmarksIn(dimId)) {
+      if (Math.abs(x - l.x) > l.r + 12 || Math.abs(z - l.z) > l.r + 12) continue;
       const d = Math.hypot(x - l.x, z - l.z);
       if (d < l.r + 12) h += (y - h) * (1 - smooth(l.r + 2, l.r + 12, d));
     }
@@ -944,6 +992,36 @@
   function baseHeight(dimId, x, z) {
     const dim = MM.DIM_BY_ID[dimId];
     if (dim.interior) return 0;
+    if (dim.regions) return compositeHeight(dim, x, z);
+    return cellHeight(dim, x, z) + smooth(MM.WORLD_HALF - 30, MM.WORLD_HALF + 10, Math.max(Math.abs(x), Math.abs(z))) * 28;
+  }
+  // Countryside between the towns: gentle rolling hills, the same in every part of the world,
+  // so each town fades into it at its edge without a step.
+  function compositeHeight(dim, x, z) {
+    let h = (MM.fbm(x * 0.005, z * 0.005, dim.seed + 3, 4) - 0.5) * 2 * 7;
+    const cells = [{ D: dim, ox: 0, oz: 0 }].concat(dim.regions.map(R => ({ D: MM.DIM_BY_ID[R.dim], ox: R.ox, oz: R.oz })));
+    for (const c of cells) {
+      const lx = x - c.ox, lz = z - c.oz, m = Math.max(Math.abs(lx), Math.abs(lz));
+      if (m >= MM.REGION_HALF) continue;
+      const k = 1 - smooth(162, 196, m);
+      h += (cellHeight(c.D, lx, lz) - h) * k;
+    }
+    // Roads between the towns stay level.
+    for (const s of MM.EARTH_LINKS) {
+      const d = segD(x, z, s);
+      if (d < 16) h *= smooth(6, 16, d);
+    }
+    return h + smooth(dim.bound - 30, dim.bound + 10, Math.max(Math.abs(x), Math.abs(z))) * 28;
+  }
+  function segD(x, z, s) {
+    const dx = s[2] - s[0], dz = s[3] - s[1], l2 = dx * dx + dz * dz || 1;
+    const t = Math.max(0, Math.min(1, ((x - s[0]) * dx + (z - s[1]) * dz) / l2));
+    return Math.hypot(x - (s[0] + dx * t), z - (s[1] + dz * t));
+  }
+  // The roads joining the suburb to the other towns.
+  MM.EARTH_LINKS = [[140, 0, 262, 0], [-140, 0, -262, 0], [0, -140, 0, -262]];
+  function cellHeight(dim, x, z) {
+    const dimId = dim.id;
     const r = Math.sqrt(x * x + z * z);
     let h = (MM.fbm(x * dim.scale, z * dim.scale, dim.seed, 4) - 0.5) * 2 * dim.amp;
     h *= smooth(14, 40, r);
@@ -957,7 +1035,6 @@
     if (dimId === 'suburbia') h *= smooth(138, 160, Math.max(Math.abs(x), Math.abs(z)));
     if (dim.flat) h *= smooth(dim.flat, dim.flat + 30, Math.max(Math.abs(x), Math.abs(z)));   // towns sit on level ground
     if (dimId === 'featherhold') h += Math.pow(MM.fbm(x * 0.02 + 5, z * 0.02, dim.seed + 7, 2), 3) * 30 * smooth(30, 60, r);
-    h += smooth(MM.WORLD_HALF - 30, MM.WORLD_HALF + 10, Math.max(Math.abs(x), Math.abs(z))) * 28;
     return h;
   }
 
@@ -1000,8 +1077,14 @@
       const t = MM.PROPS[type];
       out.push({ id: out.length, type, x, z, rot, s: scale, r: t.r * scale, h: t.h * scale, hp: Math.round(t.hp * scale) });
     };
-    for (const l of MM.LANDMARKS) if (l.dim === dimId) add(l.model, l.x, l.z, l.rot !== undefined ? l.rot : dim.interior ? (l.z < -3 ? 0 : l.z > 3 ? Math.PI : l.x < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.atan2(-l.x, -l.z), 1);
-    for (const [type, x, z, rot] of dim.fixed || []) add(type, x, z, rot, 1);
+    for (const l of MM.LANDMARKS) {
+      // A town that is part of a bigger world plans around its own landmarks, in its own
+      // coordinates; the bigger world gets them through that town's props.
+      if (l.origin === dimId) { add(l.model, l.lx, l.lz, l.rot, 1); continue; }
+      if (l.dim !== dimId || (dim.regions && l.origin)) continue;
+      add(l.model, l.x, l.z, l.rot !== undefined ? l.rot : dim.interior ? (l.z < -3 ? 0 : l.z > 3 ? Math.PI : l.x < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.atan2(-l.x, -l.z), 1);
+    }
+    for (const [type, x, z, rot, sc] of dim.fixed || []) add(type, x, z, rot, sc || 1);
     const onRoad = v => { const m = ((v % 44) + 44) % 44; return Math.min(m, 44 - m) < 7.5; };
     if (dim.streets) {
       // Blocks between streets every 44 m. Each block has two rows of houses back to back,
@@ -1038,17 +1121,36 @@
       layout(kit);
       layoutCache[dimId] = { roads: kit.roads, plazas: kit.plazas };
     } else for (const [type, n] of dim.props) {
-      // Open worlds got bigger: a few more things to fill the extra ground.
-      const t = MM.PROPS[type], count = MM.boundOf(dimId) >= MM.WORLD_HALF ? Math.round(n * 1.3) : n;
+      // Open worlds got bigger: a few more things to fill the extra ground. A composite world
+      // spreads its own things over the countryside too, but not into the other towns.
+      const comp = !!dim.regions, area = comp ? 5 : 1;
+      const t = MM.PROPS[type], count = Math.round((MM.boundOf(dimId) >= MM.WORLD_HALF ? n * 1.3 : n) * area);
       for (let i = 0, tries = 0; i < count && tries < count * 40; tries++) {
-        const span = Math.min(MM.WORLD_HALF - 28, MM.boundOf(dimId) - 3);
+        const span = comp ? MM.boundOf(dimId) - 28 : Math.min(MM.WORLD_HALF - 28, MM.boundOf(dimId) - 3);
         const x = (r() * 2 - 1) * span, z = (r() * 2 - 1) * span;
         const s = 0.8 + r() * 0.5;
-        if (dim.streets && (onRoad(x) || onRoad(z))) continue;
+        if (comp) {
+          const at = MM.regionAt(dimId, x, z);
+          if (at.R) continue;
+          if (MM.EARTH_LINKS.some(q => segD(x, z, q) < 8 + t.r * s)) continue;
+          if (Math.max(Math.abs(x), Math.abs(z)) < 150 && dim.streets && (onRoad(x) || onRoad(z))) continue;
+        } else if (dim.streets && (onRoad(x) || onRoad(z))) continue;
         if (!free(x, z, t.r * s)) continue;
         add(type, x, z, r() * Math.PI * 2, s);
         i++;
       }
+    }
+    // The other towns of a composite world, each planned in its own space and moved into place.
+    if (dim.regions) {
+      const roads = [], plazas = [];
+      for (const R of dim.regions) {
+        for (const p of MM.genProps(R.dim)) out.push(Object.assign({}, p, { id: out.length, x: p.x + R.ox, z: p.z + R.oz }));
+        const L = MM.layoutOf(R.dim);
+        for (const q of L.roads) roads.push(Object.assign({}, q, { x1: q.x1 + R.ox, z1: q.z1 + R.oz, x2: q.x2 + R.ox, z2: q.z2 + R.oz }));
+        for (const q of L.plazas) plazas.push(Object.assign({}, q, { x: q.x + R.ox, z: q.z + R.oz }));
+      }
+      for (const [x1, z1, x2, z2] of MM.EARTH_LINKS) roads.push({ x1, z1, x2, z2, w: 9, style: 'asphalt' });
+      layoutCache[dimId] = { roads, plazas };
     }
     for (const p of out) p.y = MM.heightAt(dimId, p.x, p.z);
     return (propCache[dimId] = out);
@@ -1110,12 +1212,28 @@
     lm_nimbuspalace: [-11, 11, -7, 7], lm_dreamschool: [-9.3, 9.3, -4.8, 5.2], locker: [-1.2, 1.2, -0.4, 0.4], spacecruiser: [-2.02, 2.02, -2.5, 2.5],
   };
   for (const k in BOX) if (MM.PROPS[k]) MM.PROPS[k].box = BOX[k];
-  MM.PROPS.lm_highway.arch = true;   // a gantry over the road: walk (and drive) under it
+  // Rick's garage is open: three walls and the front either side of the big door (and the
+  // side door), as segments [x1, z1, x2, z2] in the model's own frame. You walk in.
+  MM.PROPS.lm_garage.walls = [[-4.5, -4.5, 4.5, -4.5], [-4.5, -4.5, -4.5, 4.5], [4.5, -4.5, 4.5, 4.5], [-4.5, 4.5, -3.4, 4.5], [2.2, 4.5, 3.05, 4.5], [4.15, 4.5, 4.5, 4.5]];
+  delete MM.PROPS.lm_garage.box;
+  MM.PROPS.lm_garage.boxR = 6.4;
+
   // How far from its centre a prop can block (its circle, or its box's far corner).
-  MM.propReach = p => { const T = MM.PROPS[p.type]; if (!T.box) return p.r; if (!T.boxR) { const [x0, x1, z0, z1] = T.box; T.boxR = Math.hypot(Math.max(-x0, x1), Math.max(-z0, z1)); } return T.boxR * (p.s || 1); };
+  MM.propReach = p => { const T = MM.PROPS[p.type]; if (T.walls) return T.boxR * (p.s || 1); if (!T.box) return p.r; if (!T.boxR) { const [x0, x1, z0, z1] = T.box; T.boxR = Math.hypot(Math.max(-x0, x1), Math.max(-z0, z1)); } return T.boxR * (p.s || 1); };
   // Push a circle (x, z, rad) out of prop p. Returns [x, z], moved or not.
   MM.pushOutOfProp = function (p, x, z, rad) {
     const T = MM.PROPS[p.type];
+    if (T.walls) {
+      const c = Math.cos(p.rot), s = Math.sin(p.rot), k = p.s || 1, dx = x - p.x, dz = z - p.z, r = rad / k + 0.1;
+      let lx = (dx * c - dz * s) / k, lz = (dx * s + dz * c) / k, moved = false;
+      for (const [x1, z1, x2, z2] of T.walls) {
+        const ex = x2 - x1, ez = z2 - z1, l2 = ex * ex + ez * ez || 1;
+        const t = Math.max(0, Math.min(1, ((lx - x1) * ex + (lz - z1) * ez) / l2));
+        const px = x1 + ex * t, pz = z1 + ez * t, ox = lx - px, oz = lz - pz, d2 = ox * ox + oz * oz;
+        if (d2 < r * r) { let d = Math.sqrt(d2), ux = ox, uz = oz; if (d < 1e-6) { const l = Math.sqrt(l2); ux = -ez / l; uz = ex / l; d = 1; } lx = px + ux / d * r; lz = pz + uz / d * r; moved = true; }
+      }
+      return moved ? [p.x + (lx * c + lz * s) * k, p.z + (-lx * s + lz * c) * k] : [x, z];
+    }
     if (T.box) {
       const c = Math.cos(p.rot), s = Math.sin(p.rot), dx = x - p.x, dz = z - p.z, k = p.s || 1;
       let lx = (dx * c - dz * s) / k, lz = (dx * s + dz * c) / k;
@@ -1147,8 +1265,33 @@
     }
     return [x, z];
   };
+  // Props by 24 m grid cell, so collisions only look at what is near (Earth has well over a
+  // thousand props). A prop sits in every cell its reach touches.
+  const gridCache = {}, GRID = 24;
+  function propGrid(dimId) {
+    if (gridCache[dimId]) return gridCache[dimId];
+    const g = new Map();
+    for (const p of MM.genProps(dimId)) {
+      const R = MM.propReach(p);
+      for (let i = Math.floor((p.x - R) / GRID); i <= Math.floor((p.x + R) / GRID); i++) for (let j = Math.floor((p.z - R) / GRID); j <= Math.floor((p.z + R) / GRID); j++) {
+        const k = i * 4096 + j;
+        let b = g.get(k); if (!b) g.set(k, b = []);
+        b.push(p);
+      }
+    }
+    return (gridCache[dimId] = g);
+  }
+  // Props whose reach may come within rad of (x, z). May list a prop twice.
+  MM.propsNear = function (dimId, x, z, rad) {
+    const g = propGrid(dimId), out = [];
+    for (let i = Math.floor((x - rad) / GRID); i <= Math.floor((x + rad) / GRID); i++) for (let j = Math.floor((z - rad) / GRID); j <= Math.floor((z + rad) / GRID); j++) {
+      const b = g.get(i * 4096 + j);
+      if (b) for (const p of b) out.push(p);
+    }
+    return out;
+  };
   MM.collideProps = function (dimId, x, z, rad, alive) {
-    const props = MM.genProps(dimId);
+    const props = MM.propsNear(dimId, x, z, rad);
     for (const p of props) {
       if (alive && !alive[p.id]) continue;
       if (MM.PROPS[p.type].arch) continue;

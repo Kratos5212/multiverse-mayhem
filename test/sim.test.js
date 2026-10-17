@@ -288,15 +288,14 @@ test('world events start and bring visitors', () => {
   assert.ok(p.inst.npcs.size >= before);
 });
 
-test("Rick's garage: walk in, use the Plumbus, go down to the lab, build at the workbench", () => {
+test("Rick's garage: open on the street, use the Plumbus, go down to the lab and back, build at the workbench", () => {
   const host = new MM.Host();
-  const { c, p } = join(host, 'sidekick');
-  near(host, c, p, 'garage');
-  run(host, 1.2);
-  host.message(c, '{"t":"door","l":"garage"}');
-  assert.strictEqual(p.inst.dimId, 'rickgarage');
-  // Kiosks and portals can't target the garage from outside.
-  assert.ok(MM.DIM_BY_ID.rickgarage.hidden && !MM.WORLD_IDS.includes('rickgarage'));
+  const { c, p } = join(host, 'sidekick', { dim: 'suburbia' });
+  // No door: the garage is part of the street, and you walk straight in.
+  assert.ok(!MM.LANDMARK_BY_ID.garage.door && MM.LANDMARK_BY_ID.workbench.dim === 'suburbia');
+  const g = MM.genProps('suburbia').find(q => q.type === 'lm_garage');
+  assert.deepStrictEqual(MM.pushOutOfProp(g, g.x + 1, g.z, 0.45), [g.x + 1, g.z], 'standing inside is fine');
+  assert.notDeepStrictEqual(MM.pushOutOfProp(g, g.x, g.z + 4.5, 0.45), [g.x, g.z + 4.5], 'the walls block');
   near(host, c, p, 'plumbus');
   run(host, 1.2);
   host.message(c, '{"t":"use","l":"plumbus"}');
@@ -321,6 +320,18 @@ test("Rick's garage: walk in, use the Plumbus, go down to the lab, build at the 
   run(host, 0.4);
   host.message(c, JSON.stringify({ t: 'st', x: p.x, y: 0, z: 40, r: 0, a: 1, ep: p.ep }));
   assert.ok(p.z <= MM.boundOf('ricklab'));
+  // Up the ladder: back in the same garage.
+  near(host, c, p, 'ladder'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"ladder"}');
+  assert.strictEqual(p.inst.dimId, 'suburbia');
+  assert.ok(Math.hypot(p.x - g.x, p.z - g.z) < 6, 'in the garage');
+  // From another Earth's garage, the lab's ladder takes you back to that Earth.
+  near(host, c, p, 'shrimpearth_trapdoor'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"shrimpearth_trapdoor"}');
+  assert.strictEqual(p.inst.dimId, 'ricklab');
+  near(host, c, p, 'ladder'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"ladder"}');
+  assert.strictEqual(p.inst.dimId, 'shrimpearth');
 });
 
 test('Meeseeks Box gadget and the Citadel', () => {
@@ -454,18 +465,20 @@ test('teams: invite, no friendly fire, and teammates come along through doors an
   assert.ok(!a.p.team && !b.p.team);
 });
 
-test('Earth: highways between regions, the President is guarded, and freezing time brings a Time Cop', () => {
+test('Earth is one world: the suburb, Downtown, D.C. and Area 51; the President is guarded; freezing time brings a Time Cop', () => {
   const host = new MM.Host();
   const { c, p } = join(host, 'genius', { dim: 'suburbia' });
-  near(host, c, p, 'hw_suburbia_dc'); run(host, 1.2);
-  host.message(c, '{"t":"door","l":"hw_suburbia_dc"}');
-  assert.strictEqual(p.inst.dimId, 'dc');
+  for (const id of ['whitehouse', 'mall', 'sonicstage', 'home', 'garage']) assert.strictEqual(MM.LANDMARK_BY_ID[id].dim, 'suburbia', id + ' is on Earth');
+  assert.ok(!MM.WORLD_IDS.includes('downtown') && MM.boundOf('suburbia') >= 600);
+  const wh = MM.LANDMARK_BY_ID.whitehouse;
   const pres = [...p.inst.npcs.values()].find(n => n.type === 'president');
-  assert.ok(pres && Math.hypot(pres.x, pres.z + 38) < 8, 'the President is at the White House');
+  assert.ok(pres && Math.hypot(pres.x - wh.x, pres.z - (wh.z + 14)) < 8, 'the President is at the White House');
+  host.teleport(p, pres.x + 3, pres.y, pres.z);
   p.inst.hurtNpc(pres, 5, p);
   assert.ok([...p.inst.npcs.values()].some(n => n.T.guard && n !== pres && n.angry === p.id), 'his guards come for you');
   // Alternate Earths share the street plan and the landmarks.
   assert.ok(MM.LANDMARK_BY_ID.shrimpearth_home && MM.isAt(MM.LANDMARK_BY_ID.shrimpearth_home, 'home'));
+  assert.ok(MM.LANDMARK_BY_ID.shrimpearth_whitehouse && MM.LANDMARK_BY_ID.shrimpearth_mall, 'every Earth has the whole planet');
   // A Time Crystal stops time... and a Time Cop turns up.
   p.inv.timecrystal = 1;
   host.message(c, '{"t":"g","g":"timecrystal","dx":0,"dy":0,"dz":1}');

@@ -234,7 +234,7 @@
       const alive = null;
       [nx, nz] = MM.collideProps(this.dim, nx, nz, 0.5, alive);
       if (Math.hypot(nx - this.x, nz - this.z) < speed * dt * 0.3 && (mx || mz) && Math.random() < 0.05) this.goal = null;
-      const lim = MM.WORLD_HALF - 2;
+      const lim = MM.boundOf(this.dim) - 2;
       this.x = Math.max(-lim, Math.min(lim, nx)); this.z = Math.max(-lim, Math.min(lim, nz));
       const ground = MM.heightAt(this.dim, this.x, this.z);
       this.vy -= dim.gravity * dt;

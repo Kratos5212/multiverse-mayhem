@@ -97,8 +97,14 @@
       this.nextEvent = host.time + 60 + Math.random() * 90;
       // [type, count] or [type, count, x, z] for someone who lives at a particular spot.
       const bx = MM.boundOf(this.dimId) - 0.8, bz = MM.boundZOf(this.dimId) - 0.8, cl = (v, b) => Math.max(-b, Math.min(b, v));
-      for (const [type, count, x, z] of this.dim.npc) for (let i = 0; i < count; i++) this.spawnNpc(type, false, x !== undefined ? { at: { x: cl(x + (Math.random() - 0.5) * 6, bx), z: cl(z + (Math.random() - 0.5) * 6, bz) } } : null);
-      for (const k in this.dim.pickups) for (let i = 0; i < this.dim.pickups[k]; i++) this.spawnPickup(k, false);
+      // spread: somewhere within that distance of x, z (a town inside a bigger world).
+      for (const [type, count, x, z, spread] of MM.npcListOf(this.dimId)) for (let i = 0; i < count; i++) {
+        const j = spread || 3, at = x !== undefined ? { x: cl(x + (Math.random() - 0.5) * 2 * j, bx), z: cl(z + (Math.random() - 0.5) * 2 * j, bz) } : null;
+        if (at && spread) [at.x, at.z] = MM.collideProps(this.dimId, at.x, at.z, 0.8, null);
+        this.spawnNpc(type, false, at ? { at } : null);
+      }
+      this.pickupSet = MM.pickupsOf(this.dimId);
+      for (const k in this.pickupSet) for (let i = 0; i < this.pickupSet[k]; i++) this.spawnPickup(k, false);
       for (let i = MM.curioCount(this.dimId); i > 0; i--) this.spawnPickup('q:' + MM.pickCurio(this.dimId), false);
     }
 
@@ -166,7 +172,7 @@
         // Keep the world stocked with this dimension's materials.
         const have = {};
         for (const pk of this.pickups.values()) if (!pk.drop) have[pk.c] = (have[pk.c] || 0) + 1;
-        for (const k in this.dim.pickups) if ((have[k] || 0) < this.dim.pickups[k]) this.spawnPickup(k, true);
+        for (const k in this.pickupSet) if ((have[k] || 0) < this.pickupSet[k]) this.spawnPickup(k, true);
         // And with its curios, more slowly.
         if (this.host.tickN % 300 === 0) {
           let q = 0;
@@ -208,7 +214,7 @@
       const players = [...this.players.values()];
       if (E.spawn) for (const [type, n] of E.spawn) for (let i = 0; i < n; i++) {
         const p = pick(players), a = Math.random() * 6.28, d = 14 + Math.random() * 16;
-        const x = Math.max(-MM.WORLD_HALF + 25, Math.min(MM.WORLD_HALF - 25, p.x + Math.cos(a) * d)), z = Math.max(-MM.WORLD_HALF + 25, Math.min(MM.WORLD_HALF - 25, p.z + Math.sin(a) * d));
+        const x = Math.max(-MM.boundOf(this.dimId) + 25, Math.min(MM.boundOf(this.dimId) - 25, p.x + Math.cos(a) * d)), z = Math.max(-MM.boundOf(this.dimId) + 25, Math.min(MM.boundOf(this.dimId) - 25, p.z + Math.sin(a) * d));
         this.spawnNpc(type, true, { at: { x, z }, until: now + E.dur + 20 });
       }
       if (E.loot) for (let i = 0; i < E.loot[1]; i++) {
@@ -243,11 +249,10 @@
           if (segDist2(ox, oy, oz, pr.x, pr.y, pr.z, t.x, t.y + 0.8, t.z) < 1.1 * 1.1) { hit = { t }; break; }
         }
         if (!hit) {
-          const props = MM.genProps(this.dimId);
-          for (let i = 0; i < props.length; i++) {
-            const st = this.props[i];
+          const near = MM.propsNear(this.dimId, (ox + pr.x) / 2, (oz + pr.z) / 2, Math.hypot(pr.x - ox, pr.z - oz) / 2 + 2);
+          for (const p of near) {
+            const i = p.id, st = this.props[i];
             if (st.hp <= 0) continue;
-            const p = props[i];
             const r = p.r + (pr.rad || 0.15);
             if (pr.y < p.y - 0.5 || pr.y > p.y + p.h) continue;
             if (dist2(pr.x, pr.z, p.x, p.z) < r * r || dist2((ox + pr.x) / 2, (oz + pr.z) / 2, p.x, p.z) < r * r) { hit = { prop: i }; break; }
@@ -297,10 +302,11 @@
         if (d < rad + n.T.r) this.hurtNpc(n, Math.round(dmg * (1 - d / (rad + n.T.r) * 0.6)), owner);
       }
       for (const t of [...this.turrets.values()]) if (Math.hypot(t.x - x, t.z - z) < rad) this.hurtTurret(t, dmg);
-      const props = MM.genProps(this.dimId);
-      for (let i = 0; i < props.length; i++) {
-        if (this.props[i].hp <= 0) continue;
-        const p = props[i];
+      const hitP = new Set();
+      for (const p of MM.propsNear(this.dimId, x, z, rad)) {
+        const i = p.id;
+        if (this.props[i].hp <= 0 || hitP.has(i)) continue;
+        hitP.add(i);
         const d = Math.hypot(p.x - x, p.z - z) - p.r;
         if (d < rad && y < p.y + p.h + rad * 0.5) this.hurtProp(i, Math.round((opts.propDmg || dmg * 1.8) * (1 - Math.max(0, d) / rad * 0.6)), owner);
       }
@@ -418,8 +424,8 @@
           if (now >= n.wait && dist2(n.x, n.z, n.tx, n.tz) < 1) {
             n.wait = now + 1 + Math.random() * 4;
             const a = Math.random() * 6.28, d = 4 + Math.random() * 14;
-            n.tx = Math.max(-MM.WORLD_HALF + 25, Math.min(MM.WORLD_HALF - 25, n.home.x + Math.cos(a) * d));
-            n.tz = Math.max(-MM.WORLD_HALF + 25, Math.min(MM.WORLD_HALF - 25, n.home.z + Math.sin(a) * d));
+            n.tx = Math.max(-MM.boundOf(this.dimId) + 25, Math.min(MM.boundOf(this.dimId) - 25, n.home.x + Math.cos(a) * d));
+            n.tz = Math.max(-MM.boundOf(this.dimId) + 25, Math.min(MM.boundOf(this.dimId) - 25, n.home.z + Math.sin(a) * d));
           }
           if (now >= n.wait) goal = { x: n.tx, z: n.tz };
         }
@@ -430,7 +436,7 @@
             let nx = n.x + dx / l * step, nz = n.z + dz / l * step;
             [nx, nz] = MM.collideProps(this.dimId, nx, nz, T.r, null);
             [nx, nz] = MM.collideWalls(this.dimId, nx, nz, T.r);
-            const lim = Math.min(MM.WORLD_HALF - 15, MM.boundOf(this.dimId) - 0.8), limZ = Math.min(MM.WORLD_HALF - 15, MM.boundZOf(this.dimId) - 0.8);
+            const lim = MM.boundOf(this.dimId) - (this.dim.interior ? 0.8 : 15), limZ = MM.boundZOf(this.dimId) - (this.dim.interior ? 0.8 : 15);
             n.x = Math.max(-lim, Math.min(lim, nx)); n.z = Math.max(-limZ, Math.min(limZ, nz));
             n.r = Math.atan2(dx, dz);
           }
@@ -1057,8 +1063,14 @@
       p.cdUse = this.time + 1;
       if (p.ship && MM.DIM_BY_ID[l.door.dim].interior) { this.toast(p, 'Park your ship first (B).'); return; }
       const from = p.inst, ox = p.x, oz = p.z;
+      // Every Earth shares the insides (the Smith house, Rick's lab...). Remember which Earth you
+      // came in from, and the way out takes you back there instead of to C-137.
+      const here = MM.DIM_BY_ID[from.dimId], to = MM.DIM_BY_ID[l.door.dim];
+      let dest = l.door.dim;
+      if (to.interior || to.pocket) { if (!(here.interior || here.pocket)) p.doorBack = here.variantOf ? from.dimId : null; }
+      else if (p.doorBack && MM.DIM_BY_ID[p.doorBack].variantOf === dest) { dest = p.doorBack; p.doorBack = null; }
       p.inst.ev({ k: 'kiosk', id: p.id });
-      this.travel(p, l.door.dim, { x: l.door.x, z: l.door.z });
+      this.travel(p, dest, { x: l.door.x, z: l.door.z });
       this.bringTeam(p, from, ox, oz);
     }
 
