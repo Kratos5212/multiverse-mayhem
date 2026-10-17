@@ -665,3 +665,28 @@ test('portal pair: Rick shoots blue and orange, anyone steps through one and out
   host.message(m2.c, JSON.stringify({ t: 'pp', c: 0, x: q.x, y: q.y, z: q.z, nx: 0, ny: 1, nz: 0 }));
   assert.ok(!(q.pp && q.pp[0]));
 });
+
+test('space: fly up out of the atmosphere, see the planets, land on the Moon', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'suburbia' });
+  Object.assign(p.prog.up, { hull: 1 }); host.restat(p);
+  host.message(c, '{"t":"ship","on":true}');
+  assert.ok(p.ship);
+  // Not high enough yet.
+  host.message(c, '{"t":"orbit"}');
+  assert.strictEqual(p.inst.dimId, 'suburbia');
+  p.y = MM.heightAt('suburbia', p.x, p.z) + MM.ORBIT_ALT + 5;
+  host.message(c, '{"t":"orbit"}');
+  const S = MM.DIM_BY_ID[p.inst.dimId];
+  assert.ok(S.planets && S.planets[0].dim === 'suburbia', 'in space above Earth');
+  assert.ok(S.planets.some(q => q.dim === 'moon') && S.planets.some(q => q.dim === 'gazorp'), 'the moon and the other planets are there');
+  // Gazorpazorp needs the Turbo Engine; the Moon does not.
+  const G = S.planets.find(q => q.dim === 'gazorp'), M = S.planets.find(q => q.dim === 'moon');
+  p.x = G.x; p.y = G.y + G.r; p.z = G.z; host.time += 5;
+  host.message(c, '{"t":"land","d":"gazorp"}');
+  assert.ok(MM.DIM_BY_ID[p.inst.dimId].planets, 'still in space');
+  p.x = M.x; p.y = M.y + M.r; p.z = M.z; host.time += 5;
+  host.message(c, '{"t":"land","d":"moon"}');
+  assert.strictEqual(p.inst.dimId, 'moon');
+  assert.ok(p.ship && p.y > MM.heightAt('moon', p.x, p.z) + 100, 'coming in from high up, still in the ship');
+});

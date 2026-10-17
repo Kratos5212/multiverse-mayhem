@@ -611,6 +611,8 @@
         case 'ship': this.onShip(p, m.on); break;
         case 'pvp': p.pvp = m.on; this.toast(p, m.on ? 'Fights on: players who also turned fights on can hurt you, and you them.' : 'Fights off: no other player can hurt you.'); break;
         case 'drive': this.onDrive(p, m.d); break;
+        case 'orbit': this.onOrbit(p); break;
+        case 'land': this.onLand(p, m.d); break;
         case 'door': this.onDoor(p, m.l); break;
         case 'tm': this.onTeam(p, m); break;
         case 'uc': this.onCurio(p, m.id); break;
@@ -740,7 +742,8 @@
       const inst = this.instanceWithRoom(dimId, preferInst);
       const spot = at ? { x: at.x, z: at.z, y: MM.heightAt(dimId, at.x, at.z) } : MM.spawnPoint(dimId);
       p.inst = inst;
-      p.x = spot.x; p.y = spot.y + (p.ship ? 3 : 0.1); p.z = spot.z; p.a = 0;
+      p.x = spot.x; p.y = at && at.y !== undefined ? at.y : spot.y + (p.ship ? 3 : 0.1); p.z = spot.z; p.a = 0;
+      if (MM.DIM_BY_ID[dimId].planets && !p.ship) p.ship = !!p.st.ship;   // nobody walks in space
       p.ep++;
       p.lastSt = this.time;
       p.portalCool = this.time + 2;
@@ -1148,6 +1151,39 @@
       p.inst.ev({ k: 'warp', id: p.id });
       this.travel(p, d, null);
       this.bringTeam(p, from, ox, oz);   // teammates near the ship ride along as passengers
+    }
+
+    // Out of the atmosphere: into the space around this world, above its planet.
+    onOrbit(p) {
+      const D = p.inst.dim, now = this.time;
+      if (p.dead || !p.ship || D.interior || D.planets || now < (p.cdOrbit || 0)) return;
+      if (p.y - MM.heightAt(p.inst.dimId, p.x, p.z) < MM.ORBIT_ALT - 40) return;
+      p.cdOrbit = now + 3;
+      const S = MM.spaceDimOf(p.inst.dimId), P = S.planets.find(q => q.dim === p.inst.dimId) || S.planets[0];
+      const from = p.inst, ox = p.x, oz = p.z;
+      p.inst.ev({ k: 'warp', id: p.id });
+      this.travel(p, S.id, { x: P.x + (Math.random() - 0.5) * 20, z: P.z + (Math.random() - 0.5) * 20, y: P.y + P.r + 30 });
+      p.kbUntil = this.time + 1.5;
+      this.bringTeam(p, from, ox, oz);
+      this.toast(p, 'You left the atmosphere. Fly into a planet to land on it.');
+    }
+    // Fly into a planet from space: land in its sky. Earth and its moon only need the ship;
+    // the other planets of the universe need the Turbo Engine (as for flying there directly).
+    onLand(p, d) {
+      const S = p.inst.dim, now = this.time;
+      if (p.dead || !p.ship || !S.planets || now < (p.cdOrbit || 0)) return;
+      const P = S.planets.find(q => q.dim === d);
+      if (!P || Math.hypot(p.x - P.x, p.y - P.y, p.z - P.z) > P.r + 70) return;
+      const home = S.planets[0].dim, sh = p.st.ship, H = MM.DIM_BY_ID[home];
+      const why = d === home ? '' : MM.travelWhy('ship', H.variantOf === 'suburbia' ? 'suburbia' : home, d, { hull: true, engine: sh.engine, drive: sh.drive });
+      if (why) { p.cdOrbit = now + 2; this.toast(p, why); return; }
+      p.cdOrbit = now + 3;
+      const sp = MM.spawnPoint(d), from = p.inst, ox = p.x, oz = p.z;
+      p.inst.ev({ k: 'warp', id: p.id });
+      this.travel(p, d, { x: sp.x, z: sp.z, y: MM.heightAt(d, sp.x, sp.z) + 180 });
+      p.kbUntil = this.time + 1.5;
+      this.bringTeam(p, from, ox, oz);
+      this.toast(p, 'Coming in to land on ' + MM.DIM_BY_ID[d].name + '. Shift to go down, B to step out on the ground.');
     }
 
     // ----- Crafting -----

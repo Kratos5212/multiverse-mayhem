@@ -992,6 +992,7 @@
   function baseHeight(dimId, x, z) {
     const dim = MM.DIM_BY_ID[dimId];
     if (dim.interior) return 0;
+    if (dim.planets) return -150;   // space: no ground, just a floor far below
     if (dim.regions) return compositeHeight(dim, x, z);
     return cellHeight(dim, x, z) + smooth(MM.WORLD_HALF - 30, MM.WORLD_HALF + 10, Math.max(Math.abs(x), Math.abs(z))) * 28;
   }
@@ -1358,9 +1359,48 @@
     fillVariant(d);
     return d;
   };
-  // Looking up a home dimension by id makes it (deterministically) the first time.
+  // ---------- Space ----------
+  // Fly your ship straight up out of a world's atmosphere and you are in the space around it:
+  // its planet below you, and the other planets of the same universe (for the show's home
+  // universe: Earth and its moon, Bird World, Gazorpazorp, Planet Squanch...). Fly into a
+  // planet to land on it. A world with no neighbours just has itself, alone in the dark.
+  MM.ORBIT_ALT = 250;          // how high above the ground the atmosphere ends
+  MM.spaceKey = dimId => { const D = MM.DIM_BY_ID[dimId]; return D.space || D.id; };
+  MM.spaceDimOf = dimId => MM.DIM_BY_ID['sp_' + MM.spaceKey(dimId)];
+  function ensureSpaceDim(id) {
+    const key = id.slice(3);
+    if (!MM.DIM_BY_ID[key] && !MM.DIMS.some(d => d.space === key)) return undefined;
+    const inC137 = k => MM.DIMS.filter(d => d.space === k && !d.hidden && !d.interior && !d.pocket).map(d => d.id);
+    let list = inC137(key);
+    // Every Earth (the alternate ones, everyone's home) has its own sky with the same Moon and
+    // planets around it.
+    const K = MM.DIM_BY_ID[key];
+    if (K && K.variantOf === 'suburbia') list = [key].concat(inC137('c137').filter(d => d !== 'suburbia'));
+    if (!list.length) list = [key];
+    // The home planet in the middle (Earth, if it is there), its moon close by, the rest around.
+    list.sort((a, b) => (b === 'suburbia') - (a === 'suburbia'));
+    const planets = [];
+    const rest = list.filter((d, i) => i > 0 && d !== 'moon');
+    planets.push({ dim: list[0], x: 0, y: 0, z: 0, r: 110 });
+    if (list.includes('moon') && list[0] !== 'moon') planets.push({ dim: 'moon', x: 230, y: 30, z: -90, r: 32 });
+    rest.forEach((d, i) => { const a = (i + 0.5) / rest.length * Math.PI * 2; planets.push({ dim: d, x: Math.cos(a) * 470, y: ((i % 3) - 1) * 90 + 120, z: Math.sin(a) * 470, r: 52 + (i % 3) * 8 }); });
+    const home = MM.DIM_BY_ID[list[0]];
+    const d = {
+      id, name: 'Space around ' + home.name, code: home.code, hidden: true, planets, spaceOf: key,
+      blurb: 'Out of the atmosphere. Fly into a planet to land on it.', seed: 4242, gravity: 0, amp: 0, scale: 0.01, bound: 650,
+      sky: ['#000004', '#060a1e'], fog: '#02030a', fogFar: 1450, sun: '#ffffff', ambient: '#8a96c8',
+      ground: ['#000000', '#000000', '#000000'], accent: '#ffffff', props: [], npc: [], pickups: {}, mat: 's', spawn: { x: 0, z: 0 },
+    };
+    MM.DIMS.push(d); byId[id] = d; MM.DIM_IDS.push(id);
+    return d;
+  }
+  // Looking up a home dimension (or a space) by id makes it (deterministically) the first time.
   const byId = MM.DIM_BY_ID;
-  const make = k => { if (typeof k === 'string' && !(k in byId) && MM.HOME_RE.test(k)) MM.ensureHomeDim(k); };
+  const make = k => {
+    if (typeof k !== 'string' || k in byId) return;
+    if (MM.HOME_RE.test(k)) MM.ensureHomeDim(k);
+    else if (k.startsWith('sp_')) ensureSpaceDim(k);
+  };
   MM.DIM_BY_ID = new Proxy(byId, {
     get(t, k) { make(k); return t[k]; },
     has(t, k) { make(k); return k in t; },

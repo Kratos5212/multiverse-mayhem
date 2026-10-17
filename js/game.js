@@ -144,6 +144,7 @@
   }
 
   // ---------- Game state ----------
+  const SPACE_BLACK = new T.Color('#02030a');
   const G = { baseFov: 62, pairs: new Map(),
     mode: 'menu', net: null, myId: 0, ep: 0, dimId: null, inst: 0, world: null, you: null,
     me: { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, grounded: true, fly: 6, kbT: 0, aimT: 0, emoteT: 0, flying: false },
@@ -405,6 +406,8 @@
       scene.add(G.world.group);
       const dim = MM.DIM_BY_ID[w.dim];
       scene.fog = new T.Fog(dim.fog, 40, dim.fogFar);
+      const skyU = G.world.group.children[0].material.uniforms;
+      G.atmo = { fog: new T.Color(dim.fog), far: dim.fogFar, top: skyU.top.value.clone(), bot: skyU.bot.value.clone(), k: -1 };
       renderer.setClearColor(dim.fog);
     }
     G.dimId = w.dim; G.inst = w.inst; G.ep = w.ep;
@@ -1645,7 +1648,23 @@
     if (inShip) { if (ny < g) { ny = g; me.vy = Math.max(0, me.vy); }
       // Increased height limit for space travel - much higher for interplanetary travel
       const maxShipHeight = 1000; // Increased from 100 to 1000 for space travel
-      ny = Math.min(ny, MM.heightAt(G.dimId, nx, nz) + maxShipHeight); }
+      ny = Math.min(ny, MM.heightAt(G.dimId, nx, nz) + maxShipHeight);
+      if (dim.planets) {
+        // Space: fly between the planets; touch one to land on it (you can't fly through it).
+        ny = Math.min(ny, 880);
+        for (const P of dim.planets) {
+          const dx = nx - P.x, dy = ny + 1 - P.y, dz = nz - P.z, d = Math.hypot(dx, dy, dz), R = P.r + 4;
+          if (d < R + 6 && now() > (G.orbitT || 0)) { G.orbitT = now() + 2.5; send({ t: 'land', d: P.dim }); }
+          if (d < R) { nx = P.x + dx / d * R; ny = P.y - 1 + dy / d * R; nz = P.z + dz / d * R; }
+        }
+      } else if (!dim.interior) {
+        // Up out of the atmosphere: into space.
+        const alt = ny - MM.heightAt(G.dimId, nx, nz);
+        if (alt > MM.ORBIT_ALT - 70 && !G.orbitWarned) { G.orbitWarned = true; UI.toast('Leaving the atmosphere… keep climbing for space.', 2500); }
+        if (alt > MM.ORBIT_ALT && now() > (G.orbitT || 0)) { G.orbitT = now() + 3; send({ t: 'orbit' }); }
+        if (alt < MM.ORBIT_ALT - 120) G.orbitWarned = false;
+      }
+    }
     else if (ny <= g) {
       if (!me.grounded && me.vy < -14) fx.puff(nx, g, nz, '#ddd', 6, 1, 1, 0.5);
       if (!me.grounded && me.vy < -24 && !inShip) C.ragdoll(G.meAv, me.vx || Math.sin(me.yaw), me.vz || Math.cos(me.yaw), Math.min(0.8, -me.vy / 50));   // a hard landing: stumble over
@@ -1673,6 +1692,17 @@
     if (me.sprinting && me.grounded && hs > 3 && Math.random() < dt * 14) fx.puff(me.x - me.vx * 0.05, me.y + 0.1, me.z - me.vz * 0.05, '#e8e2d4', 1, 0.5, 0.6, 0.4);
     const fovT = G.baseFov + (me.sprinting && hs > 3 ? 6 : 0);
     if (Math.abs(camera.fov - fovT) > 0.05) { camera.fov += (fovT - camera.fov) * Math.min(1, dt * 6); camera.updateProjectionMatrix(); }
+    // Climbing towards space, the sky darkens and you see further.
+    if (G.atmo && !dim.interior && !dim.planets) {
+      const k = Math.max(0, Math.min(1, (me.y - MM.heightAt(G.dimId, me.x, me.z) - 70) / (MM.ORBIT_ALT - 70)));
+      if (Math.abs(k - G.atmo.k) > 0.01) {
+        G.atmo.k = k;
+        const black = SPACE_BLACK, skyU = G.world.group.children[0].material.uniforms;
+        scene.fog.color.copy(G.atmo.fog).lerp(black, k); renderer.setClearColor(scene.fog.color);
+        scene.fog.far = G.atmo.far + (1400 - G.atmo.far) * k;
+        skyU.top.value.copy(G.atmo.top).lerp(black, k); skyU.bot.value.copy(G.atmo.bot).lerp(black, k * 0.85);
+      }
+    }
     if (st.fly) $('flyFill').style.transform = 'scaleX(' + me.fly / (st.flyTime || 6) + ')';
     // Hold to fire.
     if ((mouseDown && document.pointerLockElement === canvas) || (mouseDown && !document.pointerLockElement) || touch.fire) fire();

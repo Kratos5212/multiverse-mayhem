@@ -1999,6 +1999,62 @@
     return new T.Points(g, new T.PointsMaterial({ color, size, sizeAttenuation: false, fog: false, map: C.dotTexture, transparent: true, depthWrite: false }));
   }
 
+  // ---------- Space ----------
+  // Black sky full of stars, the sun, and the planets of this universe as real globes: their
+  // own ground colours (Earth gets oceans), a glowing rim of their sky, and their name.
+  function makeSpace(dim, group) {
+    const all = new T.Group();
+    const sky = new T.Group();   // follows the camera
+    const st = (n, color, size) => {
+      const pos = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) {
+        const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, s = Math.sqrt(1 - u * u);
+        pos[i * 3] = Math.cos(a) * s * 1300; pos[i * 3 + 1] = u * 1300; pos[i * 3 + 2] = Math.sin(a) * s * 1300;
+      }
+      const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3));
+      return new T.Points(g, new T.PointsMaterial({ color, size, sizeAttenuation: false, fog: false, map: C.dotTexture, transparent: true, depthWrite: false }));
+    };
+    sky.add(st(1400, '#ffffff', 2), st(300, '#bcd4ff', 3), st(120, '#ffe0b0', 3.5));
+    const sun = new T.Mesh(new T.SphereGeometry(70, 24, 16), new T.MeshBasicMaterial({ color: '#fff4d0', fog: false }));
+    sun.position.set(-900, 500, -700); sky.add(sun);
+    const glow = new T.Mesh(new T.SphereGeometry(120, 24, 16), new T.MeshBasicMaterial({ color: '#ffd890', transparent: true, opacity: 0.25, fog: false, depthWrite: false }));
+    glow.position.copy(sun.position); sky.add(glow);
+    all.add(sky);
+    for (const P of dim.planets) {
+      const D = MM.DIM_BY_ID[P.dim];
+      const g = new T.SphereGeometry(P.r, 64, 40), pos = g.attributes.position, cols = new Float32Array(pos.count * 3);
+      const c = D.ground.map(x => new T.Color(x)), sea = new T.Color('#2f6fd6'), ice = new T.Color('#f4f8ff'), tmp = new T.Color();
+      const earth = P.dim === 'suburbia' || D.variantOf === 'suburbia';
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i) / P.r, y = pos.getY(i) / P.r, z = pos.getZ(i) / P.r;
+        const n = MM.fbm(x * 2.2 + 7, z * 2.2 + y * 1.7, D.seed || 1, 4);
+        tmp.copy(c[0]).lerp(c[1], Math.min(1, Math.max(0, (n - 0.4) * 3)));
+        if (n < 0.42) tmp.lerp(c[2], Math.min(1, (0.42 - n) * 6));
+        if (earth && n < 0.47) tmp.copy(sea).multiplyScalar(0.8 + n * 0.4);
+        if (earth && Math.abs(y) > 0.86) tmp.copy(ice);
+        if (P.dim === 'moon') tmp.multiplyScalar(0.8 + MM.fbm(x * 9, z * 9 + y * 5, 3, 2) * 0.5);
+        cols[i * 3] = tmp.r; cols[i * 3 + 1] = tmp.g; cols[i * 3 + 2] = tmp.b;
+      }
+      g.setAttribute('color', new T.BufferAttribute(cols, 3));
+      const m = new T.Mesh(g, terrainMat);
+      m.position.set(P.x, P.y, P.z);
+      all.add(m);
+      // Its atmosphere: a soft rim in the colour of its sky.
+      if (P.dim !== 'moon') {
+        const a = new T.Mesh(new T.SphereGeometry(P.r * 1.07, 48, 32), new T.MeshBasicMaterial({ color: D.sky[1], transparent: true, opacity: 0.22, side: T.BackSide, depthWrite: false, fog: false }));
+        a.position.copy(m.position); all.add(a);
+      }
+      const tag = C.makeTag(D.name, '', '', '#ffd84d');
+      tag.draw(-1);
+      tag.sprite.scale.set(110, 27, 1);
+      tag.sprite.position.set(P.x, P.y + P.r + 30, P.z);
+      tag.sprite.material.fog = false;
+      all.add(tag.sprite);
+    }
+    group.userData.spaceSky = sky;
+    return all;
+  }
+
   // Big things in the sky that make each dimension recognisable.
   function skyDecor(dim, group) {
     const add = (shape, pos) => { const m = C.meshOf(shape.build(), 0); m.position.set(pos[0], pos[1], pos[2]); m.traverse(o => { if (o.material) { o.material = o.material.clone(); o.material.fog = false; } }); group.add(m); return m; };
@@ -2842,7 +2898,8 @@
     group.add(makeSky(dim));
     if (dim.interior) group.add(makeRoom(dim));
     let terrain = null;
-    if (!dim.interior) { skyDecor(dim, group); terrain = makeTerrain(dim); group.add(terrain); }
+    if (dim.planets) group.add(makeSpace(dim, group));
+    else if (!dim.interior) { skyDecor(dim, group); terrain = makeTerrain(dim); group.add(terrain); }
     if (dim.streets) group.add(makeStreets(dim, MM.genProps(dimId)));
     const layout = MM.layoutOf(dimId);
     if (layout.roads.length || layout.plazas.length) group.add(makePaths(dim, layout));
@@ -2984,6 +3041,7 @@
         kiosk.userData.ring.rotation.y = Math.sin(t * 0.5) * 0.3;
         if (group.userData.eye && camPos) group.userData.eye.lookAt(camPos);
         group.children[0].position.copy(camPos || v.set(0, 0, 0));
+        if (group.userData.spaceSky && camPos) group.userData.spaceSky.position.copy(camPos);
       },
       dispose() {
         group.traverse(o => {
