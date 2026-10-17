@@ -858,11 +858,17 @@
   }
 
   // ----- Ring races (shared/races.js) -----
-  // Every race in this world: its rings glowing in its colour, the start ring with a sign.
-  // While you race, the next ring is bright and the rest fade; the clock runs at the top.
+  // Every race in this world has a start pad with a sign: two or more players standing on it
+  // start a race. Its rings only show while you race it: the next one bright, the rest faint;
+  // the clock runs at the top. Playing alone with bots, there are no races at all.
   function buildRaceRings(dimId) {
     G.raceRings = [];
+    if (G.net && G.net.host) return;   // offline, with bots: no races
     for (const R of MM.racesIn(dimId)) {
+      const q0 = MM.ringAt(R, 0, dimId), pad = new T.Mesh(new T.RingGeometry(R.r + 1.6, R.r + 2.4, 48), new T.MeshBasicMaterial({ color: R.color, transparent: true, opacity: 0.55, side: T.DoubleSide, fog: false }));
+      pad.rotation.x = -Math.PI / 2;
+      pad.position.set(q0.x, R.abs ? q0.y - R.r : MM.heightAt(dimId, q0.x, q0.z) + 0.06, q0.z);
+      G.world.group.add(pad);
       const geo = new T.TorusGeometry(R.r, Math.max(0.18, R.r * 0.07), 8, 32);
       R.rings.forEach((_, i) => {
         const q = MM.ringAt(R, i, dimId), n = MM.ringAt(R, (i + 1) % R.rings.length, dimId);
@@ -870,7 +876,7 @@
         m.position.set(q.x, q.y, q.z);
         m.lookAt(n.x, n.y, n.z);
         if (!i) {
-          const tag = C.makeTag(R.name, '', (R.ship ? 'By ship' : 'On foot') + ' · through here to start', R.color);
+          const tag = C.makeTag(R.name, '', (R.ship ? 'By ship' : 'On foot') + ' · 2+ players here to start', R.color);
           tag.draw(-1);
           tag.sprite.position.set(q.x, q.y + R.r + 1.2, q.z); tag.sprite.scale.multiplyScalar(R.ship ? 4 : 1.6);
           G.world.group.add(tag.sprite);
@@ -884,8 +890,9 @@
     const r = G.race, hud = $('raceHud');
     for (const g of G.raceRings || []) {
       const on = r && r.id === g.R.id, next = on && g.i === r.next;
-      g.m.material.opacity = on ? (next ? 1 : g.i < r.next ? 0.08 : 0.3) : g.i ? 0.25 : 0.9;
-      const s = next || (!r && !g.i) ? 1 + Math.sin(now() * 5) * 0.06 : 1;
+      g.m.visible = !!on && g.i >= r.next;
+      g.m.material.opacity = next ? 1 : 0.3;
+      const s = next ? 1 + Math.sin(now() * 5) * 0.06 : 1;
       g.m.scale.set(s, s, s);
     }
     if (!r) { hud.hidden = true; return; }
@@ -905,7 +912,8 @@
     G.race = null;
     if (e.done) {
       const R = MM.RACE_BY_ID[e.done], got = e.give ? Object.keys(e.give).map(k => '+' + e.give[k] + ' ' + MM.MATERIALS[k].icon).join(' ') : '';
-      UI.banner(R.name + (e.record ? ': new record!' : ': finished!'), e.t + ' s (best ' + e.best + ' s). ' + (got || 'No prize again so soon, but the time counts.'));
+      const place = e.of > 1 ? ['1st', '2nd', '3rd'][e.place - 1] || e.place + 'th' : '';
+      UI.banner(R.name + (place ? ': ' + place + ' of ' + e.of : '') + (e.record ? ' · new record!' : ''), e.t + ' s (best ' + e.best + ' s). ' + (got || 'No prize again so soon, but the time counts.'));
       C.sfx('craft');
     }
   }

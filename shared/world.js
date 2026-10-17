@@ -45,8 +45,8 @@
       ground: ['#5fae3e', '#78c24b', '#4c9636'], accent: '#ffffff',
       props: [['tree', 40], ['hedge', 20]], streets: { grid: 44, extent: 150 }, spawn: { x: 2, z: -3, spread: 5 },
       // Rick's things in his open garage (the interactive ones are landmarks).
-      fixed: [['schoolbus', 40.5, 31, Math.PI], ['ambulance', 40.5, -31, Math.PI], ['spacecruiser', -13.0, 33.0, Math.PI / 2, 0.8], ['shelf', -17.2, 27.1, 0], ['washer', -13.4, 27.1, 0], ['curioshelf', -11.6, 35.0, Math.PI]],
-      npc: [['neighbor', 9], ['schoolkid', 4], ['butterbot', 1, -16.5, 29.5]], pickups: { s: 18, c: 2 }, mat: 's',
+      fixed: [['schoolbus', 40.5, 31, Math.PI], ['ambulance', 40.5, -31, Math.PI], ['spacecruiser', -13.0, 30.55, Math.PI / 2, 0.8], ['shelf', -11.6, 24.9, 0], ['washer', -12.9, 24.9, 0], ['curioshelf', -11.6, 32.55, Math.PI]],
+      npc: [['neighbor', 9], ['schoolkid', 4], ['butterbot', 1, -16.5, 27.05]], pickups: { s: 18, c: 2 }, mat: 's',
     },
     {
       // The same Earth as C-137, all of it (the suburb, Downtown, D.C., Area 51), after the love
@@ -1402,14 +1402,14 @@
   for (const k in BOX) if (MM.PROPS[k]) MM.PROPS[k].box = BOX[k];
   // Rick's garage is open: three walls and the front either side of the big door (and the
   // side door), as segments [x1, z1, x2, z2] in the model's own frame. You walk in.
-  MM.PROPS.lm_garage.walls = [[-4.5, -4.5, 4.5, -4.5], [-4.5, -4.5, -4.5, 4.5], [4.5, -4.5, 4.5, 4.5], [-4.5, 4.5, -3.4, 4.5], [2.2, 4.5, 3.05, 4.5], [4.15, 4.5, 4.5, 4.5]];
+  MM.PROPS.lm_garage.walls = [[-4.5, -4.5, 4.5, -4.5], [-4.5, -4.5, -4.5, 4.5], [4.5, -4.5, 4.5, -2.5], [4.5, -1.1, 4.5, 4.5], [-4.5, 4.5, -3.4, 4.5], [2.2, 4.5, 3.05, 4.5], [4.15, 4.5, 4.5, 4.5]];
   delete MM.PROPS.lm_garage.box;
   MM.PROPS.lm_garage.boxR = 6.4;
   // The Smiths' back yard: a brick wall round three sides (the house and the garage close the
   // fourth), the shed in the corner and the big tree over the graves. Front = toward the house.
   MM.PROPS.lm_backyard.walls = [[-13.5, -8.5, 13.5, -8.5], [-13.5, -8.5, -13.5, 8.0], [13.5, -8.5, 13.5, 8.9],
     [-10, -6.8, -7, -6.8], [-10, -6.8, -10, -4.2], [-7, -6.8, -7, -4.2], [-10, -4.2, -7, -4.2],   // the shed
-    [9.3, -6.2, 9.7, -6.2], [9.3, -5.8, 9.7, -5.8], [9.3, -6.2, 9.3, -5.8], [9.7, -6.2, 9.7, -5.8]];   // the tree
+    [-1.7, -6.7, -1.3, -6.7], [-1.7, -6.3, -1.3, -6.3], [-1.7, -6.7, -1.7, -6.3], [-1.3, -6.7, -1.3, -6.3]];   // the tree
   MM.PROPS.lm_backyard.boxR = 16.3;
   MM.PROPS.lm_backyard.noTop = true;   // the walls stop you, but there is nothing to stand on
 

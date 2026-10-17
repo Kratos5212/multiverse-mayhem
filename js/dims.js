@@ -841,18 +841,18 @@
       s.add(P.box, '#8a6a4a', [sx + 0.4, 1.0, sz + 1.32], null, [1.0, 2.0, 0.04]);
       s.add(P.box, '#bfdcec', [sx - 0.9, 1.6, sz + 1.32], null, [0.6, 0.5, 0.03]);
       // The big tree, and the two graves in its shade: low mounds of turned earth.
-      const tx = 9.5, tz = -6;
+      const tx = -1.5, tz = -6.5;
       s.add(P.cylLo, '#6e4a2c', [tx, 1.8, tz], null, [0.42, 3.6, 0.42]);
       s.add(P.cylLo, '#6e4a2c', [tx + 0.6, 3.8, tz], [0, 0, -0.6], [0.2, 1.8, 0.2]);
       s.add(P.cylLo, '#6e4a2c', [tx - 0.6, 3.9, tz + 0.1], [0.2, 0, 0.55], [0.2, 1.7, 0.2]);
       for (const [x, y, z, r] of [[0, 5.8, 0, 3.0], [1.9, 5.3, 0.6, 2.0], [-1.9, 5.4, -0.3, 2.0], [0.4, 5.5, 1.9, 1.9], [-0.3, 5.4, -1.9, 1.9], [0.6, 7.3, 0.2, 2.0]]) s.add(P.sphere, y > 6.5 ? '#58b048' : '#47963a', [tx + x, y, tz + z], null, [r, r * 0.85, r]);
-      for (const gx of [6.3, 7.7]) {
-        s.add(P.box, '#6a4a30', [gx, 0.12, -4], null, [0.9, 0.24, 2.0]);
-        s.add(P.sphere, '#7a5838', [gx, 0.2, -4], null, [0.5, 0.18, 1.0]);
+      for (const gx of [-5.0, -3.6]) {
+        s.add(P.box, '#6a4a30', [gx, 0.12, -5.4], null, [0.9, 0.24, 2.0]);
+        s.add(P.sphere, '#7a5838', [gx, 0.2, -5.4], null, [0.5, 0.18, 1.0]);
       }
-      s.add(P.sphere, '#ff6a8a', [6.3, 0.34, -3.3], null, [0.12, 0.08, 0.12]);   // somebody left flowers
-      s.add(P.sphere, '#ffe066', [7.7, 0.34, -3.2], null, [0.12, 0.08, 0.12]);
-      s.add(P.box, '#8a6a4a', [10.8, 0.6, -2.2], [0, 0.4, -0.2], [0.08, 1.2, 0.4]);  // the shovel, still leaning there
+      s.add(P.sphere, '#ff6a8a', [-5.0, 0.34, -4.7], null, [0.12, 0.08, 0.12]);   // somebody left flowers
+      s.add(P.sphere, '#ffe066', [-3.6, 0.34, -4.6], null, [0.12, 0.08, 0.12]);
+      s.add(P.box, '#8a6a4a', [-6.4, 0.6, -4.0], [0, 0.4, -0.2], [0.08, 1.2, 0.4]);  // the shovel, against the shed
       // Bushes along the wall, a patio by the back door, a grill and two lawn chairs.
       for (const [x, z] of [[-12.6, 2], [-12.6, -3], [12.6, 3.5], [-3, -7.6], [2.5, -7.6]]) s.add(P.sphere, '#3f8a34', [x, 0.55, z], null, [0.9, 0.7, 0.9]);
       s.add(P.box, '#bcb4a6', [4.5, 0.05, 6.7], null, [4.5, 0.08, 3.4]);
@@ -873,13 +873,19 @@
       s.add(P.box, '#77776f', [0, 0.41, 0], null, [w - 0.3, 0.02, d - 0.3]);                        // concrete floor
       const panel = (x, z, sx, sz) => { s.add(P.box, wall, [x, 0.4 + h / 2, z], null, [sx, h, sz]); };
       panel(0, -d / 2 + t / 2, w, t);                                                                  // back
-      panel(-w / 2 + t / 2, 0, t, d); panel(w / 2 - t / 2, 0, t, d);                                  // sides
+      // Sides; the one against the house has the door into it (local z -2.5 to -1.1).
+      panel(-w / 2 + t / 2, 0, t, d); panel(w / 2 - t / 2, (-d / 2 - 2.5) / 2, t, d / 2 - 2.5); panel(w / 2 - t / 2, (-1.1 + d / 2) / 2, t, d / 2 + 1.1);
+      s.add(P.box, wall, [w / 2 - t / 2, 0.4 + 2.3 + (h - 2.3) / 2, -1.8], null, [t, h - 2.3, 1.4]);
+      s.add(P.box, trim, [w / 2 - t - 0.02, 0.4 + 1.15, -1.8], null, [0.06, 2.3, 1.55]);
+      s.add(P.box, '#7a3326', [w / 2 - t - 0.6, 0.4 + 1.1, -2.45], [0, 1.2, 0], [0.06, 2.2, 1.3]);       // the door, open into the garage
       panel((-w / 2 + -3.4) / 2, d / 2 - t / 2, w / 2 - 3.4, t);                                       // front, left of the door
       panel((2.2 + 3.05) / 2, d / 2 - t / 2, 0.85, t); panel((4.15 + w / 2) / 2, d / 2 - t / 2, 0.35, t);
       s.add(P.box, wall, [-0.6, 0.4 + 3.1 + (h - 3.1) / 2, d / 2 - t / 2], null, [5.6, h - 3.1, t]);   // over the big door
       s.add(P.box, wall, [3.6, 0.4 + 2.3 + (h - 2.3) / 2, d / 2 - t / 2], null, [1.1, h - 2.3, t]);    // over the side door
       // Inside: khaki panelling, wooden studs, beams across.
-      for (const sx of [-1, 1]) s.add(P.box, inner, [sx * (w / 2 - t - 0.01), 0.4 + h / 2, 0], null, [0.02, h - 0.1, d - 0.5]);
+      s.add(P.box, inner, [-(w / 2 - t - 0.01), 0.4 + h / 2, 0], null, [0.02, h - 0.1, d - 0.5]);
+      s.add(P.box, inner, [w / 2 - t - 0.01, 0.4 + h / 2, (-d / 2 + 0.25 - 2.5) / 2], null, [0.02, h - 0.1, d / 2 - 2.75]);
+      s.add(P.box, inner, [w / 2 - t - 0.01, 0.4 + h / 2, (-1.1 + d / 2 - 0.25) / 2], null, [0.02, h - 0.1, d / 2 + 0.85]);
       s.add(P.box, inner, [0, 0.4 + h / 2, -d / 2 + t + 0.01], null, [w - 0.5, h - 0.1, 0.02]);
       for (let i = -3; i <= 3; i++) s.add(P.box, '#6e5034', [i * 1.25, 0.4 + h / 2, -d / 2 + t + 0.06], null, [0.09, h, 0.09]);
       for (let i = -3; i <= 3; i++) s.add(P.box, '#6e5034', [0, 0.4 + h - 0.12, i * 1.25], null, [w - 0.4, 0.14, 0.14]);

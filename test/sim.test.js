@@ -751,24 +751,30 @@ test('worlds, their dimensions and timelines; lightspeed from space', () => {
   assert.strictEqual(p.inst.dimId, 'featherhold_ic', 'landed');
 });
 
-test('ring races: through the first ring to start, every ring in order, a prize and a record', () => {
+test('ring races: two or more people at the start pad start one; every ring in order; the winner takes double', () => {
   assert.ok(MM.racesIn('shrimpearth').some(R => R.id === 'streetrun'), 'every Earth has the street sprint');
   assert.ok(MM.racesIn('sp_c137').some(R => R.id === 'slalom'), 'the space race is in the sky over Earth');
   const host = new MM.Host();
-  const { p } = join(host, 'sidekick', { dim: 'suburbia' });
-  const R = MM.RACE_BY_ID.streetrun, at = i => { const q = MM.ringAt(R, i, 'suburbia'); p.x = q.x; p.y = q.y - 1; p.z = q.z; host.raceStep(p); };
-  const s0 = p.inv.s || 0;
-  at(0);
-  assert.strictEqual(p.race && p.race.id, 'streetrun', 'started');
-  at(3);
-  assert.strictEqual(p.race.next, 1, 'rings count only in order');
-  for (let i = 1; i < R.rings.length; i++) { host.time += 2; at(i); }
-  assert.strictEqual(p.race, null, 'finished');
-  assert.strictEqual(p.inv.s, s0 + R.give.s, 'paid');
-  assert.ok(p.prog.best.streetrun > 0, 'a best time');
-  // Too slow: the clock runs out.
-  at(0); host.time += R.time + 1; at(1);
-  assert.strictEqual(p.race, null, 'out of time');
+  const a = join(host, 'sidekick', { dim: 'suburbia' }).p, b = join(host, 'teen', { home: 'C-137' }).p;
+  host.travel(b, 'suburbia');
+  const R = MM.RACE_BY_ID.streetrun, q0 = MM.ringAt(R, 0, 'suburbia');
+  const at = (p, i) => { const q = MM.ringAt(R, i, 'suburbia'); p.x = q.x; p.y = q.y - 1; p.z = q.z; host.raceStep(p); };
+  // Alone at the start: nothing happens.
+  a.x = q0.x; a.z = q0.z; a.y = q0.y - 1; b.x = 300; b.z = 300;
+  host.raceLobby(); host.time += 4; host.raceLobby();
+  assert.ok(!a.race, 'no race alone');
+  b.x = q0.x + 1; b.z = q0.z; b.y = q0.y - 1;
+  host.raceLobby(); host.time += 3.5; host.raceLobby();
+  assert.ok(a.race && b.race && a.race.session === b.race.session, 'both racing');
+  const s0 = a.inv.s || 0;
+  at(a, 3);
+  assert.strictEqual(a.race.next, 1, 'rings count only in order');
+  for (let i = 1; i < R.rings.length; i++) { host.time += 2; at(a, i); }
+  assert.strictEqual(a.race, null, 'finished');
+  assert.strictEqual(a.inv.s, s0 + R.give.s * 2, 'first: double prize');
+  assert.ok(a.prog.best.streetrun > 0, 'a best time');
+  host.time += R.time + 1; at(b, 1);
+  assert.strictEqual(b.race, null, 'out of time');
 });
 
 test('the cast: every dimension has its own people, each exists once, and players take them over', () => {

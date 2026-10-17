@@ -1406,8 +1406,8 @@
       this.toast(p, 'Lightspeed! ' + MM.DIM_BY_ID[d].name + ' is dead ahead. Fly into it to land.');
     }
 
-    // Ring races (shared/races.js): through the first ring starts the clock, each ring in
-    // order, the last one before time runs out pays (once every MM.RACE_CD seconds).
+    // Ring races (shared/races.js): started at the start pad (raceLobby), then each ring in
+    // order; the last one before time runs out pays (once every MM.RACE_CD seconds).
     raceStep(p) {
       const now = this.time, list = MM.racesIn(p.inst.dimId);
       const near = (R, i) => { const q = MM.ringAt(R, i, p.inst.dimId); return (p.x - q.x) ** 2 + (p.y + 1 - q.y) ** 2 + (p.z - q.z) ** 2 < R.r * R.r; };
@@ -1415,23 +1415,42 @@
       if (p.race) {
         const R = MM.RACE_BY_ID[p.race.id];
         if (!list.includes(R) || !fits(R)) { p.race = null; this.priv(p, { k: 'race', id: null }); this.toast(p, R.name + ': you left the race.'); return; }
-        if (now > p.race.t0 + R.time) { p.race = null; this.priv(p, { k: 'race', id: null }); this.toast(p, R.name + ': out of time. The first ring starts it again.'); return; }
+        if (now > p.race.t0 + R.time) { p.race = null; this.priv(p, { k: 'race', id: null }); this.toast(p, R.name + ': out of time. Meet at the start pad to race again.'); return; }
         if (!near(R, p.race.next)) return;
         p.race.next++;
         if (p.race.next < R.rings.length) { this.priv(p, { k: 'race', id: R.id, next: p.race.next, left: r2(p.race.t0 + R.time - now) }); return; }
         const t = Math.round((now - p.race.t0) * 10) / 10, best = (p.prog.best || (p.prog.best = {}))[R.id], wall = this.wall();
+        const session = p.race.session;
         p.race = null;
         if (!best || t < best) p.prog.best[R.id] = t;
-        const paid = (p.prog.tasks['race_' + R.id] || 0) <= wall;
-        if (paid) { p.prog.tasks['race_' + R.id] = wall + MM.RACE_CD * 1000; for (const k in R.give) p.inv[k] = (p.inv[k] || 0) + R.give[k]; }
-        this.priv(p, { k: 'race', id: null, done: R.id, t, best: p.prog.best[R.id], record: !best || t < best, give: paid ? R.give : null });
+        const place = ++session.place, paid = (p.prog.tasks['race_' + R.id] || 0) <= wall;
+        const give = {};
+        for (const k in R.give) give[k] = R.give[k] * (place === 1 ? 2 : 1);   // the winner takes double
+        if (paid) { p.prog.tasks['race_' + R.id] = wall + MM.RACE_CD * 1000; for (const k in give) p.inv[k] = (p.inv[k] || 0) + give[k]; }
+        this.priv(p, { k: 'race', id: null, done: R.id, t, place, of: session.n, best: p.prog.best[R.id], record: !best || t < best, give: paid ? give : null });
         this.dirty(p);
         return;
       }
-      for (const R of list) if (fits(R) && near(R, 0)) {
-        p.race = { id: R.id, t0: now, next: 1 };
-        this.priv(p, { k: 'race', id: R.id, next: 1, left: R.time });
-        return;
+    }
+    // Races need rivals: two or more people (not bots) standing at a race's start pad together
+    // for three seconds start it for all of them. Nobody racing: no rings.
+    raceLobby() {
+      const now = this.time;
+      for (const inst of this.instances.values()) {
+        const humans = [...inst.players.values()].filter(p => !p.bot && !p.dead && !p.race);
+        inst.lobby = inst.lobby || {};
+        if (humans.length < 2) { inst.lobby = {}; continue; }
+        for (const R of MM.racesIn(inst.dimId)) {
+          const q = MM.ringAt(R, 0, inst.dimId);
+          const here = humans.filter(p => (R.ship ? p.ship : !p.ship) && (p.x - q.x) ** 2 + (p.z - q.z) ** 2 < (R.r + 3) ** 2 && Math.abs(p.y + 1 - q.y) < R.r + 3);
+          if (here.length < 2) { delete inst.lobby[R.id]; continue; }
+          const L = inst.lobby[R.id];
+          if (!L) { inst.lobby[R.id] = { since: now }; for (const p of here) this.toast(p, R.name + ': ' + here.length + ' racers. Starting in 3...'); continue; }
+          if (now - L.since < 3) continue;
+          delete inst.lobby[R.id];
+          const session = { id: R.id, n: here.length, place: 0 };
+          for (const p of here) { p.race = { id: R.id, t0: now, next: 1, session }; this.priv(p, { k: 'race', id: R.id, next: 1, left: R.time, rivals: here.length }); }
+        }
       }
     }
 
@@ -1791,6 +1810,7 @@
       }
       if (this.tickN % 150 === 0) this.broadcastPop();
       if (this.tickN % 60 === 0) this.castTick();
+      if (this.tickN % 15 === 0) this.raceLobby();
       if (this.tickN % 300 === 0) for (const p of this.players.values()) if (p.saveDirty) this.save(p);
     }
 
