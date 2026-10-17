@@ -1869,7 +1869,8 @@
     if (me.grounded) me.fly = Math.min(st.flyTime || 6, me.fly + dt * 1.5);
     // World rules: swim up underwater; in the dream, now and then you remember you can fly.
     let quirkGrav = 1;
-    if (!inShip && dim.quirk === 'swim') { quirkGrav = 0.35; if (jumpHeld && !me.grounded && (me.jumpLock -= dt) <= 0) { me.vy += (5 - me.vy) * Math.min(1, dt * 4); me.flying = true; } }
+    const seaSwim = !inShip && MM.inSea(G.dimId, me.x, me.z) && me.y < MM.SEA_LEVEL + 0.3;   // swimming off the beach
+    if (!inShip && (dim.quirk === 'swim' || seaSwim)) { quirkGrav = 0.35; if (jumpHeld && !me.grounded && (me.jumpLock -= dt) <= 0) { me.vy += (5 - me.vy) * Math.min(1, dt * 4); me.flying = true; } }
     if (!inShip && dim.quirk === 'dreamy') {
       if (now() > (G.lucidNext || 0)) { G.lucidNext = now() + 18 + Math.random() * 20; G.lucidUntil = now() + 6; UI.toast('A lucid moment: you remember you can fly! (hold Jump)', 2500); }
       if (now() < (G.lucidUntil || 0) && jumpHeld && !me.grounded) { me.vy += (6 - me.vy) * Math.min(1, dt * 5); me.flying = true; }

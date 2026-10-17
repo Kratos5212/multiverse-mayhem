@@ -1014,6 +1014,12 @@
       p.x = x; p.y = y; p.z = z; p.r = m.r; p.a = m.a === MM.ANIM.dead ? 0 : m.a;
       p.lastSt = now;
       if (p.race || MM.racesIn(p.inst.dimId).length) this.raceStep(p);
+      // Diving deep off an Earth's beach: down to that Earth's Atlantis.
+      if (!p.ship && !p.dead && p.inst.dim.regions && p.z > MM.SEA_Z + 20 && p.y < MM.SEA_LEVEL + MM.DIVE_DEPTH) {
+        this.travel(p, MM.atlantisOf(p.inst.dimId), { x: (Math.random() - 0.5) * 6, z: 34 });
+        this.toast(p, 'You dived deep, and deeper, and found ' + p.inst.dim.name + '. Mr. Nimbus lives here.');
+        return;
+      }
       // Pick up anything in reach.
       for (const pk of p.inst.pickups.values()) {
         if (dist2(pk.x, pk.z, p.x, p.z) < MM.PICKUP_RADIUS * MM.PICKUP_RADIUS && Math.abs(pk.y - p.y) < 3) {
@@ -1264,6 +1270,7 @@
       let dest = l.door.dim;
       if (to.interior || to.pocket) { if (!(here.interior || here.pocket)) p.doorBack = here.variantOf ? from.dimId : null; }
       else if (p.doorBack && MM.DIM_BY_ID[p.doorBack].variantOf === dest) { dest = p.doorBack; p.doorBack = null; }
+      if (here.earthOf && dest === 'suburbia') dest = here.earthOf;   // up from an Atlantis: its own Earth's beach
       p.inst.ev({ k: 'kiosk', id: p.id });
       this.travel(p, dest, { x: l.door.x, z: l.door.z });
       this.bringTeam(p, from, ox, oz);

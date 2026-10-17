@@ -805,6 +805,30 @@ test('the cast: every dimension has its own people, each exists once, and player
   assert.ok(watcher.inst.dimId === 'suburbia');
 });
 
+test('Cronenberged Earth is all of Earth, Cronenberged; every Earth has a beach, and its own Atlantis under the sea', () => {
+  assert.strictEqual(MM.DIM_BY_ID.meatlands.variantOf, 'suburbia');
+  assert.ok(MM.LANDMARK_BY_ID.meatlands_home && MM.LANDMARK_BY_ID.meatlands_whitehouse, 'the Smith house and D.C. are there too');
+  assert.ok(!MM.npcListOf('meatlands').some(([t]) => t === 'neighbor' || t === 'cop'), 'nobody human is left');
+  const host = new MM.Host();
+  const { c, p } = join(host, 'joe', { home: 'C-137' });
+  host.travel(p, 'shrimpearth', { x: 20, z: 330 });
+  assert.ok(MM.heightAt('shrimpearth', 20, 330) > 0, 'sand');
+  // Walk out into the sea and dive.
+  const y = MM.heightAt('shrimpearth', 20, 380);
+  assert.ok(y < MM.SEA_LEVEL + MM.DIVE_DEPTH, 'deep water out there');
+  run(host, 0.3);
+  host.message(c, JSON.stringify({ t: 'st', x: 20, y: MM.heightAt('shrimpearth', 20, 334), z: 334, r: 0, a: 1, ep: p.ep }));
+  p.x = 20; p.z = 380; p.y = y;
+  host.message(c, JSON.stringify({ t: 'st', x: 20, y, z: 380.5, r: 0, a: 1, ep: p.ep }));
+  assert.strictEqual(p.inst.dimId, 'atl_shrimpearth', "Shrimp Earth's own Atlantis");
+  assert.ok([...p.inst.npcs.values()].some(n => n.type === 'nimbus'), 'with its own Mr. Nimbus');
+  // And back up to the same beach.
+  const up = MM.LANDMARK_BY_ID.atl_shrimpearth_surface;
+  p.x = up.x; p.z = up.z + 1; run(host, 1.2);
+  host.message(c, JSON.stringify({ t: 'door', l: up.id }));
+  assert.strictEqual(p.inst.dimId, 'shrimpearth');
+});
+
 test('every world has something to do, and some worlds have their own rules', () => {
   for (const id of MM.WORLD_IDS) {
     const D = MM.DIM_BY_ID[id];

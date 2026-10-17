@@ -2532,6 +2532,12 @@
         if (k > 0) tmp.lerp(paint(rp[0], rp[1], rp[2], P.t2), k);
       }
     }
+    if (dim.regions && z > MM.BEACH_Z - 40) {
+      // The beach: sand down to the water, darker sand under it.
+      const k = Math.min(1, Math.max(0, (z - (MM.BEACH_Z - 40)) / 40));
+      tmp.lerp(P.sand || (P.sand = new T.Color('#e8d9a6')), k);
+      if (y < MM.SEA_LEVEL) tmp.lerp(P.seabed || (P.seabed = new T.Color('#9a8e6a')), Math.min(1, (MM.SEA_LEVEL - y) / 4));
+    }
     if ((dim.shapeOf || dim.id) === 'meatlands') {
       const v = Math.abs(Math.sin(x * 0.11 + Math.sin(z * 0.07) * 3) * Math.cos(z * 0.09 + Math.sin(x * 0.05) * 2));
       if (v < 0.05) tmp.set('#7c1e34');
@@ -2855,6 +2861,20 @@
     s.add(P.box, '#6e4a2a', [S.x0 + 0.06, 0.55, S.z0 - dir * 0.05], null, [0.14, 1.1, 0.14]);
     const g = C.meshOf(s.build(), 0.03);
     g.traverse(o => { if (o.material && o.material.side === T.BackSide) o.visible = false; });
+    return g;
+  }
+
+  // An Earth's sea, off its southern beach: the surface and a line of surf.
+  function makeSea(dim) {
+    const g = new T.Group(), W = dim.bound * 2 + 200, D = dim.bound + 120 - MM.SEA_Z;
+    const mat = new T.MeshLambertMaterial({ color: (dim.shapeOf || dim.id) === 'meatlands' ? '#a8304a' : '#2f86c0', transparent: true, opacity: 0.78 });
+    const sea = new T.Mesh(new T.PlaneGeometry(W, D, 1, 1), mat);
+    sea.rotation.x = -Math.PI / 2; sea.position.set(0, MM.SEA_LEVEL, MM.SEA_Z + D / 2 - 6);
+    g.add(sea);
+    const surf = new T.Mesh(new T.PlaneGeometry(W, 3), new T.MeshBasicMaterial({ color: '#f2fbff', transparent: true, opacity: 0.6 }));
+    surf.rotation.x = -Math.PI / 2; surf.position.set(0, MM.SEA_LEVEL + 0.03, MM.SEA_Z + 4);
+    g.add(surf);
+    g.name = 'sea';
     return g;
   }
 
@@ -3319,7 +3339,10 @@
     if (dim.interior) group.add(makeRoom(dim));
     let terrain = null;
     if (dim.planets) group.add(makeSpace(dim, group));
-    else if (!dim.interior) { skyDecor(dim, group); terrain = makeTerrain(dim); group.add(terrain); }
+    else if (!dim.interior) {
+      skyDecor(dim, group); terrain = makeTerrain(dim); group.add(terrain);
+      if (dim.regions) group.add(makeSea(dim));
+    }
     if (dim.streets) group.add(makeStreets(dim, MM.genProps(dimId)));
     const layout = MM.layoutOf(dimId);
     if (layout.roads.length || layout.plazas.length) group.add(makePaths(dim, layout));
