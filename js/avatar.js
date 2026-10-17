@@ -560,7 +560,7 @@
     root.add(shadow);
 
     const av = {
-      root, body, parts, look: L, arch, coat: top === 'labcoat', height: (neckY + headTop * 1.0 + headR) , phase: Math.random() * 6, attackT: 0, deadT: 0, t: Math.random() * 10,
+      root, body, parts, look: L, arch, coat: top === 'labcoat', height: (neckY + headTop * 1.0 + headR) , phase: Math.random() * 6, attackT: 0, legLen, deadT: 0, t: Math.random() * 10,
       shield: null,
       animate(dt, st) { animate(av, dt, st); },
       dispose() {
@@ -651,8 +651,9 @@
     const anim = st.anim || 0;
     const dead = anim === MM.ANIM.dead;
     const air = anim === MM.ANIM.air, fly = anim === MM.ANIM.fly, emote = anim === MM.ANIM.emote;
+    const seated = anim === MM.ANIM.sit || anim === MM.ANIM.ride;
     const f = Math.min(1, dt * 14);
-    const ground = !air && !fly && !dead;
+    const ground = !air && !fly && !dead && !(anim === MM.ANIM.sit || anim === MM.ANIM.ride);
 
     // Turning: lean into it a little.
     const yaw = av.root.rotation.y;
@@ -685,7 +686,26 @@
     }
     if (air) { lL = -0.8; lR = 0.25; kL = 1.1; kR = 0.5; aL = -0.5; aR = -0.6; aLz = 0.8; aRz = -0.8; eL = -0.6; bob = 0; tilt = G.slouch - 0.05; }
     if (fly) { lL = 0.25; lR = 0.4; kL = 0.5; kR = 0.7; aL = 0.3; aR = 0.2; eL = -0.2; tilt = 0.55; bob = Math.sin(av.t * 3) * 0.05; }
-    if (emote) { aRz = -2.6 + Math.sin(av.t * 12) * 0.3; aR = 0; eR = -0.5 + Math.sin(av.t * 12) * 0.4; headY = Math.sin(av.t * 6) * 0.25; }
+    if (emote) {
+      const ek = st.ek || 0, t = av.t;
+      if (ek === 0) { aRz = -2.6 + Math.sin(t * 12) * 0.3; aR = 0; eR = -0.5 + Math.sin(t * 12) * 0.4; headY = Math.sin(t * 6) * 0.25; }   // wave
+      else if (ek === 1) {   // dance: hips, bounce, arms up in turn
+        const b = Math.sin(t * 9);
+        bob = Math.abs(b) * 0.12; roll = b * 0.12; twist = Math.sin(t * 4.5) * 0.35;
+        aL = -2.4 + Math.max(0, b) * 0.8; aR = -2.4 + Math.max(0, -b) * 0.8; aLz = 0.5; aRz = -0.5; eL = eR = -0.6;
+        lL = Math.max(0, b) * 0.4; lR = Math.max(0, -b) * 0.4; kL = lL * 1.2; kR = lR * 1.2; headY = b * 0.3;
+      } else if (ek === 2) { tilt = -0.25 + Math.sin(t * 20) * 0.05; aL = -0.4; aR = -0.4; eL = eR = -1.6; aLz = 0.35; aRz = -0.35; headX = -0.4; bob = Math.abs(Math.sin(t * 20)) * 0.05; }   // laugh
+      else if (ek === 3) { aR = -1.55; eR = -0.05; aRz = -0.1; twist = -0.2; }   // point
+      else if (ek === 4) { aL = aR = -2.9 + Math.sin(t * 10) * 0.3; aLz = 0.3; aRz = -0.3; eL = eR = -0.2; bob = Math.abs(Math.sin(t * 10)) * 0.15; }   // cheer
+      else if (ek === 5) { aR = -1.1; eR = -2.2; aRz = 0.15; headX = 0.35; tilt = 0.12; }   // facepalm
+    }
+    // Sitting (a bench, a couch, the ground) or riding: thighs forward, knees down.
+    if (seated) {
+      lL = lR = -1.45; kL = kR = 1.45; tilt = 0.02; roll = 0; twist = 0;
+      bob = -(av.legLen || 0.9) * 0.5;
+      if (anim === MM.ANIM.ride) { const up = st.armsUp ? 1 : 0; aL = aR = up ? -2.8 : -0.9; eL = eR = up ? -0.2 : -0.8; aLz = 0.25; aRz = -0.25; }
+      else { aL = aR = -0.5; eL = eR = -0.7; aLz = 0.15; aRz = -0.15; }
+    }
     // Shooting: the gun arm snaps up to aim and kicks back. Melee: a big swing.
     if (av.attackT > 0) {
       av.attackT -= dt;

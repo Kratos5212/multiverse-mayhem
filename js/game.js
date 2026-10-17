@@ -440,6 +440,8 @@
       buildRaceRings(w.dim);
       if (G.life) G.life.dispose();
       G.life = C.makeLife(w.dim, scene, settings.quality);
+      if (G.rides) G.rides.dispose();
+      G.rides = C.makeRides(w.dim, scene);
       const dim = MM.DIM_BY_ID[w.dim];
       scene.fog = new T.Fog(dim.fog, 40, dim.fogFar);
       camera.far = dim.planets ? 3200 : 1500; camera.updateProjectionMatrix();
@@ -458,6 +460,11 @@
     for (const po of w.portals) addPortal(po);
     for (const t of w.turrets) addTurret(t);
     setHouse(w.house);
+    if (G.offset === null || G.offset === undefined) G.offset = now() - w.tm;
+    G.riders = new Map();
+    for (const [id, r, t0, s] of w.riders || []) G.riders.set(id, { R: MM.RIDE_BY_ID[r], t0, seat: s });
+    G.me.sit = null;
+    galHud(null);
     for (const P of w.pairs || []) addPair(P);
     const me = G.me;
     me.x = w.x; me.y = w.y; me.z = w.z; me.vx = me.vy = me.vz = 0;
@@ -799,6 +806,19 @@
       case 'pk+': addPickup(e.p); break;
       case 'pk-': if (e.by === G.myId) { const m = G.pickups.get(e.id); if (m) fx.burst(m.position.x, m.position.y, m.position.z, '#ffd84d', 10, 4, 0.5, 0.4, 0); C.sfx('pickup'); } removePickup(e.id); break;
       case 'npc+': addNpc(e.n); break;
+      case 'rd': {
+        if (e.r) G.riders.set(e.id, { R: MM.RIDE_BY_ID[e.r], t0: e.t0, seat: e.s });
+        else { G.riders.delete(e.id); const q = G.players.get(e.id); if (q) q.av.root.rotation.x = 0; else if (e.id === G.myId && G.meAv) G.meAv.root.rotation.x = 0; }
+        break;
+      }
+      case 'gal': galHud(e); break;
+      case 'pop': fx.burst(e.x, e.y, e.z, '#ffd84d', 18, 6, 0.5, 0.5, 2); numAt(e.x, e.y + 0.6, e.z, '+1', '#ffd84d', false); if (e.by === G.myId) C.sfx('pickup', 0.6); break;
+      case 'judge': {
+        const p = posOf(e.id);
+        if (p) fx.burst(p.x, p.y + 2, p.z, e.s >= 80 ? '#ffd84d' : '#5ff8ff', 30, 6, 0.8, 0.8, 2);
+        if (e.id === G.myId) UI.banner(e.s + (e.s <= 100 && !/years/.test(e.line) ? '%' : ''), e.line); else UI.toast(e.name + ': ' + e.s + (/years/.test(e.line) ? ' years' : '%') + ' · ' + e.line, 3500);
+        break;
+      }
       case 'house': {
         if (e.h) setHouse(e.h);
         if (e.by === G.myId) UI.toast('House: ' + e.say, 3000);
@@ -823,7 +843,7 @@
         abilityFx(e.a, p, e.id);
         break;
       }
-      case 'em': { const p = G.players.get(e.id); if (p) p.emoteT = 2; break; }
+      case 'em': { const p = G.players.get(e.id); if (p) { p.emoteT = e.e === 1 ? 6 : 2.5; p.emoteKind = e.e; } break; }
       case 'dodge': { const p = posOf(e.id); if (p) { numAt(p.x, p.y + 2.4, p.z, 'DODGE!', '#5ff8ff', false); sfxAt('dodge', p.x, p.z); } break; }
       case 'kiosk': { const p = posOf(e.id); if (p) fx.burst(p.x, p.y + 1, p.z, '#ffd84d', 25, 6, 0.6, 0.5, 2); break; }
       case 'timestop': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1.2, p.z, '#8fd8ff', 90, 14, 1.2, 1.4, 0); fx.burst(p.x, p.y + 1.2, p.z, '#ffffff', 30, 8, 0.8, 1.0, 0); } C.sfx('ability'); if (e.id === G.myId) UI.toast('Time stopped. Someone will have noticed.', 3000); break; }
@@ -947,6 +967,14 @@
     const me = G.me;
     if (e.k === 'race') { onRace(e); return; }
     if (e.k === 'hmenu') { openDefenses(e.own); return; }
+    if (e.k === 'catch') { UI.banner('You caught ' + e.name + '!', ['A tiddler.', 'A decent one.', 'A big one!', 'A MONSTER!'][e.size] + (e.n > 1 ? ' (' + e.n + ' caught so far)' : ' First one!')); C.sfx('cheer'); return; }
+    if (e.k === 'stamp') {
+      const D = MM.DIM_BY_ID[e.d];
+      if (e.title) UI.banner('Passport: ' + e.title + '!', e.n + ' dimensions stamped. Reward: ' + Object.keys(e.give).map(k => e.give[k] + ' ' + MM.MATERIALS[k].icon).join(' '));
+      else UI.toast('🛂 Passport stamped: ' + (D ? D.name : e.d) + ' (' + e.n + ')', 2600);
+      if (G.prog) (G.prog.stamps || (G.prog.stamps = [])).push(e.d);
+      return;
+    }
     if (e.k === 'hack') { UI.banner('Hacking another Rick\'s house', 'Stay close for ' + e.t + ' seconds...'); C.sfx('craft', 0.6); return; }
     if (e.k === 'hacked') { UI.banner('Hacked', 'You can use this Rick\'s house for ten minutes. Press H or use the console.'); C.sfx('cheer'); return; }
     if (e.k === 'wardrobe') { openWardrobe(); return; }
@@ -1272,6 +1300,10 @@
   }
   function interact() {
     if (!canAct()) return;
+    if (G.riders && G.riders.has(G.myId)) { send({ t: 'fun', a: 'off' }); return; }
+    if (G.me.sit) { G.me.sit = null; return; }
+    const lf = nearLandmark();
+    if (lf && (lf.ride || lf.gallery || lf.game) && !tasksAt(lf).length) { funAt(lf); return; }
     const n = nearestLocal();
     if (n) { send({ t: 'talk', n: n.id }); return; }
     const l = nearLandmark();
@@ -1287,6 +1319,7 @@
     const tasks = tasksAt(l);
     const builds = MM.RECIPE_IDS.filter(r => MM.RECIPES[r].at && MM.isAt(l, MM.RECIPES[r].at));
     openModal('landmark', l.name, box => {
+      if (l.ride || l.gallery || l.game) box.append(el('button', { class: 'btn go', onclick: () => { UI.closeModal(); funAt(l); } }, l.ride ? 'Ride ' + l.name : l.gallery ? 'Play the shooting gallery' : l.game === 'fish' ? 'Go fishing' : l.game === 'dance' ? 'Dance!' : 'Play'));
       const list = el('div', { class: 'list' });
       for (const t of tasks) {
         const T = MM.TASKS[t], wait = G.prog ? G.prog.tasks[t] : 0;
@@ -1300,7 +1333,51 @@
       if (builds.length) box.append(el('p', { class: 'note', text: 'Built here: ' + builds.map(r => MM.RECIPES[r].name).join(', ') + '.' }), el('button', { class: 'btn gold', onclick: () => openCraft() }, 'Open workbench'));
     });
   }
-  function emote() { if (!canAct()) return; send({ t: 'em', e: 0 }); G.me.emoteT = 2; }
+  function emote(e) {
+    if (!canAct()) return;
+    e = e || 0;
+    send({ t: 'em', e }); G.me.emoteT = e === 1 ? 8 : 2.5; G.me.emoteKind = e; G.me.sit = null;
+  }
+  // G: the emote bar (wave, dance, laugh, point, cheer, facepalm, sit).
+  function emoteBar() {
+    const bar = $('emoteBar');
+    if (!bar.hidden) { bar.hidden = true; return; }
+    bar.textContent = '';
+    MM.EMOTES.forEach((name, i) => bar.append(el('button', { class: 'btn', onclick: () => { bar.hidden = true; emote(i); } }, (i + 1) + ' ' + name)));
+    bar.append(el('button', { class: 'btn', onclick: () => { bar.hidden = true; sitDown(); } }, '7 Sit'));
+    bar.hidden = false;
+  }
+  // Sit: on the bench, couch or chair you are next to, or right where you are.
+  const SEATS = new Set(['citbench', 'in_bench', 'in_sofa', 'couch', 'giantchair', 'in_bed', 'bench']);
+  function sitDown() {
+    if (!canAct() || (G.riders && G.riders.has(G.myId))) return;
+    const me = G.me;
+    let best = null, bd = 2.6;
+    for (const p of MM.propsNear(G.dimId, me.x, me.z, 3)) { if (!SEATS.has(p.type)) continue; const d = Math.hypot(p.x - me.x, p.z - me.z); if (d < bd) { bd = d; best = p; } }
+    me.sit = best ? { x: best.x, z: best.z, y: best.y + 0.45 * best.s, yaw: best.rot } : { x: me.x, z: me.z, y: me.y - 0.25, yaw: me.yaw };
+    me.vx = me.vz = me.vy = 0;
+  }
+  // The server's clock (for the rides' trains).
+  function serverNow() { return now() - (G.offset || 0); }
+  // A ride, a shooting gallery or a mini-game at this spot.
+  function funAt(l) {
+    if (l.ride) { send({ t: 'fun', a: 'ride', l: l.id }); return; }
+    if (l.gallery) { send({ t: 'fun', a: 'gallery', l: l.id }); return; }
+    if (document.pointerLockElement) document.exitPointerLock();
+    const report = s => { send({ t: 'mg', g: l.game, l: l.id, s }); UI.afterClose && UI.afterClose(); };
+    if (l.game === 'fish') C.playFishing(l.fish, report);
+    else if (l.game === 'dance') C.playDance(l.name, report, b => { if (b % 6 === 0) send({ t: 'em', e: 1 }); G.me.emoteT = 1.2; G.me.emoteKind = 1; });
+    else if (l.game === 'roy') C.playRoy(report);
+  }
+  // The shooting gallery's scoreboard (top right), while one runs here.
+  function galHud(e) {
+    const h = $('galHud');
+    if (!e || !e.on) { h.hidden = true; if (e && e.sc) UI.banner(MM.GALLERIES[e.id] ? MM.GALLERIES[e.id].name + ': over!' : 'Over!', e.sc.length ? e.sc.map((q, i) => (i + 1) + '. ' + q[0] + ' ' + q[1]).join('  ') : 'Nobody hit anything.'); return; }
+    if (e.by) UI.toast(e.by + ' started the ' + MM.GALLERIES[e.id].name + '. Shoot the targets!', 3000);
+    h.hidden = false; h.textContent = '';
+    h.append(el('b', { text: '🎯 ' + MM.GALLERIES[e.id].name + ' · ' + e.left + ' s' }));
+    for (const [name, n] of e.sc || []) h.append(el('div', { text: name + ' — ' + n }));
+  }
 
   // ---------- Dialogs ----------
   // ---------- Rick's house (shared/house.js) ----------
@@ -1662,6 +1739,24 @@
       if (!pg.errands.length) box.append(el('p', { class: 'note', text: 'None. Talk to locals (F) and some will ask for favours.' }));
       for (const e of pg.errands) box.append(el('div', { class: 'row' }, el('div', { class: 't' }, el('b', { text: e.n + ' ' + MM.MATERIALS[e.m].name + ' → any ' + MM.NPCS[e.npc].name + ' in ' + MM.DIM_BY_ID[e.dim].name }),
         el('small', { text: 'From ' + e.from + '. Reward: ' + Object.keys(e.rew).map(k => e.rew[k] + ' ' + MM.MATERIALS[k].name).join(', ') }))));
+      const stamps = pg.stamps || [];
+      box.append(el('h3', { text: '🛂 Multiverse passport: ' + stamps.length + ' dimensions stamped' }));
+      const nextM = MM.PASSPORT.find(q => q[0] > stamps.length);
+      box.append(el('p', { class: 'note', text: (nextM ? 'Next reward at ' + nextM[0] + ' stamps: ' + nextM[1] + '. ' : 'Every reward collected. ') + 'Every dimension and timeline you set foot in gets a stamp.' }));
+      const pass = el('div', { class: 'coll' });
+      for (const W of MM.WORLDS) {
+        const ds = W.dims.concat(...W.dims.map(d => MM.timelinesOf(d)));
+        const got = ds.filter(d => stamps.includes(d)).length;
+        pass.append(el('span', { class: 'chip' + (got ? ' have' : ''), title: W.name, text: W.icon + ' ' + got + '/' + ds.length }));
+      }
+      box.append(pass);
+      const rides = pg.rides || {}, fish = pg.fish || {}, best = pg.best || {};
+      box.append(el('h3', { text: '🎢 Fun' }));
+      box.append(el('p', { class: 'note', text: 'Rides ridden: ' + Object.keys(rides).length + ' of ' + MM.RIDES.length + (Object.keys(rides).length ? ' (' + Object.keys(rides).map(k => MM.RIDE_BY_ID[k].name).join(', ') + ')' : '') + '.' }));
+      box.append(el('p', { class: 'note', text: 'Rides to find: ' + MM.RIDES.filter(R => !rides[R.id]).map(R => R.name + ' (' + (MM.DIM_BY_ID[R.dim] ? MM.DIM_BY_ID[R.dim].name : '') + ')').join(', ') || 'none, you rode them all!' }));
+      box.append(el('p', { class: 'note', text: 'Fish caught: ' + (Object.keys(fish).length ? Object.keys(fish).map(k => k + ' ×' + fish[k]).join(', ') : 'none yet (fish at the beach by the pier, on frozen lakes, in the Teenyverse)') + '.' }));
+      const scores = Object.keys(best).filter(k => MM.GALLERIES[k] || /^(dance|roy):/.test(k));
+      if (scores.length) box.append(el('p', { class: 'note', text: 'Best scores: ' + scores.map(k => (MM.GALLERIES[k] ? MM.GALLERIES[k].name + ' ' + best[k] + ' hits' : /^roy/.test(k) ? 'Roy ' + best[k] + ' years' : 'Dancing ' + best[k] + '%')).join(' · ') }));
       const st = G.st;
       box.append(el('h3', { text: 'You' }), el('p', { class: 'note', text: 'Health ' + st.maxHp + ' · speed ' + st.speed.toFixed(1) + ' · damage ×' + st.dmg.toFixed(2) +
         (st.fly ? ' · ' + (st.fly === 'jet' ? 'jetpack' : 'wings') : '') + (st.gun ? ' · portal gun ×' + st.gun.charges : '') + (st.ship ? ' · ship' + (st.ship.drive ? ' with dimension drive' : '') + (st.ship.quantum ? ' with quantum drive' : '') : '') }));
@@ -1781,6 +1876,8 @@
     if (e.key === 'Tab') { e.preventDefault(); openBoard(); return; }
     keys.add(e.code);
     if (e.repeat) return;
+    // The emote bar is open: 1-7 pick from it.
+    if (!$('emoteBar').hidden && /^Digit[1-7]$/.test(e.code)) { const i = +e.code.slice(5) - 1; $('emoteBar').hidden = true; if (i < 6) emote(i); else sitDown(); return; }
     switch (e.code) {
       case 'Enter': case 'KeyT': e.preventDefault(); openChat(); break;
       case 'Escape': openMenu(); break;
@@ -1803,7 +1900,7 @@
       case 'Digit7': useGadget('chalk'); break;
       case 'KeyI': openInventory(); break;
       case 'KeyV': toggleView(); break;
-      case 'KeyG': emote(); break;
+      case 'KeyG': emoteBar(); break;
       case 'Space': e.preventDefault(); if (G.you && G.you.dead && now() >= G.rsAt) send({ t: 'rs' }); break;
     }
   });
@@ -1941,6 +2038,28 @@
 
   function updateMe(dt) {
     const me = G.me, y = G.you;
+    // On a ride: the ride carries you (the server does the same), you just look around.
+    const rideMe = G.riders && G.riders.get(G.myId);
+    if (rideMe && rideMe.R && y && !y.dead) {
+      const q = MM.rideAt(rideMe.R, serverNow() - rideMe.t0, rideMe.seat);
+      me.x = q.x; me.y = q.y; me.z = q.z; me.vx = me.vy = me.vz = 0; me.yaw = q.yaw; me.anim = MM.ANIM.ride; me.grounded = true;
+      if (G.meAv) {
+        G.meAv.root.position.set(me.x, me.y, me.z); G.meAv.root.rotation.order = 'YXZ'; G.meAv.root.rotation.set(q.pitch * 0.8, me.yaw, 0);
+        G.meAv.animate(dt, { speed: 0, anim: me.anim, fx: y.fx, armsUp: q.pitch > 0.25 });
+        G.meAv.body.visible = !firstPerson();
+      }
+      tickHouseFx();
+      return;
+    }
+    if (me.sit) {
+      const moving = keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD') || keys.has('Space') || Math.hypot(touch.mx, touch.mz) > 0.2;
+      if (moving || !y || y.dead) me.sit = null;
+      else {
+        me.x = me.sit.x; me.z = me.sit.z; me.y = me.sit.y; me.yaw = me.sit.yaw; me.vx = me.vy = me.vz = 0; me.anim = MM.ANIM.sit;
+        if (G.meAv) { G.meAv.root.position.set(me.x, me.y, me.z); G.meAv.root.rotation.y = me.yaw; G.meAv.animate(dt, { speed: 0, anim: me.anim, fx: y.fx }); }
+        return;
+      }
+    }
     const A = MM.ARCHETYPES[profile.arch];
     const dim = MM.DIM_BY_ID[G.dimId];
     const dead = !y || y.dead;
@@ -2023,6 +2142,25 @@
         // Space: fly between the planets; touch one to land on it (you can't fly through it).
         ny = Math.min(ny, 1150);
         for (const P of dim.planets) {
+          if (P.body) {
+            // Anatomy Park's corpse: fly into a hole to go in; everywhere else it is solid.
+            const B = MM.BODY, c = Math.cos(B.yaw), sn = Math.sin(B.yaw), wx = nx - P.x, wy = ny + 1 - P.y, wz = nz - P.z;
+            const lx = wx * c - wz * sn, lz = wx * sn + wz * c;
+            let near = false;
+            B.holes.forEach((H, i) => {
+              const d = Math.hypot(lx - H[2][0], wy - H[2][1], lz - H[2][2]);
+              if (d < 12) near = true;
+              if (d < 6 && now() > (G.orbitT || 0)) { G.orbitT = now() + 2.5; send({ t: 'land', d: 'anatomy', h: i }); }
+            });
+            if (!near) for (const [px, py, pz, pr] of B.parts) {
+              const ddx = lx - px, ddy = wy - py, ddz = lz - pz, d = Math.hypot(ddx, ddy, ddz), R = pr + 3;
+              if (d < R && d > 0.01) {
+                const k = (R - d) / d, ox = ddx * k, oz = ddz * k;
+                nx += ox * c + oz * sn; nz += -ox * sn + oz * c; ny += ddy * k;
+              }
+            }
+            continue;
+          }
           const dx = nx - P.x, dy = ny + 1 - P.y, dz = nz - P.z, d = Math.hypot(dx, dy, dz), R = P.r + 4;
           if (d < R + 6 && now() > (G.orbitT || 0)) { G.orbitT = now() + 2.5; send({ t: 'land', d: P.dim }); }
           if (d < R) { nx = P.x + dx / d * R; ny = P.y - 1 + dy / d * R; nz = P.z + dz / d * R; }
@@ -2039,6 +2177,9 @@
       if (!me.grounded && me.vy < -14) fx.puff(nx, g, nz, '#ddd', 6, 1, 1, 0.5);
       if (!me.grounded && me.vy < -24 && !inShip) C.ragdoll(G.meAv, me.vx || Math.sin(me.yaw), me.vz || Math.cos(me.yaw), Math.min(0.8, -me.vy / 50));   // a hard landing: stumble over
       ny = g; me.vy = 0; me.grounded = true;
+      // A jump pad: up you go.
+      const pad = !inShip && MM.padAt(G.dimId, nx, nz);
+      if (pad) { me.vy = pad[2]; me.grounded = false; me.kbT = 0.4; fx.burst(nx, ny + 0.3, nz, '#7affea', 20, 7, 0.5, 0.5, 2); C.sfx('jump', 0.8); }
     } else if (ny > g + 0.15) me.grounded = false;
     else if (me.grounded && me.vy <= 0) ny = g;
     me.x = nx; me.y = ny; me.z = nz;
@@ -2053,7 +2194,8 @@
     if (G.meAv) {
       G.meAv.root.position.set(me.x, me.y, me.z);
       G.meAv.root.rotation.y = me.yaw;
-      G.meAv.animate(dt, { speed: me.grounded ? hs : 0, anim: me.anim, fx: fxb });
+      G.meAv.root.rotation.x = 0;
+      G.meAv.animate(dt, { speed: me.grounded ? hs : 0, anim: me.anim, fx: fxb, ek: me.emoteKind || 0 });
       if (!firstPerson()) ongoingFx(me, fxb, me.grounded ? hs : 0, dt);
       G.meAv.body.visible = !firstPerson() || dead;
       vm.bob += (me.grounded && !inShip ? hs : 0) * dt * 1.6; vm.speed = me.grounded && !inShip ? Math.min(1, hs / 5) : 0;
@@ -2164,8 +2306,14 @@
       p.av.root.rotation.y = p.r;
       const inShip = !!(s.fx & 512);
       if (inShip !== !!p.av.inShip) { C.setShip(p.av, inShip, p.info.gear); collectOutlines(p.av); }
-      const anim = s.a === MM.ANIM.dead ? s.a : p.emoteT > 0 ? MM.ANIM.emote : s.a;
-      p.av.animate(dt, { speed: s.a === MM.ANIM.run ? Math.max(p.speed, 3) : p.speed * 0.3, anim, fx: s.fx });
+      const rider = G.riders && G.riders.get(p.id);
+      let anim = s.a === MM.ANIM.dead ? s.a : p.emoteT > 0 ? MM.ANIM.emote : s.a, up = false;
+      if (rider && rider.R) {
+        const q = MM.rideAt(rider.R, serverNow() - rider.t0, rider.seat);
+        p.x = q.x; p.y = q.y; p.z = q.z; p.av.root.position.set(q.x, q.y, q.z); p.av.root.rotation.order = 'YXZ'; p.av.root.rotation.set(q.pitch * 0.8, q.yaw, 0);
+        anim = MM.ANIM.ride; up = q.pitch > 0.25;
+      }
+      p.av.animate(dt, { speed: s.a === MM.ANIM.run ? Math.max(p.speed, 3) : p.speed * 0.3, anim, fx: s.fx, ek: p.emoteKind || 0, armsUp: up });
       if (d < 40) ongoingFx(p, s.fx, p.speed, dt);
       wantDetail(p.av, p.x, p.z);
       const near = d < 40;
@@ -2366,6 +2514,7 @@
     camera.getWorldPosition(camWorld);
     G.world.update(dt, clock.elapsedTime, camWorld);
     if (G.life) G.life.update(dt, camWorld);
+    if (G.rides) G.rides.update(serverNow());
     fx.update(dt);
     const w = window.innerWidth, h = window.innerHeight;
     UI.updateNums(dt, n => {

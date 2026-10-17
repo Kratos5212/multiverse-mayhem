@@ -144,11 +144,11 @@
       props: [['cottontree', 30], ['lollipop', 30], ['rainbow', 6], ['candyrock', 20]], npc: [['froopy', 14]], pickups: { f: 6, p: 6, s: 4 }, mat: 'f',
     },
     {
-      id: 'anatomy', flat: 66, name: 'Anatomy Park', code: 'AP-1', seed: 1441, gravity: 24, amp: 6, scale: 0.02,
-      blurb: 'A theme park inside a man. Rides, attractions, and a disease problem.',
+      id: 'anatomy', flat: 100, name: 'Anatomy Park', code: 'AP-1', seed: 1441, gravity: 24, amp: 4, scale: 0.02,
+      blurb: 'A theme park inside a giant corpse floating in space, from "Anatomy Park". Fly in through any hole you like. Rides, attractions, food, and a disease problem.',
       sky: ['#5a0a1a', '#c84a5a'], fog: '#7a2a3a', fogFar: 180, sun: '#ffd0d0', ambient: '#d06070',
       ground: ['#c84a5a', '#d85a6a', '#a83a4a'], accent: '#ffe066',
-      props: [['bloodcell', 40], ['bonepillar', 16], ['artery', 14]], npc: [['bacteria', 12]], pickups: { g: 12, s: 4 }, mat: 'g',
+      props: [['bloodcell', 40], ['bonepillar', 16], ['artery', 14]], npc: [['parkguest', 16], ['parkstaff', 4], ['bacteria', 4], ['drbloom', 1, 8, -12], ['annie', 1, -10, 8], ['hepc', 1, 12, 14], ['poncho', 1, -48, -48]], pickups: { g: 12, s: 4 }, mat: 'g',
     },
     {
       id: 'pizzaworld', flat: 135, name: 'Pizza-Phone-Chair Dimension', code: 'PZ-35', seed: 3553, gravity: 24, amp: 3, scale: 0.012, outsideCurve: true,
@@ -695,6 +695,7 @@
     { id: 'toxic', name: 'The Toxic Dimension', icon: '☣️', prime: 'toxicworld', realm: true, blurb: 'Where everything toxic ends up.' },
     { id: 'cable', name: 'Interdimensional Cable', icon: '📺', prime: 'cableworld', realm: true, unique: true, blurb: 'The dimension of the commercials. There is only one.' },
     { id: 'hamster', name: 'Hamster-in-Butt World', icon: '🐹', prime: 'hamsterworld', blurb: 'It is exactly what it sounds like.' },
+    { id: 'anatomy', name: 'Anatomy Park', icon: '🎢', prime: 'anatomy', unique: true, realm: true, blurb: 'A theme park inside a giant corpse floating in space. Fly in through any hole.' },
     { id: 'sun', name: 'The Sun', icon: '☀️', prime: 'sun', solar: true, blurb: 'The middle of the solar system: the Knights of the Sun and their King.' },
     { id: 'mercury', name: 'Mercury', icon: '🐎', prime: 'mercury', solar: true, blurb: 'Hot rock and Mercurian horsemen.' },
     { id: 'venus', name: 'Venus', icon: '🟡', prime: 'venus', solar: true, blurb: 'The Viscounts of Venus, under a yellow sky.' },
@@ -804,7 +805,7 @@
   const SPACE = { suburbia: 'c137', downtown: 'c137', dc: 'c137', area51: 'c137', moon: 'c137', featherhold: 'c137', gazorp: 'c137', squanch: 'c137', purge: 'c137', gearworld: 'c137', unityworld: 'c137', federation: 'c137', blips: 'c137', bazaar: 'c137', snakeplanet: 'c137', megaseed: 'c137', plumbus: 'c137', giantland: 'c137', hamsterworld: 'c137', sun: 'c137', mercury: 'c137', venus: 'c137', mars: 'c137', jupiter: 'c137', saturn: 'c137', titan: 'c137', uranus: 'c137', neptune: 'c137', pluto: 'c137' };
   // The solar system is a short hop too: Rick flies to Pluto for an awards dinner.
   const NEAR = { suburbia: 1, downtown: 1, dc: 1, area51: 1, moon: 1, sun: 1, mercury: 1, venus: 1, mars: 1, jupiter: 1, saturn: 1, titan: 1, uranus: 1, neptune: 1, pluto: 1 };
-  const POCKET = { microverse: 1, miniverse: 1, teenyverse: 1, anatomy: 1, froopy: 1 };
+  const POCKET = { microverse: 1, miniverse: 1, teenyverse: 1, froopy: 1 };
   for (const d of MM.DIMS) { if (SPACE[d.id]) d.space = SPACE[d.id]; if (NEAR[d.id]) d.near = true; if (POCKET[d.id]) d.pocket = true; }
   // Public interdimensional stations, only where they exist in the lore.
   MM.DIM_BY_ID.citadel.station = { x: 0, z: -14, name: 'Citadel Portal Station', fee: { k: 3 }, free: ['genius', 'sidekick', 'evilmorty'] };
@@ -1017,6 +1018,11 @@
   // Doors set into a wall (and Rick's elevator doors): you walk up to them, not into them.
   MM.PROPS.lm_walldoor = { r: 0.6, h: 2.2, hp: 1e9, drop: {}, fixed: true, arch: true };
   MM.PROPS.lm_elevator = { r: 1.2, h: 3.2, hp: 1e9, drop: {}, fixed: true, arch: true };
+  // Rides and toys (shared/fun.js): the gates and the pier you walk through, the pads you step
+  // on, and the ground under a ride's track kept clear of other things (ridepost, unseen).
+  for (const k of ['lm_ridegate', 'lm_pier', 'lm_pond']) if (MM.PROPS[k]) MM.PROPS[k].arch = true;
+  MM.PROPS.jumppad = { r: 1.3, h: 0.3, hp: 1e9, drop: {}, fixed: true, arch: true };
+  MM.PROPS.ridepost = { r: 2.0, h: 0.1, hp: 1e9, drop: {}, fixed: true, arch: true };
 
   // NPCs. hostile ones chase and bite; the rest are locals you can talk to (F).
   //   human: built like a player, from these look options.  fly: hover height.
@@ -1152,6 +1158,11 @@
         skin: '#e8c8a8', hairColor: '#8a6a4a', topColor: '#6a8aa8', shirtColor: '#f2f2f2', pantsColor: '#4a4a5a', shoeColor: '#2a2a2a', accColor: '#2a2a2a' } },
       names: ['Gordon Lunas, the Man on the Moon'],
       talk: ['I am the man on the moon. It is lonely. I am thinking of a career change. Guidance counselling.', 'The flag is real. The footprints are real. The reptile footprints... we do not talk about those.'] },
+    // ----- Shooting gallery targets (shared/fun.js): one hit and down they go -----
+    tgt_hepa: { name: 'Hepatitis A (target)', hp: 1, speed: 0, hostile: false, dmg: 0, drop: {}, r: 0.7, h: 1.8, target: true },
+    tgt_jerry: { name: 'Cardboard Jerry', hp: 1, speed: 0, hostile: false, dmg: 0, drop: {}, r: 0.6, h: 1.9, target: true },
+    tgt_grom: { name: 'Gromflomite cutout', hp: 1, speed: 0, hostile: false, dmg: 0, drop: {}, r: 0.6, h: 1.9, target: true },
+    tgt_purge: { name: 'Purger cutout', hp: 1, speed: 0, hostile: false, dmg: 0, drop: {}, r: 0.6, h: 1.9, target: true },
     // ----- The Smith house's defences (shared/house.js) -----
     killbot: { name: 'Kill bot', hp: 140, speed: 4.6, hostile: false, dmg: 14, drop: { s: 3 }, r: 0.7, h: 2.3 },
     boomdrone: { name: 'Boombox drone', hp: 50, speed: 5.5, hostile: false, dmg: 5, drop: { s: 2 }, r: 0.5, h: 0.8, fly: 3.2, voice: true,
@@ -1162,6 +1173,39 @@
     fungusclone: { name: 'Fungus clone', hp: 60, speed: 1.8, hostile: false, dmg: 0, drop: { g: 3 }, r: 0.6, h: 1.4,
       talk: ['It\'s me! The real one. Not a fungus.', 'Beth? Beth, I\'m home. In a normal voice.', 'I... WILL... um. Hi!', 'Why is everyone looking at me like that?'] },
     funguseater: { name: 'Fungus clone (hungry)', hp: 320, speed: 3.4, hostile: true, dmg: 15, drop: { g: 8, m: 1 }, r: 1.6, h: 3.4 },
+    // ----- Anatomy Park's people -----
+    parkguest: { name: 'Park guest', hp: 30, speed: 2.8, hostile: false, dmg: 0, drop: { g: 1 }, r: 0.6, h: 1.8,
+      human: { species: ['human', 'alien', 'blob', 'insect', 'birdfolk'], top: ['tshirt', 'polo', 'vest'], acc: ['cap', 'none', 'goggles'] },
+      names: ['Tourist', 'Happy Guest', 'A Family of Four', 'Season Pass Holder', 'Sunburnt Visitor'],
+      talk: ['Have you done Spleen Mountain yet? I threw up. Ten out of ten.', 'The line for Bladder Falls is huge. Worth it.', 'We came in through the ear. Next year, the nose.', 'Is it weird that it smells like a hospital? It is a person.',
+        'My kid wants to see Hepatitis C. Apparently she is nice.', 'I heard the Colon Express is very... thorough.'],
+      moods: { line: 55, gift: 12, trade: 8, errand: 10, buff: 8, dance: 6, follow: 3 } },
+    parkstaff: { name: 'Park staff', hp: 40, speed: 2.6, hostile: false, guard: true, dmg: 8, drop: { k: 1 }, r: 0.6, h: 1.8,
+      human: { species: ['human', 'alien'], top: ['polo'], acc: ['cap'], colors: { topColor: '#e8405a', shirtColor: '#e8405a', pantsColor: '#2a2a3a', accColor: '#ffd84d' } },
+      names: ['Park Employee', 'Ride Operator', 'Churro Guy', 'Lifeguard (Bladder Falls)'],
+      talk: ['Keep your arms and legs inside the ride at all times. Especially inside the colon.', 'Welcome to Anatomy Park! Please do not touch the lymph nodes.', 'The Bronchial Tubes are a little slippery today. Asthma.',
+        'If you see a yellow virus with an angry face, that is Hepatitis A. Shoot it at the gallery.'] },
+    drbloom: { name: 'Dr. Xenon Bloom', hp: 80, speed: 2.2, hostile: false, dmg: 0, drop: { c: 3 }, r: 0.6, h: 1.8,
+      human: { species: ['blob'], top: ['labcoat'], acc: ['goggles'], look: { hair: 'bald', brow: 'normal', eyes: 'three', mouth: 'grin', face: 'round', height: 1.0, width: 1.1, head: 1.2,
+        skin: '#8ad87a', hairColor: '#5aa84a', topColor: '#f2f5f7', shirtColor: '#5aa84a', pantsColor: '#3a5a3a', shoeColor: '#1a2a1a', accColor: '#3a3a42' } },
+      names: ['Dr. Xenon Bloom'],
+      talk: ['Welcome to Anatomy Park! It is the dream of a lifetime. Mostly mine.', 'The rides are perfectly safe. The diseases are... being dealt with.', 'Every organ is an attraction. Every attraction is an organ. That is the magic.',
+        'Ruben was a wonderful man. Then he was a wonderful theme park.'] },
+    annie: { name: 'Annie', hp: 60, speed: 2.8, hostile: false, dmg: 0, drop: { k: 1 }, r: 0.6, h: 1.75,
+      human: { species: ['human'], top: ['polo'], acc: ['cap'], look: { hair: 'ponytail', brow: 'normal', eyes: 'normal', mouth: 'grin', face: 'round', height: 1.0, width: 0.92, head: 1.0,
+        skin: '#f2d2b6', hairColor: '#d8a83a', topColor: '#e8405a', shirtColor: '#e8405a', pantsColor: '#2a2a3a', shoeColor: '#f2f2f2', accColor: '#ffd84d' } },
+      names: ['Annie'],
+      talk: ['Hi! I work at Pirates of the Pancreas. Arr, and so on.', 'If anything goes wrong, follow me to the exit. I know where they all are. There are a lot of exits on a person.', 'Morty? You are cute. Do not tell Dr. Bloom I said that.'] },
+    hepc: { name: 'Hepatitis C', hp: 120, speed: 2.4, hostile: false, dmg: 0, drop: { g: 4 }, r: 0.8, h: 1.6,
+      human: { species: ['blob'], top: ['none'], acc: ['none'], look: { hair: 'bald', brow: 'none', eyes: 'wide', mouth: 'grin', face: 'round', height: 0.9, width: 1.35, head: 1.3,
+        skin: '#ff8ac8', topColor: '#ff8ac8', shirtColor: '#ff8ac8', pantsColor: '#e86aa8', shoeColor: '#e86aa8', accColor: '#ff8ac8' } },
+      names: ['Hepatitis C'],
+      talk: ['I am Hepatitis C! The good one. We do not talk about A.', 'I will help you fight Hepatitis A. It is personal.', 'Hugs? No. Probably not. Not a great idea, medically.'] },
+    poncho: { name: 'Poncho', hp: 140, speed: 3.2, hostile: false, guard: true, dmg: 14, drop: { k: 2 }, r: 0.7, h: 2.0,
+      human: { species: ['human'], top: ['armor'], acc: ['headband'], look: { hair: 'spiky', brow: 'angry', eyes: 'tired', mouth: 'flat', face: 'wide', height: 1.15, width: 1.2, head: 1.0,
+        skin: '#c68a62', hairColor: '#1a1a1a', topColor: '#5a6a3a', shirtColor: '#3a4a2a', pantsColor: '#3a3a2a', shoeColor: '#1a1a1a', accColor: '#c82a2a' } },
+      names: ['Poncho'],
+      talk: ['Park security. Nobody leaves until the disease situation is handled.', 'I have survived worse places than a man. Not many.', 'You want out? The gates are over there. The holes are the exits too, if you think about it.'] },
     // ----- Under the Smith garage -----
     maneater: { name: 'Killer plant', hp: 70, speed: 0.6, hostile: true, dmg: 9, drop: { g: 2 }, r: 0.9, h: 2.2 },
     jiro: { name: 'Jiro', hp: 80, speed: 1.5, hostile: false, dmg: 0, drop: { f: 2 }, r: 0.6, h: 1.7,
@@ -1676,6 +1720,13 @@
       add(l.model, l.x, l.z, l.rot !== undefined ? l.rot : dim.interior ? (l.z < -3 ? 0 : l.z > 3 ? Math.PI : l.x < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.atan2(-l.x, -l.z), 1, l.fy);
     }
     for (const [type, x, z, rot, sc, fy] of dim.fixed || []) add(type, x, z, rot, sc || 1, fy);
+    // Jump pads, and the ground under the rides (shared/fun.js), before anything else is planned.
+    if (MM.padsIn) for (const [x, z] of MM.padsIn(dimId)) add('jumppad', x, z, 0, 1);
+    if (MM.ridesIn && !dim.interior) for (const R of MM.ridesIn(dimId)) {
+      if (R.kind === 'wheel') { add('ridepost', R.wheel.x, R.wheel.z, 0, 2.2); continue; }
+      const T = MM.rideTrack(R);
+      for (let s = 0; s < T.len; s += 6) { const q = MM.trackAt(T, s, 0); add('ridepost', q.x, q.z, 0, R.kind === 'tram' ? 0.6 : 1); }
+    }
     const onRoad = v => { const m = ((v % 44) + 44) % 44; return Math.min(m, 44 - m) < 7.5; };
     if (dim.streets) {
       // Blocks between streets every 44 m. Each block has two rows of houses back to back,
@@ -2062,6 +2113,8 @@
         planets.push({ dim: d, x, y, z, r: SOLAR_R[d] });
       });
     }
+    // Anatomy Park's corpse floats above every Earth.
+    if (!tw && MM.BODY && (home === 'suburbia' || MM.DIM_BY_ID[home].variantOf === 'suburbia')) { const [bx, by, bz] = MM.BODY.at; planets.push({ dim: 'anatomy', body: true, x: bx, y: by, z: bz, r: 40 }); }
     const H = MM.DIM_BY_ID[home];
     const d = {
       id, name: tw ? 'Space (' + (MM.PARALLEL_BY_K[tw] || {}).label + ')' : 'Space around ' + H.name, code: tw ? '?/' + tw : H.code, hidden: true, planets, spaceOf: key,

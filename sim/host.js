@@ -66,6 +66,12 @@
       for (const q of MM.CURIO_IDS) if (raw.inv['q:' + q]) p.inv['q:' + q] = num(raw.inv['q:' + q], 99);
     }
     if (Array.isArray(raw.found)) p.found = MM.CURIO_IDS.filter(q => raw.found.includes(q));
+    // Fun (shared/fun.js): best scores, the passport, rides ridden, fish caught, eggs found.
+    if (raw.best && typeof raw.best === 'object') for (const k in raw.best) if ((MM.GALLERIES && MM.GALLERIES[k]) || /^(dance|roy):[a-z0-9_]{1,40}$/.test(k)) (p.best || (p.best = {}))[k] = num(raw.best[k], 100);
+    if (Array.isArray(raw.stamps)) p.stamps = raw.stamps.filter(d => typeof d === 'string' && d.length < 24 && MM.stampOf && MM.stampOf(d) === d).slice(0, 1000);
+    if (raw.rides && typeof raw.rides === 'object') { p.rides = {}; for (const k in raw.rides) if (MM.RIDE_BY_ID && MM.RIDE_BY_ID[k]) p.rides[k] = num(raw.rides[k], 1e6); }
+    if (raw.fish && typeof raw.fish === 'object' && MM.FISH) { const names = new Set([].concat(...Object.values(MM.FISH)).map(f => f[0])); p.fish = {}; for (const k in raw.fish) if (names.has(k)) p.fish[k] = num(raw.fish[k], 1e6); }
+    if (Array.isArray(raw.eggs) && MM.EGG_BY_ID) p.eggs = raw.eggs.filter(e => MM.EGG_BY_ID[e]).slice(0, 200);
     p.chaos = num(raw.chaos, 1e9);
     return p;
   }
@@ -170,6 +176,8 @@
         pairs: [...this.players.values()].flatMap(p => (p.pp || []).map((P, c) => P ? Object.assign({ o: p.id, c }, P) : null).filter(Boolean)),
         event: this.event ? { name: this.event.E.name, text: this.event.E.text, left: r2(this.event.until - this.host.time) } : null,
         house: this.host.houseRow(this),
+        riders: [...this.players.values()].filter(p => p.ride).map(p => [p.id, p.ride.id, r2(p.ride.t0), p.ride.seat]),
+        gal: Object.keys(this.gal || {}).map(id => [id, Math.ceil(this.gal[id].until - this.host.time)]),
       };
     }
     portalRow(po) { return { id: po.id, x: r2(po.x), y: r2(po.y), z: r2(po.z), r: r2(po.r), d: po.destDim, col: po.col, st: po.st || 'swirl', ttl: r2(po.until - this.host.time) }; }
@@ -181,6 +189,7 @@
       this.tickNpcs(dt, now);
       this.tickTurrets(dt, now);
       if (this.house) this.host.tickHouse(this, now);
+      if (this.gal) this.host.tickGalleries(this, now);
       this.tickPortals(now);
       if (this.players.size) this.tickEvents(now);
       // Props grow back a minute after they are destroyed.
@@ -375,6 +384,15 @@
       }
       this.ev({ k: 'dmg', n: n.id, d: dmg });
       if (n.hp > 0) return;
+      if (n.gal && this.gal && this.gal[n.gal]) {
+        // A shooting gallery target: a point for whoever hit it.
+        const S = this.gal[n.gal];
+        if (owner) S.scores.set(owner.id, (S.scores.get(owner.id) || 0) + 1);
+        this.npcs.delete(n.id); S.tg.delete(n.id);
+        this.ev({ k: 'npc-', id: n.id, die: 1 });
+        if (owner) this.ev({ k: 'pop', x: r2(n.x), y: r2(n.y + 1.4), z: r2(n.z), by: owner.id });
+        return;
+      }
       this.npcs.delete(n.id);
       this.ev({ k: 'npc-', id: n.id, die: 1 });
       let i = 0;
@@ -797,6 +815,8 @@
         case 'pi': this.send(p, { t: 'pong', c: m.c }); break;
         case 'use': this.onUse(p, m.l, m.task); break;
         case 'hd': this.onDefense(p, m.o, m.d); break;
+        case 'fun': this.onFun(p, m); break;
+        case 'mg': this.onMinigame(p, m); break;
         case 'lk': if (p.wardrobeUntil > this.time) { p.look = MM.sanitizeLook(m.look); p.inst.ev({ k: 'look', id: p.id, look: p.look }); } break;
         case 'talk': this.onTalk(p, m.n); break;
         case 'ans': this.onAnswer(p, m.a); break;
@@ -804,7 +824,7 @@
         case 'pvp': p.pvp = m.on; this.toast(p, m.on ? 'Fights on: players who also turned fights on can hurt you, and you them.' : 'Fights off: no other player can hurt you.'); break;
         case 'drive': this.onDrive(p, m.d); break;
         case 'orbit': this.onOrbit(p); break;
-        case 'land': this.onLand(p, m.d); break;
+        case 'land': this.onLand(p, m.d, m.h); break;
         case 'ls': this.onLight(p, m.d); break;
         case 'door': this.onDoor(p, m.l); break;
         case 'tm': this.onTeam(p, m); break;
@@ -949,6 +969,7 @@
       if (p.ship && MM.DIM_BY_ID[dimId] && MM.DIM_BY_ID[dimId].interior) p.ship = false;   // you park the ship to go indoors
       const from = p.inst;
       p.pp = [null, null];   // your portal pair stays behind (and closes)
+      if (p.ride) { p.ride = null; if (from) from.ev({ k: 'rd', id: p.id, r: '' }); }
       if (from) {
         from.players.delete(p.id);
         from.ev({ k: 'leave', id: p.id, via: dimId });
@@ -969,6 +990,7 @@
       const w = inst.welcomeState();
       w.t = 'w'; w.ep = p.ep; w.x = r2(p.x); w.y = r2(p.y); w.z = r2(p.z); w.tm = r2(this.time); w.ship = p.ship;
       this.send(p, w);
+      this.stampPassport(p, dimId);
       this.progress(p, 'dim', dimId);
       this.dirty(p);
     }
@@ -1011,8 +1033,10 @@
 
     // ----- Movement validation -----
     onState(c, p, m) {
-      if (m.ep !== p.ep || p.dead) return;
+      if (m.ep !== p.ep || p.dead || p.ride) return;   // on a ride the ride moves you
       const now = this.time;
+      // A jump pad throws you up (and along): let the flight happen.
+      if (MM.padAt(p.inst.dimId, p.x, p.z) || MM.padAt(p.inst.dimId, m.x, m.z)) { p.flingUntil = now + 3; p.kbUntil = now + 1.5; }
       const dt = Math.min(1.0, Math.max(0.05, now - p.lastSt));
       const kb = now < p.kbUntil;
       const allowed = this.speedOf(p) * dt * 1.5 + 1.5 + (kb ? 30 * dt + 3 : 0);
@@ -1293,6 +1317,25 @@
       // Rick's things answer to their own Rick only (any other Rick has to hack them first).
       if (this.labClosed(p, l)) return;
       if (l.rick && !this.rickMay(p, this.earthOfHere(p))) { this.rickRefuse(p, l); return; }
+      // Anatomy Park's gates: back out through that hole, into your ship (or, with no ship,
+      // the park staff fling you home to Earth).
+      if (l.bodyExit !== undefined) {
+        p.cdUse = this.time + 1;
+        const from = p.inst, space = p.anatomyFrom && MM.DIM_BY_ID[p.anatomyFrom] && MM.DIM_BY_ID[p.anatomyFrom].planets ? p.anatomyFrom : 'sp_c137';
+        from.ev({ k: 'kiosk', id: p.id });
+        if (p.st.ship) {
+          const S = MM.DIM_BY_ID[space], P = S.planets.find(q => q.body), H = MM.BODY.holes[l.bodyExit];
+          const w = P ? MM.bodyPoint(MM.BODY, H[2], [P.x, P.y, P.z]) : [0, 200, 0], c = P ? MM.bodyPoint(MM.BODY, [H[2][0], 0, 0], [P.x, P.y, P.z]) : [0, 0, 0];
+          const dx = w[0] - c[0], dy = w[1] - c[1], dz = w[2] - c[2], dl = Math.hypot(dx, dy, dz) || 1;
+          this.travel(p, space, { x: w[0] + dx / dl * 22, z: w[2] + dz / dl * 22, y: w[1] + dy / dl * 22 });
+          p.cdOrbit = this.time + 4;
+          this.toast(p, 'Out through ' + H[1].replace(/ \(.*\)/, '') + ', back in your ship.');
+        } else {
+          this.travel(p, 'suburbia', null);
+          this.toast(p, 'No ship to fly out in: the park staff loaded you into a pneumatic tube and fired you back to Earth.');
+        }
+        return;
+      }
       // Blast doors: the house's doors only open for whoever put them down (and their team).
       const Hs = p.inst.house;
       if (Hs && Hs.doors > this.time && ['home', 'backdoor', 'sidedoor', 'trapdoor'].some(a => MM.isAt(l, a)) && !this.houseAllows(p.inst, p)) { this.toast(p, 'Blast doors. Every door and window of the house is sealed.'); return; }
@@ -1406,9 +1449,24 @@
     }
     // Fly into a planet from space: land in its sky. Earth and its moon only need the ship;
     // the other planets of the universe need the Turbo Engine (as for flying there directly).
-    onLand(p, d) {
+    onLand(p, d, h) {
       const S = p.inst.dim, now = this.time;
       if (p.dead || !p.ship || !S.planets || now < (p.cdOrbit || 0)) return;
+      // Anatomy Park: fly into one of the floating corpse's holes.
+      if (d === 'anatomy') {
+        const P = S.planets.find(q => q.body), H = P && MM.BODY.holes[h];
+        if (!H) return;
+        const w = MM.bodyPoint(MM.BODY, H[2], [P.x, P.y, P.z]);
+        if (Math.hypot(p.x - w[0], p.y - w[1], p.z - w[2]) > 20) return;
+        p.cdOrbit = now + 3;
+        const g = MM.bodyGate(h), from = p.inst;
+        p.anatomyFrom = from.dimId;
+        p.inst.ev({ k: 'warp', id: p.id });
+        p.ship = false;
+        this.travel(p, 'anatomy', { x: g.x * 0.93, z: g.z * 0.93 });
+        this.toast(p, 'In through ' + H[1].replace(/ \(.*\)/, '').replace(/^The /, 'the ') + '. Welcome to Anatomy Park! Your ship is parked at the gate.');
+        return;
+      }
       const P = S.planets.find(q => q.dim === d);
       if (!P || Math.hypot(p.x - P.x, p.y - P.y, p.z - P.z) > P.r + 70) return;
       // Any planet you can see from here is in your universe: the near ones (the Moon, the
@@ -1791,6 +1849,140 @@
       }
     }
 
+    // ----- Fun (shared/fun.js): rides, shooting galleries, mini-games, the passport -----
+    onFun(p, m) {
+      if (m.a === 'off') { if (p.ride) this.endRide(p, false); return; }
+      const l = MM.LANDMARK_BY_ID[m.l];
+      if (p.dead || !l || l.dim !== p.inst.dimId || dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 3) ** 2) return;
+      if (m.a === 'ride' && l.ride) this.onRide(p, MM.RIDE_BY_ID[l.ride]);
+      if (m.a === 'gallery' && l.gallery) this.onGallery(p, l);
+    }
+    // Take the next train (or gondola) that has a seat. Trains leave on the clock, so everyone
+    // sees the same ones.
+    onRide(p, R) {
+      const now = this.time, inst = p.inst;
+      if (!R || p.ride || p.ship || !MM.ridesIn(inst.dimId).includes(R)) return;
+      let t0 = MM.nextDeparture(R, now), seat;
+      for (let k = 0; k < 6 && seat === undefined; k++, t0 += seat === undefined ? MM.rideEvery(R) : 0) {
+        const used = new Set([...inst.players.values()].filter(o => o.ride && o.ride.id === R.id && Math.abs(o.ride.t0 - t0) < 0.01).map(o => o.ride.seat));
+        for (let s = 0; s < R.seats; s++) if (!used.has(s)) { seat = s; break; }
+      }
+      if (seat === undefined) { this.toast(p, R.name + ' is full. Try again in a moment.'); return; }
+      p.ride = { id: R.id, t0, seat, inst };
+      inst.ev({ k: 'rd', id: p.id, r: R.id, t0: r2(t0), s: seat });
+      this.toast(p, 'Boarding ' + R.name + (t0 - now > 1 ? ': it leaves in ' + Math.ceil(t0 - now) + ' s.' : '.') + ' (F to get off)');
+    }
+    tickRide(p) {
+      const R = MM.RIDE_BY_ID[p.ride.id], u = this.time - p.ride.t0;
+      if (p.dead || p.inst !== p.ride.inst) { p.ride = null; return; }
+      if (u >= MM.rideDur(R)) { this.endRide(p, true); return; }
+      const q = MM.rideAt(R, Math.max(0, u), p.ride.seat);
+      p.x = q.x; p.y = q.y; p.z = q.z; p.r = q.yaw; p.a = MM.ANIM.ride; p.lastSt = this.time;
+    }
+    endRide(p, done) {
+      const R = MM.RIDE_BY_ID[p.ride.id], inst = p.ride.inst;
+      p.ride = null;
+      if (p.inst !== inst) return;
+      const [ex, ez] = R.exit;
+      this.teleport(p, ex, MM.heightAt(inst.dimId, ex, ez) + 0.1, ez);
+      p.kbUntil = this.time + 1;
+      inst.ev({ k: 'rd', id: p.id, r: '' });
+      if (!done) return;
+      const rides = p.prog.rides || (p.prog.rides = {});
+      rides[R.id] = (rides[R.id] || 0) + 1;
+      if (rides[R.id] === 1) { p.inv.k = (p.inv.k || 0) + 3; this.priv(p, { k: 'toast', text: 'First time on ' + R.name + '! +3 Schmeckles. (' + Object.keys(rides).length + '/' + MM.RIDES.length + ' rides ridden)' }); }
+      this.progress(p, 'ride', R.id);
+      this.dirty(p);
+    }
+    // A shooting gallery: targets pop up in front of the booth; everyone here can shoot them.
+    onGallery(p, l) {
+      const G = MM.GALLERIES[l.gallery], inst = p.inst, now = this.time;
+      const all = inst.gal || (inst.gal = {});
+      if (all[l.id] && all[l.id].until > now) { this.toast(p, G.name + ' is on: shoot the targets!'); return; }
+      all[l.id] = { G, l, until: now + G.secs, scores: new Map(), tg: new Set(), sent: 0 };
+      inst.ev({ k: 'gal', id: l.id, on: 1, left: G.secs, by: p.name });
+    }
+    tickGalleries(inst, now) {
+      for (const id in inst.gal) {
+        const S = inst.gal[id];
+        for (const tid of [...S.tg]) if (!inst.npcs.has(tid)) S.tg.delete(tid);
+        if (now >= S.until) {
+          for (const tid of S.tg) { inst.npcs.delete(tid); inst.ev({ k: 'npc-', id: tid }); }
+          const sc = [...S.scores].sort((a, b) => b[1] - a[1]);
+          sc.forEach(([pid, n], i) => {
+            const q = this.players.get(pid);
+            if (!q) return;
+            const best = q.prog.best || (q.prog.best = {}), was = best[id] || 0;
+            if (n > was) best[id] = n;
+            const k = Math.round(n / 2) + (i === 0 && sc.length > 1 ? 5 : 0);
+            q.inv.k = (q.inv.k || 0) + k;
+            this.priv(q, { k: 'toast', text: S.G.name + ': ' + n + ' hits' + (i === 0 ? ' (top score!)' : ', #' + (i + 1)) + (n > was ? ' New personal best!' : '') + ' +' + k + ' Schmeckles' });
+            this.progress(q, 'play', 'gallery');
+            this.dirty(q);
+          });
+          inst.ev({ k: 'gal', id, on: 0, sc: sc.slice(0, 5).map(([pid, n]) => [(this.players.get(pid) || { name: '?' }).name, n]) });
+          delete inst.gal[id];
+          continue;
+        }
+        // Keep the targets coming, each swaying side to side until it drops back down.
+        while (S.tg.size < S.G.n) {
+          const at = MM.galleryTargetSpot(S.l, Math.random(), Math.random());
+          const n = inst.spawnNpc(S.G.target, true, { at, until: now + 2.2 + Math.random() * 2.5 });
+          n.gal = id; n.sway = { x: n.x, z: n.z, ph: Math.random() * 6, a: 1 + Math.random() * 2.5, r: S.l.rot || 0 };
+          n.r = (S.l.rot || 0) + Math.PI;
+          S.tg.add(n.id);
+        }
+        for (const tid of S.tg) {
+          const n = inst.npcs.get(tid), w = n.sway, o = Math.sin(now * 1.6 + w.ph) * w.a;
+          n.x = w.x + Math.cos(w.r) * o; n.z = w.z - Math.sin(w.r) * o; n.r = w.r + Math.PI;
+        }
+        if (now - S.sent > 1) { S.sent = now; inst.ev({ k: 'gal', id, on: 1, left: Math.ceil(S.until - now), sc: [...S.scores].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([pid, n]) => [(this.players.get(pid) || { name: '?' }).name, n]) }); }
+      }
+    }
+    // A mini-game's result (the game itself runs in the player's own window).
+    onMinigame(p, m) {
+      const l = MM.LANDMARK_BY_ID[m.l], now = this.time, inst = p.inst;
+      if (p.dead || !l || l.game !== m.g || l.dim !== inst.dimId || dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 4) ** 2) return;
+      const cd = p.cdMg || (p.cdMg = {});
+      if (now < (cd[m.g] || 0)) return;
+      cd[m.g] = now + MM.MINIGAMES[m.g].cd;
+      const best = p.prog.best || (p.prog.best = {}), key = m.g + ':' + (l.alias || l.id);
+      if (m.g === 'fish') {
+        // What bites depends on where you are and how well you reeled it in.
+        const size = Math.min(3, m.s), pool = MM.FISH[l.fish] || MM.FISH.sea;
+        const can = pool.filter(f => f[1] <= size), tot = can.reduce((a, f) => a + f[2] * (1 + f[1] * size * 0.5), 0);
+        let r = Math.random() * tot, F = can[0];
+        for (const f of can) { r -= f[2] * (1 + f[1] * size * 0.5); if (r <= 0) { F = f; break; } }
+        const fish = p.prog.fish || (p.prog.fish = {});
+        fish[F[0]] = (fish[F[0]] || 0) + 1;
+        p.inv.f = (p.inv.f || 0) + 1 + F[1];
+        this.priv(p, { k: 'catch', name: F[0], size: F[1], n: fish[F[0]] });
+        if (F[1] >= 2) for (const o of inst.players.values()) if (o !== p) this.toast(o, p.name + ' caught ' + F[0] + '!');
+      } else if (m.g === 'dance') {
+        const J = MM.DANCE_JUDGE[l.alias || l.id] || MM.DANCE_JUDGE.ddr, line = J[m.s >= 80 ? 0 : m.s >= 50 ? 1 : 2];
+        p.inv.k = (p.inv.k || 0) + Math.round(m.s / 20);
+        if (m.s > (best[key] || 0)) best[key] = m.s;
+        inst.ev({ k: 'judge', id: p.id, name: p.name, s: m.s, line });
+      } else if (m.g === 'roy') {
+        p.inv.k = (p.inv.k || 0) + Math.round(m.s / 15);
+        if (m.s > (best[key] || 0)) best[key] = m.s;
+        inst.ev({ k: 'judge', id: p.id, name: p.name, s: m.s, line: p.name + ' lived ' + m.s + ' years as Roy.' + (m.s >= 70 ? ' "Roy! Roy! Roy!"' : '') });
+      }
+      this.progress(p, 'play', m.g);
+      this.dirty(p);
+    }
+    // Every dimension you set foot in, stamped in your passport; milestones pay.
+    stampPassport(p, dimId) {
+      const id = MM.stampOf(dimId);
+      if (!id) return;
+      const st = p.prog.stamps || (p.prog.stamps = []);
+      if (st.includes(id)) return;
+      st.push(id);
+      const M = MM.PASSPORT.find(q => q[0] === st.length);
+      if (M) for (const k in M[2]) p.inv[k] = (p.inv[k] || 0) + M[2][k];
+      this.priv(p, { k: 'stamp', d: id, n: st.length, title: M ? M[1] : '', give: M ? M[2] : null });
+    }
+
     // ----- Daily life at landmarks -----
     onUse(p, lid, taskId) {
       if (MM.helpless(p.arch, p.prog.up)) { const l = MM.LANDMARK_BY_ID[lid]; if (l && l.door) this.onDoor(p, lid); else this.toast(p, MM.HELPLESS_TEXT); return; }
@@ -1812,6 +2004,13 @@
       if (T.heal) p.hp = p.maxHp;
       if (T.summon) this.summonMeeseeks(p, 1, 45);
       if (T.effect === 'borrowgun') { p.borrow = 2; this.dirty(p); }
+      if (T.effect === 'sugar') { p.fx.sprint = this.time + 15; this.dirty(p); }
+      if (T.effect === 'curio' && T.curios) {
+        const q = pick(T.curios.filter(c => MM.CURIOS[c])), found = p.prog.found || (p.prog.found = []), first = !found.includes(q);
+        p.inv['q:' + q] = (p.inv['q:' + q] || 0) + 1;
+        if (first) found.push(q);
+        this.priv(p, { k: 'found', id: q, first, n: found.length });
+      }
       if (T.effect === 'acid') { p.fx.cloak = this.time + 25; this.dirty(p); p.inst.ev({ k: 'boom', x: r2(p.x), y: r2(p.y + 0.5), z: r2(p.z), r: 1.2 }); }   // they think you're dead   // Rick's gun: two charges, no recharging
       let text = T.texts ? pick(T.texts) : T.text;
       // Earth TVs are normal until a Rick "fixes" them with Xanthenite (for this copy of the world).
@@ -1956,7 +2155,8 @@
     progState(p) {
       const pr = p.prog, wall = this.wall(), tasks = {};
       for (const t of p.A.life.daily) tasks[t] = Math.max(0, Math.ceil(((pr.tasks[t] || 0) - wall) / 1000));
-      return { t: 'pg', up: pr.up, step: pr.step, grants: pr.grants, cnt: pr.cnt, errands: pr.errands, tasks, title: pr.title || '', st: p.st, found: pr.found || [] };
+      return { t: 'pg', up: pr.up, step: pr.step, grants: pr.grants, cnt: pr.cnt, errands: pr.errands, tasks, title: pr.title || '', st: p.st, found: pr.found || [],
+        stamps: pr.stamps || [], rides: pr.rides || {}, fish: pr.fish || {}, best: pr.best || {}, eggs: pr.eggs || [] };
     }
 
     // ----- The main loop -----
@@ -1975,6 +2175,7 @@
           this.dirty(p);
         }
         if (p.hack) this.tickHack(p);
+        if (p.ride) this.tickRide(p);
         if (p.arch === 'mutant' && !p.dead && p.hp < p.maxHp && this.tickN % 10 === 0) { p.hp = Math.min(p.maxHp, p.hp + 1); this.dirty(p); }
         // World rules: the living flesh heals you; the toxic air hurts (never below a tenth).
         const q = p.inst && p.inst.dim.quirk;

@@ -97,7 +97,25 @@
     if (!outdoor) return { update() {}, dispose() { scene.remove(root); } };
 
     // Birds: a few flocks wheeling over the world, wings flapping.
-    if (!under && D.gravity > 0 && !/^(beyond|cableworld|storytrain)/.test(D.shapeOf || dimId)) {
+    // Anatomy Park: the giant Heart beats in the middle of the park, and blood cells drift by.
+    if (dimId === 'anatomy') {
+      const l = MM.LANDMARK_BY_ID.bigheart, hs = new C.Shape();
+      hs.add(P.sphere, '#c8203a', [-1.4, 0.6, 0], null, [2.4, 2.4, 2]); hs.add(P.sphere, '#c8203a', [1.4, 0.6, 0], null, [2.4, 2.4, 2]);
+      hs.add(P.cone, '#c8203a', [0, -1.6, 0], [Math.PI, 0, 0], [3.4, 3.4, 1.9]);
+      hs.add(P.sphereLo, '#ff6a7a', [-1.6, 1.6, 1.2], null, [0.8, 0.6, 0.5]);
+      const heart = C.meshOf(hs.build(), 0.06);
+      heart.position.set(l.x, H(l.x, l.z) + 5.4, l.z);
+      root.add(heart);
+      life.heart = heart;
+      life.cells = [];
+      for (let i = 0; i < Math.round(26 * k); i++) {
+        const m = model('rbc', s => { s.add(P.cyl, '#c8283a', [0, 0, 0], null, [1, 0.35, 1]); s.add(P.cyl, '#a81a2a', [0, 0.05, 0], null, [0.55, 0.36, 0.55]); }, 0.03);
+        m.scale.setScalar(rnd(0.8, 2));
+        root.add(m);
+        life.cells.push({ m, x: rnd(-120, 120), z: rnd(-120, 120), y: rnd(12, 40), vx: rnd(-2, 2), vz: rnd(-2, 2), sp: rnd(0.3, 1) });
+      }
+    }
+    if (!under && D.gravity > 0 && !/^(beyond|cableworld|storytrain|anatomy)/.test(D.shapeOf || dimId)) {
       const col = earth ? '#3a3a42' : new T.Color(D.accent).lerp(new T.Color('#202028'), 0.6).getStyle();
       for (let f = 0; f < 3; f++) {
         const flock = { x: rnd(-80, 80), z: rnd(-80, 80), y: rnd(26, 44), vx: rnd(-3, 3), vz: rnd(-3, 3), birds: [] };
@@ -175,6 +193,14 @@
       update(dt, cam) {
         if (!cam) return;
         t += dt;
+        // The Heart beats (lub-dub, about seventy a minute) and the blood cells drift.
+        if (life.heart) { const b = (t * 1.17) % 1, p = Math.exp(-((b - 0.05) ** 2) / 0.002) * 0.12 + Math.exp(-((b - 0.22) ** 2) / 0.002) * 0.08; life.heart.scale.setScalar(1 + p); }
+        if (life.cells) for (const c of life.cells) {
+          c.x += c.vx * dt; c.z += c.vz * dt;
+          if (Math.abs(c.x - cam.x) > 130 || Math.abs(c.z - cam.z) > 130) { c.x = cam.x + rnd(-100, 100); c.z = cam.z + rnd(-100, 100); }
+          c.m.position.set(c.x, H(c.x, c.z) + c.y + Math.sin(t * c.sp + c.x) * 2, c.z);
+          c.m.rotation.set(t * c.sp * 0.5, 0, t * c.sp * 0.3);
+        }
         // Birds
         for (const F of life.birds) {
           F.x += F.vx * dt; F.z += F.vz * dt;

@@ -25,6 +25,7 @@ const { WebSocketServer } = require('ws');
 
 const ROOT = path.join(__dirname, '..');
 require(path.join(ROOT, 'shared/rules.js'));
+require(path.join(ROOT, 'shared/fun.js'));
 require(path.join(ROOT, 'shared/world.js'));
 require(path.join(ROOT, 'shared/layouts.js'));
 require(path.join(ROOT, 'shared/interiors.js'));

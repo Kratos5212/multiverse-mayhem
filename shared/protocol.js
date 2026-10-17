@@ -37,7 +37,7 @@
     ship: m => typeof m.on === 'boolean' ? { on: m.on } : null,                // board or leave your ship
     pvp: m => typeof m.on === 'boolean' ? { on: m.on } : null,                 // allow fights with other players who allow them too
     orbit: () => ({}),                                                          // fly out of the atmosphere
-    land: m => (str(m.d, 24) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null,   // fly into a planet from space
+    land: m => (str(m.d, 24) && own(MM.DIM_BY_ID, m.d) && (m.h === undefined || int(m.h, 0, 20))) ? { d: m.d, h: m.h } : null,   // fly into a planet from space (h: which hole of Anatomy Park's body)
     drive: m => (str(m.d, 16) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null, // dimension drive
     ls: m => (str(m.d, 24) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null,    // lightspeed, from space
     door: m => (str(m.l, 32) && own(MM.LANDMARK_BY_ID, m.l)) ? { l: m.l } : null,  // walk through a door
@@ -48,6 +48,10 @@
     pt: m => ((m.c === 0 || m.c === 1) && int(m.o, 0, 1e12)) ? { o: m.o, c: m.c } : null,   // step through someone's portal pair
     uc: m => (str(m.id, 20) && own(MM.CURIOS, m.id)) ? { id: m.id } : null,   // use a curio from your inventory
     lk: m => (typeof m.look === 'object' && m.look !== null && !Array.isArray(m.look)) ? { look: m.look } : null,   // the wardrobe: a new look
+    // Fun (shared/fun.js): board a ride, start or join a shooting gallery, get off a ride.
+    fun: m => (['ride', 'gallery', 'off'].includes(m.a) && (m.a === 'off' || (str(m.l, 32) && own(MM.LANDMARK_BY_ID, m.l)))) ? { a: m.a, l: m.l } : null,
+    // A mini-game's result: fishing (size 0-3), dancing (0-100 %), Roy (years lived).
+    mg: m => (str(m.g, 8) && own(MM.MINIGAMES, m.g) && str(m.l, 32) && own(MM.LANDMARK_BY_ID, m.l) && int(m.s, 0, 100)) ? { g: m.g, l: m.l, s: m.s } : null,
     hd: m => (str(m.o, 12) && MM.DEFENSES && own(MM.DEFENSES, m.o) && (m.d === undefined || int(m.d, 0, 9))) ? { o: m.o, d: m.d } : null,   // "House, ..." (shared/house.js)
     c: m => str(m.text, 300) ? { text: m.text } : null,  // chat
     em: m => int(m.e, 0, 5) ? { e: m.e } : null,       // emote
@@ -81,11 +85,11 @@
   MM.RATE = {
     all: [90, 45], st: [40, 20], f: [12, 6], c: [3, 0.5], cr: [6, 2], g: [6, 2],
     po: [3, 1], ki: [3, 1], ab: [4, 2], em: [4, 1], rs: [3, 1], pi: [5, 1], hello: [1, 0],
-    use: [4, 1], talk: [4, 1], ans: [4, 1], ship: [4, 1], drive: [3, 0.5], ls: [3, 0.5], orbit: [2, 0.5], land: [3, 1], door: [3, 1], pvp: [3, 0.5], tm: [4, 0.5], uc: [3, 1], pp: [8, 3], pt: [8, 4], hd: [4, 1], lk: [2, 0.2],
+    use: [4, 1], talk: [4, 1], ans: [4, 1], ship: [4, 1], drive: [3, 0.5], ls: [3, 0.5], orbit: [2, 0.5], land: [3, 1], door: [3, 1], pvp: [3, 0.5], tm: [4, 0.5], uc: [3, 1], pp: [8, 3], pt: [8, 4], hd: [4, 1], lk: [2, 0.2], fun: [4, 1], mg: [3, 0.5],
   };
 
   // Animation states the client reports.
-  MM.ANIM = { idle: 0, run: 1, air: 2, fly: 3, emote: 4, dead: 5 };
+  MM.ANIM = { idle: 0, run: 1, air: 2, fly: 3, emote: 4, dead: 5, sit: 6, ride: 7 };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = MM;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

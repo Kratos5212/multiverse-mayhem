@@ -324,6 +324,17 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 .keys { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
 .keys kbd { background: #0e1328; border: 2px solid #000; border-radius: 6px; padding: 0 6px; font: 700 13px var(--font); }
 #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 22px; color: var(--portal); background: var(--bg); }
+/* Fun: the mini-game window, the shooting gallery scoreboard, the emote bar */
+.mg { position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%); z-index: 40; width: min(460px, calc(100vw - 24px)); background: rgba(14, 18, 34, 0.94); border: 2px solid #5ff8ff; border-radius: 14px; padding: 10px 12px; color: #eef; box-shadow: 0 6px 30px rgba(0,0,0,0.5); }
+.mgHead { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 18px; }
+.mgCanvas { width: 100%; height: auto; display: block; border-radius: 8px; touch-action: none; margin-top: 6px; }
+.mgCanvas.tall { max-height: 46vh; object-fit: contain; }
+.mgMsg { margin: 6px 0 0; text-align: center; font-weight: 700; }
+.mgStory { max-height: 34vh; overflow: auto; font-size: 14px; line-height: 1.4; }
+.mgStory p { margin: 4px 0; }
+#galHud { position: fixed; right: 12px; top: 70px; z-index: 30; background: rgba(14,18,34,0.85); border: 2px solid #ffd84d; border-radius: 10px; padding: 6px 10px; color: #fff; font-size: 13px; min-width: 160px; }
+#emoteBar { position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); z-index: 35; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: calc(100vw - 24px); }
+.coll .chip.have { background: #2a6a3a; }
 /* House defences: a grid of big buttons, each with what it does */
 .deflist { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; max-height: 60vh; overflow: auto; }
 .defbtn { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 3px; white-space: normal; height: auto; padding: 8px 10px; }
@@ -392,6 +403,8 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
   </div>
   <div id="feed"></div>
   <div id="toasts"></div>
+  <div id="galHud" hidden></div>
+  <div id="emoteBar" hidden></div>
   <div id="cross"></div>
   <div id="dmgNums"></div>
   <div id="flash"></div>
@@ -430,6 +443,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 
 <script src="vendor/three.min.js"></script>
 <script src="shared/rules.js"></script>
+<script src="shared/fun.js"></script>
 <script src="shared/world.js"></script>
 <script src="shared/layouts.js"></script>
 <script src="shared/interiors.js"></script>
@@ -446,6 +460,8 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 <script src="js/avatar.js"></script>
 <script src="js/dims.js"></script>
 <script src="js/life.js"></script>
+<script src="js/rides.js"></script>
+<script src="js/minigames.js"></script>
 <script src="js/fx.js"></script>
 <script src="js/net.js"></script>
 <script src="js/audio.js"></script>

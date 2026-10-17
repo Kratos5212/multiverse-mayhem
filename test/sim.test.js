@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 require('../shared/rules.js');
+require('../shared/fun.js');
 require('../shared/world.js');
 require('../shared/layouts.js');
 require('../shared/interiors.js');

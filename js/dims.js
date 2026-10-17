@@ -2195,6 +2195,120 @@
       s.add(P.box, '#d8b84a', [-4, 0.6, 3], null, [1.6, 1.2, 1.2]);
       s.add(P.box, '#c8302a', [3, 1.5, -6.05], null, [3, 1, 0.05]);
     },
+    // ----- Fun (shared/fun.js) -----
+    // A ride's gate: two striped posts, a sign board and a queue rope.
+    lm_ridegate(s) {
+      for (const sx of [-1, 1]) { s.add(P.cyl, '#e8405a', [sx * 1.4, 1.6, 0], null, [0.14, 3.2, 0.14]); for (let y = 0.4; y < 3; y += 0.8) s.add(P.cyl, '#f2f2f2', [sx * 1.4, y, 0], null, [0.15, 0.3, 0.15]); s.add(P.sphereLo, '#ffd84d', [sx * 1.4, 3.3, 0], null, [0.22, 0.22, 0.22], true); }
+      s.add(P.box, '#2a2f48', [0, 3.3, 0], null, [3.2, 0.7, 0.12]);
+      s.add(P.box, '#ffd84d', [0, 3.3, 0.07], null, [2.9, 0.45, 0.02], true);
+      for (const sx of [-1, 1]) s.add(P.cylLo, '#c8a84a', [sx * 0.9, 0.5, 1.2], null, [0.05, 1, 0.05]);
+      s.add(P.box, '#c8282a', [0, 0.9, 1.2], null, [1.8, 0.06, 0.06]);
+    },
+    // A shooting gallery booth: a striped counter and awning, prizes on the back wall.
+    // A shooting gallery: you stand at the counter; the targets pop up out in front, against
+    // a striped backstop.
+    lm_gallery(s) {
+      s.add(P.box, '#c8282a', [0, 0.55, 0], null, [4.4, 1.1, 0.7]);
+      s.add(P.box, '#f2e8d0', [0, 1.12, 0], null, [4.5, 0.06, 0.8]);
+      for (const sx of [-1, 1]) s.add(P.cyl, '#8a6a3a', [sx * 2.1, 1.6, -0.2], null, [0.1, 3.2, 0.1]);
+      for (let i = -2; i <= 2; i++) s.add(P.box, i % 2 ? '#f2f2f2' : '#c8282a', [i * 0.88, 3.1, -0.6], [-0.35, 0, 0], [0.88, 0.08, 1.4]);
+      s.add(P.cyl, '#5ff8ff', [1.2, 1.25, 0.1], [Math.PI / 2, 0, 0.3], [0.06, 0.6, 0.06]);
+      for (let i = 0; i < 9; i++) s.add(P.box, i % 2 ? '#ffd84d' : '#c8282a', [-8 + i * 2, 2.2, 17], null, [2, 4.4, 0.3]);
+      for (const sx of [-1, 1]) s.add(P.box, '#8a6a3a', [sx * 9, 1, 12], null, [0.3, 2, 10]);
+    },
+    // The pier: a long wooden deck out over the sea on posts, with a bench at the end.
+    lm_pier(s) {
+      s.add(P.box, '#a8804a', [0, 1.2, 4], null, [3, 0.2, 64]);
+      for (let z = -26; z <= 34; z += 6) for (const sx of [-1.4, 1.4]) s.add(P.cylLo, '#6a4a2a', [sx, -0.6, z], null, [0.18, 3.8, 0.18]);
+      for (let z = -26; z <= 36; z += 2) for (const sx of [-1.45, 1.45]) s.add(P.box, '#8a6a3a', [sx, 1.7, z], null, [0.08, 0.8, 0.08]);
+      for (const sx of [-1.45, 1.45]) s.add(P.box, '#8a6a3a', [sx, 2.1, 4], null, [0.08, 0.08, 64]);
+      s.add(P.box, '#f2f2f2', [0, 3.5, 36], null, [0.3, 4.6, 0.3]);
+      s.add(P.sphereLo, '#fff4b0', [0, 5.9, 36], null, [0.4, 0.4, 0.4], true);
+    },
+    // A pool in a river: still water ringed with stones and reeds.
+    lm_pond(s) {
+      s.add(P.cyl, '#3a7ab0', [0, 0.06, 0], null, [4.2, 0.1, 4.2], true);
+      for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; s.add(P.sphereLo, '#7a7a6a', [Math.cos(a) * 4.4, 0.2, Math.sin(a) * 4.4], null, [0.6, 0.35, 0.5]); }
+      for (let i = 0; i < 8; i++) { const a = i * 0.9; s.add(P.cylLo, '#5a8a3a', [Math.cos(a) * 3.6, 0.6, Math.sin(a) * 3.6], [0.2, 0, 0.1], [0.04, 1.2, 0.04]); }
+    },
+    // A dance machine: a screen, speakers and a light-up floor of four arrows.
+    lm_ddr(s) {
+      s.add(P.box, '#2a1a4a', [0, 1.6, -1.2], null, [2.4, 3.2, 0.8]);
+      s.add(P.box, '#5ff8ff', [0, 2.2, -0.78], null, [1.8, 1.2, 0.02], true);
+      for (const sx of [-1, 1]) s.add(P.box, '#1a1a1e', [sx * 1.5, 1.0, -1.1], null, [0.5, 2.0, 0.5]);
+      s.add(P.box, '#3a3a4a', [0, 0.1, 0.6], null, [2.4, 0.2, 2.4]);
+      for (const [x, z, c] of [[-0.7, 0.6, '#ff6a8a'], [0.7, 0.6, '#ffd84d'], [0, -0.1, '#5ab0ff'], [0, 1.3, '#7aff6a']]) s.add(P.box, c, [x, 0.21, z], null, [0.6, 0.02, 0.6], true);
+    },
+    // A jump pad: a glowing ring on a low drum. Step on it.
+    jumppad(s) {
+      s.add(P.cyl, '#3a3f48', [0, 0.12, 0], null, [1.2, 0.24, 1.2]);
+      s.add(P.cyl, '#7affea', [0, 0.25, 0], null, [0.9, 0.04, 0.9], true);
+      s.add(P.torus, '#ffd84d', [0, 0.27, 0], [Math.PI / 2, 0, 0], [1.05, 1.05, 0.5], true);
+    },
+    // Unseen: keeps the ground under a ride's track clear.
+    ridepost() {},
+    // ----- Anatomy Park -----
+    // A gate inside the park: a fleshy arch, ringed in cartilage, with a sign for its hole.
+    lm_bodygate(s) {
+      for (const sx of [-1, 1]) { s.add(P.capsule, '#d86a7a', [sx * 1.9, 2.2, 0], null, [0.55, 4.4, 0.55]); s.add(P.sphereLo, '#f0d8c8', [sx * 1.9, 0.3, 0], null, [0.8, 0.4, 0.8]); }
+      s.add(P.torus, '#c84a5a', [0, 3.6, 0], null, [2.1, 1.6, 0.9]);
+      s.add(P.box, '#f4e8d8', [0, 4.6, 0.3], null, [3.8, 0.9, 0.12]);
+      s.add(P.box, '#3a0d16', [0, 1.6, -0.2], null, [3.2, 3.2, 0.1]);
+      s.add(P.torus, '#ff8ac8', [0, 1.8, -0.15], null, [1.4, 1.6, 0.4], true);
+    },
+    // The Heart: a huge heart on a pedestal of bone, arteries curling off it. (It beats: js/life.js.)
+    lm_heart(s) {
+      s.add(P.cyl, '#f0e4d0', [0, 0.6, 0], null, [5, 1.2, 5]);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.capsule, '#e8dcc8', [Math.cos(a) * 4.6, 1.6, Math.sin(a) * 4.6], null, [0.35, 1.8, 0.35]); }
+      for (const [x, z, c] of [[-1.5, 0, '#8a1a3a'], [1.8, 0.4, '#3a4ab0'], [0.2, -1.6, '#8a1a3a']]) s.add(P.capsule, c, [x, 8.5, z], [0.3 * x, 0, 0.2], [0.6, 3, 0.6]);
+    },
+    // Spleen Mountain: a purple-red organ the size of a hill, the coaster all over it.
+    lm_spleenmtn(s) {
+      s.add(P.sphere, '#8a3a5a', [0, 4, 0], null, [12, 9, 8]);
+      s.add(P.sphere, '#a84a6a', [3, 9, -1], null, [7, 6, 5]);
+      for (let i = 0; i < 10; i++) { const a = i * 1.7; s.add(P.capsule, '#c85a7a', [Math.cos(a) * 8, 4 + (i % 3) * 2.5, Math.sin(a) * 5], [a, 0.4, 0.3], [0.4, 3, 0.4]); }
+      s.add(P.box, '#2a0a16', [-8, 2, 0], [0, Math.PI / 2, 0], [4, 3.5, 1]);
+    },
+    // The Bladder: a big yellowish tank on stilts, where the flume starts.
+    lm_bladder(s) {
+      for (const [x, z] of [[-3, -3], [3, -3], [-3, 3], [3, 3]]) s.add(P.cyl, '#e8dcc8', [x, 4, z], null, [0.4, 8, 0.4]);
+      s.add(P.sphere, '#f0d870', [0, 11, 0], null, [5.5, 4.5, 5.5]);
+      s.add(P.sphere, '#fff4b0', [0, 11, 0], null, [5.2, 4.2, 5.2], true);
+      s.add(P.cyl, '#d8b84a', [0, 6.4, 0], null, [1.2, 1.4, 1.2]);
+    },
+    // The Bronchial Tubes: a tower of stairs up to the lungs, the slide spiralling down.
+    lm_slidetower(s) {
+      for (const [x, z] of [[-1.6, -1.6], [1.6, -1.6], [-1.6, 1.6], [1.6, 1.6]]) s.add(P.cylLo, '#b0d8ff', [x, 7, z], null, [0.18, 14, 0.18]);
+      for (let i = 0; i < 14; i++) s.add(P.box, '#8ab0d8', [Math.cos(i * 0.9) * 1.2, i + 0.5, Math.sin(i * 0.9) * 1.2], [0, -i * 0.9, 0], [1.6, 0.12, 0.7]);
+      s.add(P.box, '#d8e8f8', [0, 13.9, 0], null, [3.8, 0.2, 3.8]);
+      for (const sx of [-1, 1]) s.add(P.sphere, '#f0a0b0', [sx * 1.4, 16.2, 0], null, [1.5, 2.2, 1.3]);
+      s.add(P.cyl, '#e8c0c8', [0, 18.6, 0], null, [0.6, 1.6, 0.6]);
+    },
+    // The gift shop: a little pink building, a window full of plush organs.
+    lm_giftshop(s) {
+      s.add(P.box, '#f0a0b8', [0, 2.2, 0], null, [8, 4.4, 6]);
+      s.add(P.prism, '#c84a6a', [0, 5, 0], null, [8.6, 1.6, 6.6]);
+      s.add(P.box, '#3a1a2a', [0, 1.2, 3.02], null, [1.6, 2.4, 0.06]);
+      s.add(P.box, '#fff4d8', [-2.6, 2.2, 3.02], null, [2, 1.6, 0.04], true);
+      for (let i = 0; i < 4; i++) s.add(P.sphereLo, ['#e8405a', '#8a3a5a', '#f0d870', '#ff8ac8'][i], [-3.3 + i * 0.5, 1.8, 3.08], null, [0.22, 0.25, 0.1]);
+    },
+    // A food stand: a cart with a striped umbrella.
+    lm_foodstand(s) {
+      s.add(P.box, '#f2e8d0', [0, 0.6, 0], null, [2.8, 1.2, 1.4]);
+      s.add(P.box, '#c8282a', [0, 1.25, 0], null, [3, 0.1, 1.6]);
+      s.add(P.cylLo, '#8a8e94', [0, 2.2, 0], null, [0.05, 2.2, 0.05]);
+      s.add(P.cone, '#e8405a', [0, 3.4, 0], null, [2.2, 0.8, 2.2]);
+      for (const sx of [-1, 1]) s.add(P.cyl, '#2a2a2a', [sx * 1.2, 0.25, 0.75], [0, 0, Math.PI / 2], [0.25, 0.1, 0.25]);
+    },
+    // The Uvula Bandstand: a round stage under a dangling uvula, speakers either side.
+    lm_bandstand(s) {
+      s.add(P.cyl, '#d86a7a', [0, 0.5, 0], null, [5.5, 1, 5.5]);
+      s.add(P.cyl, '#f0c0c8', [0, 1.02, 0], null, [5, 0.05, 5], true);
+      for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; s.add(P.cylLo, '#f0e4d0', [Math.cos(a) * 5, 3.5, Math.sin(a) * 5], null, [0.2, 5, 0.2]); }
+      s.add(P.hemi, '#c84a5a', [0, 6, 0], [Math.PI, 0, 0], [6, 1.2, 6]);
+      s.add(P.capsule, '#e86a8a', [0, 5.2, 0], null, [0.8, 2, 0.8]);
+      for (const sx of [-1, 1]) s.add(P.box, '#1a1a1e', [sx * 3.8, 2, -2], null, [1, 2, 1]);
+    },
     // ----- The solar system -----
     // King Flippy Nips's palace: a stepped pyramid in Pluto's teal and gold, a mushroom dome on top.
     lm_plutopalace(s) {
@@ -2723,6 +2837,7 @@
   // ---------- Space ----------
   // Black sky full of stars, the sun, and the planets of this universe as real globes: their
   // own ground colours (Earth gets oceans), a glowing rim of their sky, and their name.
+  const tmpTagV = new T.Vector3();
   function makeSpace(dim, group) {
     const all = new T.Group();
     const sky = new T.Group();   // follows the camera
@@ -2756,6 +2871,7 @@
     sun.visible = glow.visible = !hasSun;
     all.add(sky);
     for (const P of dim.planets) {
+      if (P.body) { all.add(makeBody(P, tags)); continue; }
       const D = MM.DIM_BY_ID[P.dim];
       const g = new T.SphereGeometry(P.r, 64, 40), pos = g.attributes.position, cols = new Float32Array(pos.count * 3);
       const c = D.ground.map(x => new T.Color(x)), sea = new T.Color('#2f6fd6'), ice = new T.Color('#f4f8ff'), tmp = new T.Color();
@@ -2820,6 +2936,37 @@
     group.userData.spaceSky = sky;
     group.userData.spaceTags = tags;
     return all;
+  }
+
+  // Anatomy Park's corpse, floating in space (shared/fun.js MM.BODY): spheres of pale skin,
+  // a bald head with a nose and ears, blue boxers, and a ring of light around every hole.
+  function makeBody(P, tags) {
+    const B = MM.BODY, s = new C.Shape({ smooth: false }), skin = '#d8c4b0', g = new T.Group();
+    for (const [x, y, z, r] of B.parts) s.add(C.prim.sphere, skin, [x, y, z], null, [r, r * (Math.abs(z) > 20 || x < -20 ? 1 : 0.95), r]);
+    s.add(C.prim.sphere, '#3a5ab0', [-14, 0, 0], null, [20.5, 19.5, 20.5]);   // the boxers
+    for (let i = 0; i < 18; i++) { const a = i * 1.3, y = Math.sin(a) * 12, z = Math.cos(a) * 16; s.add(C.prim.sphereLo, '#f2f2f2', [-14 + (i % 3 - 1) * 6, y + 7 * Math.sign(y), z * 0.9], null, [1.2, 1.2, 1.2]); }
+    for (const z of [-5, 5]) s.add(C.prim.sphere, '#f0f0f0', [76, 9, z], null, [2.4, 1.2, 2.4]);   // closed eyelids
+    s.add(C.prim.box, '#8a5a5a', [77, 11.5, 0], null, [3, 0.6, 6]);   // lips
+    const m = C.meshOf(s.build(), 0.6);
+    g.add(m);
+    for (const [id, name, at] of B.holes) {
+      const ring = new T.Mesh(new T.TorusGeometry(4.5, 0.6, 8, 32), new T.MeshBasicMaterial({ color: '#ff8ac8', fog: false }));
+      ring.position.set(at[0], at[1], at[2]);
+      const out = new T.Vector3(at[0] - (at[0] > 60 ? 70 : at[0]), at[1], at[2]).normalize();
+      ring.lookAt(ring.position.clone().add(out));
+      g.add(ring);
+      const tag = C.makeTag(name, '', '', '#ff8ac8'); tag.draw(-1);
+      tag.sprite.scale.set(36, 9, 1); tag.sprite.material.fog = false;
+      const tp = new T.Vector3(at[0], at[1], at[2]).add(out.clone().multiplyScalar(9));
+      tag.sprite.position.copy(tp); g.add(tag.sprite);
+      tags.push({ sprite: tag.sprite, near: 6, local: true });
+    }
+    // A billboard: the park's name, floating over the chest.
+    const bill = C.makeTag('ANATOMY PARK', 'Fly in through any hole!', '', '#ffd84d'); bill.draw(-1);
+    bill.sprite.scale.set(120, 30, 1); bill.sprite.position.set(30, 70, 0); bill.sprite.material.fog = false; g.add(bill.sprite);
+    tags.push({ sprite: bill.sprite, near: 40, local: true });
+    g.position.set(P.x, P.y, P.z); g.rotation.y = B.yaw;
+    return g;
   }
 
   // Big things in the sky that make each dimension recognisable.
@@ -3730,6 +3877,24 @@
         s.add(P.sphereLo, '#3a1a12', [0, 1.28 * k, 0.38 * k], null, [big ? 0.3 * k : 0.12, big ? 0.18 * k : 0.04, 0.05 * k]);
         if (big) for (let i = -3; i <= 3; i++) s.add(P.cone, '#fff8e0', [i * 0.1 * k, 1.36 * k, 0.42 * k], [Math.PI, 0, 0], [0.04 * k, 0.1 * k, 0.04 * k]);
         for (const sx of [-1, 1]) s.add(P.capsule, '#d8c8a8', [sx * 0.6 * k, 0.8 * k, 0], [0, 0, sx * 0.5], [0.12 * k, 0.6 * k, 0.12 * k]);
+      } else if (type === 'tgt_hepa') {
+        // Hepatitis A, the bad one, on a target post.
+        s.add(P.cylLo, '#6a4a2a', [0, 0.5, 0], null, [0.06, 1, 0.06]);
+        s.add(P.sphere, '#e8d84a', [0, 1.4, 0], null, [0.55, 0.55, 0.55]);
+        for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; s.add(P.cone, '#c8b83a', [Math.cos(a) * 0.55, 1.4 + Math.sin(a * 2) * 0.2, Math.sin(a) * 0.55], [0, 0, a - Math.PI / 2], [0.1, 0.3, 0.1]); }
+        for (const sx of [-1, 1]) { s.add(P.sphereLo, '#fff', [sx * 0.18, 1.5, 0.45], null, [0.12, 0.12, 0.08]); s.add(P.box, '#1a1a1a', [sx * 0.18, 1.66, 0.48], [0, 0, sx * 0.5], [0.22, 0.05, 0.02]); }
+        s.add(P.cyl, '#c8282a', [0, 1.4, 0.56], [Math.PI / 2, 0, 0], [0.18, 0.02, 0.18]);
+      } else if (type === 'tgt_jerry' || type === 'tgt_grom' || type === 'tgt_purge') {
+        // A cardboard cutout on a stick, with a bullseye.
+        const col = { tgt_jerry: ['#f2d2b6', '#6a4a2a', '#7aa0d8'], tgt_grom: ['#7ac85a', '#3a3a42', '#2a3a5a'], tgt_purge: ['#f4f0e8', '#2a2a2a', '#5a2a2a'] }[type];
+        s.add(P.cylLo, '#6a4a2a', [0, 0.4, 0], null, [0.05, 0.8, 0.05]);
+        s.add(P.box, col[2], [0, 1.15, 0], null, [0.75, 0.9, 0.06]);
+        s.add(P.box, col[0], [0, 1.85, 0], null, [0.55, 0.6, 0.06]);
+        s.add(P.box, col[1], [0, 2.18, 0], null, [0.6, 0.12, 0.07]);
+        if (type === 'tgt_grom') for (const sx of [-1, 1]) s.add(P.sphereLo, '#1a1a1a', [sx * 0.15, 1.9, 0.04], null, [0.12, 0.14, 0.03]);
+        else for (const sx of [-1, 1]) s.add(P.sphereLo, '#1a1a1a', [sx * 0.12, 1.9, 0.04], null, [0.05, 0.05, 0.02]);
+        s.add(P.cyl, '#f2f2f2', [0, 1.15, 0.04], [Math.PI / 2, 0, 0], [0.3, 0.02, 0.3]);
+        s.add(P.cyl, '#c8282a', [0, 1.15, 0.05], [Math.PI / 2, 0, 0], [0.18, 0.02, 0.18]);
       } else if (type === 'mooncrab') {
         s.add(P.sphere, '#c9c9d6', [0, 0.55, 0], null, [0.85, 0.35, 0.7]);
         for (const sx of [-1, 1]) {
@@ -4007,7 +4172,7 @@
         if (SL && camPos) { SL.target.position.set(Math.round(camPos.x), 0, Math.round(camPos.z)); SL.position.set(SL.target.position.x + 80, 140, SL.target.position.z + 60); }
         // Planet names fade out as you come close (you are about to land, you know where you are).
         if (group.userData.spaceTags && camPos) for (const tg of group.userData.spaceTags) {
-          const d = tg.sprite.position.distanceTo(camPos);
+          const d = tg.local ? tg.sprite.getWorldPosition(tmpTagV).distanceTo(camPos) : tg.sprite.position.distanceTo(camPos);
           tg.sprite.material.opacity = Math.max(0, Math.min(1, (d - tg.near) / 120));
           tg.sprite.visible = tg.sprite.material.opacity > 0.02;
         }
