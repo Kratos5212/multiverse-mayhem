@@ -246,12 +246,36 @@ input[type=range] { width: 100%; accent-color: var(--portal); }
 @media (pointer: coarse) {
   #hotbar { bottom: max(8px, env(safe-area-inset-bottom)); transform: translateX(-50%) scale(.8); transform-origin: bottom; }
   #hotbar .slot.empty, #hotbar .s-portal, #hotbar .s-ship, #hotbar .s-ab { display: none; }
-  #toasts { top: 120px; } #chat { bottom: 200px; width: 46vw; }
-  #status { width: min(250px, 32vw); bottom: auto; top: calc(max(10px, env(safe-area-inset-top)) + 58px); }
+  #toasts { top: 120px; } #chat { bottom: 240px; width: 46vw; }
+  #status { width: min(250px, 32vw); bottom: auto; top: calc(max(10px, env(safe-area-inset-top)) + 64px); }
   #status #res { gap: 4px; } #status #res span { font-size: 11px; padding: 0 5px; }
 }
 @media (max-width: 700px) { #hotbar .slot { width: 46px; height: 46px; font-size: 9px; } #dimBadge b { font-size: 14px; } }
 @media (pointer: coarse) { #tracker { top: calc(max(10px, env(safe-area-inset-top)) + 54px); left: auto; right: 12px; width: min(300px, 27vw); font-size: 11px; padding: 3px 8px; opacity: .92; } #feed { top: 150px; } #tracker small { display: none; } #toasts { top: 175px; } }
+/* No overlaps (checked at 390x844, 844x390, 1024x768 and 1366x768):
+   - with a mouse, the slot bar sits between the health panel and the right edge;
+   - phones upright: the top buttons get the whole first row, the dimension badge goes under
+     them, health on the left and the quest on the right below it; chat and the use prompt sit
+     above the stick and the round buttons;
+   - phones sideways: the quest hides (it is in the Journal), chat sits by the stick, the
+     round buttons shrink a little so they clear the top row, toasts stay narrow. */
+@media (pointer: fine) {
+  #hotbar { left: calc(max(12px, env(safe-area-inset-left)) + min(300px, 44vw) + 16px); right: 12px; transform: none; justify-content: center; flex-wrap: wrap-reverse; }
+}
+@media (pointer: coarse) and (max-width: 600px) {
+  #dimBadge { top: calc(max(10px, env(safe-area-inset-top)) + 50px); max-width: 60vw; }
+  #status { top: calc(max(10px, env(safe-area-inset-top)) + 108px); }
+  #tracker { top: calc(max(10px, env(safe-area-inset-top)) + 108px); width: min(170px, 40vw); }
+  #toasts { top: 240px; max-width: 92vw; }
+  #chat { bottom: 240px; width: 40vw; }
+  #prompt { bottom: 310px; }
+}
+@media (pointer: coarse) and (max-height: 460px) {
+  #tracker { display: none; }
+  #chat { left: 165px; bottom: 140px; width: 30vw; }
+  #tbtns { transform: scale(.85); transform-origin: bottom right; }
+  #toasts { top: 60px; max-width: 36vw; }
+}
 
 /* ---------- Dialogs ---------- */
 #modal { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.45); padding: 16px; }

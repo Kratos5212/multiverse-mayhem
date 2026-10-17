@@ -922,6 +922,25 @@
       s.add(P.cylLo, '#cfd2d6', [7.5, 6, D / 2 + 3.5], null, [0.08, 12, 0.08]);
       s.add(P.box, '#3c6fb5', [8.4, 11.2, D / 2 + 3.5], null, [1.8, 1.1, 0.05]);
       s.add(P.box, '#e2483d', [8.4, 10.85, D / 2 + 3.53], null, [1.8, 0.2, 0.02]);
+      // What makes it a school: the clock over the door, a bike rack, a basketball hoop.
+      s.add(P.cyl, '#f6f2ea', [0, 6.4, D / 2 + 0.06], [Math.PI / 2, 0, 0], [0.6, 0.08, 0.6]);
+      s.add(P.cyl, '#2a2a2a', [0, 6.4, D / 2 + 0.11], [Math.PI / 2, 0, 0], [0.5, 0.02, 0.5]);
+      s.add(P.box, '#f6f2ea', [0, 6.55, D / 2 + 0.14], null, [0.05, 0.32, 0.02]); s.add(P.box, '#f6f2ea', [0.1, 6.4, D / 2 + 0.14], null, [0.22, 0.05, 0.02]);
+      for (let i = 0; i < 6; i++) s.add(P.torus, '#9aa0a6', [-7.2 + i * 0.5, 0.45, D / 2 + 2.2], [0, Math.PI / 2, 0], [0.32, 0.32, 0.3]);
+      s.add(P.cylLo, '#e8ecef', [-W / 2 - 3, 1.8, D / 2 - 2], null, [0.08, 3.6, 0.08]);
+      s.add(P.box, '#f6f6f6', [-W / 2 - 3, 3.5, D / 2 - 1.6], null, [1.2, 0.8, 0.06]);
+      s.add(P.torus, '#e2483d', [-W / 2 - 3, 3.05, D / 2 - 1.2], [Math.PI / 2, 0, 0], [0.24, 0.24, 0.24]);
+    },
+    // A yellow school bus, parked out front of the school.
+    schoolbus(s) {
+      s.add(P.box, '#f2b81e', [0, 1.35, 0], null, [2.4, 1.9, 8.6]);
+      s.add(P.box, '#f2b81e', [0, 1.0, 4.9], null, [2.3, 1.2, 1.4]);
+      s.add(P.box, '#1a1a1a', [0, 0.65, 0], null, [2.45, 0.12, 8.7]);
+      for (let z = -3.4; z <= 3.4; z += 1.1) for (const sx of [-1, 1]) s.add(P.box, '#3e4d5c', [sx * 1.21, 1.75, z], null, [0.03, 0.6, 0.85]);
+      s.add(P.box, '#3e4d5c', [0, 1.75, 4.32], null, [2.1, 0.7, 0.03]);
+      for (const z of [-2.8, 3.6]) for (const sx of [-1, 1]) s.add(P.cyl, '#1a1a1a', [sx * 1.15, 0.45, z], [0, 0, Math.PI / 2], [0.45, 0.3, 0.45]);
+      s.add(P.box, '#1a1a1a', [0, 2.0, -4.32], null, [2.0, 0.22, 0.03]);
+      s.add(P.box, '#e2483d', [1.25, 1.6, 3.2], null, [0.04, 0.5, 0.5]);   // the stop sign
     },
     // The horse hospital: a white clinic with a green trim band, big windows and a horse statue.
     lm_hospital(s) {
@@ -934,9 +953,28 @@
       s.add(P.box, '#bfdcec', [0, 1.6, D / 2 + 0.05], null, [2.6, 2.6, 0.06]);
       s.add(P.box, '#f3f1ea', [0, 1.6, D / 2 + 0.09], null, [0.08, 2.6, 0.04]);
       s.add(P.box, '#4a9a6a', [0, 3.3, D / 2 + 0.9], [-0.15, 0, 0], [4, 0.15, 2]);
+      // What makes it a hospital: the red cross, EMERGENCY over the side door, a helipad.
+      s.add(P.box, '#f3f1ea', [0, H + 1.4, D / 2 - 0.3], null, [2.2, 2.2, 0.3]);
+      s.add(P.box, '#e2483d', [0, H + 1.4, D / 2 - 0.12], null, [1.8, 0.55, 0.05]);
+      s.add(P.box, '#e2483d', [0, H + 1.4, D / 2 - 0.12], null, [0.55, 1.8, 0.05]);
+      s.add(P.box, '#e2483d', [-W / 2 + 1.8, 3.2, D / 2 + 0.12], null, [2.8, 0.55, 0.08]);
+      s.add(P.box, '#ffffff', [-W / 2 + 1.8, 3.2, D / 2 + 0.17], null, [2.4, 0.12, 0.02], true);
+      s.add(P.cyl, '#5a5e64', [2, 0.4 + H + 0.02, -1.5], null, [2.6, 0.06, 2.6]);
+      s.add(P.box, '#ffd84d', [2 - 0.7, 0.4 + H + 0.06, -1.5], null, [0.2, 0.02, 1.8]); s.add(P.box, '#ffd84d', [2 + 0.7, 0.4 + H + 0.06, -1.5], null, [0.2, 0.02, 1.8]); s.add(P.box, '#ffd84d', [2, 0.4 + H + 0.06, -1.5], null, [1.4, 0.02, 0.2]);
       // A bronze horse out front, in honour of the patients.
       s.add(P.box, '#9aa0a6', [5, 0.4, D / 2 + 2.5], null, [3.4, 0.8, 1.4]);
       horse(s, 4.7, 0.8, D / 2 + 2.5, 1.25, '#a0703f');
+    },
+    // A horse ambulance: a white van with a horse trailer, red stripe and light bar.
+    ambulance(s) {
+      s.add(P.box, '#f6f6f2', [0, 1.3, 1.6], null, [2.2, 1.9, 3.2]);
+      s.add(P.box, '#f6f6f2', [0, 1.0, 3.7], null, [2.1, 1.2, 1.1]);
+      s.add(P.box, '#3e4d5c', [0, 1.5, 4.2], null, [1.9, 0.6, 0.04]);
+      s.add(P.box, '#e2483d', [0, 1.15, 1.6], null, [2.24, 0.25, 3.22]);
+      s.add(P.box, '#e2483d', [-0.4, 2.3, 2.6], null, [0.5, 0.15, 0.3], true); s.add(P.box, '#3a8aff', [0.4, 2.3, 2.6], null, [0.5, 0.15, 0.3], true);
+      s.add(P.box, '#f6f6f2', [0, 1.5, -2.3], null, [2.2, 2.2, 3.4]);                 // the horse trailer
+      s.add(P.box, '#e2483d', [1.11, 1.6, -2.3], null, [0.03, 0.5, 0.5]); s.add(P.box, '#e2483d', [1.11, 1.6, -2.3], null, [0.03, 0.16, 1.4]);
+      for (const z of [3.4, 0.4, -2.3]) for (const sx of [-1, 1]) s.add(P.cyl, '#1a1a1a', [sx * 1.05, 0.4, z], [0, 0, Math.PI / 2], [0.4, 0.3, 0.4]);
     },
     // The unemployment office: a grey municipal block with a queue of chairs outside.
     lm_office(s) {

@@ -8,6 +8,7 @@
   const MM = root.MM || (root.MM = {});
 
   MM.PAIR_RANGE = 1000;       // how far the gun reaches in this mode
+  MM.PAIR_SIZE = 1.25;        // the same size as a portal to another world (2.5 m wide, 3.4 m tall)
   MM.PAIR_AIR = 120;          // how far out a portal shot at nothing hangs in mid-air
   // Colours come from the owner's look (MM.pairColors): green for a Rick unless changed.
   MM.PAIR_MAX_SPEED = 32;     // fling speed cap
@@ -120,7 +121,7 @@
     let x = hit.x + n[0] * 0.08, y = hit.y + n[1] * 0.14, z = hit.z + n[2] * 0.08;
     if (n[1] < 0.7 && n[1] > -0.5) {
       const g = MM.heightAt(dimId, x + n[0] * 0.6, z + n[2] * 0.6);
-      y = Math.max(y, g + 1.25);
+      y = Math.max(y, g + 1.75);   // its bottom edge at the ground, like a travel portal
     }
     return { x, y, z, nx: n[0], ny: n[1], nz: n[2] };
   };
@@ -129,11 +130,11 @@
   // Are you stepping into portal P? (x, y, z: your feet.)
   MM.inPair = function (P, x, y, z) {
     const kind = MM.pairKind(P);
-    if (kind === 'floor') return (x - P.x) ** 2 + (z - P.z) ** 2 < 0.95 * 0.95 && y - P.y > -0.4 && y - P.y < 0.5;
-    if (kind === 'ceiling') return (x - P.x) ** 2 + (z - P.z) ** 2 < 0.95 * 0.95 && P.y - (y + 1.9) < 0.5 && P.y - (y + 1.9) > -0.6;
-    const bx = x - P.x, by = y + 1 - P.y, bz = z - P.z;
+    if (kind === 'floor') return (x - P.x) ** 2 + (z - P.z) ** 2 < 1.3 * 1.3 && y - P.y > -0.4 && y - P.y < 0.5;
+    if (kind === 'ceiling') return (x - P.x) ** 2 + (z - P.z) ** 2 < 1.3 * 1.3 && P.y - (y + 1.9) < 0.5 && P.y - (y + 1.9) > -0.6;
+    const bx = x - P.x, by = y + 1.2 - P.y, bz = z - P.z;
     const front = bx * P.nx + by * P.ny + bz * P.nz;
-    return front < 0.8 && front > -0.4 && bx * bx + by * by + bz * bz < 1.15 * 1.15;
+    return front < 0.8 && front > -0.4 && bx * bx + by * by * 0.6 + bz * bz < 1.6 * 1.6;
   };
 
   // Where you come out of portal P, and how fast, given the speed you went in with.
@@ -143,7 +144,7 @@
     if (kind === 'floor') { const s = Math.max(v, 9); return { x: P.x, y: P.y + 0.15, z: P.z, vx: P.nx * s, vy: P.ny * s, vz: P.nz * s }; }
     if (kind === 'ceiling') return { x: P.x, y: P.y - 2.3, z: P.z, vx: 0, vy: -Math.max(v, 2), vz: 0 };
     const l = Math.hypot(P.nx, P.nz) || 1, hx = P.nx / l, hz = P.nz / l, s = Math.max(v, 4);
-    return { x: P.x + hx * 0.95, y: P.y - 1.15, z: P.z + hz * 0.95, vx: hx * s, vy: 2 + Math.max(0, P.ny) * s, vz: hz * s };
+    return { x: P.x + hx * 1.1, y: P.y - 1.6, z: P.z + hz * 1.1, vx: hx * s, vy: 2 + Math.max(0, P.ny) * s, vz: hz * s };
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = MM;

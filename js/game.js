@@ -320,21 +320,19 @@
     const P = { x: e.x, y: e.y, z: e.z, nx: e.nx, ny: e.ny, nz: e.nz };
     const g = new T.Group();
     const look = lookOf(e.o), col = MM.pairColors(look)[e.c];
-    const mesh = C.portalMesh(col, 0.85, look && look.portalStyle);
+    // The same portal as one to another world: same size, same swirl, same colours.
+    const mesh = C.portalMesh(col, MM.PAIR_SIZE, look && look.portalStyle);
     mesh.renderOrder = 3;
-    // Valve-style: a hard, glowing oval rim around the swirl.
-    const rim = new T.Mesh(pairRimGeo || (pairRimGeo = new T.RingGeometry(0.86, 1.0, 48)), new T.MeshBasicMaterial({ color: e.c ? '#ffffff' : col, side: T.DoubleSide, fog: false }));
-    rim.scale.set(0.85, 0.85 * 1.35, 1); rim.position.z = 0.01;
-    g.add(mesh, rim);
-    mesh.userData.rim = rim;
+    g.add(mesh);
     g.position.set(P.x, P.y, P.z);
     g.lookAt(P.x + P.nx, P.y + P.ny, P.z + P.nz);
     scene.add(g);
+    fx.burst(P.x, P.y, P.z, col, 26, 6, 0.6, 0.5, 2);
+    sfxAt('portal', P.x, P.z, 0.7);
     G.pairs.set(key, { o: e.o, c: e.c, P, g, mesh, col, born: now() });
   }
-  let pairRimGeo = null;
   const lookOf = id => id === G.myId ? profile.look : G.players.get(id) && G.players.get(id).info.look;
-  function removePair(key) { const q = G.pairs.get(key); if (q) { scene.remove(q.g); q.mesh.material.dispose(); q.mesh.userData.rim.material.dispose(); G.pairs.delete(key); } }
+  function removePair(key) { const q = G.pairs.get(key); if (q) { scene.remove(q.g); q.mesh.material.dispose(); G.pairs.delete(key); } }
   function removePairsOf(o) { removePair(o + ':0'); removePair(o + ':1'); }
   // Aim with the crosshair and shoot the next portal of your pair (R, right click, or the
   // touch button): the first end, then its partner, then the first again (which moves it). Both
@@ -2082,7 +2080,7 @@
     for (const q of G.pairs.values()) {
       q.mesh.userData.tick(dt);
       const op = Math.min(1, (t - q.born) * 4);
-      q.mesh.material.uniforms.open.value = op; q.mesh.userData.rim.scale.set(0.85 * op, 0.85 * 1.35 * op, 1);
+      q.mesh.material.uniforms.open.value = op;
       if (Math.random() < 0.15) fx.glow.emit(q.P.x + (Math.random() - 0.5) * 1.4, q.P.y + (Math.random() - 0.5) * 1.8, q.P.z + (Math.random() - 0.5) * 1.4, q.P.nx, q.P.ny, q.P.nz, q.col, 0.25, 0.4, 0);
     }
     for (const po of G.portals.values()) {
