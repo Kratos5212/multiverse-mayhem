@@ -1325,6 +1325,7 @@
     const n = nearestLocal();
     if (n) { send({ t: 'talk', n: n.id }); return; }
     const l = nearLandmark();
+    if (l && MM.isAt(l, 'housecon')) { send({ t: 'use', l: l.id }); return; }   // the house answers (or another Rick starts hacking)
     if (l) { if (l.door && !tasksAt(l).length) send({ t: 'door', l: l.id }); else openLandmark(l); return; }
     if (nearKiosk()) openDims('station');
   }

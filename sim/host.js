@@ -1706,8 +1706,9 @@
       if (D.interior || D.pocket) return p.doorBack || 'suburbia';
       return MM.worldOf(p.inst.dimId) === 'earth' && !D.timeline ? p.inst.dimId : null;
     }
-    // Each Earth's house is its own Rick's (C-137's is Rick C-137's; clones count, they are him).
-    rickOwns(p, earth) { return p.arch === 'genius' && !!earth && MM.castHome('genius', p.home) === earth; }
+    // Each Earth's house is its own Rick's (C-137's is Rick C-137's). His clones are not him:
+    // like any other Rick, they have to hack it.
+    rickOwns(p, earth) { return p.arch === 'genius' && !p.clone && !!earth && MM.castHome('genius', p.home) === earth; }
     rickMay(p, earth) { return this.rickOwns(p, earth) || (p.arch === 'genius' && !!earth && (p.hacked && p.hacked[earth] || 0) > this.time); }
     // Not yours: anyone but a Rick is told no; another Rick starts hacking (stay close).
     rickRefuse(p, l) {

@@ -18,6 +18,7 @@
     }
     return list;
   };
+  MM.GRAVE_EARTHS = ['suburbia', 'splitearth', 'fedearth', 'zigerion'];
   MM.TEAM_MAX = 8; MM.TEAM_REACH = 14;
   MM.AGGRO_RANGE = 9;
   MM.LEASH = 26;               // protocol version; client and server must match
@@ -53,7 +54,11 @@
     { id: 'backdoor', dim: 'suburbia', name: 'Back door (into the kitchen)', x: -19.7, z: 12.05, r: 0.8, h: 2.2, model: 'lm_marker', door: { dim: 'smithhouse', x: 5.97, z: 5.6 } },
     { id: 'sidedoor', dim: 'suburbia', name: "Door from the garage into the house (Rick's room)", x: -16.3, z: 24.5, r: 0.8, h: 2.2, model: 'lm_marker', door: { dim: 'smithhouse', x: -8.2, z: 3.84 } },
     { id: 'backyard', dim: 'suburbia', name: 'The back yard', x: -28.5, z: 21.5, r: 8.5, h: 3, model: 'lm_backyard', rot: Math.PI / 2 },
-    { id: 'graves', dim: 'suburbia', name: 'Two graves by the shed', x: -33.9, z: 25.8, r: 1.4, h: 1, model: 'lm_marker' },
+    // The graves are only where Rick and Morty took the dead ones' places ("Rick Potion #9"):
+    // Earth C-137 and the C-137s that came after it (the split timeline, the Federation's, the
+    // Zigerions' copy). Not on other Earths, nor where it never happened (Cronenberged Earth
+    // and its cure, 65 million years ago, everyone's home Earth). See MM.GRAVE_EARTHS.
+    { id: 'graves', dim: 'suburbia', name: 'Two graves by the shed', x: -33.9, z: 25.8, r: 1.4, h: 1, model: 'lm_graves', rot: Math.PI / 2 },
     // Inside the Smith house: two floors, each a Mojulo floor plan (shared/interiors.js has the
     // plans). fy: the floor a spot is on (4.3 = upstairs). Spots are marked with a ring.
     { id: 'smithexit', dim: 'smithhouse', name: 'Front door', x: 0, z: -6.3, r: 0.8, h: 2.2, fy: 0, model: 'lm_marker', door: { dim: 'suburbia', x: -6.3, z: 17.1 } },

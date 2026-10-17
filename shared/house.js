@@ -1,7 +1,8 @@
 // Multiverse Mayhem: the Smith house's defences, and whose they are. Every Earth's house is
 // its own Rick's: he can use all of it, from the console in the garage or (voice activation)
 // by just saying so anywhere near the house. Nobody else can, except another Rick who hacks
-// his way in (stand at the console for a few seconds: ten minutes of access). Crafting at the
+// his way in (stand at the console for a few seconds: ten minutes of access), his own clones
+// included. Crafting at the
 // workbench stays open to any Rick at any garage.
 (function (root) {
   'use strict';

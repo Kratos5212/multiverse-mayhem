@@ -623,7 +623,7 @@
     d.props = (B.props || []).concat(d.extra || []);
     // The same buildings stand here too (minus the doors into this Earth's garage and the
     // highways): the Smith house, the school, the hospital. Tasks there work the same.
-    for (const l of MM.LANDMARKS.slice()) if (l.dim === d.variantOf && !/^hw_/.test(l.id) && l.id !== 'anatomyentry' && l.id !== 'chalkdoor') {
+    for (const l of MM.LANDMARKS.slice()) if (l.dim === d.variantOf && !/^hw_/.test(l.id) && l.id !== 'anatomyentry' && l.id !== 'chalkdoor' && (l.id !== 'graves' || MM.GRAVE_EARTHS.includes(d.id))) {
       const c = Object.assign({}, l, { id: d.id + '_' + l.id, alias: l.id, dim: d.id });
       // The same doors as the original (the Smith house, the school, Rick's lab hatch...),
       // looked up live because building insides get their doors later (shared/interiors.js).
@@ -1042,6 +1042,7 @@
   for (const l of MM.LANDMARKS) MM.PROPS[l.model] = { r: l.r, h: l.h, hp: 1e9, drop: {}, fixed: true };
   // Rings on the floor that mark a spot: you walk over them.
   MM.PROPS.lm_marker = { r: 0.6, h: 0.1, hp: 1e9, drop: {}, fixed: true, arch: true };
+  MM.PROPS.lm_graves.arch = true;   // low mounds: you walk over them
   // Doors set into a wall (and Rick's elevator doors): you walk up to them, not into them.
   MM.PROPS.lm_walldoor = { r: 0.6, h: 2.2, hp: 1e9, drop: {}, fixed: true, arch: true };
   MM.PROPS.lm_elevator = { r: 1.2, h: 3.2, hp: 1e9, drop: {}, fixed: true, arch: true };

@@ -1163,3 +1163,33 @@ test('every world has something to do, and some worlds have their own rules', ()
   run(host, 6);
   assert.ok(t.p.hp < h0 && t.p.hp >= t.p.maxHp * 0.1);
 });
+
+test('the graves are only on the Earths where Rick and Morty took over', () => {
+  const graves = d => MM.LANDMARKS.some(l => l.dim === d && MM.isAt(l, 'graves')) && MM.genProps(d).some(p => p.type === 'lm_graves');
+  for (const d of ['suburbia', 'splitearth', 'fedearth', 'zigerion']) assert.ok(graves(d), d + ' has them');
+  for (const d of ['meatlands', 'curedearth', 'shrimpearth', 'fascistearth', 'c500a', 'doofusearth']) assert.ok(!graves(d), d + ' does not');
+  const h = MM.homeDimId('Q-12');
+  MM.ensureHomeDim(h);
+  assert.ok(MM.DIM_BY_ID[h] && !graves(h), 'nor anyone\'s home Earth');
+});
+
+test('Rick C-137 uses his own house console; his clone has to hack it', () => {
+  const host = new MM.Host();
+  const r = join(host, 'genius', { dim: 'suburbia' });
+  near(host, r.c, r.p, 'housecon'); run(host, 1.2);
+  r.c.sent.length = 0;
+  host.message(r.c, '{"t":"use","l":"housecon"}'); run(host, 0.2);
+  assert.ok(r.c.sent.some(m => m.t === 'pv' && m.l.some(e => e.k === 'hmenu' && e.own)), 'his house answers him');
+  const g = r.p.inv.grenade || 0;
+  host.time += 1; host.message(r.c, '{"t":"hd","o":"stash"}');
+  assert.strictEqual(r.p.inv.grenade, g + 1, 'and does what he says');
+  const cl = join(host, 'genius', { dim: 'suburbia' });
+  assert.ok(cl.p.clone, 'a second Rick C-137 is a clone');
+  near(host, cl.c, cl.p, 'housecon'); run(host, 1.2);
+  host.message(cl.c, '{"t":"use","l":"housecon"}'); run(host, 0.2);
+  assert.ok(cl.p.hack, 'the clone starts hacking');
+  run(host, MM.HACK_TIME + 0.5);
+  const g2 = cl.p.inv.grenade || 0;
+  host.time += 400; host.message(cl.c, '{"t":"hd","o":"stash"}');
+  assert.strictEqual(cl.p.inv.grenade, g2 + 1, 'hacked: now he can');
+});

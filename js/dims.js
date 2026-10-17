@@ -825,8 +825,7 @@
       for (const x of [-6.2, 5.6]) s.add(P.sphere, '#3f8a34', [x, 0.6, d / 2 + 0.8], null, [1.1, 0.8, 0.8]);   // bushes by the porch
     },
     // The back yard: lawn, a grey brick wall round three sides, Rick's white shed with a brown
-    // roof in the far corner, the big tree, and under it the two graves where Rick and Morty
-    // buried this Earth's Rick and Morty ("Rick Potion #9"). Front (+z) = toward the house.
+    // roof in the far corner and the big tree. Front (+z) = toward the house.
     lm_backyard(s) {
       const brick = '#8e8c88', cap = '#a8a6a0', mortar = '#77756f';
       s.add(P.box, '#62b444', [0, 0.02, 0.2], null, [26.8, 0.04, 17.2]);
@@ -847,18 +846,12 @@
       s.add(P.prism, '#6a4430', [sx, 2.4, sz], null, [3.6, 1.2, 3.2]);
       s.add(P.box, '#8a6a4a', [sx + 0.4, 1.0, sz + 1.32], null, [1.0, 2.0, 0.04]);
       s.add(P.box, '#bfdcec', [sx - 0.9, 1.6, sz + 1.32], null, [0.6, 0.5, 0.03]);
-      // The big tree, and the two graves in its shade: low mounds of turned earth.
+      // The big tree (the graves in its shade are their own model, lm_graves: not every Earth has them).
       const tx = -1.5, tz = -6.5;
       s.add(P.cylLo, '#6e4a2c', [tx, 1.8, tz], null, [0.42, 3.6, 0.42]);
       s.add(P.cylLo, '#6e4a2c', [tx + 0.6, 3.8, tz], [0, 0, -0.6], [0.2, 1.8, 0.2]);
       s.add(P.cylLo, '#6e4a2c', [tx - 0.6, 3.9, tz + 0.1], [0.2, 0, 0.55], [0.2, 1.7, 0.2]);
       for (const [x, y, z, r] of [[0, 5.8, 0, 3.0], [1.9, 5.3, 0.6, 2.0], [-1.9, 5.4, -0.3, 2.0], [0.4, 5.5, 1.9, 1.9], [-0.3, 5.4, -1.9, 1.9], [0.6, 7.3, 0.2, 2.0]]) s.add(P.sphere, y > 6.5 ? '#58b048' : '#47963a', [tx + x, y, tz + z], null, [r, r * 0.85, r]);
-      for (const gx of [-5.0, -3.6]) {
-        s.add(P.box, '#6a4a30', [gx, 0.12, -5.4], null, [0.9, 0.24, 2.0]);
-        s.add(P.sphere, '#7a5838', [gx, 0.2, -5.4], null, [0.5, 0.18, 1.0]);
-      }
-      s.add(P.sphere, '#ff6a8a', [-5.0, 0.34, -4.7], null, [0.12, 0.08, 0.12]);   // somebody left flowers
-      s.add(P.sphere, '#ffe066', [-3.6, 0.34, -4.6], null, [0.12, 0.08, 0.12]);
       s.add(P.box, '#8a6a4a', [-6.4, 0.6, -4.0], [0, 0.4, -0.2], [0.08, 1.2, 0.4]);  // the shovel, against the shed
       // The swimming pool (new this season), with a ladder and Jerry's cheap Pool Bot.
       const px = 6.0, pz = -3.0;
@@ -2695,6 +2688,16 @@
     sludgepool(s) {
       s.add(P.cyl, '#7ae02a', [0, 0.05, 0], null, [3, 0.1, 3], true);
       for (let i = 0; i < 5; i++) s.add(P.sphereLo, '#a8ff3a', [Math.sin(i * 2.1) * 1.8, 0.15, Math.cos(i * 1.7) * 1.8], null, [0.3, 0.12, 0.3], true);
+    },
+    // Under the big tree in the back yard: the two graves where Rick and Morty buried this
+    // Earth's Rick and Morty ("Rick Potion #9"), low mounds of turned earth with flowers.
+    lm_graves(s) {
+      for (const gx of [-0.7, 0.7]) {
+        s.add(P.box, '#6a4a30', [gx, 0.12, 0], null, [0.9, 0.24, 2.0]);
+        s.add(P.sphere, '#7a5838', [gx, 0.2, 0], null, [0.5, 0.18, 1.0]);
+      }
+      s.add(P.sphere, '#ff6a8a', [-0.7, 0.34, 0.7], null, [0.12, 0.08, 0.12]);   // somebody left flowers
+      s.add(P.sphere, '#ffe066', [0.7, 0.34, 0.8], null, [0.12, 0.08, 0.12]);
     },
     lm_marker(s) {
       const ring = new T.TorusGeometry(0.55, 0.05, 6, 32);
