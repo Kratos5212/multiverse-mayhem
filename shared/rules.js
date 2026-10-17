@@ -95,6 +95,12 @@
     // Ways into the pocket worlds, and back out.
     { id: 'anatomyentry', dim: 'suburbia', name: 'Anatomy Park (inside Ruben)', x: 66, z: -66, r: 5, h: 4, model: 'lm_anatomytent', door: { dim: 'anatomy', x: 0, z: 18 }, sign: { text: 'ANATOMY PARK', y: 4.4, z: 4.1, w: 6 } },
     { id: 'chalkdoor', dim: 'suburbia', name: "Rick's chalk door", x: -66, z: 66, r: 2.5, h: 3.5, model: 'lm_chalkdoor', door: { dim: 'froopy', x: 0, z: 16 } },
+    { id: 'minibattery', dim: 'microverse', name: "Zeep's battery (the Miniverse)", x: -36, z: -14, r: 2.2, h: 3.2, model: 'lm_bigbattery', rot: Math.PI / 2, door: { dim: 'miniverse', x: 0, z: 14 } },
+    { id: 'miniexit', dim: 'miniverse', name: 'Out of the battery (the Microverse)', x: 0, z: 10, r: 2.5, h: 4, model: 'lm_exitportal', door: { dim: 'microverse', x: -32, z: -14 } },
+    { id: 'teenybattery', dim: 'miniverse', name: "Kyle's battery (the Teenyverse)", x: -30, z: -14, r: 2.2, h: 3.2, model: 'lm_bigbattery', rot: Math.PI / 2, door: { dim: 'teenyverse', x: 0, z: 14 } },
+    { id: 'teenyexit', dim: 'teenyverse', name: 'Out of the battery (the Miniverse)', x: 0, z: 10, r: 2.5, h: 4, model: 'lm_exitportal', door: { dim: 'miniverse', x: -26, z: -14 } },
+    { id: 'teenyhut', dim: 'teenyverse', name: 'The treehouse village', x: 24, z: -24, r: 6, h: 9, model: 'lm_teenyhut' },
+    { id: 'acidvat', dim: 'downtown', name: 'The vat of acid (the crime lords\' warehouse)', x: 70, z: 60, r: 8, h: 8, model: 'lm_acidvat' },
     { id: 'microexit', dim: 'microverse', name: 'Out of the battery', x: 0, z: 10, r: 2.5, h: 4, model: 'lm_exitportal', door: { dim: 'suburbia', x: -12.6, z: 26.45 } },
     { id: 'anatomyexit', dim: 'anatomy', name: "Out of Ruben", x: 0, z: 12, r: 2.5, h: 4, model: 'lm_exitportal', door: { dim: 'suburbia', x: 66, z: -58 } },
     { id: 'froopyexit', dim: 'froopy', name: 'Back through the chalk door', x: 0, z: 10, r: 2.5, h: 3.5, model: 'lm_chalkdoor', door: { dim: 'suburbia', x: -66, z: 58 } },
@@ -283,6 +289,10 @@
     // Things anyone can do, whoever they are.
     plumbus: { at: 'plumbus', any: true, name: 'Make a plumbus', cd: 150, give: { s: 3 }, text: 'Dinglebop, schleem, grumbo, fleeb. You made a plumbus. Everyone has one.' },
     mbox:    { at: 'mbox', any: true, name: 'Press the Meeseeks Box', cd: 120, give: {}, summon: true, text: 'I\'m Mr. Meeseeks! Look at me! He will help you for a while.' },
+    zeepbattery: { at: 'minibattery', any: true, name: "Look into Zeep's battery", cd: 160, give: { c: 2, k: 1 }, text: 'A whole universe in there, making power for this one, making power for Rick\'s car. Zeep does not see the problem.' },
+    kylenotes: { at: 'teenybattery', any: true, name: "Read Kyle's notes", cd: 160, give: { k: 1, c: 2 }, text: 'Forty years of work, then a page that just says "ZEEP DID IT FIRST" in very small letters.' },
+    teenylife: { at: 'teenyhut', any: true, name: 'Live off the land for a while', cd: 200, heal: 1, give: { f: 3 }, text: 'You lived in the trees with the natives. Long enough to get good with a spear. Rick and Zeep did it for months.' },
+    acid: { at: 'acidvat', any: true, name: 'Hide in the vat of acid', cd: 180, effect: 'acid', give: { s: 2 }, text: 'In you go, a fistful of fake bones floating up behind you. It is not acid. The crime lords bought it completely. Nobody can find you for a while.' },
     battery: { at: 'battery', any: true, name: 'Check the microverse battery', cd: 150, give: { c: 2, s: 1 }, text: 'The tiny civilisation inside still thinks it invented the power. Car is charged.' },
     mindblower: { at: 'mindblowers', any: true, name: 'Watch a Mind Blower', cd: 120, heal: 1, give: { s: 1 }, text: 'A memory you asked to forget. Huh. That explains a lot.' },
     phoenix: { at: 'b1clones', any: true, name: 'Check on the backup bodies', cd: 240, heal: 1, give: { g: 2 }, text: 'Row after row of you, asleep in green goo. One of them opened an eye. Best keep moving.' },

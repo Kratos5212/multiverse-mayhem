@@ -1811,7 +1811,8 @@
       for (const k in T.give) p.inv[k] = (p.inv[k] || 0) + T.give[k] * mult;
       if (T.heal) p.hp = p.maxHp;
       if (T.summon) this.summonMeeseeks(p, 1, 45);
-      if (T.effect === 'borrowgun') { p.borrow = 2; this.dirty(p); }   // Rick's gun: two charges, no recharging
+      if (T.effect === 'borrowgun') { p.borrow = 2; this.dirty(p); }
+      if (T.effect === 'acid') { p.fx.cloak = this.time + 25; this.dirty(p); p.inst.ev({ k: 'boom', x: r2(p.x), y: r2(p.y + 0.5), z: r2(p.z), r: 1.2 }); }   // they think you're dead   // Rick's gun: two charges, no recharging
       let text = T.texts ? pick(T.texts) : T.text;
       // Earth TVs are normal until a Rick "fixes" them with Xanthenite (for this copy of the world).
       if (T.effect === 'fixtv') p.inst.cable = this.time + 600;

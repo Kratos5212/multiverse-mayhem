@@ -2158,6 +2158,43 @@
       s.add(P.cyl, '#2a5a3a', [0, 0.5, 0], [0.12, 0, 0], [0.22, 1.0, 0.22]);
       for (let i = 0; i < 4; i++) { s.add(P.cylLo, '#c8c8c8', [Math.sin(i) * 0.08, 1.15, Math.cos(i) * 0.08], null, [0.015, 0.4, 0.015]); s.add(P.box, '#a8a8b0', [Math.sin(i) * 0.08 + 0.04, 1.36, Math.cos(i) * 0.08], null, [0.1, 0.05, 0.04]); }
     },
+    // A car battery the size of a shed: inside it, another universe (Zeep's, then Kyle's).
+    lm_bigbattery(s) {
+      s.add(P.box, '#2a2a30', [0, 1.4, 0], null, [3.6, 2.8, 2.4]);
+      s.add(P.box, '#3a3a42', [0, 2.85, 0], null, [3.7, 0.15, 2.5]);
+      s.add(P.cyl, '#c8302a', [-1.1, 3.1, 0], null, [0.32, 0.4, 0.32]);
+      s.add(P.cyl, '#2a2a2a', [1.1, 3.1, 0], null, [0.32, 0.4, 0.32]);
+      s.add(P.box, '#ffd84d', [0, 1.6, 1.21], null, [2.6, 0.9, 0.02]);
+      s.add(P.box, '#5ff8ff', [0, 1.6, 1.23], null, [1.2, 0.3, 0.01], true);
+      s.add(P.box, '#4a4a52', [0, 0.1, 0], null, [4.4, 0.2, 3.2]);
+    },
+    // The Teenyverse's treehouse village: huts on stilts and rope bridges.
+    lm_teenyhut(s) {
+      for (const [x, z] of [[-3, -2], [3, -1], [0, 3]]) {
+        for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) s.add(P.cylLo, '#6a4a2a', [x + dx * 1.1, 2.2, z + dz * 1.1], null, [0.12, 4.4, 0.12]);
+        s.add(P.box, '#8a6a3a', [x, 4.4, z], null, [2.8, 0.2, 2.8]);
+        s.add(P.box, '#a8804a', [x, 5.4, z], null, [2.4, 1.8, 2.4]);
+        s.add(P.cone, '#c8a85a', [x, 7.2, z], null, [2.2, 1.8, 2.2]);
+      }
+      s.add(P.box, '#a8804a', [0, 4.3, -1.5], [0, 0.17, 0], [5.4, 0.08, 0.6]);
+      s.add(P.box, '#a8804a', [-1.5, 4.3, 0.5], [0, -0.9, 0], [5.0, 0.08, 0.6]);
+    },
+    // The crime lords' warehouse: an open shed, a catwalk, and the big vat of (definitely) acid.
+    lm_acidvat(s) {
+      s.add(P.box, '#8a8e94', [0, 0.05, 0], null, [15, 0.1, 13]);
+      for (const [x, z] of [[-7, -6], [7, -6], [-7, 6], [7, 6]]) s.add(P.box, '#6a6e74', [x, 4, z], null, [0.4, 8, 0.4]);
+      s.add(P.box, '#6a6e74', [-7.2, 4, 0], null, [0.2, 8, 12]);
+      s.add(P.box, '#6a6e74', [0, 4, -6.2], null, [14, 8, 0.2]);
+      s.add(P.prism, '#5a5e64', [0, 8.6, 0], [0, Math.PI / 2, 0], [13.4, 1.4, 15.4]);
+      s.add(P.cyl, '#7a8088', [0, 1.3, -1], null, [3.2, 2.6, 3.2]);
+      s.add(P.cyl, '#7aff3a', [0, 2.62, -1], null, [2.9, 0.06, 2.9], true);
+      for (let i = 0; i < 6; i++) s.add(P.capsule, '#f4f0e0', [Math.cos(i) * 1.6, 2.7, -1 + Math.sin(i * 1.7) * 1.4], [Math.PI / 2, i, 0], [0.06, 0.5, 0.06]);
+      s.add(P.sphereLo, '#f4f0e0', [0.8, 2.72, -0.6], null, [0.22, 0.2, 0.2]);
+      s.add(P.box, '#4a4e54', [0, 4.2, -3.2], null, [10, 0.12, 1.2]);
+      for (const x of [-4.8, 4.8]) s.add(P.box, '#4a4e54', [x, 2.1, -3.2], null, [0.15, 4.2, 0.15]);
+      s.add(P.box, '#d8b84a', [-4, 0.6, 3], null, [1.6, 1.2, 1.2]);
+      s.add(P.box, '#c8302a', [3, 1.5, -6.05], null, [3, 1, 0.05]);
+    },
     // ----- The solar system -----
     // King Flippy Nips's palace: a stepped pyramid in Pluto's teal and gold, a mushroom dome on top.
     lm_plutopalace(s) {
@@ -3149,7 +3186,7 @@
         ceiling(-W, -D, hx0, D, Fl.y - 0.02); ceiling(hx1, -D, W, D, Fl.y - 0.02); ceiling(hx0, hz1, hx1, D, Fl.y - 0.02);
         g.add(makeStairs(Fl));
         const upper = new T.Group();
-        upper.name = 'roomUpper'; upper.position.y = Fl.y; upper.visible = false;
+        upper.name = 'roomUpper'; upper.position.y = Fl.y;
         C.loadMMG(R.upper).then(geo => upper.add(new T.Mesh(geo, C.mmgMat))).catch(e => console.warn('upper mesh', e));
         ceiling(-W, -D, W, D, R.h + 0.02, upper);
         const lamp2 = new T.PointLight('#fff1d0', 0.22, 30);

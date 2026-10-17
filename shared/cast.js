@@ -16,6 +16,7 @@
     if (dimId === 'froopy') return MM.ARCHETYPES.tommy ? ['tommy'] : [];
     if (dimId === 'dinoearth') return [];                                   // 65 million years ago
     if (dimId === 'meatlands') return ['teen', 'surgeon', 'joe', 'mutant'];   // Rick and Morty left
+    if (dimId === 'c500a') return ['genius', 'surgeon', 'joe'];   // Beth and Jerry never married: no Morty, no Summer
     const W = MM.worldOf(dimId);
     if (W === 'earth') return dimId === 'suburbia' ? SMITHS.concat(['beanling']) : SMITHS.slice();
     return { birdworld: ['birdfolk'], squanch: ['squanchy'], federation: ['trooper'], unity: ['hive'], citadel: ['evilmorty'] }[W] || [];
@@ -46,6 +47,7 @@
     // ...in that species' own colours.
     const SKIN = { shrimp: '#f2895c', teddy: '#b8865a', cat: '#c98a4a', robot: '#aab2ba', alien: '#8fd86a', blob: '#e07a85' };
     if (human && SKIN[L.species]) L.skin = SKIN[L.species];
+    if (dimId === 'c500a' && arch === 'joe') { L.top = 'vest'; L.topColor = '#1a1a1e'; L.shirtColor = '#f6f6f2'; L.acc = 'goggles'; L.accColor = '#1a1a1e'; }   // a movie star, in shades
     if (dimId === 'fascistearth') { L.shirtColor = '#3a3a3a'; if (L.top !== 'labcoat') L.topColor = '#3a3a3a'; L.accColor = '#c8273a'; }
     if (dimId === 'meatlands' && human) { L.top = 'vest'; L.topColor = '#6a4a2e'; L.shirtColor = '#8a6a44'; L.pantsColor = '#5a3e26'; L.skin = '#e0a898'; L.acc = arch === 'joe' ? 'headband' : 'none'; L.accColor = '#7a2a2a'; }
     if (D.twist === 'CR') { L.skin = '#e0a0a0'; L.mouth = 'open'; }

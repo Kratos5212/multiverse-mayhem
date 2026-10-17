@@ -169,7 +169,22 @@
       blurb: 'A tiny universe inside Rick\'s car battery. The locals stomp on gooble boxes to make power. They think it\'s their idea.',
       sky: ['#3aa0ff', '#c8f0ff'], fog: '#c0e8ff', fogFar: 230, sun: '#ffffff', ambient: '#a8d8ff',
       ground: ['#7ac8a0', '#8ad8b0', '#5aa880'], accent: '#ffd84d',
-      props: [['microtower', 20], ['microdome', 16], ['tree', 24], ['streetlamp', 16]], npc: [['microperson', 14]], pickups: { c: 10, s: 6 }, mat: 'c',
+      props: [['microtower', 20], ['microdome', 16], ['tree', 24], ['streetlamp', 16]], npc: [['microperson', 14], ['zeep', 1, -30, -9]], pickups: { c: 10, s: 6 }, mat: 'c',
+    },
+    // ----- "The Ricks Must Be Crazy": a universe in a battery, in a universe in a battery -----
+    {
+      id: 'miniverse', flat: 90, name: 'The Miniverse', code: 'MV-2', seed: 5776, gravity: 22, amp: 4, scale: 0.016,
+      blurb: 'Inside Zeep Xanflorp\'s battery, inside Rick\'s battery. The Miniversians make his power and have no idea. Their own scientist, Kyle, has built a battery of his own.',
+      sky: ['#ff9ad8', '#fff0f8'], fog: '#f8d8ec', fogFar: 200, sun: '#ffffff', ambient: '#e8b8d8',
+      ground: ['#c88ad8', '#d89ae8', '#a870b8'], accent: '#5ff8ff',
+      props: [['microdome', 18], ['microtower', 10], ['crystal', 16], ['lamp', 10]], npc: [['miniperson', 12], ['kyle', 1, -26, -8]], pickups: { c: 8, k: 2 }, mat: 'c',
+    },
+    {
+      id: 'teenyverse', flat: 70, name: 'The Teenyverse', code: 'MV-3', seed: 5777, gravity: 20, amp: 9, scale: 0.014,
+      blurb: 'Inside Kyle\'s battery, inside Zeep\'s, inside Rick\'s: a young universe of jungle and treehouses, where the natives have never heard of power plants.',
+      sky: ['#3a8a5a', '#d8ffd0'], fog: '#b8e8b0', fogFar: 180, sun: '#fff8d8', ambient: '#a8d8a0',
+      ground: ['#3a8a2a', '#4a9a3a', '#6a7a3a'], accent: '#ffd84d',
+      props: [['jungletree', 40], ['fern', 40], ['rock', 14]], npc: [['teenyperson', 12]], pickups: { f: 8, g: 3 }, mat: 'f',
     },
     {
       id: 'unityworld', flat: 130, name: 'Unity\'s Planet', code: 'UN-1', seed: 6886, gravity: 24, amp: 1, scale: 0.012,
@@ -296,7 +311,7 @@
       sky: ['#6fb8f0', '#e2f2ff'], fog: '#d4e6f4', fogFar: 240, sun: '#fff4dc', ambient: '#a8c4e0',
       ground: ['#8a9a7a', '#96a684', '#7e8e70'], accent: '#ffffff',
       props: [], spawn: { x: 0, z: 8, spread: 6 },
-      npc: [['neighbor', 12], ['schoolkid', 3], ['cop', 4]], pickups: { s: 20, k: 3 }, mat: 's',
+      npc: [['neighbor', 12], ['schoolkid', 3], ['cop', 4], ['crimelord', 1, 62, 52], ['crimelord', 1, 78, 50], ['crimelord', 1, 64, 68]], pickups: { s: 20, k: 3 }, mat: 's',
     },
     {
       id: 'dc', region: 'earth', flat: 172, name: 'Earth: Washington, D.C.', code: 'C-137', seed: 1776, gravity: 24, amp: 1, scale: 0.01,
@@ -789,7 +804,7 @@
   const SPACE = { suburbia: 'c137', downtown: 'c137', dc: 'c137', area51: 'c137', moon: 'c137', featherhold: 'c137', gazorp: 'c137', squanch: 'c137', purge: 'c137', gearworld: 'c137', unityworld: 'c137', federation: 'c137', blips: 'c137', bazaar: 'c137', snakeplanet: 'c137', megaseed: 'c137', plumbus: 'c137', giantland: 'c137', hamsterworld: 'c137', sun: 'c137', mercury: 'c137', venus: 'c137', mars: 'c137', jupiter: 'c137', saturn: 'c137', titan: 'c137', uranus: 'c137', neptune: 'c137', pluto: 'c137' };
   // The solar system is a short hop too: Rick flies to Pluto for an awards dinner.
   const NEAR = { suburbia: 1, downtown: 1, dc: 1, area51: 1, moon: 1, sun: 1, mercury: 1, venus: 1, mars: 1, jupiter: 1, saturn: 1, titan: 1, uranus: 1, neptune: 1, pluto: 1 };
-  const POCKET = { microverse: 1, anatomy: 1, froopy: 1 };
+  const POCKET = { microverse: 1, miniverse: 1, teenyverse: 1, anatomy: 1, froopy: 1 };
   for (const d of MM.DIMS) { if (SPACE[d.id]) d.space = SPACE[d.id]; if (NEAR[d.id]) d.near = true; if (POCKET[d.id]) d.pocket = true; }
   // Public interdimensional stations, only where they exist in the lore.
   MM.DIM_BY_ID.citadel.station = { x: 0, z: -14, name: 'Citadel Portal Station', fee: { k: 3 }, free: ['genius', 'sidekick', 'evilmorty'] };
@@ -802,7 +817,7 @@
     o = o || {};
     if (!B || from === to) return 'You are already here.';
     if (B.hidden) return 'You can only get there through its door.';
-    if (B.pocket) return 'Only through its entrance: ' + (to === 'microverse' ? "the car battery in Rick's garage." : to === 'anatomy' ? 'Anatomy Park, inside Ruben, on Earth.' : 'the chalk door on Earth.');
+    if (B.pocket) return 'Only through its entrance: ' + (to === 'microverse' ? "the car battery in Rick's garage." : to === 'miniverse' ? "Zeep's battery, in the Microverse." : to === 'teenyverse' ? "Kyle's battery, in the Miniverse." : to === 'anatomy' ? 'Anatomy Park, inside Ruben, on Earth.' : 'the chalk door on Earth.');
     if (B.outsideCurve && !(method === 'portal' && o.gold)) return 'Outside the Central Finite Curve. Only a gold portal goes there.';
     if (method === 'portal' || method === 'station') return '';
     // Lightspeed: from space, in your ship. Planets you can see you can just fly into.
@@ -1358,6 +1373,31 @@
       moods: { line: 55, gift: 10, trade: 10, errand: 10, buff: 6, angry: 6, dance: 3 } },
     raider: { name: 'Raider', hp: 60, speed: 4.6, hostile: true, dmg: 11, drop: { s: 3 }, r: 0.6, h: 1.9,
       human: { species: ['human'], top: ['armor', 'vest', 'none'], acc: ['goggles', 'eyepatch', 'headband', 'none'] } },
+    zeep: { name: 'Zeep Xanflorp', hp: 120, speed: 2.6, hostile: false, dmg: 0, drop: { c: 4, k: 2 }, r: 0.6, h: 1.9,
+      human: { species: ['alien'], top: ['labcoat'], acc: ['goggles'], look: { hair: 'tuft', brow: 'angry', eyes: 'wide', mouth: 'frown', face: 'long', height: 1.1, width: 0.95, head: 1.1,
+        skin: '#7ec8a8', hairColor: '#2a3a2a', topColor: '#f2f5f7', shirtColor: '#5a7a9a', pantsColor: '#3a3a4a', shoeColor: '#1a1a1a', accColor: '#5a5a62' } },
+      names: ['Zeep Xanflorp'],
+      talk: ['I invented the gooble box. My people stomp on it and the power just... flows. Do not ask where it comes from.', 'A universe inside a battery, making power for a bigger universe? That would be slavery. Mine is completely different.', 'Rick? Never heard of him. Get out of my lab.', 'Kyle built one too. Kyle is an idiot.'] },
+    kyle: { name: 'Kyle', hp: 70, speed: 2.4, hostile: false, dmg: 0, drop: { c: 2, k: 1 }, r: 0.6, h: 1.8,
+      human: { species: ['alien'], top: ['labcoat'], acc: ['none'], look: { hair: 'bowl', brow: 'normal', eyes: 'tired', mouth: 'flat', face: 'round', height: 1.0, width: 1.0, head: 1.05,
+        skin: '#d8a0e8', hairColor: '#3a2a4a', topColor: '#f2f5f7', shirtColor: '#c87ad8', pantsColor: '#3a3a4a', shoeColor: '#1a1a1a', accColor: '#2a2a2a' } },
+      names: ['Kyle'],
+      talk: ['I spent my whole life on the Teenyverse. Then Zeep showed up and told me he did it first.', 'Inside my battery the natives make my power. They think it is a religious thing. It sort of is.', 'Go in, if you want. Bring a stick. Things got tribal in there.'] },
+    miniperson: { name: 'Miniversian', hp: 30, speed: 3, hostile: false, dmg: 0, drop: { c: 2 }, r: 0.6, h: 1.8,
+      human: { species: ['alien'], top: ['vest', 'polo', 'sweater'], acc: ['antennae', 'none'], skin: '#d8a0e8', colors: { topColor: '#5ff8ff', pantsColor: '#5a3a6a' } },
+      names: ['Flimflorp', 'Zanna', 'Mini Pete', 'Glarb'],
+      talk: ['We make the power for the universe above. Professor Xanflorp says it is a privilege.', 'Have you met Kyle? Kyle is a scientist too. Sort of.', 'Every morning I push the big button. Every evening, the lights come on somewhere else.'],
+      moods: { line: 50, gift: 15, trade: 10, errand: 12, buff: 8, follow: 3 } },
+    teenyperson: { name: 'Teenyversian', hp: 40, speed: 3.4, hostile: false, dmg: 0, drop: { f: 2 }, r: 0.6, h: 1.7,
+      human: { species: ['human'], top: ['none', 'vest'], acc: ['headband', 'none'], colors: { topColor: '#8a5a2a', shirtColor: '#c89a5a', pantsColor: '#6a4a2a', accColor: '#d8402a' } },
+      names: ['Oomph', 'Treekeeper', 'Little Rain', 'Stick'],
+      talk: ['The sky-man Kyle lived with us once. He taught us to build. Then he left.', 'Two strange men fell from the sky and fought in our trees for a very long time.', 'Ooga? (They are being polite. They know more words than you.)'],
+      moods: { line: 50, gift: 18, trade: 8, errand: 10, buff: 10, dance: 4 } },
+    // ----- "The Vat of Acid Episode" -----
+    crimelord: { name: 'Crime lord', hp: 90, speed: 3.2, hostile: false, guard: true, dmg: 12, drop: { k: 3 }, r: 0.6, h: 1.9,
+      human: { species: ['alien', 'human'], top: ['vest', 'armor'], acc: ['tophat', 'eyepatch', 'none'], colors: { topColor: '#2a2a30', shirtColor: '#8a2a2a', pantsColor: '#1a1a20' } },
+      names: ['Crime Lord', 'The Boss', 'A Very Large Man', 'Another Crime Lord'],
+      talk: ['Where are they? Where did those two go?', 'If they went in the vat, they are dead. Nobody survives the vat.', 'Bones in the acid. Huh. Real convincing bones.'] },
     microperson: { name: 'Microversian', hp: 30, speed: 3, hostile: false, dmg: 0, drop: { c: 2 }, r: 0.6, h: 1.8,
       human: { species: ['alien'], top: ['vest', 'labcoat', 'sweater'], acc: ['antennae', 'none', 'goggles'] }, names: ['Zeep-ish', 'Kyle', 'Flurbo', 'Gooble Jane'],
       talk: ['We stomp the gooble boxes and the power just flows. Nobody knows why.', 'A scientist once came from the sky. He was rude.', 'Our universe is the biggest one there is. Obviously.', 'Have you seen the Miniverse? Me neither.'],

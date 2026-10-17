@@ -904,6 +904,23 @@ test('Earth\'s country roads wind between the towns, level, with power lines alo
   assert.ok(MM.layoutOf('suburbia').roads.some(r => r.style === 'highway'));
 });
 
+test('battery inside battery: the Microverse, Zeep\'s Miniverse, Kyle\'s Teenyverse; the vat of acid; C-500A has no Morty or Summer', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'suburbia' });
+  for (const [door, to] of [['battery', 'microverse'], ['minibattery', 'miniverse'], ['teenybattery', 'teenyverse'], ['teenyexit', 'miniverse'], ['miniexit', 'microverse']]) {
+    near(host, c, p, door); run(host, 1.2);
+    host.message(c, JSON.stringify({ t: 'door', l: door }));
+    assert.strictEqual(p.inst.dimId, to, door);
+  }
+  assert.ok([...p.inst.npcs.values()].some(n => n.type === 'zeep'), 'Zeep Xanflorp is in the Microverse');
+  assert.ok(MM.travelWhy('portal', 'suburbia', 'teenyverse'), 'only through the batteries');
+  // The vat of acid: they think you are dead.
+  near(host, c, p, 'acidvat'); run(host, 1.2);
+  host.message(c, '{"t":"use","l":"acidvat"}');
+  assert.ok(p.fx.cloak > host.time, 'hidden');
+  assert.deepStrictEqual(MM.castOf('c500a').sort(), ['genius', 'joe', 'surgeon']);
+});
+
 test('ring races: two or more people at the start pad start one; every ring in order; the winner takes double', () => {
   assert.ok(MM.racesIn('shrimpearth').some(R => R.id === 'streetrun'), 'every Earth has the street sprint');
   assert.ok(MM.racesIn('sp_c137').some(R => R.id === 'slalom'), 'the space race is in the sky over Earth');

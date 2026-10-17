@@ -223,6 +223,10 @@ Every dimension has its own people (`shared/cast.js`): each Earth its own Rick, 
 
 **King Tommy** (Beth's childhood friend, lost in Froopyland) cannot leave Froopyland: no portal or door lets him out, except a **magic chalk** door. Only Ricks and Evil Morty know how to make Magic Chalk (key 7): draw a door anywhere into Froopyland, or there, back out; anyone can go through it. Evil Morty can build anything a Rick can (not a Rick's own body upgrades); everyone else only what their life teaches them.
 
+### The vat of acid
+
+In Downtown, the crime lords' warehouse has the vat of acid from "The Vat of Acid Episode". Hide in it (it is not acid; Rick throws fake bones in after you) and nobody can find you for a while.
+
 ### Beaches and Atlantis
 
 South of every Earth's towns there is a sandy **beach** and the sea. Swim out and dive, and you are in that Earth's own **Atlantis** (C-137's, Shrimp Earth's, your home Earth's...), each with its own **Mr. Nimbus** at his palace. Swim up to the surface to get back to the same beach.
@@ -232,7 +236,7 @@ South of every Earth's towns there is a sandy **beach** and the sea. Swim out an
 The multiverse has three layers, and they are different things:
 
 * **Worlds** are places: Earth, the Moon, Bird World, Gazorpazorp, Planet Squanch, the Citadel, Snake Planet, Atlantis, the Dream World, the planets of the solar system and the rest (33 of them).
-* **Dimensions** are parallel versions of a world. Earth's include Earth C-137, Fascist Earth, Shrimp Earth, Teddy Earth, C-500A, Doofus Rick's Earth, Cronenberged Earth, the wasteland, Snowball's dog world, the pizza-and-furniture one, the Zigerion simulation, and everyone's home Earth. Every other world has **three** parallel dimensions: a Cronenberg, mirror, ice age, dark, jungle, cat or toy version (Bird World in an ice age, Gazorpazorp made of plastic...). Each kind has a place of its own with something to do: the Flesh Shrine, the Great Mirror, ice fishing on the Frozen Lake, relighting the Last Lighthouse, the Overgrown Temple, a nap at the Great Scratching Post, winding up the Giant Toy Box.
+* **Dimensions** are parallel versions of a world. Earth's include Earth C-137, Fascist Earth, Shrimp Earth, Teddy Earth, C-500A (Beth and Jerry never married, so there is no Morty or Summer: Beth is a heart surgeon, Jerry a movie star), Doofus Rick's Earth, Cronenberged Earth, the wasteland, Snowball's dog world, the pizza-and-furniture one, the Zigerion simulation, and everyone's home Earth. Every other world has **three** parallel dimensions: a Cronenberg, mirror, ice age, dark, jungle, cat or toy version (Bird World in an ice age, Gazorpazorp made of plastic...). Each kind has a place of its own with something to do: the Flesh Shrine, the Great Mirror, ice fishing on the Frozen Lake, relighting the Last Lighthouse, the Overgrown Temple, a nap at the Great Scratching Post, winding up the Giant Toy Box.
 * **One of a kind:** the Citadel, Blips and Chitz, the Dream World, the Story Train, Interdimensional Cable and Beyond the Curve exist once in the whole multiverse, so they have no parallels.
 * **Timelines** are other times of one dimension: Earth C-137 65 million years ago, the split timeline from "A Rickle in Time", and Earth under the Federation; the Citadel under President Morty; Bird World after the wedding.
 
@@ -265,7 +269,7 @@ Rick's garage stands open on the street, on every Earth, on the left of the Smit
 * The **Space Cruiser** parked inside, shelves of glowing jars, a weapon rack, beakers and a toolchest.
 * A **Plumbus**: anyone can make one.
 * The **Meeseeks Box**: press it and a Mr. Meeseeks pops out to help you.
-* The **microverse battery**, charging the car.
+* The **microverse battery**, charging the car. Go in: in the Microverse, the scientist **Zeep Xanflorp** has a battery of his own (the **Miniverse**), and in there **Kyle** has his (the **Teenyverse**, jungle and treehouses). Each battery's exit takes you back up one level.
 * The **Butter Robot**. It talks.
 * A **trapdoor** down to the **secret underground lab**: clone tanks, a giant computer, a machine, and the **Mind Blowers** cabinet.
 * A **door to Rick's wine cellar**, a pocket dimension with barrels, bottle racks and his private stash.

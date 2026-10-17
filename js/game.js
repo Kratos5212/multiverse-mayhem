@@ -2318,13 +2318,14 @@
       // Keep the camera inside the walls and under the ceiling.
       const hx = room.w / 2 - 0.5, hz = room.d / 2 - 0.5;
       cx = Math.max(-hx, Math.min(hx, cx)); cz = Math.max(-hz, Math.min(hz, cz));
-      // A house with an upstairs: stay on your floor, and only show the upstairs when you are
-      // up there (downstairs you see the rooms with the upper floor lifted off).
+      // A house with an upstairs: the camera stays on your floor (on the stairs it may rise
+      // with you). The upstairs is always there: from below the ceiling hides it, and up the
+      // stairwell you see it.
       const Fl = MM.DIM_BY_ID[G.dimId].floors, up = Fl && MM.levelAt(G.dimId, me.y) === 1;
+      const S = Fl && Fl.stair, onStair = S && me.x > S.x0 - 0.3 && me.x < S.x1 + 0.3 && me.z > S.z0 - 0.3 && me.z < S.z1 + 0.3;
       if (up) cy = Math.max(Fl.y + 0.4, Math.min(Fl.y + room.h - 0.5, cy));
-      else cy = Math.min(Fl ? Fl.y - 0.3 : room.h - 0.5, cy);
-      if (G.upperFor !== G.world) { G.upperFor = G.world; G.upperRoom = G.world && G.world.group.getObjectByName('roomUpper'); }
-      if (G.upperRoom) G.upperRoom.visible = !!up;
+      else if (!onStair) cy = Math.min(Fl ? Fl.y - 0.3 : room.h - 0.5, cy);
+      if (G.upperFor !== G.world) { G.upperFor = G.world; G.upperRoom = G.world && G.world.group.getObjectByName('roomUpper'); if (G.upperRoom) G.upperRoom.visible = true; }
     }
     if (G.shake > 0) { cx += (Math.random() - 0.5) * G.shake; cy += (Math.random() - 0.5) * G.shake; cz += (Math.random() - 0.5) * G.shake; G.shake = Math.max(0, G.shake - dt * 1.5); }
     camera.position.set(cx, cy, cz);
