@@ -2036,6 +2036,183 @@
       for (const sx of [-1, 0, 1]) s.add(P.cone, '#ffd84d', [sx * 0.6, 18.6, 0], null, [0.18, 1, 0.18], true);
       s.add(P.box, '#ffd84d', [0, 18, 0], null, [1.4, 0.2, 0.2], true);
     },
+    // ----- The solar system -----
+    // King Flippy Nips's palace: a stepped pyramid in Pluto's teal and gold, a mushroom dome on top.
+    lm_plutopalace(s) {
+      for (let i = 0; i < 5; i++) s.add(P.box, i % 2 ? '#3a8a7a' : '#4aa890', [0, 1 + i * 2, 0], null, [20 - i * 3.6, 2, 20 - i * 3.6]);
+      s.add(P.cyl, '#e8e0c8', [0, 12, 0], null, [0.9, 3, 0.9]);
+      s.add(P.hemi, '#ffd84d', [0, 13.4, 0], null, [3.6, 2.4, 3.6]);
+      for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; s.add(P.sphereLo, '#fff4c8', [Math.cos(a) * 2.2, 14.6, Math.sin(a) * 2.2], null, [0.35, 0.25, 0.35]); }
+      s.add(P.box, '#2a2a3a', [0, 1.8, 10.05], null, [3, 3.6, 0.2]);
+      for (let i = 0; i < 5; i++) s.add(P.box, '#3a8a7a', [0, 0.2 + i * 0.4, 10.6 + (4 - i) * 0.6], null, [4, 0.4, 0.6]);
+      for (const sx of [-1, 1]) { s.add(P.cylLo, '#6a5a3a', [sx * 6, 4, 10.4], null, [0.1, 8, 0.1]); s.add(P.box, '#ff9a3a', [sx * 6 + sx * 0.8, 7.2, 10.4], null, [1.6, 1, 0.05]); s.add(P.box, '#ffd84d', [sx * 6 + sx * 0.8, 7.2, 10.43], null, [0.6, 0.6, 0.05]); }
+      // "PLUTO IS A PLANET" banner
+      s.add(P.box, '#ffd84d', [0, 9.2, 4.6], null, [8, 1.2, 0.1]); s.add(P.box, '#3a1a12', [0, 9.2, 4.66], null, [7, 0.3, 0.05]);
+    },
+    // The plutonium mine: a hill with a timber entrance, rails, a cart and green glowing ore.
+    lm_plutomine(s) {
+      s.add(P.hemi, '#4a8a78', [0, 0, -2], null, [8, 6, 6]);
+      s.add(P.box, '#141c1c', [0, 1.6, 3.3], null, [3.2, 3.2, 1]);
+      for (const sx of [-1, 1]) s.add(P.box, '#7a5a3a', [sx * 1.8, 1.8, 3.8], null, [0.4, 3.6, 0.4]);
+      s.add(P.box, '#7a5a3a', [0, 3.7, 3.8], null, [4.2, 0.4, 0.5]);
+      for (const sx of [-0.6, 0.6]) s.add(P.box, '#5a5a62', [sx, 0.08, 7], null, [0.12, 0.08, 8]);
+      for (let i = 0; i < 8; i++) s.add(P.box, '#5a3a22', [0, 0.04, 3.4 + i], null, [1.8, 0.06, 0.25]);
+      s.add(P.box, '#6a6a72', [0, 0.8, 7.5], null, [1.6, 1, 2.2]);
+      for (let i = 0; i < 4; i++) s.add(P.octa, '#7aff6a', [(i % 2 - 0.5) * 0.7, 1.5, 7 + i * 0.3], [i, i * 0.7, 0], [0.35, 0.45, 0.35], true);
+      for (let i = 0; i < 6; i++) { const a = i * 1.1; s.add(P.octa, '#5aff8a', [Math.cos(a) * 5.5, 0.6, -2 + Math.sin(a) * 4], [a, 0, 0.4], [0.5, 0.9, 0.5], true); }
+      s.add(P.box, '#ffd84d', [3, 1.2, 4.5], [0, 0.3, 0], [1.6, 1, 0.08]);
+    },
+    // The Marquis's keep: red stone walls, four round towers with gold roofs, a gate and banners.
+    lm_marskeep(s) {
+      const W = '#9a3a24', D = '#7a2a18', G = '#ffd84d';
+      s.add(P.box, W, [0, 4, 0], null, [20, 8, 18]);
+      for (let i = -4; i <= 4; i++) for (const z of [-9, 9]) s.add(P.box, W, [i * 2.2, 8.6, z], null, [1.2, 1.2, 1]);
+      for (const [x, z] of [[-10, -9], [10, -9], [-10, 9], [10, 9]]) { s.add(P.cyl, D, [x, 6, z], null, [2.4, 12, 2.4]); s.add(P.cone, G, [x, 13.6, z], null, [2.8, 3.4, 2.8]); }
+      s.add(P.cyl, D, [0, 11, -2], null, [3.4, 6, 3.4]); s.add(P.cone, G, [0, 16, -2], null, [3.9, 4, 3.9]);
+      s.add(P.box, '#2a1410', [0, 2.6, 9.05], null, [4, 5.2, 0.3]);
+      s.add(P.hemi, '#2a1410', [0, 5.2, 9.05], [Math.PI / 2, 0, 0], [2, 2, 0.3]);
+      for (const sx of [-1, 1]) { s.add(P.box, '#c8282a', [sx * 4.5, 5, 9.1], null, [2, 4.5, 0.1]); s.add(P.box, G, [sx * 4.5, 5.6, 9.17], null, [0.9, 0.9, 0.05]); }
+    },
+    // The Viscounts of Venus: a crescent of tall statues on plinths, the biggest in the middle.
+    lm_venusstatues(s) {
+      for (let i = -3; i <= 3; i++) {
+        const a = i * 0.36, x = Math.sin(a) * 9, z = -Math.cos(a) * 4 + 2, k = i === 0 ? 1.4 : 1;
+        s.add(P.box, '#a8904a', [x, 0.8, z], [0, -a, 0], [2.2 * k, 1.6, 2.2 * k]);
+        s.add(P.cyl, '#d8c07a', [x, 1.6 + 2.4 * k, z], [0, -a, 0], [0.75 * k, 4.8 * k, 0.75 * k]);
+        s.add(P.cone, '#d8c07a', [x, 1.6 + 1.2 * k, z], [0, -a, 0], [1.3 * k, 2.4 * k, 1.3 * k]);
+        s.add(P.sphere, '#e8d090', [x, 1.6 + 5.6 * k, z], null, [0.7 * k, 0.85 * k, 0.7 * k]);
+        for (let j = 0; j < 5; j++) s.add(P.cone, '#ffd84d', [x + Math.cos(j * 1.26) * 0.45 * k, 1.6 + 6.5 * k, z + Math.sin(j * 1.26) * 0.45 * k], null, [0.14 * k, 0.5 * k, 0.14 * k]);
+      }
+      s.add(P.cyl, '#8a7030', [0, 0.1, 5], null, [5, 0.2, 2.6]);
+    },
+    // The Mercurian stables: a long timber barn, stalls, hay and a paddock fence.
+    lm_mercurystables(s) {
+      s.add(P.box, '#8a5a32', [0, 2, -2], null, [16, 4, 6]);
+      s.add(P.prism, '#6a3a22', [0, 4.9, -2], [0, Math.PI / 2, 0], [7, 1.8, 17]);
+      for (let i = -3; i <= 3; i++) { s.add(P.box, '#2a1a10', [i * 2.2, 1.3, 1.05], null, [1.6, 2.4, 0.1]); s.add(P.box, '#a87a4a', [i * 2.2, 1.0, 1.15], null, [1.7, 0.15, 0.1]); }
+      for (let i = 0; i < 4; i++) s.add(P.box, '#e8c86a', [-6 + i * 1.3, 0.45, 3 + (i % 2) * 0.4], [0, i * 0.4, 0], [1.1, 0.9, 0.8]);
+      for (let i = 0; i < 9; i++) { s.add(P.box, '#a87a4a', [-8 + i * 2, 0.7, 8], null, [0.18, 1.4, 0.18]); }
+      for (const y of [0.5, 1.1]) s.add(P.box, '#a87a4a', [0, y, 8], null, [16, 0.12, 0.1]);
+      s.add(P.cyl, '#6a6a72', [6, 0.4, 4], null, [1, 0.8, 0.6]);
+    },
+    // The Jovian cloud fort: a floating deck of domes and pylons over the Great Red Spot.
+    lm_jovianfort(s) {
+      s.add(P.cyl, '#c8a888', [0, 2, 0], null, [11, 1, 11]);
+      s.add(P.cone, '#a8805a', [0, 0, 0], [Math.PI, 0, 0], [10, 3, 10]);
+      s.add(P.torus, '#c8402a', [0, 0.4, 0], [Math.PI / 2, 0, 0], [6, 6, 1.6], true);
+      s.add(P.hemi, '#f0d8b8', [0, 2.5, 0], null, [6, 6, 6]);
+      for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI * 2 + 0.4; s.add(P.hemi, '#e8b888', [Math.cos(a) * 8, 2.5, Math.sin(a) * 8], null, [2, 2, 2]); s.add(P.cylLo, '#7a5a3a', [Math.cos(a) * 10, 6, Math.sin(a) * 10], null, [0.2, 8, 0.2]); s.add(P.sphereLo, '#ff7a3a', [Math.cos(a) * 10, 10.2, Math.sin(a) * 10], null, [0.5, 0.5, 0.5], true); }
+      s.add(P.cylLo, '#ffd84d', [0, 10, 0], null, [0.25, 3, 0.25]);
+    },
+    // The Hall of All the Rings: a golden dome with rings around it, of course.
+    lm_saturnhall(s) {
+      s.add(P.cyl, '#d8c08a', [0, 2, 0], null, [9, 4, 9]);
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; s.add(P.cyl, '#f0e0b0', [Math.cos(a) * 9.2, 2, Math.sin(a) * 9.2], null, [0.45, 4, 0.45]); }
+      s.add(P.hemi, '#e8c870', [0, 4, 0], null, [8, 6, 8]);
+      for (const [r, t, c] of [[11, 0.35, '#c8b088'], [12.6, 0.25, '#e8d8b0'], [14, 0.2, '#a89068']]) s.add(P.torus, c, [0, 7, 0], [Math.PI / 2 + 0.25, 0, 0], [r, r, t * 4]);
+      s.add(P.box, '#3a2a1a', [0, 1.6, 9.1], null, [3, 3.2, 0.2]);
+    },
+    // The Warlord of Titan's lair: black rock, spikes, and a trophy rack of skulls.
+    lm_titanlair(s) {
+      s.add(P.box, '#2a1e18', [0, 4, 0], null, [16, 8, 14]);
+      for (let i = -3; i <= 3; i++) s.add(P.cone, '#4a3a2a', [i * 2.4, 9.6, 6.6], null, [0.7, 3.2 + (i % 2) * 1.2, 0.7]);
+      for (const sx of [-1, 1]) { s.add(P.cone, '#3a2a1e', [sx * 8.4, 6, 0], [0, 0, sx * 0.3], [1.6, 12, 1.6]); s.add(P.sphereLo, '#ff6a1a', [sx * 6, 6.5, 7.05], null, [0.6, 0.6, 0.2], true); }
+      s.add(P.box, '#120a08', [0, 2.6, 7.05], null, [4, 5.2, 0.2]);
+      for (let i = 0; i < 5; i++) s.add(P.sphereLo, '#e8e0c8', [-2 + i, 6.2, 7.2], null, [0.35, 0.4, 0.35]);
+    },
+    // Uranus: nobody lives here, so someone's flag will do.
+    lm_uranusflag(s) {
+      s.add(P.cylLo, '#c8c8d0', [0, 3.5, 0], null, [0.08, 7, 0.08]);
+      s.add(P.box, '#ffffff', [0.95, 6.3, 0], null, [1.8, 1.1, 0.04]);
+      s.add(P.sphereLo, '#a8ecf0', [0.95, 6.3, 0.03], null, [0.3, 0.3, 0.05]);
+      s.add(P.cyl, '#d8f6f8', [0, 0.1, 0], null, [1.4, 0.2, 1.4]);
+    },
+    // Neptune's throne: a coral throne under a giant trident, on a shell dais.
+    lm_neptunethrone(s) {
+      s.add(P.cyl, '#e8d8c8', [0, 0.6, 0], null, [8, 1.2, 8]);
+      s.add(P.cyl, '#f0e4d4', [0, 1.6, -2], null, [5, 0.8, 5]);
+      s.add(P.box, '#3a8ac8', [0, 3.6, -3.5], null, [3.2, 3.6, 1]);
+      s.add(P.box, '#3a8ac8', [0, 2.4, -2.2], null, [3.2, 0.6, 2]);
+      for (const sx of [-1, 1]) s.add(P.box, '#2a6aa8', [sx * 1.5, 3, -2.4], null, [0.3, 1.4, 2]);
+      s.add(P.cylLo, '#ffd84d', [3.5, 7, -3.5], null, [0.18, 13, 0.18], true);
+      s.add(P.box, '#ffd84d', [3.5, 13.2, -3.5], null, [2.2, 0.25, 0.25], true);
+      for (const sx of [-1, 0, 1]) s.add(P.cone, '#ffd84d', [3.5 + sx * 1, 14.1, -3.5], null, [0.25, 1.6, 0.25], true);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.capsule, ['#ff7a8a', '#ff9a5a', '#c85aff'][i % 3], [Math.cos(a) * 7, 2.2, Math.sin(a) * 7], [0.2, 0, 0.3], [0.4, 2.4, 0.4]); }
+    },
+    // The Throne of the Sun: a gold dais with the King's throne, columns, and the Sun's disk.
+    lm_sunthrone(s) {
+      for (let i = 0; i < 4; i++) s.add(P.box, '#f0c040', [0, 0.4 + i * 0.8, -i * 1.4], null, [16 - i * 2.4, 0.8, 12 - i * 2.8]);
+      s.add(P.box, '#c8282a', [0, 4.6, -5.4], null, [2.4, 3.2, 0.8]);
+      s.add(P.box, '#ffd84d', [0, 3.6, -4.6], null, [2.6, 0.5, 1.8]);
+      s.add(P.torus, '#fff4c8', [0, 9.4, -6], null, [3.6, 3.6, 1.2], true);
+      s.add(P.cyl, '#ffd84d', [0, 9.4, -6.1], [Math.PI / 2, 0, 0], [3, 0.2, 3], true);
+      for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) { s.add(P.cyl, '#f8e8b0', [sx * 7, 4, 4 - i * 4], null, [0.6, 8, 0.6]); s.add(P.sphereLo, '#ffb02a', [sx * 7, 8.6, 4 - i * 4], null, [0.7, 0.7, 0.7], true); }
+      s.add(P.cylLo, '#ffd84d', [1.6, 5.2, -4.4], [0, 0, 0.3], [0.1, 3, 0.1], true);   // the Solar Scepter
+      s.add(P.sphereLo, '#ffffff', [2.05, 6.6, -4.4], null, [0.35, 0.35, 0.35], true);
+    },
+    // Apollo landing site: the flag, the lander's descent stage, and footprints. Big footprints.
+    lm_moonflag(s) {
+      s.add(P.cylLo, '#d8d8d8', [0, 1.5, 0], null, [0.05, 3, 0.05]);
+      s.add(P.box, '#f2f2f2', [0.7, 2.6, 0], null, [1.4, 0.9, 0.03]);
+      s.add(P.box, '#2a3a8a', [0.35, 2.8, 0.02], null, [0.6, 0.45, 0.02]);
+      for (let i = 0; i < 4; i++) s.add(P.box, '#c83a3a', [0.85, 2.3 + i * 0.13, 0.02], null, [1.0, 0.05, 0.02]);
+      s.add(P.box, '#d8b84a', [-3, 1.2, -1], null, [2, 1.2, 2]);
+      for (const [x, z] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) s.add(P.cylLo, '#c8c8c8', [-3 + x * 1.3, 0.5, -1 + z * 1.3], [z * 0.4, 0, -x * 0.4], [0.05, 1.3, 0.05]);
+      for (let i = 0; i < 5; i++) s.add(P.box, '#6a6a76', [1.5 + i * 0.5, 0.03, 1.5 + (i % 2) * 0.3], null, [0.18, 0.02, 0.32]);
+      for (let i = 0; i < 3; i++) s.add(P.box, '#5a5a66', [-1 - i * 1.4, 0.03, 2.6 + (i % 2) * 0.7], [0, 0.3, 0], [0.6, 0.02, 1.0]);
+    },
+    // ----- What there is to find in each kind of parallel dimension -----
+    lm_tw_cr(s) {
+      s.add(P.sphere, '#d9677a', [0, 3, 0], null, [3, 2.6, 3]);
+      for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; s.add(P.capsule, '#c4505f', [Math.cos(a) * 4.5, 2.6, Math.sin(a) * 4.5], [Math.sin(a) * 0.3, 0, Math.cos(a) * 0.3], [0.6, 5, 0.6]); s.add(P.sphere, '#fff', [Math.cos(a) * 4.5, 5.6, Math.sin(a) * 4.5], null, [0.5, 0.5, 0.5]); s.add(P.sphereLo, '#111', [Math.cos(a) * 4.8, 5.6, Math.sin(a) * 4.8], null, [0.2, 0.2, 0.2]); }
+      s.add(P.sphereLo, '#3a0d0d', [0, 2.6, 2.7], null, [1.2, 0.7, 0.5]);
+    },
+    lm_tw_mr(s) {
+      s.add(P.box, '#c8a84a', [0, 4.2, 0], null, [6.6, 8.4, 0.6]);
+      s.add(P.box, '#d8f0ff', [0, 4.2, 0.32], null, [5.6, 7.4, 0.05], true);
+      s.add(P.box, '#d8f0ff', [0, 4.2, -0.32], null, [5.6, 7.4, 0.05], true);
+      for (const sx of [-1, 1]) s.add(P.sphereLo, '#ffd84d', [sx * 3.3, 8.4, 0], null, [0.6, 0.6, 0.6]);
+      s.add(P.box, '#8a6a2a', [0, 0.2, 0], null, [7.6, 0.4, 2]);
+    },
+    lm_tw_ic(s) {
+      s.add(P.cyl, '#bfe6f4', [0, 0.06, 0], null, [6, 0.12, 6]);
+      s.add(P.cyl, '#1a3a5a', [1.5, 0.08, 1], null, [0.7, 0.12, 0.7]);
+      s.add(P.box, '#8a4a2a', [-2.5, 1.2, -2], null, [2.4, 2.4, 2.4]);
+      s.add(P.prism, '#e8f4fa', [-2.5, 2.8, -2], null, [2.8, 0.9, 2.8]);
+      s.add(P.cylLo, '#6a4a2a', [1.2, 0.8, 0.6], [0.6, 0, 0], [0.04, 1.6, 0.04]);
+      s.add(P.box, '#3a6aa8', [0.6, 0.35, 0.2], null, [0.6, 0.6, 0.6]);
+    },
+    lm_tw_dk(s) {
+      for (let i = 0; i < 6; i++) s.add(P.cyl, i % 2 ? '#e8e8e8' : '#c83a3a', [0, 1 + i * 2, 0], null, [2.2 - i * 0.18, 2, 2.2 - i * 0.18]);
+      s.add(P.cyl, '#2a2a2a', [0, 12.6, 0], null, [1.6, 0.4, 1.6]);
+      s.add(P.cyl, '#fff4b0', [0, 13.6, 0], null, [1.1, 1.8, 1.1], true);
+      s.add(P.cone, '#2a2a2a', [0, 15.2, 0], null, [1.5, 1.4, 1.5]);
+      s.add(P.box, '#3a2a1a', [0, 1, 2.2], null, [1.2, 2, 0.2]);
+    },
+    lm_tw_jg(s) {
+      for (let i = 0; i < 4; i++) s.add(P.box, i % 2 ? '#7a7a6a' : '#8a8a78', [0, 0.9 + i * 1.8, 0], null, [11 - i * 2.4, 1.8, 11 - i * 2.4]);
+      s.add(P.box, '#1a1a12', [0, 1.4, 5.55], null, [2.2, 2.8, 0.1]);
+      for (let i = 0; i < 14; i++) { const a = i * 0.9; s.add(P.capsule, '#3a8a2a', [Math.cos(a) * (5 - (i % 4)), 1.5 + (i % 4) * 1.6, Math.sin(a) * (5 - (i % 4))], [0.3, a, 0.2], [0.2, 2.6, 0.2]); }
+      for (let i = 0; i < 5; i++) s.add(P.sphereLo, '#4a9a3a', [(i - 2) * 1.6, 7.5, (i % 2) - 0.5], null, [1.2, 0.8, 1.2]);
+    },
+    lm_tw_ct(s) {
+      s.add(P.cyl, '#d8b888', [0, 4.5, 0], null, [1.1, 9, 1.1]);
+      for (let i = 0; i < 12; i++) s.add(P.torus, '#b8946a', [0, 0.6 + i * 0.7, 0], [Math.PI / 2, 0, 0], [1.15, 1.15, 0.5]);
+      for (const [y, a] of [[3, 0], [6, 2.1], [9.2, 4.2]]) s.add(P.cyl, '#c86a8a', [Math.cos(a) * 2, y, Math.sin(a) * 2], null, [2, 0.4, 2]);
+      s.add(P.sphere, '#ff5a8a', [3.4, 0.7, 2], null, [0.7, 0.7, 0.7]);
+      s.add(P.cyl, '#8a6a4a', [0, 0.2, 0], null, [4, 0.4, 4]);
+    },
+    lm_tw_ty(s) {
+      s.add(P.box, '#ff5a5a', [0, 2.5, 0], null, [9, 5, 7]);
+      s.add(P.box, '#ffd84d', [0, 2.5, 3.52], null, [9.02, 1, 0.1]);
+      s.add(P.box, '#5a8aff', [0, 5.6 + 2.6, -3.3], [-1.2, 0, 0], [9.2, 0.4, 7.2]);
+      s.add(P.sphere, '#7ad85a', [-2, 6, 0], null, [1.4, 1.4, 1.4]);
+      s.add(P.box, '#b8b8c8', [2, 6.6, 0.5], null, [1.6, 2.2, 1.2]);
+      s.add(P.box, '#b8b8c8', [2, 8.2, 0.5], null, [1.2, 1, 1]);
+      s.add(P.sphereLo, '#22e6ff', [2, 8.3, 1.02], null, [0.25, 0.2, 0.05], true);
+      s.add(P.cylLo, '#ffd84d', [2, 6.6, -0.4], [Math.PI / 2, 0, 0], [0.1, 0.8, 0.1]);
+      s.add(P.box, '#ffd84d', [2, 6.6, -0.85], null, [0.8, 0.15, 0.1]);
+    },
     // ----- The Dream World -----
     floatdoor(s) {
       s.add(P.box, '#8a5a3a', [0, 2.4, 0], [0, 0, 0.12], [1.3, 2.6, 0.14]);
@@ -2400,19 +2577,54 @@
       return new T.Points(g, new T.PointsMaterial({ color, size, sizeAttenuation: false, fog: false, map: C.dotTexture, transparent: true, depthWrite: false }));
     };
     sky.add(st(1400, '#ffffff', 2), st(300, '#bcd4ff', 3), st(120, '#ffe0b0', 3.5));
+    // A faint band of the Milky Way across the stars.
+    {
+      const n = 2600, pos = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) {
+        const a = Math.random() * Math.PI * 2, w = (Math.random() + Math.random() + Math.random() - 1.5) * 0.16;
+        const v = new T.Vector3(Math.cos(a), w, Math.sin(a)).normalize().applyAxisAngle(new T.Vector3(1, 0, 0.3).normalize(), 0.9).multiplyScalar(1280);
+        pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z;
+      }
+      const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3));
+      sky.add(new T.Points(g, new T.PointsMaterial({ color: '#c8c8ff', size: 1.6, sizeAttenuation: false, fog: false, map: C.dotTexture, transparent: true, opacity: 0.55, depthWrite: false })));
+    }
+    // When the Sun is one of the planets you can fly to, it is that, not a painted light.
+    const hasSun = dim.planets.some(P => P.star), tags = [];
     const sun = new T.Mesh(new T.SphereGeometry(70, 24, 16), new T.MeshBasicMaterial({ color: '#fff4d0', fog: false }));
     sun.position.set(-900, 500, -700); sky.add(sun);
     const glow = new T.Mesh(new T.SphereGeometry(120, 24, 16), new T.MeshBasicMaterial({ color: '#ffd890', transparent: true, opacity: 0.25, fog: false, depthWrite: false }));
     glow.position.copy(sun.position); sky.add(glow);
+    sun.visible = glow.visible = !hasSun;
     all.add(sky);
     for (const P of dim.planets) {
       const D = MM.DIM_BY_ID[P.dim];
       const g = new T.SphereGeometry(P.r, 64, 40), pos = g.attributes.position, cols = new Float32Array(pos.count * 3);
       const c = D.ground.map(x => new T.Color(x)), sea = new T.Color('#2f6fd6'), ice = new T.Color('#f4f8ff'), tmp = new T.Color();
       const earth = P.dim === 'suburbia' || D.variantOf === 'suburbia';
+      // The Sun: a burning ball of light, with a corona.
+      if (P.star) {
+        for (let i = 0; i < pos.count; i++) {
+          const x = pos.getX(i) / P.r, y = pos.getY(i) / P.r, z = pos.getZ(i) / P.r, n = MM.fbm(x * 4 + 3, z * 4 + y * 3, 77, 4);
+          tmp.set('#ffd060').lerp(new T.Color('#ff7a10'), Math.max(0, Math.min(1, (0.55 - n) * 2.5))).lerp(new T.Color('#fff8d8'), Math.max(0, (n - 0.6) * 2));
+          cols[i * 3] = tmp.r; cols[i * 3 + 1] = tmp.g; cols[i * 3 + 2] = tmp.b;
+        }
+        g.setAttribute('color', new T.BufferAttribute(cols, 3));
+        const m = new T.Mesh(g, new T.MeshBasicMaterial({ vertexColors: true, fog: false }));
+        m.position.set(P.x, P.y, P.z); all.add(m);
+        for (const [k, o] of [[1.25, 0.3], [1.6, 0.14], [2.2, 0.06]]) {
+          const c = new T.Mesh(new T.SphereGeometry(P.r * k, 32, 20), new T.MeshBasicMaterial({ color: '#ffb040', transparent: true, opacity: o, fog: false, depthWrite: false, side: T.BackSide }));
+          c.position.copy(m.position); all.add(c);
+        }
+        const tag = C.makeTag(D.name, '', '', '#ffd84d'); tag.draw(-1);
+        tag.sprite.scale.set(160, 39, 1); tag.sprite.position.set(P.x, P.y + P.r * 1.3 + 40, P.z); tag.sprite.material.fog = false; all.add(tag.sprite);
+        tags.push({ sprite: tag.sprite, near: 160 });
+        const L = new T.PointLight('#fff4d8', 0.45, 0, 0); L.position.copy(m.position); all.add(L);
+        continue;
+      }
       for (let i = 0; i < pos.count; i++) {
         const x = pos.getX(i) / P.r, y = pos.getY(i) / P.r, z = pos.getZ(i) / P.r;
-        const n = MM.fbm(x * 2.2 + 7, z * 2.2 + y * 1.7, D.seed || 1, 4);
+        // Gas giants are banded, not continents.
+        const n = D.gasGiant ? 0.5 + Math.sin(y * 14 + MM.fbm(x * 3, z * 3, D.seed, 3) * 3) * 0.3 : MM.fbm(x * 2.2 + 7, z * 2.2 + y * 1.7, D.seed || 1, 4);
         tmp.copy(c[0]).lerp(c[1], Math.min(1, Math.max(0, (n - 0.4) * 3)));
         if (n < 0.42) tmp.lerp(c[2], Math.min(1, (0.42 - n) * 6));
         if (earth && n < 0.47) tmp.copy(sea).multiplyScalar(0.8 + n * 0.4);
@@ -2425,6 +2637,15 @@
       m.position.set(P.x, P.y, P.z);
       all.add(m);
       // Its atmosphere: a soft rim in the colour of its sky.
+      // Saturn's rings (and Pluto's rocky one).
+      if (D.ring) {
+        const [rc, r0, r1] = D.ring;
+        const rg = new T.RingGeometry(P.r * r0, P.r * r1, 96, 3);
+        const ring = new T.Mesh(rg, new T.MeshBasicMaterial({ color: rc, transparent: true, opacity: 0.75, side: T.DoubleSide, fog: false, depthWrite: false }));
+        ring.position.copy(m.position); ring.rotation.set(-Math.PI / 2 + 0.38, 0, 0.2); all.add(ring);
+        const ring2 = new T.Mesh(new T.RingGeometry(P.r * (r0 + (r1 - r0) * 0.55), P.r * (r0 + (r1 - r0) * 0.6), 96, 1), new T.MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.5, side: T.DoubleSide, fog: false, depthWrite: false }));
+        ring2.position.copy(ring.position); ring2.rotation.copy(ring.rotation); ring2.position.y += 0.05; all.add(ring2);
+      }
       if (P.dim !== 'moon') {
         const a = new T.Mesh(new T.SphereGeometry(P.r * 1.07, 48, 32), new T.MeshBasicMaterial({ color: D.sky[1], transparent: true, opacity: 0.22, side: T.BackSide, depthWrite: false, fog: false }));
         a.position.copy(m.position); all.add(a);
@@ -2435,8 +2656,10 @@
       tag.sprite.position.set(P.x, P.y + P.r + 30, P.z);
       tag.sprite.material.fog = false;
       all.add(tag.sprite);
+      tags.push({ sprite: tag.sprite, near: 90 });
     }
     group.userData.spaceSky = sky;
+    group.userData.spaceTags = tags;
     return all;
   }
 
@@ -3041,7 +3264,19 @@
     const key = type === 'froopy' ? type + ((seed || 0) % 4) : type === 'merfolk' ? type + ((seed || 0) % 3) : type;
     if (!npcCache[key]) {
       const s = new C.Shape();
-      if (type === 'meatblob') {
+      if (type === 'mercuhorse') {
+        // A Mercurian horse: chestnut, saddled, with a flaming orange mane.
+        const c = '#8a4a2a', d = '#5a2a18';
+        s.add(P.capsule, c, [0, 1.35, 0], [Math.PI / 2, 0, 0], [0.45, 1.5, 0.5]);
+        for (const [x, z] of [[-0.25, 0.6], [0.25, 0.6], [-0.25, -0.6], [0.25, -0.6]]) { s.add(P.cyl, c, [x, 0.6, z], null, [0.11, 1.2, 0.11]); s.add(P.cyl, '#2a1a12', [x, 0.06, z], null, [0.13, 0.12, 0.13]); }
+        s.add(P.capsule, c, [0, 1.9, 0.95], [0.6, 0, 0], [0.22, 0.7, 0.26]);
+        s.add(P.box, c, [0, 2.25, 1.35], [0.5, 0, 0], [0.3, 0.32, 0.65]);
+        for (const sx of [-1, 1]) { s.add(P.cone, c, [sx * 0.1, 2.55, 1.15], null, [0.06, 0.18, 0.06]); s.add(P.sphereLo, '#111', [sx * 0.15, 2.32, 1.38], null, [0.05, 0.05, 0.05]); }
+        for (let i = 0; i < 5; i++) s.add(P.cone, i % 2 ? '#ff9a2a' : '#ffd84d', [0, 2.4 - i * 0.16, 1.05 - i * 0.16], [-0.6, 0, 0], [0.09, 0.3, 0.09], true);
+        s.add(P.box, '#3a2a1a', [0, 1.85, -0.05], null, [0.95, 0.12, 0.8]);
+        s.add(P.cone, '#ff9a2a', [0, 1.3, -1.05], [-2.3, 0, 0], [0.12, 0.7, 0.12], true);
+        void d;
+      } else if (type === 'meatblob') {
         s.add(P.sphere, '#d9677a', [0, 0.8, 0], null, [0.95, 0.8, 0.9]);
         for (let i = 0; i < 5; i++) s.add(P.sphereLo, '#c4505f', [Math.sin(i * 1.3) * 0.7, 0.5 + (i % 2) * 0.6, Math.cos(i * 1.3) * 0.6], null, [0.4, 0.35, 0.4]);
         s.add(P.sphere, '#fff', [0.3, 1.25, 0.7], null, [0.25, 0.25, 0.15]); s.add(P.sphere, '#fff', [-0.25, 1.1, 0.75], null, [0.18, 0.18, 0.12]);
@@ -3529,6 +3764,12 @@
         if (group.userData.eye && camPos) group.userData.eye.lookAt(camPos);
         group.children[0].position.copy(camPos || v.set(0, 0, 0));
         if (group.userData.spaceSky && camPos) group.userData.spaceSky.position.copy(camPos);
+        // Planet names fade out as you come close (you are about to land, you know where you are).
+        if (group.userData.spaceTags && camPos) for (const tg of group.userData.spaceTags) {
+          const d = tg.sprite.position.distanceTo(camPos);
+          tg.sprite.material.opacity = Math.max(0, Math.min(1, (d - tg.near) / 120));
+          tg.sprite.visible = tg.sprite.material.opacity > 0.02;
+        }
       },
       dispose() {
         group.traverse(o => {

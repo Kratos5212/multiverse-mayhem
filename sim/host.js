@@ -1361,6 +1361,9 @@
       if (p.dead || !p.ship || D.interior || D.planets || now < (p.cdOrbit || 0)) return;
       if (p.y - MM.heightAt(p.inst.dimId, p.x, p.z) < MM.ORBIT_ALT - 40) return;
       p.cdOrbit = now + 3;
+      // Realms (a dream, the Story Train, beyond the Curve...) are not planets: no space above them.
+      const W = MM.WORLD_BY_ID[MM.worldOf(p.inst.dimId)];
+      if (W && W.realm) { this.toast(p, D.name + ' is not a planet: there is no space above it. Use a portal.'); return; }
       const S = MM.spaceDimOf(p.inst.dimId), P = S.planets.find(q => q.dim === p.inst.dimId) || S.planets[0];
       const from = p.inst, ox = p.x, oz = p.z;
       p.inst.ev({ k: 'warp', id: p.id });
@@ -1376,8 +1379,11 @@
       if (p.dead || !p.ship || !S.planets || now < (p.cdOrbit || 0)) return;
       const P = S.planets.find(q => q.dim === d);
       if (!P || Math.hypot(p.x - P.x, p.y - P.y, p.z - P.z) > P.r + 70) return;
-      const home = S.planets[0].dim, sh = p.st.ship, H = MM.DIM_BY_ID[home];
-      const why = d === home ? '' : MM.travelWhy('ship', H.variantOf === 'suburbia' ? 'suburbia' : home, d, { hull: true, engine: sh.engine, drive: sh.drive });
+      // Any planet you can see from here is in your universe: the near ones (the Moon, the
+      // solar system) need only the ship, the far ones across the galaxy the Turbo Engine.
+      const home = S.planets[0].dim, sh = p.st.ship, H = MM.DIM_BY_ID[home], B = MM.DIM_BY_ID[d];
+      const near = (H.near || H.variantOf === 'suburbia' || H.solar) && (B.near || B.shapeOf === 'moon');
+      const why = d === home || near || sh.engine ? '' : 'Your ship needs a Turbo Engine to cross the galaxy.';
       if (why) { p.cdOrbit = now + 2; this.toast(p, why); return; }
       p.cdOrbit = now + 3;
       const sp = MM.spawnPoint(d), from = p.inst, ox = p.x, oz = p.z;
@@ -1783,7 +1789,7 @@
         // World rules: the living flesh heals you; the toxic air hurts (never below a tenth).
         const q = p.inst && p.inst.dim.quirk;
         if (q === 'regen' && !p.dead && p.hp < p.maxHp && this.tickN % 60 === 0) { p.hp = Math.min(p.maxHp, p.hp + 2); this.dirty(p); }
-        if (q === 'toxic' && !p.dead && now >= p.fx.shield && now >= p.fx.prot && !p.ship && p.hp > p.maxHp * 0.1 && this.tickN % 75 === 0) { p.hp -= 1; p.inst.ev({ k: 'dmg', p: p.id, d: 1, by: 0 }); this.dirty(p); }
+        if ((q === 'toxic' || q === 'hot') && !p.dead && now >= p.fx.shield && now >= p.fx.prot && !p.ship && p.hp > p.maxHp * 0.1 && this.tickN % 75 === 0) { p.hp -= 1; p.inst.ev({ k: 'dmg', p: p.id, d: 1, by: 0 }); this.dirty(p); }
       }
       for (const inst of this.instances.values()) {
         if (inst.players.size === 0 && inst.idx > 0 && inst.portals.size === 0 && now - inst.emptySince > 60) { this.instances.delete(inst.key); continue; }

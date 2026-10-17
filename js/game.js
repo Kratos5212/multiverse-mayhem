@@ -430,6 +430,7 @@
       buildRaceRings(w.dim);
       const dim = MM.DIM_BY_ID[w.dim];
       scene.fog = new T.Fog(dim.fog, 40, dim.fogFar);
+      camera.far = dim.planets ? 3200 : 1500; camera.updateProjectionMatrix();
       const skyU = G.world.group.children[0].material.uniforms;
       G.atmo = { fog: new T.Color(dim.fog), far: dim.fogFar, top: skyU.top.value.clone(), bot: skyU.bot.value.clone(), k: -1 };
       renderer.setClearColor(dim.fog);
@@ -1905,7 +1906,7 @@
       ny = Math.min(ny, MM.heightAt(G.dimId, nx, nz) + maxShipHeight);
       if (dim.planets) {
         // Space: fly between the planets; touch one to land on it (you can't fly through it).
-        ny = Math.min(ny, 880);
+        ny = Math.min(ny, 1150);
         for (const P of dim.planets) {
           const dx = nx - P.x, dy = ny + 1 - P.y, dz = nz - P.z, d = Math.hypot(dx, dy, dz), R = P.r + 4;
           if (d < R + 6 && now() > (G.orbitT || 0)) { G.orbitT = now() + 2.5; send({ t: 'land', d: P.dim }); }

@@ -720,7 +720,15 @@ test('worlds, their dimensions and timelines; lightspeed from space', () => {
   // Every place you can portal to belongs to a world (pockets aside); every world has a
   // parallel dimension; timelines hang off one dimension of one world.
   for (const id of MM.WORLD_IDS) if (!MM.DIM_BY_ID[id].pocket) assert.ok(MM.worldOf(id), id + ' belongs to a world');
-  for (const W of MM.WORLDS) if (!MM.DIM_BY_ID[W.prime].interior) assert.ok(W.dims.length >= 2, W.name + ' has a parallel dimension');
+  // Places that exist once in the whole multiverse (the Citadel, the Story Train, beyond the
+  // Curve) and the solar system have no parallels; every other world has three or more, each
+  // with something of its own to do.
+  for (const W of MM.WORLDS) if (!MM.DIM_BY_ID[W.prime].interior) {
+    if (W.unique || W.solar) { assert.strictEqual(W.dims.length, 1, W.name + ' exists once'); continue; }
+    assert.ok(W.dims.length >= 3, W.name + ' has parallel dimensions');
+    for (const d of W.dims) if (MM.DIM_BY_ID[d].twist) assert.ok(MM.LANDMARKS.some(l => l.dim === d && MM.TASKS[l.alias]), d + ' has something of its own to do');
+  }
+  assert.ok(MM.WORLD_BY_ID.citadel.unique && MM.WORLD_BY_ID.beyond.unique);
   assert.strictEqual(MM.worldOf('shrimpearth'), 'earth');
   assert.strictEqual(MM.worldOf('h_X123'), 'earth', 'home Earths are Earth');
   assert.deepStrictEqual(MM.timelinesOf('suburbia').sort(), ['dinoearth', 'fedearth', 'splitearth']);
@@ -749,6 +757,49 @@ test('worlds, their dimensions and timelines; lightspeed from space', () => {
   p.x = P.x; p.y = P.y + P.r; p.z = P.z; host.time += 5;
   host.message(c, '{"t":"land","d":"featherhold_ic"}');
   assert.strictEqual(p.inst.dimId, 'featherhold_ic', 'landed');
+});
+
+test('the multiverse in space: every Earth sees the solar system, each kind of parallel has its own universe, Atlantis is under the sea, realms have no sky', () => {
+  for (const e of ['suburbia', 'fascistearth', 'h_X123']) {
+    const S = MM.spaceDimOf(e), on = S.planets.map(P => P.dim);
+    for (const d of ['sun', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'titan', 'uranus', 'neptune', 'pluto', 'moon']) assert.ok(on.includes(d), d + ' in the sky of ' + e);
+    assert.ok(on.length > 15, 'plenty of planets around');
+  }
+  // The planets have the people the show gave them.
+  const has = (d, t) => MM.npcListOf(d).some(n => n[0] === t);
+  assert.ok(has('pluto', 'plutonian') && has('pluto', 'flippynips') && has('pluto', 'scroopy'));
+  assert.ok(has('mars', 'marquis') && has('venus', 'lithdor') && has('titan', 'titanwarlord') && has('sun', 'sunking') && has('neptune', 'neptune'));
+  assert.strictEqual(MM.npcListOf('uranus').length, 0, 'nobody lives on Uranus');
+  for (const t of ['plutoplanet', 'marquis', 'viscounts', 'gallop', 'redspot', 'rings', 'warlord', 'neutral', 'tide', 'scepter']) assert.ok(MM.LANDMARK_BY_ID[MM.TASKS[t].at], t);
+  // Atlantis is not a planet: up from it is the sky over its Earth.
+  assert.strictEqual(MM.spaceDimOf('atlantis').id, 'sp_c137');
+  assert.strictEqual(MM.spaceDimOf('atl_shrimpearth').id, 'sp_shrimpearth');
+  for (const k of ['c137', 'tw_IC', 'tw_CR', 'tw_TY']) assert.ok(!MM.DIM_BY_ID['sp_' + k].planets.some(P => MM.worldOf(P.dim) === 'atlantis'), 'no Atlantis planet in ' + k);
+  // A parallel dimension is its own universe: the same twist on the other worlds around it.
+  const I = MM.spaceDimOf('featherhold_ic');
+  assert.ok(I.planets.length >= 3 && I.planets.every(P => MM.DIM_BY_ID[P.dim].twist === 'IC'));
+  assert.strictEqual(MM.spaceDimOf('squanch_cr').planets[0].dim, 'meatlands', 'Cronenberged Earth is in the middle of the Cronenberg universe');
+  // The solar system is a short hop: a ship with no Turbo Engine gets there.
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'suburbia' });
+  Object.assign(p.prog.up, { hull: 1 }); host.restat(p);
+  host.message(c, '{"t":"ship","on":true}');
+  p.y = MM.heightAt('suburbia', p.x, p.z) + MM.ORBIT_ALT + 5;
+  host.message(c, '{"t":"orbit"}');
+  const S = p.inst.dim, P = S.planets.find(q => q.dim === 'pluto');
+  p.x = P.x; p.y = P.y + P.r; p.z = P.z; host.time += 5;
+  host.message(c, '{"t":"land","d":"pluto"}');
+  assert.strictEqual(p.inst.dimId, 'pluto', 'landed on Pluto');
+  // The Sun burns unless your shield is up.
+  host.message(c, '{"t":"ship","on":false}');
+  host.travel(p, 'sun'); p.ship = false;
+  const hp = p.hp;
+  run(host, 8);
+  assert.ok(p.hp < hp, 'the Sun is hot');
+  // Realms are not planets.
+  host.travel(p, 'dreamworld'); p.ship = true; p.y = MM.heightAt('dreamworld', p.x, p.z) + MM.ORBIT_ALT + 5; host.time += 10;
+  host.message(c, '{"t":"orbit"}');
+  assert.strictEqual(p.inst.dimId, 'dreamworld', 'no space above a dream');
 });
 
 test('ring races: two or more people at the start pad start one; every ring in order; the winner takes double', () => {
