@@ -49,7 +49,7 @@
       npc: [['neighbor', 9], ['schoolkid', 4], ['butterbot', 1, -16.5, 11]], pickups: { s: 18, c: 2 }, mat: 's',
     },
     {
-      id: 'meatlands', flat: 140, name: 'Cronenberged Earth', code: 'PRIME', seed: 4242, gravity: 24, amp: 9, scale: 0.02,
+      id: 'meatlands', flat: 140, name: 'Cronenberged Earth', code: 'PRIME', seed: 4242, gravity: 24, amp: 9, scale: 0.02, quirk: 'regen',
       blurb: 'The Prime Dimension: Rick\'s love potion turned everyone into Cronenbergs, so he and Morty moved to a replacement Earth. Everything is meat now. It is warm. It is watching.',
       sky: ['#3d0a1c', '#c4485f'], fog: '#7a2236', fogFar: 170, sun: '#ffc2b0', ambient: '#b05068',
       ground: ['#c9576b', '#e07a85', '#9c3a4e'], accent: '#fff2c8',
@@ -135,7 +135,7 @@
       props: [['redmesa', 20], ['bonepile', 16], ['spikeplant', 30]], npc: [['gazorpian', 10]], pickups: { g: 8, s: 6 }, mat: 'g',
     },
     {
-      id: 'froopy', name: 'Froopyland', code: 'FR-00', seed: 9339, gravity: 18, amp: 6, scale: 0.013,
+      id: 'froopy', name: 'Froopyland', code: 'FR-00', seed: 9339, gravity: 18, amp: 6, scale: 0.013, quirk: 'bouncy',
       blurb: 'A soft, safe world built for children. Nothing here can hurt you. Probably.',
       sky: ['#9ad8ff', '#ffd6f0'], fog: '#f0e0ff', fogFar: 230, sun: '#ffffff', ambient: '#ffd8f0',
       ground: ['#8ae0a8', '#a8f0c0', '#f0c8e8'], accent: '#ff8fd0',
@@ -208,7 +208,7 @@
       npc: [['giant', 7]], pickups: { s: 14, f: 4 }, mat: 's',
     },
     {
-      id: 'atlantis', flat: 130, name: 'Atlantis', code: 'AT-1', seed: 1919, gravity: 9, amp: 6, scale: 0.012,
+      id: 'atlantis', flat: 130, name: 'Atlantis', code: 'AT-1', seed: 1919, gravity: 9, amp: 6, scale: 0.012, quirk: 'swim',
       blurb: "Mr. Nimbus's sunken city. Columns, coral, kelp, and a sea king who very much controls the police.",
       sky: ['#0a3a6a', '#2a8ac8'], fog: '#1a5a8a', fogFar: 150, sun: '#c8f0ff', ambient: '#5aa0d0',
       ground: ['#c8b88a', '#b8a878', '#8aa890'], accent: '#5ff8e0',
@@ -216,12 +216,38 @@
       npc: [['merfolk', 12], ['seamonster', 4]], pickups: { c: 10, s: 4 }, mat: 'c',
     },
     {
-      id: 'dreamworld', name: 'The Dream World', code: 'ZZZ', seed: 6116, gravity: 16, amp: 9, scale: 0.012,
+      id: 'dreamworld', name: 'The Dream World', code: 'ZZZ', seed: 6116, gravity: 16, amp: 9, scale: 0.012, quirk: 'dreamy',
       blurb: 'Inside someone\'s dream, from "Lawnmower Dog". Doors float, clocks melt, the school hallway goes on forever, and Scary Terry is somewhere behind you.',
       sky: ['#2a0a4a', '#ff8ad0'], fog: '#5a2a7a', fogFar: 200, sun: '#ffd8f8', ambient: '#b88ae0',
       ground: ['#5a3a8a', '#7a4aa0', '#3a2a6a'], accent: '#ffe066',
       props: [['floatdoor', 24], ['meltclock', 16], ['locker', 30], ['dreamstair', 10]],
       npc: [['dreamer', 8], ['scaryterry', 2]], pickups: { p: 10, f: 4 }, mat: 'p',
+    },
+    // ----- Crazier still -----
+    {
+      id: 'storytrain', flat: 150, name: 'The Story Train', code: 'ST-4', seed: 4646, gravity: 22, amp: 1, scale: 0.01, outsideCurve: false,
+      blurb: 'From "Never Ricking Morty": an endless train of anthology stories, run by the Story Lord. Every carriage is a different plot, and they all go somewhere you can guess.',
+      sky: ['#2a1a4a', '#d8a8ff'], fog: '#7a5aa8', fogFar: 230, sun: '#ffe8ff', ambient: '#b098d8',
+      ground: ['#3a2a5a', '#4a3a6a', '#2a1e48'], accent: '#ffd84d',
+      props: [['storybook', 26], ['lamp', 24], ['crate', 20]],
+      // The train itself: a long line of carriages through the middle of the world.
+      fixed: Array.from({ length: 15 }, (_, i) => ['traincar', -126 + i * 18, 56, Math.PI / 2]),
+      npc: [['passenger', 10], ['storylord', 2]], pickups: { p: 10, m: 1, s: 6 }, mat: 'p',
+    },
+    {
+      id: 'toxicworld', flat: 120, name: 'The Toxic Dimension', code: 'TX-1', seed: 7337, gravity: 24, amp: 4, scale: 0.014,
+      blurb: 'From "Rest and Ricklaxation": everything Rick and Morty detoxed out of themselves ended up here. Including a toxic Rick and Morty. The air hurts.',
+      sky: ['#2a3a0a', '#b8e04a'], fog: '#6a8a2a', fogFar: 190, sun: '#efffc0', ambient: '#a8c870',
+      ground: ['#4a5a2a', '#5a6a2a', '#3a4a1e'], accent: '#a8ff3a', quirk: 'toxic',
+      props: [['toxicbarrel', 40], ['sludgepool', 22], ['bonepile', 12], ['wreck', 10]],
+      npc: [['toxicrick', 4], ['raider', 4]], pickups: { g: 12, c: 4 }, mat: 'g',
+    },
+    {
+      id: 'zigerion', variantOf: 'suburbia', name: 'Zigerion Simulation', code: 'SIM-1',
+      blurb: 'From "M. Night Shaym-Aliens!": a fake Earth inside a Zigerion scam ship, rendered by a simulation that is not quite good enough. The locals repeat themselves. A lot.',
+      sky: ['#0a2a14', '#5aff8a'], fog: '#3a8a5a', fogFar: 200, sun: '#e8fff0', ambient: '#90d8a8',
+      ground: ['#2a6a3a', '#3a7a4a', '#1e5a2e'], accent: '#5aff8a', glitch: true, tiles: true,
+      extra: [], npc: [['simperson', 10], ['zigerion', 3]], pickups: { s: 16, c: 3 }, mat: 'c',
     },
     // ----- Other times: the same Earth, earlier, or split in two -----
     {
@@ -589,6 +615,10 @@
     dreamstair:  { r: 2.4, h: 9, hp: 150, drop: { p: 2 }, arch: true },
     timeshard:   { r: 0.7, h: 3.5, hp: 40, drop: { c: 1 }, arch: true },
     flowerbed:   { r: 1.4, h: 0.8, hp: 10, drop: { f: 1 }, arch: true },
+    storybook:   { r: 1.6, h: 3.2, hp: 60, drop: { p: 1 } },
+    traincar:    { r: 3.0, h: 4.2, hp: 1e9, drop: {}, fixed: true },
+    toxicbarrel: { r: 0.7, h: 1.4, hp: 30, drop: { g: 1 } },
+    sludgepool:  { r: 3.0, h: 0.3, hp: 1e9, drop: {}, fixed: true, arch: true },
     lm_snakeclub:   { r: 8, h: 8, hp: 9999, drop: {} },
     lm_dinocouncil: { r: 10, h: 10, hp: 9999, drop: {} },
     lm_giantcastle: { r: 14, h: 26, hp: 9999, drop: {} },
@@ -828,6 +858,30 @@
       human: { species: ['human'], top: ['sweater'], acc: ['cap'], look: { hair: 'bald', brow: 'angry', mouth: 'grin', face: 'long', height: 1.15, width: 0.9, head: 1.0,
         skin: '#b0583e', topColor: '#2a6a3a', shirtColor: '#c83a3a', pantsColor: '#5a3a2a', shoeColor: '#2a1a12', accColor: '#3a2a1a' } },
       names: ['Scary Terry'] },
+    passenger: { name: 'Passenger', hp: 30, speed: 2.6, hostile: false, dmg: 0, drop: { p: 1, s: 1 }, r: 0.6, h: 1.8,
+      human: { species: ['human', 'alien'], top: ['sweater', 'vest', 'polo'], acc: ['none', 'tophat', 'goggles'] },
+      names: ['A Man Who Has Seen Things', 'The Conductor (maybe)', 'A Plot Device', 'Anthology Annie'],
+      talk: ['Every carriage is a story. This one is about a man on a train. Wait.', 'The Story Lord wants a big ending. He always wants a big ending.', 'Do not get off at the flashback. Nobody comes back from the flashback.', 'I have been on this train for three seasons.'],
+      moods: { line: 60, gift: 10, trade: 8, errand: 12, buff: 6, dance: 4 } },
+    storylord: { name: 'Story Lord', hp: 180, speed: 4.0, hostile: true, dmg: 15, drop: { p: 4, m: 1 }, r: 0.7, h: 2.1,
+      human: { species: ['human'], top: ['armor'], acc: ['crown'], look: { hair: 'slick', brow: 'angry', mouth: 'grin', face: 'long', height: 1.2, width: 1.0, head: 1.0,
+        skin: '#d8c8b0', topColor: '#3a2a5a', shirtColor: '#ffd84d', pantsColor: '#2a1e3a', shoeColor: '#111111', accColor: '#ffd84d', hairColor: '#2a1a1a' } },
+      names: ['The Story Lord'] },
+    toxicrick: { name: 'Toxic Rick', hp: 120, speed: 4.6, hostile: true, dmg: 13, drop: { g: 4, c: 2 }, r: 0.6, h: 2.0,
+      human: { species: ['human'], top: ['labcoat'], acc: ['none'], look: { hair: 'rick', brow: 'uni', eyes: 'tired', mouth: 'grin', face: 'long', height: 1.25, width: 0.8, head: 0.95,
+        skin: '#a8d870', hairColor: '#5a7a2a', topColor: '#c8e890', shirtColor: '#6a8a3a', pantsColor: '#3a4a1e', shoeColor: '#1e2a10' } },
+      names: ['Toxic Rick', 'Toxic Morty (in a Rick suit)'] },
+    simperson: { name: 'Simulated Neighbour', hp: 25, speed: 2.4, hostile: false, dmg: 0, drop: { c: 1 }, r: 0.6, h: 1.8,
+      human: { species: ['human'], top: ['polo', 'tshirt'], acc: ['none'], colors: { topColor: '#5aff8a', pantsColor: '#2a6a3a', shirtColor: '#5aff8a' } },
+      names: ['Neighbour.exe', 'Generic Dad 4', 'Background Jogger'],
+      talk: ['Hello, neighbour! Hello, neighbour! Hello, neighbour!', 'What a nice day. (The sky flickered.)', 'Have you signed up for Concentrated Dark Matter? Just tell us the recipe.', 'I am definitely a real person. Beep.'],
+      moods: { line: 70, gift: 8, trade: 6, errand: 8, buff: 4, dance: 4 } },
+    zigerion: { name: 'Zigerion', hp: 40, speed: 3.0, hostile: false, dmg: 0, drop: { c: 2, k: 2 }, r: 0.6, h: 1.6,
+      human: { species: ['alien'], top: ['armor'], acc: ['goggles'], look: { hair: 'bald', brow: 'none', eyes: 'wide', mouth: 'flat', face: 'round', height: 0.85, width: 0.9, head: 1.35,
+        skin: '#d8b8a8', topColor: '#6a6a8a', shirtColor: '#6a6a8a', pantsColor: '#3a3a5a', shoeColor: '#222222', accColor: '#5aff8a' } },
+      names: ['Prince Nebulon', 'Zigerion Scammer', 'Zigerion Tech'],
+      talk: ['Welcome back to Earth, sir. This is definitely Earth.', 'What is the recipe for Concentrated Dark Matter? Asking for a friend.', 'Do not look at the edges. The edges are not done.', 'We are the greatest con artists in the galaxy. Please rate us five stars.'],
+      moods: { line: 60, gift: 6, trade: 10, errand: 10, buff: 4, angry: 4 } },
     gazorpian: { name: 'Gazorpian', hp: 90, speed: 4.2, hostile: true, dmg: 14, drop: { g: 3, s: 2 }, r: 1.2, h: 2.6 },
     froopy: { name: 'Froopy', hp: 30, speed: 2.8, hostile: false, dmg: 0, drop: { f: 2 }, r: 0.7, h: 1.4,
       names: ['Fluffle', 'Snoob', 'Mister Wobbs', 'Bloop', 'Gentle Toot'],
@@ -942,6 +996,10 @@
     dreamworld: [{ id: 'nightmare', name: 'Nightmare', text: 'You can run, but you cannot hide. Scary Terry brought friends.', spawn: [['scaryterry', 3]], dur: 70 },
       { id: 'lucid', name: 'Lucid Dream', text: 'You know you are dreaming. Everything is easier.', loot: ['p', 12], talkBoost: 1, dur: 50 }],
     splitearth: [{ id: 'fracture', name: 'Time Fracture', text: 'The timeline split again. Time Cops are cracking down.', spawn: [['timecop', 2]], dur: 70 }],
+    storytrain: [{ id: 'twist', name: 'Plot Twist', text: 'The Story Lord sent his enforcers into the carriages.', spawn: [['storylord', 3]], dur: 80 },
+      { id: 'finale', name: 'Season Finale', text: 'Everyone gets a moment. Free plasma for the cast.', loot: ['p', 12], talkBoost: 1, dur: 50 }],
+    toxicworld: [{ id: 'spill', name: 'Toxic Spill', text: 'A fresh batch of detox waste came through. More Toxic Ricks with it.', spawn: [['toxicrick', 4]], dur: 80 }],
+    zigerion: [{ id: 'scam', name: 'Scam in Progress', text: 'The Zigerions are working on you. Everyone suddenly wants the recipe.', loot: ['c', 10], talkBoost: 1, dur: 60 }],
     froopy: [{ id: 'sugar', name: 'Sugar Rush', text: 'It is raining candy. And feathers. Do not ask.', loot: ['f', 12], talkBoost: 1, dur: 50 }],
     anatomy: [{ id: 'outbreak', name: 'Outbreak', text: 'The diseases have escaped containment. Again.', spawn: [['bacteria', 9]], dur: 90 }],
     pizzaworld: [{ id: 'delivery', name: 'Rush Hour', text: 'Everyone is delivering everyone. Grab a slice.', loot: ['s', 12], talkBoost: 1, dur: 50 }],
@@ -1209,7 +1267,7 @@
     lm_gooble: [-7.2, 7.2, -5.2, 7.65], lm_fakedoors: [-4.7, 4.7, -3.7, 3.9], lm_antsjohnson: [-4.7, 4.7, -3.7, 3.9], lm_plumbusline: [-6, 6, -5, 5.11],
     lm_mall: [-11.5, 11.5, -7.25, 10.6], lm_shoneys: [-5.9, 5.9, -4.4, 4.6], lm_needful: [-4.25, 4.25, -4.25, 4.7], lm_wong: [-5.7, 5.7, -4.7, 5.2],
     lm_tvstore: [-5.2, 5.2, -4.2, 4.35], lm_whitehouse: [-12.3, 12.3, -5.8, 9.6], lm_capitol: [-15.5, 15.5, -7.5, 9.5], lm_sonicstage: [-9, 9, -5, 5],
-    lm_hangar: [-7.6, 7.6, -9, 9.2], snakehut: [-2.8, 2.8, -2.8, 2.8], lm_snakeclub: [-7.5, 7.5, -5, 5], lm_dinocouncil: [-9, 9, -9, 9],
+    lm_hangar: [-7.6, 7.6, -9, 9.2], traincar: [-1.6, 1.6, -8.4, 8.4], lm_raidergarage: [-7, 7, -5, 5], lm_formsoffice: [-7.5, 7.5, -5.5, 5.5], lm_pizzacounter: [-5, 5, -3, 3], snakehut: [-2.8, 2.8, -2.8, 2.8], lm_snakeclub: [-7.5, 7.5, -5, 5], lm_dinocouncil: [-9, 9, -9, 9],
     lm_nimbuspalace: [-11, 11, -7, 7], lm_dreamschool: [-9.3, 9.3, -4.8, 5.2], locker: [-1.2, 1.2, -0.4, 0.4], spacecruiser: [-2.02, 2.02, -2.5, 2.5],
   };
   for (const k in BOX) if (MM.PROPS[k]) MM.PROPS[k].box = BOX[k];
@@ -1359,6 +1417,17 @@
     fillVariant(d);
     return d;
   };
+  // ---------- World rules ----------
+  // Things that make a world play differently, shown when you arrive.
+  MM.QUIRKS = {
+    swim: 'Underwater: hold Jump to swim up, and you sink slowly.',
+    bouncy: 'Everything is soft: you jump much higher, and everything hurts you half as much.',
+    dreamy: 'A dream: now and then you remember you can fly (hold Jump).',
+    regen: 'The flesh is warm and alive: it slowly heals you while you stand on it.',
+    toxic: 'The air is toxic: it slowly hurts you unless your shield is up.',
+  };
+  MM.quirkOf = dimId => { const D = MM.DIM_BY_ID[dimId]; return D && D.quirk; };
+
   // ---------- Space ----------
   // Fly your ship straight up out of a world's atmosphere and you are in the space around it:
   // its planet below you, and the other planets of the same universe (for the show's home

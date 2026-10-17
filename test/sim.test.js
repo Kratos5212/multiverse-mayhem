@@ -690,3 +690,27 @@ test('space: fly up out of the atmosphere, see the planets, land on the Moon', (
   assert.strictEqual(p.inst.dimId, 'moon');
   assert.ok(p.ship && p.y > MM.heightAt('moon', p.x, p.z) + 100, 'coming in from high up, still in the ship');
 });
+
+test('every world has something to do, and some worlds have their own rules', () => {
+  for (const id of MM.WORLD_IDS) {
+    const D = MM.DIM_BY_ID[id];
+    if (D.variantOf || D.pocket) continue;
+    const L = MM.LANDMARKS.filter(l => l.dim === id);
+    assert.ok(Object.keys(MM.TASKS).some(t => L.some(l => MM.isAt(l, MM.TASKS[t].at))), id + ' has a task');
+  }
+  for (const d of ['storytrain', 'toxicworld', 'zigerion']) assert.ok(MM.WORLD_IDS.includes(d), d);
+  const host = new MM.Host();
+  // Froopyland: nothing hurts much.
+  const a = join(host, 'genius', { dim: 'suburbia' }), b = join(host, 'trooper', { dim: 'suburbia' });
+  host.travel(a.p, 'froopy', { x: 0, z: 0 }); host.travel(b.p, 'froopy', { x: 2, z: 0 });
+  assert.strictEqual(MM.quirkOf(a.p.inst.dimId), 'bouncy');
+  a.p.fx.prot = 0; const hp = a.p.hp;
+  host.hurtPlayer(a.p.inst, a.p, 20, b.p, 'test');
+  assert.strictEqual(hp - a.p.hp, 10);
+  // The toxic air hurts, slowly, but never kills.
+  const t = join(host, 'genius', { dim: 'suburbia' });
+  host.travel(t.p, 'toxicworld', { x: 0, z: 30 });
+  t.p.fx.prot = 0; const h0 = t.p.hp;
+  run(host, 6);
+  assert.ok(t.p.hp < h0 && t.p.hp >= t.p.maxHp * 0.1);
+});

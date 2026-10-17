@@ -40,6 +40,9 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | PC | Phone | Action |
 | --- | --- | --- |
 | W A S D | Left stick | Move |
+| Shift (hold) | Drag past the stick's edge | Sprint (a bit faster; more with leg upgrades) |
+| R or right click | PORTALS | Portal pair: shoot one end, then the other (portal gun owners) |
+| I | Items | Inventory: curios, gadgets, collection |
 | Mouse (click to capture) | Drag the right side | Look |
 | Click | FIRE | Shoot or hit |
 | Space | JUMP | Jump (hold to fly as a Birdfolk) |
@@ -47,7 +50,7 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | E | PORTAL | Travel: portal gun (own or borrowed), portal station, or your ship |
 | F | TALK / USE | Talk to locals, daily tasks at buildings, doors, portal stations |
 | J | Journal button | Your life, your path, errands |
-| B | SHIP | Board or leave your ship (Space up, Shift down) |
+| B | SHIP | Board or leave your ship (Space up, Shift down; keep climbing for space) |
 | 1 2 3 4 5 | GADGET | Grenade, turret, shrink ray, Meeseeks Box, Time Crystal (Ricks and Evil Morty) |
 | C | Build slot | Workbench |
 | Enter | Chat button | Chat with the whole multiverse |
@@ -210,9 +213,13 @@ There is no public portal on Earth. To get around you need one of these:
 * **A ship.** Earth to the Moon is a short hop. Other planets in the same universe (Bird World, Gazorpazorp, Squanch, the Purge Planet, Unity's planet, Gear World, Blips and Chitz, the Bazaar, the Federation) need the Turbo Engine. Other dimensions need the Dimension Drive.
 * **Doors.** The Microverse is inside the car battery in Rick's garage; Anatomy Park is inside Ruben, in a tent on Earth; Froopyland is behind Rick's chalk door. Only the doors go there.
 
+* **Straight up.** Climb your ship 250 m and you leave the atmosphere: space around your world, with its planet below and, for Earth, the Moon and the other planets of the show's home universe. Fly into a planet to land on it (Earth and the Moon need only the ship; the others the Turbo Engine).
+
+**The portal pair** (R or right click, for anyone with a portal gun): a short-range mode like Valve's Portal. Shoot one end onto a floor, wall, roof or cliff, then the other, or into thin air; walk in one and come out the other at the same speed. Anyone can use anyone's pair. Both ends take your **portal colours** (green for Rick, as in the show): pick the colour, the second end's colour and the style (swirl, ring, spiral, static) in the character creator's **Portals** tab.
+
 Worlds **outside the Central Finite Curve** can only be reached with a gold portal: Evil Morty's gun, or a gun upgraded with **Golden Portal Fluid** at the garage.
 
-The **portal gun, portal stations and ships** open a map of the **Central Finite Curve**: every world inside the curve, the odd one outside it, and how many players are in each. Tap a world to see it and go.
+The **portal gun, portal stations and ships** open the travel menu: search by name or code, tabs for Recent, Earths, Worlds, Other times and Outside the Curve, and a card per world in its own colours with who is there (or why you can't go that way). The old **Central Finite Curve** map is the last tab.
 
 
 ### Rick's garage (and what's under it)

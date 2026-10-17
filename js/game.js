@@ -433,6 +433,7 @@
     if (G.prog) C.setGear(G.meAv, myGear());
     C.setShip(G.meAv, !!w.ship, myGear());
     if (w.event) { UI.banner(w.event.name, w.event.text); }
+    else if (changed && MM.QUIRKS[MM.DIM_BY_ID[w.dim].quirk]) UI.banner(MM.DIM_BY_ID[w.dim].name, MM.QUIRKS[MM.DIM_BY_ID[w.dim].quirk]);
     G.offset = null;
     const dim = MM.DIM_BY_ID[w.dim];
     $('dimName').textContent = dim.name;
@@ -1664,7 +1665,7 @@
       me.vy += (climb * 12 - me.vy) * Math.min(1, dt * 4);
       me.grounded = false;
     } else if (jumpHeld && me.grounded) {
-      me.vy = st.jump;
+      me.vy = st.jump * (dim.quirk === 'bouncy' ? 1.6 : 1);
       me.grounded = false;
       me.jumpLock = 0.25;
       C.sfx('jump', 0.4);
@@ -1675,10 +1676,17 @@
       if (st.fly === 'jet' && Math.random() < 0.5) fx.glow.emit(me.x, me.y + 0.5, me.z, 0, -4, 0, '#ffb03a', 0.4, 0.3, 0);
     }
     if (me.grounded) me.fly = Math.min(st.flyTime || 6, me.fly + dt * 1.5);
+    // World rules: swim up underwater; in the dream, now and then you remember you can fly.
+    let quirkGrav = 1;
+    if (!inShip && dim.quirk === 'swim') { quirkGrav = 0.35; if (jumpHeld && !me.grounded && (me.jumpLock -= dt) <= 0) { me.vy += (5 - me.vy) * Math.min(1, dt * 4); me.flying = true; } }
+    if (!inShip && dim.quirk === 'dreamy') {
+      if (now() > (G.lucidNext || 0)) { G.lucidNext = now() + 18 + Math.random() * 20; G.lucidUntil = now() + 6; UI.toast('A lucid moment: you remember you can fly! (hold Jump)', 2500); }
+      if (now() < (G.lucidUntil || 0) && jumpHeld && !me.grounded) { me.vy += (6 - me.vy) * Math.min(1, dt * 5); me.flying = true; }
+    }
     // Reduced gravity when flying or in ship at high altitude
-    let gravityMult = 1.0;
+    let gravityMult = quirkGrav;
     if (me.flying) {
-      gravityMult = 0.2; // Personal jetpack/wings
+      gravityMult = 0.2 * quirkGrav; // Personal jetpack/wings
     } else if (inShip && me.y > 50) {
       // Reduce gravity for ships at high altitude (simulating space)
       gravityMult = Math.max(0.1, 1.0 - (me.y - 50) * 0.015); // Gradually reduce gravity above 50 units
