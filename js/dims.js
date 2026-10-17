@@ -2752,12 +2752,13 @@
         upper.name = 'roomUpper'; upper.position.y = Fl.y; upper.visible = false;
         C.loadMMG(R.upper).then(geo => upper.add(new T.Mesh(geo, C.mmgMat))).catch(e => console.warn('upper mesh', e));
         ceiling(-W, -D, W, D, R.h + 0.02, upper);
-        const lamp2 = new T.PointLight('#fff1d0', 0.5, 30);
+        const lamp2 = new T.PointLight('#fff1d0', 0.22, 30);
         lamp2.position.set(0, R.h - 1, 0);
         upper.add(lamp2);
         g.add(upper);
       }
-      const lamp = new T.PointLight('#fff1d0', 0.6, 40);
+      // A soft lamp: any brighter and characters close to it wash out to white.
+      const lamp = new T.PointLight('#fff1d0', 0.25, 40);
       lamp.position.set(0, (Fl ? Fl.y : R.h) - 1, 0);
       g.add(lamp);
       return g;
@@ -2795,7 +2796,7 @@
     if (R.style !== 'garage') for (const x of [-w / 4, w / 4]) for (const z of [-d / 4, d / 4]) { s.add(P.cylLo, '#2a2a2a', [x, h - 0.5, z], null, [0.03, 1, 0.03]); s.add(P.sphereLo, '#fff4c0', [x, h - 1.1, z], null, [0.35, 0.25, 0.35], true); }
     const g = C.meshOf(s.build(), 0.05);
     g.traverse(o => { if (o.material && o.material.side === T.BackSide) o.visible = false; });   // outlines would show through walls
-    const lamp = new T.PointLight('#fff1d0', R.style === 'garage' ? 0.35 : 0.8, 40);
+    const lamp = new T.PointLight('#fff1d0', R.style === 'garage' ? 0.25 : 0.35, 40);
     lamp.position.set(0, h - 1.5, 0);
     g.add(lamp);
     return g;
@@ -2829,7 +2830,7 @@
     }
     const grp = C.meshOf(s.build(), 0.05);
     grp.traverse(o => { if (o.material && o.material.side === T.BackSide) o.visible = false; });
-    const lamp = new T.PointLight('#fff1d0', 0.7, 50);
+    const lamp = new T.PointLight('#fff1d0', 0.3, 50);
     lamp.position.set(0, h - 1.2, 0);
     grp.add(lamp);
     return grp;
