@@ -955,6 +955,7 @@
     radar:       { r: 2.2, h: 8, hp: 140, drop: { c: 1, s: 1 } },
     jeep:        { r: 2.2, h: 2, hp: 90, drop: { s: 3 } },
     banner:      { r: 0.4, h: 6.5, hp: 30, drop: { s: 1 } },
+    powerpole:   { r: 0.3, h: 9, hp: 90, drop: { s: 2 } },
     watchtower:  { r: 2.0, h: 9, hp: 160, drop: { s: 3, p: 1 } },
     shrimpstatue:{ r: 1.6, h: 5.5, hp: 220, drop: { g: 2 } },
     teddystatue: { r: 1.6, h: 5, hp: 220, drop: { f: 2 } },
@@ -1523,10 +1524,10 @@
       const k = 1 - smooth(162, 196, m);
       h += (cellHeight(c.D, lx, lz) - h) * k;
     }
-    // Roads between the towns stay level.
-    for (const s of MM.EARTH_LINKS) {
-      const d = segD(x, z, s);
-      if (d < 16) h *= smooth(6, 16, d);
+    // Roads between the towns stay level (only the roads whose box the point is in).
+    for (const R of MM.EARTH_ROUTES) {
+      if (x < R.box[0] || x > R.box[1] || z < R.box[2] || z > R.box[3]) continue;
+      for (const s of R.segs) { const d = segD(x, z, s); if (d < 16) h *= smooth(6, 16, d); }
     }
     // South (+z): the beach, then the sea. No mountains on that side.
     if (z > MM.BEACH_Z - 40) {
@@ -1546,8 +1547,28 @@
     const t = Math.max(0, Math.min(1, ((x - s[0]) * dx + (z - s[1]) * dz) / l2));
     return Math.hypot(x - (s[0] + dx * t), z - (s[1] + dz * t));
   }
-  // The roads joining the suburb to the other towns.
-  MM.EARTH_LINKS = [[140, 0, 262, 0], [-140, 0, -262, 0], [0, -140, 0, -262]];
+  // The roads joining the suburb to the other towns, and down to the beach: country roads that
+  // wind a little through the hills (from, to, how far they swing out, and an S-bend), with
+  // power lines along one side.
+  const ROUTES = [[140, 0, 262, 0, 16, 5], [-140, 0, -262, 0, -14, 6], [0, -140, 0, -262, 18, -5], [0, 140, 0, 288, 12, -7]];
+  MM.EARTH_ROUTES = ROUTES.map(([x1, z1, x2, z2, A, B]) => {
+    const len = Math.hypot(x2 - x1, z2 - z1), ux = (x2 - x1) / len, uz = (z2 - z1) / len, n = Math.ceil(len / 8), pts = [];
+    for (let i = 0; i <= n; i++) {
+      const t = i / n, off = A * Math.sin(Math.PI * t) + B * Math.sin(2 * Math.PI * t);
+      pts.push([x1 + (x2 - x1) * t - uz * off, z1 + (z2 - z1) * t + ux * off]);
+    }
+    const segs = [];
+    for (let i = 1; i < pts.length; i++) segs.push([pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]]);
+    const xs = pts.map(q => q[0]), zs = pts.map(q => q[1]);
+    // Power poles every few segments, 7.5 m off the road on its left.
+    const poles = [];
+    for (let i = 1; i < pts.length - 1; i += 4) {
+      const [ax, az] = pts[i - 1], [bx, bz] = pts[i + 1], dx = bx - ax, dz = bz - az, l = Math.hypot(dx, dz) || 1;
+      poles.push([pts[i][0] - dz / l * 7.5, pts[i][1] + dx / l * 7.5, Math.atan2(dx, dz)]);
+    }
+    return { pts, segs, poles, box: [Math.min(...xs) - 18, Math.max(...xs) + 18, Math.min(...zs) - 18, Math.max(...zs) + 18] };
+  });
+  MM.EARTH_LINKS = [].concat(...MM.EARTH_ROUTES.map(R => R.segs));
   function cellHeight(dim, x, z) {
     const dimId = dim.shapeOf || dim.id;   // a parallel dimension has the same lie of the land
     const r = Math.sqrt(x * x + z * z);
@@ -1671,6 +1692,8 @@
         i++;
       }
     }
+    // The power lines along the country roads.
+    if (dim.regions) for (const R of MM.EARTH_ROUTES) for (const [x, z, rot] of R.poles) add('powerpole', x, z, rot, 1);
     // The other towns of a composite world, each planned in its own space and moved into place.
     if (dim.regions) {
       const roads = [], plazas = [];
@@ -1680,7 +1703,7 @@
         for (const q of L.roads) roads.push(Object.assign({}, q, { x1: q.x1 + R.ox, z1: q.z1 + R.oz, x2: q.x2 + R.ox, z2: q.z2 + R.oz }));
         for (const q of L.plazas) plazas.push(Object.assign({}, q, { x: q.x + R.ox, z: q.z + R.oz }));
       }
-      for (const [x1, z1, x2, z2] of MM.EARTH_LINKS) roads.push({ x1, z1, x2, z2, w: 9, style: 'asphalt' });
+      for (const [x1, z1, x2, z2] of MM.EARTH_LINKS) roads.push({ x1, z1, x2, z2, w: 8, style: 'highway' });
       layoutCache[dimId] = { roads, plazas };
     }
     for (const p of out) p.y = p.fy !== undefined ? p.fy : MM.heightAt(dimId, p.x, p.z);

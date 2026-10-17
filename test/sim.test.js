@@ -892,6 +892,18 @@ test("the house's defences: only its own Rick (or a Rick who hacks the console),
   assert.strictEqual(o.p.inv.grenade, g + 1, 'hacked: he can use it');
 });
 
+test('Earth\'s country roads wind between the towns, level, with power lines along them, on every Earth', () => {
+  assert.strictEqual(MM.EARTH_ROUTES.length, 4, 'to Downtown, D.C., Area 51 and the beach');
+  for (const R of MM.EARTH_ROUTES) {
+    const [a, b] = [R.pts[0], R.pts[R.pts.length - 1]], mid = R.pts[Math.floor(R.pts.length / 2)];
+    const dx = b[0] - a[0], dz = b[1] - a[1], off = Math.abs((mid[0] - a[0]) * dz - (mid[1] - a[1]) * dx) / Math.hypot(dx, dz);
+    assert.ok(off > 5, 'it bends');
+    assert.ok(R.poles.length >= 3, 'power poles along it');
+  }
+  for (const e of ['suburbia', 'shrimpearth', 'h_X123']) assert.ok(MM.genProps(e).filter(p => p.type === 'powerpole').length >= 12, 'poles on ' + e);
+  assert.ok(MM.layoutOf('suburbia').roads.some(r => r.style === 'highway'));
+});
+
 test('ring races: two or more people at the start pad start one; every ring in order; the winner takes double', () => {
   assert.ok(MM.racesIn('shrimpearth').some(R => R.id === 'streetrun'), 'every Earth has the street sprint');
   assert.ok(MM.racesIn('sp_c137').some(R => R.id === 'slalom'), 'the space race is in the sky over Earth');

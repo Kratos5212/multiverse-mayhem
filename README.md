@@ -2,7 +2,7 @@
 
 Created by **Gabi** (Kratos5212).
 
-An unofficial, free, non-commercial **Rick and Morty fan game** in cartoon 3D: be any Rick, Morty or anyone else, from any universe. Build your own variant, pick who you are in this universe, and live that life, or break out of it: craft across worlds, build a portal gun and a ship, talk to strange locals, and portal-hop across dimensions with everyone else online. It runs in the browser on PC and phones, with [three.js](https://threejs.org) for graphics and a small Node server for online play.
+An unofficial, free, non-commercial **Rick and Morty fan game** in 3D: be any Rick, Morty or anyone else, from any universe. Build your own variant, pick who you are in this universe, and live that life, or break out of it: craft across worlds, build a portal gun and a ship, talk to strange locals, and portal-hop across dimensions with everyone else online. It runs in the browser on PC and phones, with [three.js](https://threejs.org) for graphics and a small Node server for online play.
 
 Rick and Morty and its characters belong to their creators and Adult Swim. This is a fan project, not affiliated with or endorsed by them, and it must stay free. All models are made in code in this repository (no ripped assets), in the show's style.
 
@@ -54,6 +54,7 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | L | LIGHT | Lightspeed, out in space: to another world, dimension or timeline |
 | 1 2 3 4 5 6 7 | GADGET | Grenade, turret, shrink ray, Meeseeks Box, Time Crystal, freeze ray, Magic Chalk (the last two kinds: Ricks and Evil Morty) |
 | C | Build slot | Workbench |
+| H | Garage console | Rick: "House, ..." (the defences of your own house, from anywhere near it) |
 | Enter | Chat button | Chat with the whole multiverse |
 | Tab | Chart button | Leaderboard, players here, invite to your team, mute |
 | V or mouse wheel | Eye button | Switch between first and third person |
@@ -230,8 +231,9 @@ South of every Earth's towns there is a sandy **beach** and the sea. Swim out an
 
 The multiverse has three layers, and they are different things:
 
-* **Worlds** are places: Earth, the Moon, Bird World, Gazorpazorp, Planet Squanch, the Citadel, Snake Planet, Atlantis, the Dream World and the rest (24 of them).
-* **Dimensions** are parallel versions of a world. Earth's include Earth C-137, Fascist Earth, Shrimp Earth, Teddy Earth, C-500A, Doofus Rick's Earth, Cronenberged Earth, the wasteland, Snowball's dog world, the pizza-and-furniture one, the Zigerion simulation, and everyone's home Earth. Every other world has at least one parallel dimension too: a Cronenberg, mirror, ice age, dark, jungle or cat version (Bird World in an ice age, the Citadel where everyone is a cat...).
+* **Worlds** are places: Earth, the Moon, Bird World, Gazorpazorp, Planet Squanch, the Citadel, Snake Planet, Atlantis, the Dream World, the planets of the solar system and the rest (33 of them).
+* **Dimensions** are parallel versions of a world. Earth's include Earth C-137, Fascist Earth, Shrimp Earth, Teddy Earth, C-500A, Doofus Rick's Earth, Cronenberged Earth, the wasteland, Snowball's dog world, the pizza-and-furniture one, the Zigerion simulation, and everyone's home Earth. Every other world has **three** parallel dimensions: a Cronenberg, mirror, ice age, dark, jungle, cat or toy version (Bird World in an ice age, Gazorpazorp made of plastic...). Each kind has a place of its own with something to do: the Flesh Shrine, the Great Mirror, ice fishing on the Frozen Lake, relighting the Last Lighthouse, the Overgrown Temple, a nap at the Great Scratching Post, winding up the Giant Toy Box.
+* **One of a kind:** the Citadel, Blips and Chitz, the Dream World, the Story Train, Interdimensional Cable and Beyond the Curve exist once in the whole multiverse, so they have no parallels.
 * **Timelines** are other times of one dimension: Earth C-137 65 million years ago, the split timeline from "A Rickle in Time", and Earth under the Federation; the Citadel under President Morty; Bird World after the wedding.
 
 ### Travel, the way the show does it
@@ -241,7 +243,7 @@ There is no public portal on Earth. To get around you need one of these:
 * **A portal gun.** Ricks own one; Morty has a borrowed one with one charge; Evil Morty's is gold. Anyone else can borrow (steal) Rick's from the workbench in his garage (two jumps, no recharge), grab a charge from a gun owner they knock out, or build their own when their life path allows it. A portal goes to any world, dimension or timeline.
 * **Somebody else's portal.** Portals stay open for a while and anyone can walk through, so a team can follow whoever has the gun.
 * **A portal station.** The Citadel's portal station (free for Ricks and Mortys, 3 Schmeckles for everyone else) and Interdimensional Customs at the Federation (free for troopers).
-* **Your ship.** Fly anywhere on a world (Earth is one big world: the suburb, Downtown, D.C. and Area 51). To leave it, fly **straight up**: at 250 m you leave the atmosphere and are in space, with your planet below and the other worlds of your universe around it (for Earth: the Moon, Bird World, Gazorpazorp, Squanch, the Purge Planet, Unity's planet, Planet Gear, Blips and Chitz, the Bazaar and the Federation). Fly into a planet to land on it (Earth and the Moon need only the ship; the others the Turbo Engine).
+* **Your ship.** Fly anywhere on a world (Earth is one big world: the suburb, Downtown, D.C. and Area 51). To leave it, fly **straight up**: at 250 m you leave the atmosphere and are in space, with your planet below and the other worlds of your universe all around it. Above every Earth: the Moon, the **solar system** (the Sun far off, then Mercury, Venus, Mars, Jupiter, Saturn with its rings and its moon Titan, Uranus, Neptune and Pluto) and, further across the galaxy, Bird World, Gazorpazorp, Squanch, the Purge Planet, Unity's planet, Planet Gear, the Bazaar, the Federation, Snake Planet and the rest. Each kind of parallel dimension is a universe of its own (fly up from Bird World in the ice age and you see the ice-age Gazorpazorp and Planet Gear; Cronenberged Earth sits in the middle of the Cronenberg universe). Atlantis is under the sea, not a planet: fly up from it and you are over its Earth. Realms (a dream, the Story Train, beyond the Curve) have no sky to fly out of. Fly into a planet to land on it: the Moon and the solar system need only the ship, the rest of the galaxy the Turbo Engine.
 * **Lightspeed.** Out in space, press **L** (or **LIGHT** on a phone) and pick where to go: the stars streak, and you come out in space by that world, dimension or timeline with its planet dead ahead. Another dimension needs the **Dimension Drive**, another timeline the **Quantum Drive**.
 * **Doors.** The Microverse is inside the car battery in Rick's garage; Anatomy Park is inside Ruben, in a tent on Earth; Froopyland is behind Rick's chalk door. Only the doors go there.
 
@@ -250,6 +252,10 @@ There is no public portal on Earth. To get around you need one of these:
 Worlds **outside the Central Finite Curve** can only be reached with a gold portal: Evil Morty's gun, or a gun upgraded with **Golden Portal Fluid** at the garage.
 
 **The travel menu** (portal gun, station, ship or lightspeed) is laid out the same way: pick a **world**, see its **dimensions** as cards (in their own colours, with who is there, or why you can't go that way), and the **timelines** of each dimension as chips under its card. It shows where you are now (world › dimension › timeline). Search finds anything by name or code; **Recent** and the old **Central Finite Curve** map are a tab away.
+
+### The solar system
+
+From "Something Ricked This Way Comes" and "A Rick in King Mortur's Mort": **Pluto** (four billion Plutonians, yellow in front and orange behind, King Flippy Nips in his pyramid palace, his son Scroopy Noopers, the plutonium mine that is shrinking the planet), **Mars** (the one-armed Marquis of Mars in his keep), **Venus** (the Viscounts of Venus and Viscount Lithdor, under a yellow sky), **Mercury** (riders on horseback), **Jupiter** (the Jovians' cloud fort over the Great Red Spot), **Saturn** (all the rings, and Saturnians who won't stop saying so), **Titan** (the Warlord of Titan, who is not friendly), **Uranus** (nobody), **Neptune** (Neptune himself) and **the Sun** (the Knights of the Sun and their King, on a walkway over the fire; it burns you unless your shield is up). On the Moon: the Apollo site and Gordon Lunas, the man on the moon. Each has its own curios and something to do.
 
 ### Rick's garage (and what's under it)
 
@@ -266,6 +272,12 @@ Rick's garage stands open on the street, on every Earth, on the left of the Smit
 
 Portals, stations and ships can't take you into the lab or the cellar; you have to use the doors, and coming back up you are in the same garage on the Earth you came from.
 
+**The sublevels.** In the lab, Rick's elevator goes down: **B1** clone bodies (Operation Phoenix) and walls of weapons, **B2** the Killer Plant Lab (and the Phantom Zone), **B3** the Globaflyn Prison, **B7** the Valuables Vault with Memory Diane's ant-farm brain, **B10** the Rick Prime room, **B15** Jiro's sushi restaurant, **B17** the prison of dead prisoners and the landline portals. Each has something to do.
+
+**Whose it is.** Every Earth's house is its own Rick's (C-137's is Rick C-137's, your home Earth's is your Rick's). Only he goes down to the lab and uses the house. Anyone else is turned away; another Rick can **hack** the hatch or the console (stand there 8 seconds) and then has ten minutes. Building at the workbench stays open to every Rick at every garage.
+
+**House defences** (the console on the garage wall, or **H** anywhere near your own house, "House, ..."): a **forcefield** dome over the house, garage and yard; **blast doors** on every door and window; **turrets** on the roof and a laser turret over the front door; the **large energy weapon**; the garage **laser grid**; **kill bots**; **boombox drones** that shout your words at intruders; **carnivorous plants** from B2; a **hologram** of you that monsters go for; a **fungus clone** that copies your voice (destroy it within 45 seconds, or it starts eating the world); the **cloning vat** (a backup body: next time you die you wake up in the garage); the washing machine's **hidden gun stash**; the **vehicle trapdoor** (your ship rises out of the garage floor with you in it); the **retractable lab**; the **large teleporter** (Downtown, D.C., Area 51, the beach); and the **retractable wardrobe** (change what you wear).
+
 **New things to build and use:**
 * **Meeseeks Box** gadget (Schmeckles, key 4): a Meeseeks fights for you for 30 s. Everyone knows how.
 * **Mega Seed Smarts** (4 Mega Seeds, at the garage): abilities recharge 30% faster and you hit 10% harder.
@@ -279,7 +291,9 @@ Rick, Morty and Evil Morty's daily lives now include Council meetings and Morty 
 
 **Inside, two floors** of the same 44 × 32 ft footprint (about 19 × 14 m):
 * **Downstairs:** the front hall with the stairs, the living room (the couch and interdimensional cable), the dining room (family dinner), the kitchen (raid the fridge) and **Rick's room** (look under his bed).
-* **Upstairs:** **Morty's room** (do his homework), **Summer's room** (her phone), **Beth and Jerry's room**, and the **bathroom** (take a shower).
+* **Upstairs:** **Morty's room** (do his homework), **Summer's room** (her phone), **Beth and Jerry's room** with their own **bathroom** through the door, and the **bathroom** (take a shower).
+* **Off Rick's room:** the **holodeck**, a black room with a yellow grid; run a simulation.
+* **In the yard:** the **swimming pool** (new this season, cleaned by Jerry's cheap Pool Bot), and the shed is **Jerry's man cave** (the couch, the TV, the Titanic poster, the Lovefinderrz desk).
 
 You walk up and down the stairs; walls only stop you on their own floor, the camera stays on your floor, and downstairs you see the rooms with the upper floor lifted off. Spots upstairs only work upstairs. Each floor is a [Mojulo](https://mojulo.com) floor plan, exported as glTF and converted for the game; the upstairs gets its stairwell cut out:
 
@@ -359,6 +373,12 @@ node scripts/release.js --windows --push    # also a new launcher (when desktop/
 
 Version numbers live in `version.json`. The APK is signed with the project key in `android/keystore/`. Keep that key: Android only installs an update over the app if it is signed with the same key. Building needs Node 18+, JDK 21 and the Android SDK for the APK, and Go for the launcher.
 
+## Living worlds, and the look
+
+Birds wheel over every open world, fish swim in the sea (and all around you in Atlantis and on Neptune), deer, rabbits, squirrels and foxes live by the trees on Earth (little critters elsewhere) and run when you come close, and cars drive Earth's roads, keeping right and stopping for you. The roads between Earth's towns and down to the beach wind through the hills, with lane markings and power lines along them. All of it is scenery each player's game draws for itself.
+
+The game looks **realistic** by default: lit surfaces, filmic colour, soft sun shadows around you on high quality, and thinner ink lines. The flat **cartoon** look (cel shading, thick outlines) is a choice in the menu's settings (**Look**), and applies on the next load.
+
 ## Files
 
 | Path | What it is |
@@ -368,10 +388,12 @@ Version numbers live in `version.json`. The APK is signed with the project key i
 | `shared/world.js` | Worlds, dimensions and timelines, terrain, props (generated from seeds, identical everywhere) |
 | `shared/interiors.js` | The insides of buildings: floor plans, walls, spots, the Smith house's two floors |
 | `shared/races.js` | Ring race courses |
+| `shared/cast.js` | The cast: who lives in each dimension |
+| `shared/house.js` | The Smith house's defences, and whose house it is |
 | `shared/protocol.js` | Every message a client may send, and the rate limits |
 | `sim/host.js` | The authoritative game host (runs on the server, and in the browser when offline) |
 | `sim/bot.js` | Bots that play through the same protocol as people |
-| `js/` | The client: cartoon rendering, characters, dimensions, effects, sound, UI and game loop |
+| `js/` | The client: rendering (realistic or cartoon), characters, dimensions, life (`js/life.js`: birds, fish, animals, traffic), effects, sound, UI and game loop |
 | `server/server.js` | Web and WebSocket server with connection limits and security headers |
 | `test/` | `npm test` |
 | `scripts/loadtest.js` | Connects N bots over real WebSockets to measure a server |

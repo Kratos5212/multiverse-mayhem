@@ -22,6 +22,8 @@
   if (profile.startDim && !MM.DIM_BY_ID[profile.startDim]) profile.startDim = '';
   C.setVolume(settings.volume);
   C.bevelSegs = settings.quality === 'low' ? 2 : 3;   // rounded-edge smoothness
+  if (!settings.style) settings.style = 'real';
+  C.setStyle(settings.style, settings.quality);
 
   // ---------- Renderer ----------
   const canvas = $('view');
@@ -29,6 +31,11 @@
   C.renderer = renderer;
   const applyQuality = () => renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, settings.quality === 'high' ? 2 : 1.25));
   applyQuality();
+  // The realistic look: filmic tone mapping, and soft sun shadows on high quality.
+  if (C.style === 'real') {
+    renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.95;
+    if (settings.quality === 'high') { renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap; }
+  }
   renderer.setClearColor('#0b0f1e');
   const camera = new T.PerspectiveCamera(62, 1, 0.1, 1500);
   C.camera = camera;
@@ -256,6 +263,7 @@
     }
     m = C.npcModel(type, seed);
     m.root.position.set(x, y, z); m.root.rotation.y = r;
+    if (C.style === 'real') m.root.traverse(o => { if (o.isMesh && o.material && o.material.side !== T.BackSide) o.castShadow = true; });
     if (type === 'hologram') m.root.traverse(o => { if (o.isMesh && o.material) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.45; if (o.material.color) o.material.color.lerp(new T.Color('#7ad8ff'), 0.5); o.material.depthWrite = false; } });
     const NT = MM.NPCS[type];
     // Locals you can talk to wear a small name tag; monsters don't.
@@ -430,6 +438,8 @@
       G.world = C.buildDimension(w.dim, settings.quality);
       scene.add(G.world.group);
       buildRaceRings(w.dim);
+      if (G.life) G.life.dispose();
+      G.life = C.makeLife(w.dim, scene, settings.quality);
       const dim = MM.DIM_BY_ID[w.dim];
       scene.fog = new T.Fog(dim.fog, 40, dim.fogFar);
       camera.far = dim.planets ? 3200 : 1500; camera.updateProjectionMatrix();
@@ -1726,6 +1736,7 @@
         row('Volume', el('input', { type: 'range', min: 0, max: 1, step: 0.05, value: settings.volume, oninput: e => { settings.volume = Number(e.target.value); C.setVolume(settings.volume); UI.save('settings', settings); } })),
         row('Fights', el('div', { class: 'chips' }, ...[[true, 'On: anyone with fights on can hurt you'], [false, 'Off: nobody can hurt you']].map(([v, t]) => el('button', { class: 'chip', 'aria-pressed': String((settings.pvp !== false) === v), onclick: () => { settings.pvp = v; UI.save('settings', settings); if (G.net) send({ t: 'pvp', on: v }); openMenu(); } }, t)))),
         row('View', el('div', { class: 'chips' }, ...[['third', 'Third person'], ['first', 'First person']].map(([v, t]) => el('button', { class: 'chip', 'aria-pressed': String(settings.view === v), onclick: () => { setView(v); openMenu(); } }, t)))),
+        row('Look', el('div', { class: 'chips' }, ...[['real', 'Realistic'], ['cartoon', 'Cartoon']].map(([q, label]) => el('button', { class: 'chip', 'aria-pressed': String(settings.style === q), onclick: () => { if (settings.style === q) return; settings.style = q; UI.save('settings', settings); UI.toast('The new look applies when you reload the game.', 3500); openMenu(); } }, label)))),
         row('Graphics', el('div', { class: 'chips' }, ...['high', 'low'].map(q => el('button', { class: 'chip', 'aria-pressed': String(settings.quality === q), onclick: () => { settings.quality = q; applyQuality(); resize(); UI.save('settings', settings); openMenu(); } }, q)))),
         row('Options', el('div', { class: 'chips' },
           el('button', { class: 'chip', 'aria-pressed': String(settings.invert), onclick: () => { settings.invert = !settings.invert; UI.save('settings', settings); openMenu(); } }, 'Invert look'),
@@ -2353,6 +2364,7 @@
     updateRace();
     camera.getWorldPosition(camWorld);
     G.world.update(dt, clock.elapsedTime, camWorld);
+    if (G.life) G.life.update(dt, camWorld);
     fx.update(dt);
     const w = window.innerWidth, h = window.innerHeight;
     UI.updateNums(dt, n => {

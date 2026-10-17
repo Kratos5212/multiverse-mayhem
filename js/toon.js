@@ -15,6 +15,18 @@
 
   C.toonMat = new T.MeshToonMaterial({ vertexColors: true, gradientMap });
   C.glowMat = new T.MeshBasicMaterial({ vertexColors: true, fog: true });
+  // The look: 'real' (the default: soft, physically lit surfaces, real shadows and thin ink
+  // lines) or 'cartoon' (flat cel shading and thick outlines). Chosen once, before anything
+  // is built (Settings; it takes effect on the next load).
+  C.style = 'cartoon';
+  C.outlineScale = 1;
+  C.setStyle = function (style, quality) {
+    C.style = style === 'cartoon' ? 'cartoon' : 'real';
+    if (C.style === 'real') {
+      C.toonMat = quality === 'low' ? new T.MeshLambertMaterial({ vertexColors: true }) : new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, metalness: 0.04 });
+      C.outlineScale = 0.45;
+    }
+  };
 
   // Outline: the back faces of the mesh, pushed out along smoothed normals and drawn black.
   // The shell is also nudged away from the camera (C.outlineDepth x its thickness), so only
@@ -23,6 +35,8 @@
   C.outlineDepth = 1.6;
   const outlineCache = {};
   C.outlineMat = function (thick, color) {
+    // Characters (thin lines) keep more of their ink than the scenery in the realistic look.
+    thick *= thick < 0.045 ? Math.min(1, C.outlineScale * 1.6) : C.outlineScale;
     const key = thick + ':' + (color || '#1d1813');
     if (outlineCache[key]) return outlineCache[key];
     const m = new T.MeshBasicMaterial({ color: color || '#1d1813', side: T.BackSide, fog: true });

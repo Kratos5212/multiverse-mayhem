@@ -318,6 +318,8 @@
       for (const m of av.lodFar) m.visible = !near;
     };
     av.setDetail(true);
+    // The realistic look: characters cast shadows (the ground, and everything else, takes them).
+    if (C.style === 'real') av.root.traverse(o => { if (o.isMesh && o.material && o.material.side !== T.BackSide) o.castShadow = true; });
     return av;
   };
   function buildAvatarOnce(look, arch, opts) {

@@ -206,6 +206,13 @@
       for (const x of [-0.85, 0.85]) for (const z of [-1.35, 1.35]) { s.add(P.cyl, '#26262a', [x, 0.4, z], [0, 0, Math.PI / 2], [0.4, 0.28, 0.4]); s.add(P.cyl, '#c9cdd2', [x * 1.17, 0.4, z], [0, 0, Math.PI / 2], [0.2, 0.04, 0.2]); }
       for (const sx of [-1, 1]) { s.add(P.box, '#fff6c0', [sx * 0.6, 0.8, 2.11], null, [0.4, 0.18, 0.05], true); s.add(P.box, '#e2483d', [sx * 0.65, 0.82, -2.11], null, [0.32, 0.16, 0.05], true); }
     },
+    // A wooden power pole with a crossarm and insulators (the wires are drawn between them).
+    powerpole(s) {
+      s.add(P.cylLo, '#6a5038', [0, 4.5, 0], null, [0.14, 9, 0.14]);
+      s.add(P.box, '#5a4430', [0, 8.4, 0], null, [2.6, 0.14, 0.14]);
+      for (const x of [-1.1, 0, 1.1]) s.add(P.cylLo, '#e8e4dc', [x, 8.6, 0], null, [0.06, 0.25, 0.06]);
+      s.add(P.cyl, '#7a7e84', [0.25, 7.4, 0], null, [0.22, 0.5, 0.22]);
+    },
     streetlamp(s) {
       s.add(P.cylLo, '#4a5058', [0, 2.6, 0], null, [0.09, 5.2, 0.09]);
       s.add(P.box, '#4a5058', [0, 5.2, 0.6], null, [0.12, 0.12, 1.3]);
@@ -2748,7 +2755,7 @@
         cols[i * 3] = tmp.r; cols[i * 3 + 1] = tmp.g; cols[i * 3 + 2] = tmp.b;
       }
       g.setAttribute('color', new T.BufferAttribute(cols, 3));
-      const m = new T.Mesh(g, terrainMat);
+      const m = new T.Mesh(g, groundMat());
       m.position.set(P.x, P.y, P.z);
       all.add(m);
       // Its atmosphere: a soft rim in the colour of its sky.
@@ -2896,7 +2903,9 @@
     t.anisotropy = 4;
     return t;
   })();
-  const terrainMat = new T.MeshToonMaterial({ vertexColors: true, gradientMap: C.gradientMap, map: grain });
+  let terrainMat = new T.MeshToonMaterial({ vertexColors: true, gradientMap: C.gradientMap, map: grain });
+  // The realistic look: the ground is lit like everything else, and takes shadows.
+  const groundMat = () => C.style === 'real' ? (terrainMat.isMeshToonMaterial ? (terrainMat = new T.MeshStandardMaterial({ vertexColors: true, map: grain, roughness: 0.95, metalness: 0 })) : terrainMat) : terrainMat;
   const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   // The ground's colour at a point: the world's palette in noisy patches, painted floors and
   // tiles where a world has them, paving around landmarks. In a composite world each town
@@ -2975,7 +2984,7 @@
     // Tile the grain about every 5 m (in world space, so pieces line up).
     const uv = g.attributes.uv;
     for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) / 5, -pos.getZ(i) / 5);
-    return new T.Mesh(g, terrainMat);
+    const tm = new T.Mesh(g, groundMat()); tm.receiveShadow = C.style === 'real'; return tm;
   }
   function makeTerrain(dim) {
     const B = MM.boundOf(dim.id), P = terrainPalette(dim);
@@ -3047,6 +3056,7 @@
   // ---------- Roads and plazas of the planned towns (shared/layouts.js) ----------
   const PATH_STYLES = {
     asphalt: { road: '#5d6168', walk: '#d8d3c7', curb: '#bcb6a9' },
+    highway: { road: '#4e5258', edge: '#ecebe4', center: '#e8c84a', shoulder: '#8e877a' },
     flesh: { road: '#8a2a40', edge: '#5e1528' },
     neon: { road: '#241838', edge: '#5ff8ff', glow: true },
     white: { road: '#e6eaf0', edge: '#5fd6b0', glow: true },
@@ -3077,6 +3087,8 @@
         // Sit on the highest of the ends and the middle so the ground never pokes through.
         const y = Math.max(H(rd.x1 + dx * t0, rd.z1 + dz * t0), H(mx, mz), H(rd.x1 + dx * t1, rd.z1 + dz * t1)) + 0.04;
         s.add(P.box, st.road, [mx, y, mz], [0, yaw, 0], [rd.w, 0.08, pl]);
+        if (st.shoulder) s.add(P.box, st.shoulder, [mx, y - 0.025, mz], [0, yaw, 0], [rd.w + 2.6, 0.08, pl]);
+        if (st.center && i % 2 === 0) s.add(P.box, st.center, [mx, y + 0.02, mz], [0, yaw, 0], [0.16, 0.08, pl * 0.55]);
         if (st.edge) for (const sd of [-1, 1]) s.add(P.box, st.edge, [mx + nx * sd * (rd.w / 2 - 0.2), y + 0.015, mz + nz * sd * (rd.w / 2 - 0.2)], [0, yaw, 0], [0.3, 0.08, pl], st.glow);
         if (st.walk) for (const sd of [-1, 1]) {
           s.add(P.box, st.curb, [mx + nx * sd * (rd.w / 2 + 0.12), y + 0.04, mz + nz * sd * (rd.w / 2 + 0.12)], [0, yaw, 0], [0.25, 0.14, pl]);
@@ -3255,6 +3267,24 @@
   }
 
   // An Earth's sea, off its southern beach: the surface and a line of surf.
+  // Power lines: three wires from pole to pole along the country roads, each sagging.
+  function makeWires(dimId) {
+    const pts = [];
+    for (const R of MM.EARTH_ROUTES) for (let i = 1; i < R.poles.length; i++) {
+      const [ax, az, ar] = R.poles[i - 1], [bx, bz, br] = R.poles[i];
+      const ay = MM.heightAt(dimId, ax, az) + 8.7, by = MM.heightAt(dimId, bx, bz) + 8.7;
+      for (const off of [-1.1, 0, 1.1]) {
+        const x0 = ax + Math.cos(ar) * off, z0 = az - Math.sin(ar) * off, x1 = bx + Math.cos(br) * off, z1 = bz - Math.sin(br) * off;
+        let px = x0, py = ay, pz = z0;
+        for (let k = 1; k <= 8; k++) {
+          const t = k / 8, x = x0 + (x1 - x0) * t, z = z0 + (z1 - z0) * t, y = ay + (by - ay) * t - Math.sin(Math.PI * t) * 0.9;
+          pts.push(px, py, pz, x, y, z); px = x; py = y; pz = z;
+        }
+      }
+    }
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pts, 3));
+    return new T.LineSegments(g, new T.LineBasicMaterial({ color: '#2a2a2e' }));
+  }
   function makeSea(dim) {
     const g = new T.Group(), W = dim.bound * 2 + 200, D = dim.bound + 120 - MM.SEA_Z;
     const mat = new T.MeshLambertMaterial({ color: (dim.shapeOf || dim.id) === 'meatlands' ? '#a8304a' : '#2f86c0', transparent: true, opacity: 0.78 });
@@ -3778,6 +3808,7 @@
     else if (!dim.interior) {
       skyDecor(dim, group); terrain = makeTerrain(dim); group.add(terrain);
       if (dim.regions) group.add(makeSea(dim));
+      if (dim.regions) group.add(makeWires(dimId));
     }
     if (dim.streets) group.add(makeStreets(dim, MM.genProps(dimId)));
     const layout = MM.layoutOf(dimId);
@@ -3898,12 +3929,25 @@
     if (MM.hasKiosk(dimId)) group.add(kiosk);
 
     // Lights
-    // Flat, even light so colours read as painted: a strong neutral fill and a modest sun.
-    const sun = new T.DirectionalLight(dim.sun, 0.55);
+    // Cartoon: flat, even light so colours read as painted (a strong fill, a modest sun).
+    // Realistic: a stronger sun that casts soft shadows around you, a sky-and-ground fill.
+    const real = C.style === 'real';
+    const sun = new T.DirectionalLight(dim.sun, real ? (dim.interior ? 0.6 : 1.35) : 0.55);
     sun.position.set(80, 140, 60);
     group.add(sun);
     const sky = new T.Color(dim.ambient).lerp(new T.Color('#ffffff'), 0.65), gnd = new T.Color(dim.ambient).lerp(new T.Color('#ffffff'), 0.4);
-    group.add(new T.HemisphereLight(sky, gnd, 0.58));
+    if (real) gnd.lerp(new T.Color(dim.ground[0]), 0.35);
+    group.add(new T.HemisphereLight(sky, gnd, real ? 0.62 : 0.58));
+    if (real && C.renderer && C.renderer.shadowMap.enabled && !dim.planets) {
+      sun.castShadow = true;
+      const S = sun.shadow;
+      S.mapSize.set(2048, 2048); S.bias = -0.0006; S.normalBias = 0.04;
+      Object.assign(S.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 10, far: 400 });
+      S.camera.updateProjectionMatrix();
+      group.add(sun.target);
+      group.userData.sunLight = sun;
+      group.traverse(o => { if (o.isMesh || o.isInstancedMesh) { if (o.material && o.material.side !== T.BackSide && !o.material.transparent) { o.castShadow = true; o.receiveShadow = true; } } });
+    }
 
     return {
       dim, group, kiosk,
@@ -3921,6 +3965,9 @@
         if (group.userData.eye && camPos) group.userData.eye.lookAt(camPos);
         group.children[0].position.copy(camPos || v.set(0, 0, 0));
         if (group.userData.spaceSky && camPos) group.userData.spaceSky.position.copy(camPos);
+        // The shadow-casting sun follows you, so shadows are sharp where you are.
+        const SL = group.userData.sunLight;
+        if (SL && camPos) { SL.target.position.set(Math.round(camPos.x), 0, Math.round(camPos.z)); SL.position.set(SL.target.position.x + 80, 140, SL.target.position.z + 60); }
         // Planet names fade out as you come close (you are about to land, you know where you are).
         if (group.userData.spaceTags && camPos) for (const tg of group.userData.spaceTags) {
           const d = tg.sprite.position.distanceTo(camPos);
