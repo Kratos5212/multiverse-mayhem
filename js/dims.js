@@ -2619,6 +2619,50 @@
       s.add(P.box, '#a03a1a', [-4, 0.8, 3], null, [3.6, 1.0, 1.8]); s.add(P.box, '#a03a1a', [-4, 1.6, 3.2], null, [2, 0.8, 1.4]);
       for (const x of [-5.3, -2.7]) for (const z of [2.2, 3.8]) s.add(P.cyl, '#1a1a1a', [x, 0.5, z], [0, 0, Math.PI / 2], [0.5, 0.4, 0.5]);
     },
+    // The Ring of Death: a sand floor (with stains), a wall of welded scrap with spikes along the
+    // top, three tiers of stands, a tall fence at the back, and a gate north and south under a
+    // beam with skulls (the sign hangs from the south one). The walls match MM.PROPS.lm_deathring.
+    lm_deathring(s) {
+      const n = 24, step = Math.PI * 2 / n, gate = a => Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < 0.2 || Math.abs(Math.atan2(Math.sin(a - Math.PI), Math.cos(a - Math.PI))) < 0.2;
+      s.add(P.cyl, '#b07e52', [0, 0.03, 0], null, [11.9, 0.06, 11.9]);
+      for (const [x, z, r] of [[3, 2, 1.4], [-4, -3, 1.1], [1, -6, 0.9], [-6, 4, 0.8], [6, -2, 0.7]]) s.add(P.cyl, '#7a2a1a', [x, 0.07, z], null, [r, 0.02, r * 0.7]);
+      const panel = ['#7a6a5a', '#8a5a3a', '#6a6e74', '#9a6a3a'];
+      for (let i = 0; i < n; i++) {
+        const a = (i + 0.5) * step;
+        if (gate(a)) continue;
+        const len = 2 * Math.sin(step / 2), sx = Math.sin(a), cz = Math.cos(a);
+        // The fighting wall, with spikes along its top.
+        s.add(P.box, panel[i % 4], [sx * 12, 1.3, cz * 12], [0, a, 0], [12 * len + 0.15, 2.6, 0.3]);
+        for (const t of [-0.3, 0.3]) s.add(P.cone, '#c8c8c8', [sx * 12 + cz * t * 2.5, 2.85, cz * 12 - sx * t * 2.5], null, [0.08, 0.5, 0.08]);
+        // Three tiers of stands behind it, then the back fence.
+        for (let k = 0; k < 3; k++) { const R = 12.75 + k * 0.95; s.add(P.box, k % 2 ? '#7a6250' : '#6a5444', [sx * R, 0.45 + k * 0.45, cz * R], [0, a, 0], [R * len + 0.1, 0.9 + k * 0.9, 0.95]); }
+        s.add(P.box, panel[(i + 2) % 4], [sx * 15.6, 2.2, cz * 15.6], [0, a, 0], [15.6 * len + 0.15, 4.4, 0.3]);
+        if (i % 3 === 0) { s.add(P.cylLo, '#3a3a3a', [sx * 15.6, 5.2, cz * 15.6], null, [0.05, 2.2, 0.05]); s.add(P.box, i % 2 ? '#c8402a' : '#2a2420', [sx * 15.6 + cz * 0.45, 5.9, cz * 15.6 - sx * 0.45], [0, a + Math.PI / 2, 0], [0.9, 0.6, 0.03]); }   // flags
+      }
+      // The gates: a post either side and a beam over the top with skulls on it.
+      for (const gz of [1, -1]) {
+        for (const x of [-3.3, 3.3]) { s.add(P.box, '#5a4a3a', [x, 3.6, gz * 13.8], null, [0.55, 7.2, 0.55]); s.add(P.cone, '#c8c8c8', [x, 7.6, gz * 13.8], null, [0.15, 0.8, 0.15]); }
+        s.add(P.box, '#4a3a2a', [0, 7.0, gz * 13.8], null, [7.3, 0.6, 0.6]);
+        for (const x of [-2.2, 0, 2.2]) { s.add(P.sphere, '#e8e0d0', [x, 7.55, gz * 14.1], null, [0.3, 0.28, 0.24]); for (const ex of [-0.1, 0.1]) s.add(P.sphereLo, '#111111', [x + ex, 7.6, gz * 14.32], null, [0.07, 0.07, 0.03]); }
+        for (const x of [-4.4, 4.4]) for (let k = 0; k < 3; k++) s.add(P.cyl, '#1e1e22', [x, 0.25 + k * 0.42, gz * 16.5], null, [0.55, 0.4, 0.55]);   // stacked tyres
+        for (const x of [-3.3, 3.3]) s.add(P.cone, '#ff8a2a', [x, 8.2, gz * 13.8], null, [0.2, 0.5, 0.2], true);   // torches
+      }
+    },
+    // Death Stalker cars, parked side by side with the keys in, and a board behind them.
+    lm_carlot(s) {
+      for (const [x, body] of [[-1.25, '#8a3a1e'], [1.25, '#6a5a2a']]) {
+        s.add(P.box, body, [x, 0.62, 0], null, [1.9, 0.5, 4.1]);
+        s.add(P.box, '#5a2a16', [x, 0.98, 1.2], null, [1.75, 0.26, 1.6]);
+        s.add(P.box, '#9aa0a6', [x, 1.22, 1.1], null, [0.62, 0.3, 0.6]);
+        for (const z of [1.3, -1.4]) for (const sx of [-1, 1]) s.add(P.cyl, '#1e1e22', [x + sx * 1.0, 0.45, z], [0, 0, Math.PI / 2], [0.45, 0.38, 0.45]);
+        s.add(P.box, '#9aa0a6', [x, 0.55, 2.1], null, [2.0, 0.22, 0.12]);
+        for (let i = 0; i < 4; i++) s.add(P.cone, '#c8c8c8', [x - 0.75 + i * 0.5, 0.55, 2.35], [Math.PI / 2, 0, 0], [0.07, 0.4, 0.07]);
+        s.add(P.sphere, '#e8e0d0', [x, 0.86, 2.1], null, [0.2, 0.18, 0.1]);
+        for (const sx of [-0.65, 0.65]) s.add(P.box, '#4a4a50', [x + sx, 1.5, -0.9], null, [0.09, 1.0, 0.09]);
+        s.add(P.box, '#4a4a50', [x, 2.0, -0.9], null, [1.4, 0.09, 0.09]);
+      }
+      for (const x of [-1.6, 1.6]) s.add(P.cylLo, '#5a4a3a', [x, 1.4, -2.7], null, [0.07, 2.8, 0.07]);
+    },
     lm_unitycore(s) {
       s.add(P.cyl, '#d8e0e8', [0, 0.4, 0], null, [5.5, 0.8, 5.5]);
       s.add(P.cone, '#e8eef4', [0, 7, 0], null, [3.4, 12, 3.4]);
@@ -3636,6 +3680,12 @@
     return look;
   };
   C.npcModel = function (type, seed) {
+    if (MM.NPCS[type].car) {
+      // A Death Stalker at the wheel of his car.
+      const av = C.buildAvatar(C.npcLook('raider', seed || 1), 'joe');
+      C.setCar(av, true);
+      return { root: av.root, av };
+    }
     if (MM.NPCS[type].human) {
       const look = C.npcLook(type, seed || 1);
       const H = MM.NPCS[type].human;

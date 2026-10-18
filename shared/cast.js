@@ -17,6 +17,7 @@
     if (dimId === 'dinoearth') return [];                                   // 65 million years ago
     if (dimId === 'meatlands') return ['teen', 'surgeon', 'joe', 'mutant'];   // Rick and Morty left
     if (dimId === 'c500a') return ['genius', 'surgeon', 'joe'];   // Beth and Jerry never married: no Morty, no Summer
+    if (dimId === 'wasteland') return ['sidekick', 'teen'];   // Strong-arm Morty of the Ring of Death, and Summer of the Death Stalkers
     const W = MM.worldOf(dimId);
     if (W === 'earth') return dimId === 'suburbia' ? SMITHS.concat(['beanling']) : SMITHS.slice();
     return { birdworld: ['birdfolk'], squanch: ['squanchy'], federation: ['trooper'], unity: ['hive'], citadel: ['evilmorty'] }[W] || [];
@@ -33,8 +34,14 @@
   MM.castLabel = function (arch, dimId) {
     const A = MM.ARCHETYPES[arch], D = MM.DIM_BY_ID[dimId];
     const W = MM.WORLD_BY_ID[MM.worldOf(dimId)];
-    return A.name + (D && (W && W.id === 'earth' || D.variantOf || D.timeline) ? ' ' + D.code : '');
+    return MM.CAST_NAMES[MM.castKey(arch, dimId)] || A.name + (D && (W && W.id === 'earth' || D.variantOf || D.timeline) ? ' ' + D.code : '');
   };
+  // Some go by what they became there ("Rickmancing the Stone").
+  MM.CAST_NAMES = { 'sidekick@wasteland': 'Strong-arm Morty', 'teen@wasteland': 'Post-Apocalyptic Summer' };
+  // Where they spend their days (a landmark there), if not at home.
+  MM.CAST_SPOT = { 'sidekick@wasteland': 'deathring', 'teen@wasteland': 'raidergarage' };
+  // What they carry on them: Morty's giant arm, sewn on from a dead fighter.
+  MM.castGear = (arch, dimId) => arch === 'sidekick' && dimId === 'wasteland' ? { strongarm: true } : {};
   // How they look there: the show's look, with the dimension's twist (shrimp people on Shrimp
   // Earth, barbarians on Cronenberged Earth, cats in a cat dimension...).
   const SPECIES = { shrimpearth: 'shrimp', teddyearth: 'teddy' };
@@ -50,6 +57,8 @@
     if (dimId === 'c500a' && arch === 'joe') { L.top = 'vest'; L.topColor = '#1a1a1e'; L.shirtColor = '#f6f6f2'; L.acc = 'goggles'; L.accColor = '#1a1a1e'; }   // a movie star, in shades
     if (dimId === 'fascistearth') { L.shirtColor = '#3a3a3a'; if (L.top !== 'labcoat') L.topColor = '#3a3a3a'; L.accColor = '#c8273a'; }
     if (dimId === 'meatlands' && human) { L.top = 'vest'; L.topColor = '#6a4a2e'; L.shirtColor = '#8a6a44'; L.pantsColor = '#5a3e26'; L.skin = '#e0a898'; L.acc = arch === 'joe' ? 'headband' : 'none'; L.accColor = '#7a2a2a'; }
+    // Summer of the Death Stalkers: leather and shoulder armour, a scowl, her hair a shade wilder.
+    if (dimId === 'wasteland' && arch === 'teen') { L.top = 'armor'; L.topColor = '#4a3424'; L.shirtColor = '#2a201a'; L.pantsColor = '#2a2420'; L.shoeColor = '#1a1410'; L.brow = 'angry'; L.mouth = 'flat'; L.hairColor = '#e0602a'; }
     if (D.twist === 'CR') { L.skin = '#e0a0a0'; L.mouth = 'open'; }
     if (D.twist === 'MR') { const s = L.shirtColor; L.shirtColor = L.pantsColor; L.pantsColor = s; if (L.top !== 'labcoat') L.topColor = L.shirtColor; }
     if (D.twist === 'IC') { L.skin = '#d4e6f2'; L.hairColor = '#f2f8fc'; }
@@ -79,6 +88,11 @@
     hive: ['We are glad you came.', 'Join us. It is nice in here.', 'One of us is watching. All of us are.'],
     evilmorty: ['...', 'You\'d be surprised what you can do when you stop listening to Ricks.', 'Out of the Curve. That\'s the plan.'],
     tommy: ['I survived. It took... choices.', 'Beth? Is that you?', 'You can\'t leave without the chalk. Nobody can.'],
+  };
+  // ...and what they say there, if it is not what they say at home.
+  MM.CAST_TALK_AT = {
+    'sidekick@wasteland': ['The arm wants to fight. I-I mostly let it.', 'I\'m the champion of the Ring of Death! Me! Morty!', 'Grandpa says the arm is a bad influence. The arm says Grandpa is.', 'Step into the Ring. I-I dare you. The arm dares you more.'],
+    'teen@wasteland': ['Out here, nobody tells me what to do.', 'Hemorrhage and I are really happy. Don\'t make it weird.', 'Want a car? They\'re by the garage. Try not to cry when you crash it.', 'I make the best spiked hubcaps in the wasteland.'],
   };
   // Clones, for when someone else is already playing your character: weaker.
   MM.CLONE_HP = 0.75;

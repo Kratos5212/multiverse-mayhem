@@ -196,6 +196,12 @@
     { id: 'froopyslide', dim: 'froopy', name: 'The Big Froopy Slide', x: 26, z: -26, r: 6, h: 10, model: 'lm_froopyslide' },
     { id: 'pizzacounter', dim: 'pizzaworld', name: 'Pizza-Phone-Chair Exchange', x: 0, z: -30, r: 6, h: 6, model: 'lm_pizzacounter', rot: 0 },
     { id: 'raidergarage', dim: 'wasteland', name: "The Raiders' Garage", x: 0, z: -34, r: 8, h: 7, model: 'lm_raidergarage', rot: 0 },
+    // The Ring of Death, in the middle of the Death Stalker camp ("Rickmancing the Stone"): a
+    // ring of spiked scrap walls with a gate on each side and the crowd up on the stands. Step
+    // in and fight three rounds, the champion last (Host.startBout). Strong-arm Morty lives here.
+    { id: 'deathring', dim: 'wasteland', name: 'The Ring of Death', x: 0, z: 0, r: 12.5, h: 4, model: 'lm_deathring', rot: 0, bout: true, sign: { text: 'RING OF DEATH', y: 6.15, z: 14.15, w: 6.6 } },
+    // Death Stalker cars, parked by the garage with the keys in. Take one (F) and drive.
+    { id: 'carlot', dim: 'wasteland', name: 'Death Stalker cars', x: 18, z: -30, r: 3.2, h: 1.8, model: 'lm_carlot', rot: -Math.PI / 2, car: true, sign: { text: 'TAKE A CAR', y: 2.6, z: -2.62, w: 3.2 } },
     { id: 'unitycore', dim: 'unityworld', name: 'The Hive Core', x: 0, z: -34, r: 6, h: 14, model: 'lm_unitycore' },
     { id: 'formsoffice', dim: 'federation', name: 'Bureau of Forms', x: 0, z: -40, r: 8, h: 9, model: 'lm_formsoffice', rot: 0 },
     { id: 'geartemple', dim: 'gearworld', name: 'Temple of the Great Gear', x: 0, z: -36, r: 8, h: 12, model: 'lm_geartemple', rot: 0 },
@@ -207,6 +213,12 @@
   MM.LANDMARK_BY_ID = {};
   for (const l of MM.LANDMARKS) MM.LANDMARK_BY_ID[l.id] = l;
   MM.SHIP_BOOST = 1.6;   // Shift in a ship: the afterburner
+  // A Death Stalker car (Post-Apocalyptic Earth): top speed, Shift for the nitro, reversing,
+  // how hard a ram hits (damage per m/s, at 8 m/s and up), and armour (the share of hits that
+  // gets through to you). It stays in its world: travel and it is parked.
+  MM.CAR = { speed: 22, boost: 1.45, rev: 8, ram: 1.5, ramMin: 8, armour: 0.5, dims: ['wasteland'] };
+  // The Ring of Death: three rounds, the champion last. A round's fighters, and what winning gives.
+  MM.BOUT = { r: 11.5, rounds: [['gladiator', 2], ['gladiator', 3], ['ringchamp', 1]], give: { s: 12, c: 3, k: 4 }, leave: 3 };
   MM.USE_RADIUS = 4;   // how close to a landmark's wall you must be to use it
   // A landmark counts as a recipe's station if it is that station or stands in for it.
   MM.isAt = (l, at) => l.id === at || l.alias === at;
@@ -631,6 +643,8 @@
     rifle:   { dmg: 11, cd: 0.24, speed: 85, range: 85, color: '#ff5a5a' },
     toy:     { dmg: 5,  cd: 0.45, speed: 45, range: 45, color: '#ff8fd0' },
     lasers:  { dmg: 18, cd: 0.2,  speed: 95, range: 90, color: '#5ff8ff' },
+    carguns: { dmg: 9,  cd: 0.13, speed: 95, range: 70, color: '#ffb03a' },   // the twin guns on a Death Stalker car's hood
+    stalkergun: { dmg: 6, cd: 0.7, speed: 70, range: 34, color: '#ff7a3a' },  // a Death Stalker shooting from his car
     talon:   { dmg: 24, cd: 0.55, melee: 3.6 },
     scalpel: { dmg: 15, cd: 0.45, melee: 2.9 },
     slap:    { dmg: 7,  cd: 0.4,  melee: 2.8 },

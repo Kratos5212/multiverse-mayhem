@@ -1193,3 +1193,96 @@ test('Rick C-137 uses his own house console; his clone has to hack it', () => {
   host.time += 400; host.message(cl.c, '{"t":"hd","o":"stash"}');
   assert.strictEqual(cl.p.inv.grenade, g2 + 1, 'hacked: now he can');
 });
+
+test('Post-Apocalyptic Earth: Strong-arm Morty and Summer live there, by the Ring and the garage', () => {
+  assert.deepStrictEqual(MM.castOf('wasteland'), ['sidekick', 'teen']);
+  assert.strictEqual(MM.castLabel('sidekick', 'wasteland'), 'Strong-arm Morty');
+  assert.strictEqual(MM.castLabel('teen', 'wasteland'), 'Post-Apocalyptic Summer');
+  assert.ok(MM.castGear('sidekick', 'wasteland').strongarm && !MM.castGear('sidekick', 'suburbia').strongarm);
+  assert.strictEqual(MM.castLook('teen', 'wasteland').top, 'armor');
+  const host = new MM.Host();
+  const a = join(host, 'genius', { dim: 'wasteland' });
+  host.travel(a.p, 'wasteland'); run(host, 0.5);
+  const cast = [...a.p.inst.npcs.values()].filter(n => n.cast);
+  const morty = cast.find(n => n.cast.arch === 'sidekick'), ring = MM.LANDMARK_BY_ID.deathring;
+  assert.ok(morty && Math.hypot(morty.home.x - ring.x, morty.home.z - ring.z) < 20, 'Morty by the Ring');
+  assert.ok(cast.some(n => n.cast.arch === 'teen'), 'Summer');
+  assert.ok([...a.p.inst.npcs.values()].some(n => n.type === 'hemorrhage'), 'and Hemorrhage');
+});
+
+test('Death Stalker cars: get in at the lot, drive fast, ram, shoot, get out; parked when you travel', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'surgeon', { dim: 'wasteland', home: 'Q-12' });   // (not Morty: he dodges)
+  near(host, c, p, 'carlot'); run(host, 0.5);
+  host.message(c, '{"t":"use","l":"carlot"}');
+  assert.ok(p.car, 'in the car');
+  assert.ok(host.speedOf(p) > p.st.speed * 2, 'a car is fast');
+  assert.strictEqual(host.weaponOf(p), 'carguns');
+  // Ram a raider at speed.
+  const inst = p.inst;
+  for (const n of [...inst.npcs.values()]) if (n.T.hostile) inst.npcs.delete(n.id);
+  host.teleport(p, 60, MM.heightAt('wasteland', 60, 60), 60); run(host, 0.3);
+  const r = inst.spawnNpc('raider', false, { at: { x: 60, z: 66 } });
+  r.stun = host.time + 5;
+  const hp = r.hp;
+  for (let i = 1; i <= 6; i++) {
+    host.time += 0.05;
+    host.message(c, JSON.stringify({ t: 'st', x: 60, y: MM.heightAt('wasteland', 60, 60 + i), z: 60 + i, r: 0, a: 1, ep: p.ep }));
+  }
+  assert.ok(!inst.npcs.has(r.id) || r.hp < hp - 20, 'rammed hard');
+  // Hits on you in a car are halved.
+  p.fx.prot = 0; const before = p.hp; host.hurtPlayer(inst, p, 20, null, 'x');
+  assert.strictEqual(before - p.hp, 10, 'armour');
+  host.message(c, '{"t":"car","on":false}');
+  assert.ok(!p.car, 'out');
+  host.message(c, '{"t":"car","on":true}');
+  assert.ok(!p.car, 'only at the lot');
+  near(host, c, p, 'carlot'); host.message(c, '{"t":"car","on":true}');
+  assert.ok(p.car);
+  host.travel(p, 'suburbia');
+  assert.ok(!p.car, 'parked when you travel');
+});
+
+test('Death Stalker cars hunt cars from far off and shoot at them', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'wasteland', home: 'Q-13' });
+  host.travel(p, 'wasteland');
+  const inst = p.inst;
+  for (const n of [...inst.npcs.values()]) if (n.T.hostile) inst.npcs.delete(n.id);
+  near(host, c, p, 'carlot'); host.message(c, '{"t":"use","l":"carlot"}');
+  host.teleport(p, -80, MM.heightAt('wasteland', -80, 80), 80); p.fx.prot = 0;
+  const car = inst.spawnNpc('stalkercar', false, { at: { x: -80, z: 110 } });
+  const hp = p.hp;
+  let shots = 0;
+  for (let i = 0; i < 90; i++) { host.update(MM.TICK); shots += inst.projs.filter(q => q.kind === 'stalkergun').length ? 1 : 0; p.lastSt = host.time; }
+  assert.ok(shots > 0, 'it shoots');
+  assert.ok(Math.hypot(car.x - p.x, car.z - p.z) < 28, 'and closes in');
+  assert.ok(p.hp < hp, 'and hits');
+});
+
+test('the Ring of Death: three rounds, the champion last; win and get paid, run and lose', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'genius', { dim: 'wasteland', home: 'Q-14' });
+  host.travel(p, 'wasteland');
+  const inst = p.inst, ring = MM.LANDMARK_BY_ID.deathring;
+  host.teleport(p, ring.x, MM.heightAt('wasteland', ring.x, ring.z + 5), ring.z + 5); run(host, 0.3);
+  host.message(c, '{"t":"use","l":"deathring"}');
+  assert.ok(p.bout, 'in a fight');
+  const s0 = p.inv.s || 0;
+  for (const [type, count] of MM.BOUT.rounds) {
+    const ids = p.bout.npcs;
+    assert.strictEqual(ids.length, count);
+    for (const id of ids) { const n = inst.npcs.get(id); assert.strictEqual(n.type, type); inst.hurtNpc(n, 9999, p); }
+    run(host, 0.1);
+  }
+  assert.ok(!p.bout, 'over');
+  assert.ok(p.inv.s >= s0 + MM.BOUT.give.s, 'paid');
+  assert.strictEqual(p.prog.cnt.use.deathring, 1);
+  // Again, and run out of the Ring: lost, and the fighters go.
+  run(host, 1.2);
+  host.message(c, '{"t":"use","l":"deathring"}');
+  const ids = p.bout.npcs.slice();
+  host.teleport(p, 0, MM.heightAt('wasteland', 0, 40), 40);
+  run(host, MM.BOUT.leave + 0.5);
+  assert.ok(!p.bout && ids.every(id => !inst.npcs.has(id)), 'lost');
+});

@@ -172,7 +172,10 @@
       blurb: 'A burned-out Earth of sand, spikes and raiders in modified cars. Bring your own water.',
       sky: ['#c88a4a', '#f0d8a0'], fog: '#e0b880', fogFar: 220, sun: '#fff0d0', ambient: '#e0b080',
       ground: ['#d8b878', '#c8a868', '#b89858'], accent: '#ff5a3a',
-      props: [['wreck', 26], ['scraptower', 10], ['cactus', 30]], npc: [['raider', 10]], pickups: { s: 18, c: 2 }, mat: 's',
+      props: [['wreck', 26], ['scraptower', 10], ['cactus', 30]], pickups: { s: 18, c: 2 }, mat: 's',
+      // Raiders out in the sand, Death Stalker cars roaming the tracks, the Death Stalkers on
+      // the Ring's stands, and Hemorrhage by the garage.
+      npc: [['raider', 8], ['stalkercar', 3], ['deathfan', 3, -17.5, 0, 2], ['deathfan', 3, 17.5, 0, 2], ['deathfan', 2, 0, -17.5, 2], ['hemorrhage', 1, 8, -25, 1]],
     },
     {
       id: 'microverse', flat: 125, name: 'The Microverse', code: 'MV-1', seed: 5775, gravity: 22, amp: 3, scale: 0.014,
@@ -1501,6 +1504,29 @@
       moods: { line: 55, gift: 10, trade: 10, errand: 10, buff: 6, angry: 6, dance: 3 } },
     raider: { name: 'Raider', hp: 60, speed: 4.6, hostile: true, dmg: 11, drop: { s: 3 }, r: 0.6, h: 1.9,
       human: { species: ['human'], top: ['armor', 'vest', 'none'], acc: ['goggles', 'eyepatch', 'headband', 'none'] } },
+    // The Death Stalkers of Post-Apocalyptic Earth ("Rickmancing the Stone"). In the Ring of
+    // Death: gladiators, and the champion in the last round (they only go for the fighter).
+    gladiator: { name: 'Gladiator', hp: 70, speed: 5.0, hostile: true, dmg: 11, drop: { s: 2 }, r: 0.6, h: 1.9, ring: true,
+      human: { species: ['human'], top: ['armor', 'none'], acc: ['headband', 'goggles', 'eyepatch'], colors: { topColor: '#5a3a26', pantsColor: '#3a2a20' } },
+      names: ['Gutsplitter', 'Lug Nut', 'Dust Devil', 'Rib Cage', 'Tetanus Tom', 'Scab'] },
+    ringchamp: { name: 'Ring Champion', hp: 300, speed: 4.4, hostile: true, dmg: 19, drop: { s: 8, k: 3 }, r: 0.9, h: 2.6, ring: true,
+      human: { species: ['human'], top: ['armor'], acc: ['headband'], scale: 1.35, colors: { topColor: '#3a2418', pantsColor: '#241a14', accColor: '#a8201a' }, look: { hair: 'mohawk', brow: 'angry', mouth: 'grin', width: 1.3 } },
+      names: ['Skullgrinder', 'Big Hemo', 'The Gearbox', 'Mother Rust'] },
+    // A Death Stalker car: spikes, a skull on the grille, a raider at the wheel and a gun on the
+    // hood. It hunts from far off (aggro), chases a long way (leash), shoots and rams.
+    stalkercar: { name: 'Death Stalker car', hp: 150, speed: 12, hostile: true, dmg: 16, drop: { s: 6 }, r: 1.6, h: 1.7, aggro: 40, leash: 110, gun: 'stalkergun', car: true },
+    // The Death Stalkers in the camp and on the stands: rough, but fine with you.
+    deathfan: { name: 'Death Stalker', hp: 55, speed: 2.4, hostile: false, dmg: 0, drop: { s: 2 }, r: 0.6, h: 1.9,
+      human: { species: ['human'], top: ['armor', 'vest', 'none'], acc: ['goggles', 'headband', 'eyepatch', 'none'], colors: { pantsColor: '#3a2a20' } },
+      names: ['Toxic Tina', 'Blowtorch', 'Crankshaft', 'Mad Maxine', 'Grit', 'Skidmark'],
+      talk: ['BLOOD! BLOOD! BLOOD!', 'Two go in. Sometimes one comes out. Sometimes both. It is not very organised.', 'You want a car? Take one by the garage. Bring it back on fire.',
+        'Strong-arm Morty is the best thing that ever happened to the Ring.', 'We don\'t have much out here. But we have cars. And the Ring.', 'Hemorrhage got married. To a girl from another dimension. Weird.'],
+      moods: { line: 60, gift: 8, trade: 10, errand: 8, buff: 6, angry: 6, dance: 2 } },
+    // Hemorrhage, the Death Stalkers' leader, and Summer's husband in that dimension.
+    hemorrhage: { name: 'Hemorrhage', hp: 220, speed: 2.6, hostile: false, dmg: 0, drop: { s: 6 }, r: 0.8, h: 2.3,
+      human: { species: ['human'], top: ['armor'], acc: ['none'], scale: 1.2, look: { hair: 'bald', brow: 'angry', eyes: 'normal', mouth: 'flat', face: 'wide', height: 1.15, width: 1.3, head: 1.0,
+        skin: '#c89a78', hairColor: '#2a1a12', topColor: '#3a2a20', shirtColor: '#5a3e2a', pantsColor: '#2a201a', shoeColor: '#1a1410', accColor: '#2a2a2a' } },
+      names: ['Hemorrhage'], talk: ['I am Hemorrhage. I lead the Death Stalkers.', 'Summer is my wife. She is the strongest of us.', 'Do not touch the cars without asking. Or do. That is how you earn respect.', 'Your world has... schools? Sounds terrible.'] },
     zeep: { name: 'Zeep Xanflorp', hp: 120, speed: 2.6, hostile: false, dmg: 0, drop: { c: 4, k: 2 }, r: 0.6, h: 1.9,
       human: { species: ['alien'], top: ['labcoat'], acc: ['goggles'], look: { hair: 'tuft', brow: 'angry', eyes: 'wide', mouth: 'frown', face: 'long', height: 1.1, width: 0.95, head: 1.1,
         skin: '#7ec8a8', hairColor: '#2a3a2a', topColor: '#f2f5f7', shirtColor: '#5a7a9a', pantsColor: '#3a3a4a', shoeColor: '#1a1a1a', accColor: '#5a5a62' } },
@@ -1978,6 +2004,21 @@
     [-1.7, -6.7, -1.3, -6.7], [-1.7, -6.3, -1.3, -6.3], [-1.7, -6.7, -1.7, -6.3], [-1.3, -6.7, -1.3, -6.3]];   // the tree
   MM.PROPS.lm_backyard.boxR = 16.3;
   MM.PROPS.lm_backyard.noTop = true;   // the walls stop you, but there is nothing to stand on
+  // The Ring of Death: the fighting wall (12 m) and the back of the stands (15.6 m), each a
+  // ring of straight pieces, with a gate through both on the south (+z) and north sides.
+  {
+    const W = [], n = 24, step = Math.PI * 2 / n, gate = a => Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < 0.2 || Math.abs(Math.atan2(Math.sin(a - Math.PI), Math.cos(a - Math.PI))) < 0.2;
+    for (const R of [12, 15.6]) for (let i = 0; i < n; i++) {
+      const a0 = i * step, a1 = a0 + step;
+      if (gate((a0 + a1) / 2)) continue;
+      W.push([Math.sin(a0) * R, Math.cos(a0) * R, Math.sin(a1) * R, Math.cos(a1) * R]);
+    }
+    // The gates' sides, so you can't slip in between the wall and the stands.
+    for (const a of [step, -step, Math.PI + step, Math.PI - step]) W.push([Math.sin(a) * 12, Math.cos(a) * 12, Math.sin(a) * 15.6, Math.cos(a) * 15.6]);
+    MM.PROPS.lm_deathring.walls = W;
+    MM.PROPS.lm_deathring.boxR = 16.5;
+    MM.PROPS.lm_deathring.noTop = true;
+  }
 
   // How far from its centre a prop can block (its circle, or its box's far corner).
   MM.propReach = p => { const T = MM.PROPS[p.type]; if (T.walls) return T.boxR * (p.s || 1); if (!T.box) return p.r; if (!T.boxR) { const [x0, x1, z0, z1] = T.box; T.boxR = Math.hypot(Math.max(-x0, x1), Math.max(-z0, z1)); } return T.boxR * (p.s || 1); };

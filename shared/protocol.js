@@ -35,6 +35,7 @@
     talk: m => int(m.n, 0, 1e12) ? { n: m.n } : null,  // talk to a local
     ans: m => int(m.a, 0, 1) ? { a: m.a } : null,      // accept (1) or refuse (0) a local's offer
     ship: m => typeof m.on === 'boolean' ? { on: m.on } : null,                // board or leave your ship
+    car: m => typeof m.on === 'boolean' ? { on: m.on } : null,                 // get in (at the car lot) or out of a Death Stalker car
     pvp: m => typeof m.on === 'boolean' ? { on: m.on } : null,                 // allow fights with other players who allow them too
     orbit: () => ({}),                                                          // fly out of the atmosphere
     land: m => (str(m.d, 24) && own(MM.DIM_BY_ID, m.d) && (m.h === undefined || int(m.h, 0, 20))) ? { d: m.d, h: m.h } : null,   // fly into a planet from space (h: which hole of Anatomy Park's body)

@@ -250,6 +250,7 @@
     if (arch && MM.ARCHETYPES[arch]) {
       // One of the cast: their own character, in their dimension's look, and their name tag.
       const av = C.buildAvatar(MM.castLook(arch, origin), arch);
+      C.setGear(av, MM.castGear(arch, origin));   // Strong-arm Morty's arm
       m = { root: av.root, av };
       if (ship) C.setShip(av, true);
       const tag = C.makeTag(name, '', MM.ARCHETYPES[arch].name, UI.ARCH_COLORS[arch] || '#d6e4ff');
@@ -477,6 +478,7 @@
     }
     if (G.prog) C.setGear(G.meAv, myGear());
     C.setShip(G.meAv, !!w.ship, myGear());
+    C.setCar(G.meAv, false);   // a car stays in its world
     if (w.event) { UI.banner(w.event.name, w.event.text); }
     else if (changed && MM.QUIRKS[MM.DIM_BY_ID[w.dim].quirk]) UI.banner(MM.DIM_BY_ID[w.dim].name, MM.QUIRKS[MM.DIM_BY_ID[w.dim].quirk]);
     G.offset = null;
@@ -715,7 +717,7 @@
     for (const u of m.u) { const tu = G.turrets.get(u[0]); if (tu) tu.aim = u[1]; }
   }
 
-  const SHOT_COLORS = { plasma: '#5dff8a', blaster: '#ffd84d', toy: '#ff8fd0', turret: '#ff4d4d', shrink: '#b48aff', freeze: '#bfeaff', gren: '#ffd84d' };
+  const SHOT_COLORS = { plasma: '#5dff8a', blaster: '#ffd84d', toy: '#ff8fd0', turret: '#ff4d4d', shrink: '#b48aff', freeze: '#bfeaff', gren: '#ffd84d', carguns: '#ffb03a', stalkergun: '#ff7a3a' };
   const NPC_NAMES = {};
   for (const k in MM.NPCS) NPC_NAMES[k] = MM.NPCS[k].name;
 
@@ -901,6 +903,7 @@
         if (p) { C.setShip(p.av, e.on, p.info.gear); collectOutlines(p.av); sfxAt('jump', p.x, p.z); }
         break;
       }
+      case 'car': { const p = posOf(e.id); if (p) sfxAt(e.on ? 'craft' : 'jump', p.x, p.z); break; }
       case 'warp': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1, p.z, '#5ff8ff', 40, 10, 0.8, 0.6, 0); sfxAt('warp', p.x, p.z); } break; }
     }
   }
@@ -978,6 +981,12 @@
     const me = G.me;
     if (e.k === 'race') { onRace(e); return; }
     if (e.k === 'hmenu') { openDefenses(e.own); return; }
+    if (e.k === 'bout') {
+      if (e.won) { UI.banner('You won in the Ring of Death!', 'The crowd chants your name. ' + Object.keys(e.give).map(k => e.give[k] + ' ' + MM.MATERIALS[k].icon).join(' ') + (e.won > 1 ? ' · ' + e.won + ' wins' : '')); C.sfx('cheer'); }
+      else if (e.lost) { UI.banner('Out of the Ring', e.why || 'You lost.'); }
+      else { UI.banner('Ring of Death: round ' + e.round + ' of ' + e.of, e.champ ? 'The champion, ' + e.champ + '!' : e.n + ' fighters. BLOOD! BLOOD! BLOOD!'); C.sfx('cheer', 0.6); }
+      return;
+    }
     if (e.k === 'egg') {
       const E = MM.EGG_BY_ID[e.id];
       if (G.prog) (G.prog.eggs || (G.prog.eggs = [])).push(e.id);
@@ -1048,6 +1057,7 @@
     $('charges').hidden = !y.chMax && !y.bor;
     $('charges').textContent = y.chMax ? 'Portal ' + '●'.repeat(y.ch) + '○'.repeat(Math.max(0, y.chMax - y.ch)) : y.bor ? 'Borrowed gun ' + '●'.repeat(y.bor) : '';
     if (G.meAv && !!y.ship !== !!G.meAv.inShip) { C.setShip(G.meAv, y.ship, myGear()); if (y.ship) { G.me.vy = 0; G.me.grounded = false; } }
+    if (G.meAv && !!y.car !== !!G.meAv.inCar) { C.setCar(G.meAv, y.car); collectOutlines(G.meAv); G.me.carYaw = G.me.yaw; G.me.carSpeed = 0; C.sfx(y.car ? 'craft' : 'jump', 0.6); }
     $('chaos').textContent = y.chaos;
     $('kos').textContent = y.kills;
     G.abReadyAt = now() + y.ab;
@@ -1186,12 +1196,12 @@
     slots.portal.hidden = !travel; $('tPortal').hidden = !travel;
     slots.portal.querySelector('.l').textContent = gun ? 'Portal' : nearKiosk() ? 'Station' : 'Travel';
     tLabel('tPortal', gun ? 'PORTAL' : nearKiosk() ? 'STATION' : 'TRAVEL');
-    slots.ship.hidden = !(st && st.ship);
-    slots.ship.querySelector('.l').textContent = y.ship ? 'Land' : 'Ship';
-    $('tShip').hidden = !(st && st.ship);
+    slots.ship.hidden = !(st && st.ship) && !y.car;
+    slots.ship.querySelector('.l').textContent = y.car ? 'Get out' : y.ship ? 'Land' : 'Ship';
+    $('tShip').hidden = !(st && st.ship) && !y.car;
     $('tDown').hidden = !y.ship;
     $('tLight').hidden = !(y.ship && MM.DIM_BY_ID[G.dimId].planets);   // out in space: lightspeed
-    tLabel('tShip', y.ship ? 'LAND' : 'SHIP');
+    tLabel('tShip', y.car ? 'GET OUT' : y.ship ? 'LAND' : 'SHIP');
   }
 
   // ---------- Actions ----------
@@ -1201,6 +1211,7 @@
   // The weapon in use (mirrors Host.weaponOf): ship guns while flying.
   function weaponId() {
     if (G.you && G.you.ship) return G.st && G.st.ship && G.st.ship.lasers ? 'lasers' : 'blaster';
+    if (G.you && G.you.car) return 'carguns';
     return MM.ARCHETYPES[profile.arch].weapon;
   }
   function aimDir() {
@@ -1286,6 +1297,7 @@
   }
   function toggleShip() {
     if (!canAct() || pickled()) return;
+    if (G.you.car) { send({ t: 'car', on: false }); return; }   // B: out of the car
     if (!G.st || !G.st.ship) { UI.toast('You don\'t have a ship. Build a Ship Hull at the Bazaar Shipyard, if your path allows it (J).', 4000); return; }
     send({ t: 'ship', on: !G.you.ship });
   }
@@ -1320,12 +1332,14 @@
     if (!canAct()) return;
     if (G.riders && G.riders.has(G.myId)) { send({ t: 'fun', a: 'off' }); return; }
     if (G.me.sit) { G.me.sit = null; return; }
+    if (G.you.car) { send({ t: 'car', on: false }); return; }   // out of the car
     const lf = nearLandmark();
     if (lf && (lf.ride || lf.gallery || lf.game) && !tasksAt(lf).length) { funAt(lf); return; }
     const n = nearestLocal();
     if (n) { send({ t: 'talk', n: n.id }); return; }
     const l = nearLandmark();
     if (l && MM.isAt(l, 'housecon')) { send({ t: 'use', l: l.id }); return; }   // the house answers (or another Rick starts hacking)
+    if (l && l.car) { send({ t: 'use', l: l.id }); return; }                    // take a car
     if (l) { if (l.door && !tasksAt(l).length) send({ t: 'door', l: l.id }); else openLandmark(l); return; }
     if (nearKiosk()) openDims('station');
   }
@@ -1339,6 +1353,8 @@
     const builds = MM.RECIPE_IDS.filter(r => MM.RECIPES[r].at && MM.isAt(l, MM.RECIPES[r].at));
     openModal('landmark', l.name, box => {
       if (l.ride || l.gallery || l.game) box.append(el('button', { class: 'btn go', onclick: () => { UI.closeModal(); funAt(l); } }, l.ride ? 'Ride ' + l.name : l.gallery ? 'Play the shooting gallery' : l.game === 'fish' ? 'Go fishing' : l.game === 'dance' ? 'Dance!' : 'Play'));
+      if (l.bout) box.append(el('p', { class: 'note', text: 'Three rounds on foot: two fighters, then three, then the champion. Leave the Ring or go down and you lose. Win: ' + Object.keys(MM.BOUT.give).map(k => MM.BOUT.give[k] + ' ' + MM.MATERIALS[k].icon).join(' ') + '.' }),
+        el('button', { class: 'btn go', onclick: () => { UI.closeModal(); send({ t: 'use', l: l.id }); } }, 'Fight in the Ring of Death'));
       const list = el('div', { class: 'list' });
       for (const t of tasks) {
         const T = MM.TASKS[t], wait = G.prog ? G.prog.tasks[t] : 0;
@@ -1346,7 +1362,7 @@
         list.append(el('div', { class: 'row' }, el('div', { class: 't' }, el('b', { text: T.name }), el('small', { text: (gives || '') + (T.heal ? ' · heals you' : '') + (wait ? ' · ready in ' + wait + ' s' : '') })),
           el('button', { class: 'btn go', disabled: wait ? '' : null, onclick: () => { send({ t: 'use', l: l.id, task: t }); UI.closeModal(); } }, 'Do it')));
       }
-      if (!tasks.length && !l.door) list.append(el('p', { class: 'note', text: 'This place is not part of your daily life.' }));
+      if (!tasks.length && !l.door && !l.bout) list.append(el('p', { class: 'note', text: 'This place is not part of your daily life.' }));
       box.append(list);
       if (l.door) box.append(el('button', { class: 'btn go', onclick: () => { send({ t: 'door', l: l.id }); UI.closeModal(); } }, 'Go to ' + MM.DIM_BY_ID[l.door.dim].name));
       if (builds.length) box.append(el('p', { class: 'note', text: 'Built here: ' + builds.map(r => MM.RECIPES[r].name).join(', ') + '.' }), el('button', { class: 'btn gold', onclick: () => openCraft() }, 'Open workbench'));
@@ -1474,6 +1490,7 @@
           scene.add(G.meAv.root);
           if (G.prog) C.setGear(G.meAv, myGear());
           C.setShip(G.meAv, !!(G.you && G.you.ship), myGear());
+          C.setCar(G.meAv, !!(G.you && G.you.car));
           UI.closeModal();
         } }, 'Wear it')));
     });
@@ -2131,23 +2148,35 @@
       if (keys.has('KeyD') || keys.has('ArrowRight')) ix += 1;
     }
     ix += touch.mx; iz += touch.mz;
+    const steer = Math.max(-1, Math.min(1, ix)), throttle = Math.max(-1, Math.min(1, iz));   // a car: throttle and steering on their own, not one direction
     const il = Math.hypot(ix, iz);
     if (il > 1) { ix /= il; iz /= il; }
     if (dead) { ix = iz = 0; }
     const fxb = y ? y.fx : 0;
     const st = G.st || MM.statsOf(profile.arch, {});
-    const inShip = !!(y && y.ship && st.ship);
+    const inShip = !!(y && y.ship && st.ship), inCar = !!(y && y.car);
     // Same speed rules as the server (Host.speedOf), so you never get snapped back.
     const mult = (fxb & 2 ? 1.8 : 1) * (fxb & 8 ? 0.75 : 1) * (fxb & 16 ? 0.6 : 1) * (fxb & 256 ? 0.5 : 1) * (fxb & 1024 ? 0.12 : 1);
     const shift = !chatOpen() && !UI.modalOpen() && (keys.has('ShiftLeft') || keys.has('ShiftRight'));
-    me.sprinting = !inShip && !dead && il > 0.3 && (shift || touch.sprint) && iz > -0.2;
-    me.boosting = inShip && !dead && (shift || touch.sprint);   // Shift in the ship: afterburner
+    me.sprinting = !inShip && !inCar && !dead && il > 0.3 && (shift || touch.sprint) && iz > -0.2;
+    me.boosting = (inShip || inCar) && !dead && (shift || touch.sprint);   // Shift in the ship: afterburner; in a car: nitro
     const speed = inShip ? st.ship.speed * mult * (me.boosting ? MM.SHIP_BOOST : 1) : st.speed * mult * (st.fly && !me.grounded ? 1.3 : 1) * (me.sprinting ? st.sprint || 1.3 : 1);
     const sy = Math.sin(G.camYaw), cy = Math.cos(G.camYaw);
     const wx = (sy * iz - cy * ix) * speed, wz = (cy * iz + sy * ix) * speed;
     const accel = me.kbT > 0 ? 2 : inShip ? 5 : me.grounded ? 40 : 10;
     const k = Math.min(1, accel * dt);
-    me.vx += (wx - me.vx) * k; me.vz += (wz - me.vz) * k;
+    if (inCar) {
+      // A car: W/S is the throttle along the car's nose, A/D steer (harder the faster you go).
+      const top = MM.CAR.speed * mult * (me.boosting ? MM.CAR.boost : 1);
+      const want = dead ? 0 : throttle > 0.1 ? top * throttle : throttle < -0.1 ? MM.CAR.rev * throttle : 0, cur = me.carSpeed || 0;
+      const acc = !me.grounded ? 1 : want === 0 ? 7 : want * cur < 0 ? 28 : 13;
+      me.carSpeed = cur + Math.sign(want - cur) * Math.min(Math.abs(want - cur), acc * dt);
+      if (me.carYaw === undefined) me.carYaw = me.yaw;
+      me.carYaw -= (dead ? 0 : steer) * 2.1 * Math.max(-1, Math.min(1, me.carSpeed / 7)) * (me.grounded ? 1 : 0.3) * dt;
+      if (me.kbT > 0) { me.vx += (Math.sin(me.carYaw) * me.carSpeed - me.vx) * k; me.vz += (Math.cos(me.carYaw) * me.carSpeed - me.vz) * k; }
+      else { me.vx = Math.sin(me.carYaw) * me.carSpeed; me.vz = Math.cos(me.carYaw) * me.carSpeed; }
+      if (me.boosting && Math.abs(me.carSpeed) > 4 && Math.random() < 0.5) fx.glow.emit(me.x - Math.sin(me.carYaw) * 2.2, me.y + 1.0, me.z - Math.cos(me.carYaw) * 2.2, 0, 1, 0, '#ff8a2a', 0.5, 0.35, 0);
+    } else { me.vx += (wx - me.vx) * k; me.vz += (wz - me.vz) * k; }
     me.kbT = Math.max(0, me.kbT - dt);
     const jumpHeld = !chatOpen() && !UI.modalOpen() && (keys.has('Space') || touch.jump) && !dead;
     const ctrl = !chatOpen() && !UI.modalOpen() && (keys.has('ControlLeft') || keys.has('ControlRight'));
@@ -2158,12 +2187,12 @@
       const climb = (jumpHeld ? 1 : 0) - (downHeld ? 1 : 0) + (iz > 0 ? -Math.sin(G.camPitch) * iz * 0.8 : 0);
       me.vy += (climb * 12 - me.vy) * Math.min(1, dt * 4);
       me.grounded = false;
-    } else if (jumpHeld && me.grounded) {
+    } else if (jumpHeld && me.grounded && !inCar) {
       me.vy = st.jump * (dim.quirk === 'bouncy' ? 1.6 : 1);
       me.grounded = false;
       me.jumpLock = 0.25;
       C.sfx('jump', 0.4);
-    } else if (st.fly && jumpHeld && !me.grounded && (me.jumpLock -= dt) <= 0 && me.fly > 0) {
+    } else if (st.fly && !inCar && jumpHeld && !me.grounded && (me.jumpLock -= dt) <= 0 && me.fly > 0) {
       me.vy += (7 - me.vy) * Math.min(1, dt * 5);
       me.fly = Math.max(0, me.fly - dt);
       me.flying = true;
@@ -2188,7 +2217,8 @@
     }
     if (!inShip) me.vy -= dim.gravity * dt * gravityMult;
     let nx = me.x + me.vx * dt, nz = me.z + me.vz * dt, ny = me.y + me.vy * dt;
-    [nx, nz] = pushOut(nx, nz, ny, inShip ? 1.6 : 0.45);
+    const wantX = nx, wantZ = nz;
+    [nx, nz] = pushOut(nx, nz, ny, inShip ? 1.6 : inCar ? 1.3 : 0.45);
     const lim = MM.boundOf(G.dimId) - (MM.DIM_BY_ID[G.dimId].interior ? 0 : 1), limZ = MM.boundZOf(G.dimId) - (MM.DIM_BY_ID[G.dimId].interior ? 0 : 1);
     nx = Math.max(-lim, Math.min(lim, nx)); nz = Math.max(-limZ, Math.min(limZ, nz));
     [nx, nz] = MM.collideWalls(G.dimId, nx, nz, 0.4, me.y);
@@ -2241,15 +2271,18 @@
       if (pad) { me.vy = pad[2]; me.grounded = false; me.kbT = 0.4; fx.burst(nx, ny + 0.3, nz, '#7affea', 20, 7, 0.5, 0.5, 2); C.sfx('jump', 0.8); }
     } else if (ny > g + 0.15) me.grounded = false;
     else if (me.grounded && me.vy <= 0) ny = g;
+    // A car that hits something solid loses most of its speed (and you feel it).
+    if (inCar && Math.abs(me.carSpeed) > 6 && Math.hypot(nx - wantX, nz - wantZ) > Math.abs(me.carSpeed) * dt * 0.5) { G.shake = Math.max(G.shake || 0, Math.min(0.6, Math.abs(me.carSpeed) / 40)); me.carSpeed *= 0.35; C.sfx('hit', 0.6); }
     me.x = nx; me.y = ny; me.z = nz;
     if (G.pairs.size > 1) pairTransit(me);
     // Face where you move, or where you aim right after shooting.
     me.aimT = Math.max(0, me.aimT - dt);
     me.emoteT = Math.max(0, me.emoteT - dt);
     const hs = Math.hypot(me.vx, me.vz);
-    if (firstPerson() || me.aimT > 0 || mouseDown || touch.fire) me.yaw = G.camYaw;
+    if (inCar) me.yaw = me.carYaw;   // the car faces its nose; the hood guns aim on their own
+    else if (firstPerson() || me.aimT > 0 || mouseDown || touch.fire) me.yaw = G.camYaw;
     else if (hs > 0.5) me.yaw += wrap(Math.atan2(me.vx, me.vz) - me.yaw) * Math.min(1, dt * 12);
-    me.anim = dead ? MM.ANIM.dead : inShip ? MM.ANIM.idle : me.flying ? MM.ANIM.fly : !me.grounded ? MM.ANIM.air : me.emoteT > 0 ? MM.ANIM.emote : hs > 0.6 ? MM.ANIM.run : MM.ANIM.idle;
+    me.anim = dead ? MM.ANIM.dead : inCar ? MM.ANIM.sit : inShip ? MM.ANIM.idle : me.flying ? MM.ANIM.fly : !me.grounded ? MM.ANIM.air : me.emoteT > 0 ? MM.ANIM.emote : hs > 0.6 ? MM.ANIM.run : MM.ANIM.idle;
     if (G.meAv) {
       G.meAv.root.position.set(me.x, me.y, me.z);
       G.meAv.root.rotation.y = me.yaw;
@@ -2365,6 +2398,8 @@
       p.av.root.rotation.y = p.r;
       const inShip = !!(s.fx & 512);
       if (inShip !== !!p.av.inShip) { C.setShip(p.av, inShip, p.info.gear); collectOutlines(p.av); }
+      const inCar = !!(s.fx & 8192);
+      if (inCar !== !!p.av.inCar) { C.setCar(p.av, inCar); collectOutlines(p.av); }
       const rider = G.riders && G.riders.get(p.id);
       let anim = s.a === MM.ANIM.dead ? s.a : p.emoteT > 0 ? MM.ANIM.emote : s.a, up = false;
       if (rider && rider.R) {
@@ -2392,7 +2427,7 @@
       const nd = Math.hypot(n.x - G.me.x, n.z - G.me.z), big = MM.NPCS[n.type].h > 4;
       root.visible = nd < (big ? fogFar : settings.quality === 'low' ? 70 : 110);
       if (!root.visible) continue;
-      if (n.m.av) { n.m.av.animate(dt, { speed: n.speed, anim: (n.flags & 4) ? MM.ANIM.emote : n.speed > 0.4 ? 1 : 0 }); wantDetail(n.m.av, n.x, n.z); }
+      if (n.m.av) { n.m.av.animate(dt, { speed: n.speed, anim: n.m.av.inCar ? MM.ANIM.sit : (n.flags & 4) ? MM.ANIM.emote : n.speed > 0.4 ? 1 : 0 }); wantDetail(n.m.av, n.x, n.z); }
       else {
         const md = root.userData.model;
         if (n.type === 'meatblob') { const s = 1 + Math.sin(n.t * (3 + n.speed)) * 0.08; md.scale.set(1 / s, s, 1 / s); }
@@ -2495,7 +2530,7 @@
     const tx = me.x, ty = me.y + 1.7 * sc + 0.2, tz = me.z;
     const cp = Math.cos(G.camPitch), sp = Math.sin(G.camPitch);
     const fx_ = Math.sin(G.camYaw) * cp, fy = -sp, fz = Math.cos(G.camYaw) * cp;
-    const dist = G.camDist * (0.7 + 0.3 * sc) * (MM.DIM_BY_ID[G.dimId].room ? 0.7 : 1);
+    const dist = G.camDist * (0.7 + 0.3 * sc) * (MM.DIM_BY_ID[G.dimId].room ? 0.7 : 1) * (G.you && G.you.car ? 1.45 : 1);
     const rx = -Math.cos(G.camYaw), rz = Math.sin(G.camYaw);
     const sh = 0.55;
     // Pull the camera in when a prop is between it and the player.
