@@ -117,9 +117,13 @@
   // ---------- Voice commands ----------
   // A command starts with who you are talking to (house, garage, ship, car, Morty, portal...),
   // unless you hold the command key, when anything you say counts.
-  const WAKE = /^(hey |ok |okay )?(house|garage|computer|ship|car|cruiser|morty|summer|rick|portal|gun|wubba|pickle|tiny|remote)\b/;
+  // (Anywhere in what was heard: speech recognition often hears an "uh" or the tail of the last
+  // sentence first. And it hears "Morty" as "Marty" a lot.)
+  const WAKE = /\b(house|garage|computer|ship|car|cruiser|morty|summer|rick|portal|gun|wubba|pickle|tiny|remote)\b/;
+  const norm = raw => String(raw || '').toLowerCase().replace(/[^a-z0-9' ]+/g, ' ').replace(/\b(marty|mordy|mortie|morti|naughty)\b/g, 'morty').replace(/\b(garages|garbage)\b/g, 'garage').replace(/\s+/g, ' ').trim();
+  V.hasWake = raw => WAKE.test(norm(raw));
   V.parse = function (raw, held) {
-    const t = String(raw || '').toLowerCase().replace(/[^a-z0-9' ]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const t = norm(raw);
     if (!t || (!held && !WAKE.test(t))) return null;
     const has = (...w) => w.some(x => t.includes(x));
     const house = id => ({ house: id });
@@ -165,7 +169,21 @@
 
   // Listening: the browser's own speech recognition (Chrome, Edge, the Windows launcher), or
   // the Android app's (a Capacitor plugin). onText(text, held) for each thing you say.
-  let rec = null, wantOn = false, heldNow = false, onText = null;
+  let rec = null, wantOn = false, heldNow = false, heldUntil = 0, armedUntil = 0, onText = null;
+  const nowMs = () => performance.now();
+  // Counts as "held" while the key is down, and for a few seconds after: the last words of
+  // what you said arrive a moment after you let go.
+  const isHeld = () => heldNow || nowMs() < heldUntil || nowMs() < armedUntil;
+  V.isListening = () => wantOn && isHeld();
+  // One thing heard: a command, just the name (then the next thing you say is the command:
+  // "Garage... lock the doors"), or not a command at all.
+  function heard(text) {
+    const held = isHeld();
+    if (!held && !V.parse(text, false) && V.hasWake(text)) { armedUntil = nowMs() + 6000; api.toast('🎙 "' + text.trim() + '"... listening.', 2500); return; }
+    armedUntil = 0;
+    if (!heldNow) heldUntil = 0;   // (one command per press)
+    onText(text, held);
+  }
   const native = () => { const P = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins; return P && P.SpeechRecognition; };
   V.commandsSupported = () => !!(native() || window.SpeechRecognition || window.webkitSpeechRecognition);
   V.listenAlways = () => !native() && !!(window.SpeechRecognition || window.webkitSpeechRecognition);   // the app can only listen while you hold the button
@@ -174,19 +192,35 @@
     if (native() || rec) return true;
     const R = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!R) return false;
-    rec = new R(); rec.lang = 'en-US'; rec.continuous = true; rec.interimResults = false;
-    rec.onresult = e => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) onText(e.results[i][0].transcript, heldNow); };
-    rec.onend = () => { if (wantOn) setTimeout(() => { try { rec.start(); } catch (_) {} }, 250); };
-    rec.onerror = e => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { wantOn = false; api.toast('Voice commands need the microphone (allow it for this site).'); } };
-    try { rec.start(); } catch (_) {}
+    // One phrase at a time (not "continuous", which waits much longer before it gives you the
+    // words and runs phrases together), started again as soon as it ends.
+    const r = rec = new R(); r.lang = 'en-US'; r.continuous = false; r.interimResults = false; r.maxAlternatives = 3;
+    r.onresult = e => {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (!e.results[i].isFinal) continue;
+        const alts = [...e.results[i]].map(a => a.transcript);
+        heard(alts.find(a => V.parse(a, isHeld())) || alts[0]);   // (the second guess is sometimes the right one)
+      }
+    };
+    let fails = 0;
+    r.onstart = () => { fails = 0; };
+    r.onend = () => { if (wantOn && rec === r) setTimeout(() => { if (wantOn && rec === r) try { r.start(); } catch (_) {} }, fails > 3 ? 3000 : 80); };
+    r.onerror = e => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { wantOn = false; api.toast('Voice commands need the microphone (allow it for this site).', 4000); }
+      else if (e.error === 'network') { fails++; if (fails === 4) api.toast('Voice commands can\'t reach the speech service (it needs the internet). Still trying.', 4000); }
+      else if (e.error === 'audio-capture') { fails++; if (fails === 4) api.toast('No microphone found for voice commands.', 4000); }
+    };
+    try { r.start(); } catch (_) {}
     return true;
   };
-  V.stopCommands = function () { wantOn = false; if (rec) { try { rec.stop(); } catch (_) {} rec = null; } };
+  V.stopCommands = function () { wantOn = false; armedUntil = heldUntil = 0; if (rec) { const r = rec; rec = null; try { r.abort(); } catch (_) {} } };
   // Hold the command key (or button): whatever you say next is a command.
   V.holdCommand = async function (on) {
+    if (!on && heldNow) heldUntil = nowMs() + 5000;
     heldNow = !!on;
     const N = native();
-    if (!N || !on || !onText) return;
+    if (!N) { if (on && wantOn && !rec && onText) V.startCommands(onText); return; }
+    if (!on || !onText) return;
     try {
       const perm = await N.requestPermissions(); if (perm && perm.speechRecognition && perm.speechRecognition !== 'granted') { api.toast('Voice commands need the microphone.'); return; }
       const r = await N.start({ language: 'en-US', maxResults: 1, partialResults: false, popup: false });

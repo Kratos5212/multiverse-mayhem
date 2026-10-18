@@ -1821,6 +1821,42 @@ test('voice: the server passes the WebRTC handshake only between nearby players 
   assert.strictEqual(P('lock the doors'), null, 'no wake word, no command (unless you hold the key)');
   assert.strictEqual(P('lock the doors', true).house, 'doors');
   assert.strictEqual(P('house teleport me to downtown').d, 0);
+  // What PC speech recognition actually hears: an "uh" first, "Marty" for "Morty".
+  assert.strictEqual(P('uh garage lock the doors').house, 'doors');
+  assert.ok(P('Marty initiate car transformation sequence').carMorty);
+});
+
+test('voice commands in a PC browser: name then command, late words after letting go of Y, second guesses', () => {
+  const vm = require('vm');
+  let clock = 0, live = null;
+  class FakeRec { constructor() { live = this; this.started = 0; } start() { this.started++; } abort() {} stop() {} }
+  const say = (...alts) => live.onresult({ resultIndex: 0, results: [Object.assign(alts.map(a => ({ transcript: a })), { isFinal: true })] });
+  const ctx = { window: { MMC: {}, webkitSpeechRecognition: FakeRec }, navigator: {}, console, performance: { now: () => clock }, setTimeout: f => f() };
+  vm.runInNewContext(require('fs').readFileSync(require('path').join(__dirname, '../js/voice.js'), 'utf8'), ctx);
+  const V = ctx.window.MMC.voice, got = [], toasts = [];
+  V.init({ toast: t => toasts.push(t) });
+  V.startCommands((text, held) => { const c = V.parse(text, held); got.push(c ? c.label : null); });
+  assert.ok(live && live.started === 1 && !live.continuous, 'listening, one phrase at a time');
+  say('Garage, lock the doors');
+  assert.deepStrictEqual(got, ['Blast doors']);
+  // A pause after the name: "Garage..." then "lock the doors".
+  say('garage'); assert.ok(toasts.some(t => t.includes('listening')) && V.isListening());
+  clock += 2000; say('lock the doors');
+  assert.deepStrictEqual(got, ['Blast doors', 'Blast doors']);
+  // ...but not forever.
+  say('garage'); clock += 9000; say('lock the doors');
+  assert.strictEqual(got.length, 3); assert.strictEqual(got[2], null);
+  // Hold Y, speak, let go: the words arrive a second later and still count.
+  V.holdCommand(true); V.holdCommand(false); clock += 1500; say('keep summer safe');
+  assert.strictEqual(got[3], 'Keep Summer safe');
+  clock += 1000; say('lock the doors');
+  assert.strictEqual(got[4], null, 'one command per press');
+  // The recogniser's second guess is used when only it makes sense.
+  say('carriage keep some are safe', 'car keep summer safe');
+  assert.strictEqual(got[5], 'Keep Summer safe');
+  // It starts listening again when a phrase ends.
+  const n = live.started; live.onend(); assert.strictEqual(live.started, n + 1);
+  V.stopCommands(); live.onend(); assert.strictEqual(live.started, n + 1, 'stopped stays stopped');
 });
 
 test('Keep Summer Safe on Rick\'s order: "Car, keep Summer safe" starts it even with him right there', () => {

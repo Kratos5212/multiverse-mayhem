@@ -1543,7 +1543,7 @@
     mk('vcmd', 'Y', 'Command', () => {});
     const hold = (b, on, off) => { b.onpointerdown = e => { e.preventDefault(); on(); }; b.onpointerup = b.onpointerleave = b.onpointercancel = () => off(); };
     hold(slots.mic, () => C.voice.pushToTalk(true), () => C.voice.pushToTalk(false));
-    hold(slots.vcmd, () => { C.voice.holdCommand(true); UI.toast('🎙 Listening for a command...', 1500); }, () => setTimeout(() => C.voice.holdCommand(false), 1200));
+    hold(slots.vcmd, () => { C.voice.holdCommand(true); UI.toast('🎙 Listening for a command...', 1500); }, () => C.voice.holdCommand(false));
     mk('items', 'I', 'Items', () => openInventory());
     mk('pair', 'R', 'Portals', () => shootPair());
     mk('scan', 'X', 'Scan', () => scan());
@@ -2346,7 +2346,7 @@
   // Something you said: if it is a command, do it (the same as pressing the button would).
   function runVoiceCommand(text, held) {
     const c = C.voice.parse(text, held);
-    if (!c) { if (held) UI.toast('🎙 "' + text + '": not a command I know.', 2500); return; }
+    if (!c) { if (held || C.voice.hasWake(text)) UI.toast('🎙 "' + text.trim() + '": not a command I know.', 2500); return; }
     if (!canAct()) return;
     UI.toast('🎙 "' + text.trim() + '" → ' + c.label, 2500);
     if (c.house) send(c.d !== undefined ? { t: 'hd', o: c.house, d: c.d } : { t: 'hd', o: c.house });
@@ -2398,6 +2398,7 @@
       if (p.vcIcon) { p.vcIcon.visible = on; p.vcIcon.position.y = p.av.headY + 1.05; }
     }
     if (slots.mic) slots.mic.classList.toggle('on', C.voice.isTalking());
+    if (slots.vcmd) slots.vcmd.classList.toggle('on', C.voice.isListening());
   }
 
   function openMenu() {
@@ -2495,7 +2496,7 @@
       case 'KeyN': savePoint('load'); break;
       case 'KeyM': if (G.you && G.you.alt) savePoint('merge'); break;
       case 'KeyZ': if (C.voice.mode() === 'ptt') C.voice.pushToTalk(true); break;
-      case 'KeyY': if (settings.vcmd) { C.voice.holdCommand(true); UI.toast('🎙 Listening for a command...', 1500); } break;
+      case 'KeyY': if (settings.vcmd && !e.repeat) { C.voice.holdCommand(true); UI.toast('🎙 Listening for a command...', 1500); } break;
       case 'KeyI': openInventory(); break;
       case 'KeyV': toggleView(); break;
       case 'KeyG': emoteBar(); break;
@@ -2505,7 +2506,7 @@
   window.addEventListener('keyup', e => {
     keys.delete(e.code);
     if (e.code === 'KeyZ') C.voice.pushToTalk(false);
-    if (e.code === 'KeyY') setTimeout(() => C.voice.holdCommand(false), 1200);   // (let the last words in)
+    if (e.code === 'KeyY') C.voice.holdCommand(false);   // (what you said still counts for a few seconds: the words arrive late)
   });
   window.addEventListener('blur', () => { keys.clear(); mouseDown = false; touch.fire = false; touch.jump = false; C.voice.pushToTalk(false); });
 
