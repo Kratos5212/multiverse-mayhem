@@ -3096,41 +3096,86 @@
     return all;
   }
 
-  // Anatomy Park's corpse, floating in space (shared/fun.js MM.BODY): spheres of pale skin,
-  // a bald head with a nose and ears, blue boxers, and a ring of light around every hole.
+  // Anatomy Park's corpse, floating in space (shared/fun.js MM.BODY): Ruben on his back, a
+  // big bald man in polka-dot boxers, eyes closed, hands at his sides, toes up. A ring of
+  // light round every hole you can fly in through.
+  const UP = new T.Vector3(0, 1, 0), tmpQ = new T.Quaternion(), tmpE = new T.Euler();
+  function limb(s, color, r, A, B) {
+    const d = new T.Vector3(B[0] - A[0], B[1] - A[1], B[2] - A[2]), len = d.length();
+    tmpQ.setFromUnitVectors(UP, d.normalize()); tmpE.setFromQuaternion(tmpQ);
+    C.capsuleAt(s, color, r, len + r * 0.6, [A[0] - d.x * r * 0.3, A[1] - d.y * r * 0.3, A[2] - d.z * r * 0.3], [tmpE.x, tmpE.y, tmpE.z]);
+  }
+  function bodyShape() {
+    const B = MM.BODY, s = new C.Shape({ smooth: true }), skin = '#e0a888', shade = '#c48a6c', P = C.prim;
+    for (const [x, y, z, rx, ry, rz] of B.blobs) s.add(P.sphere, skin, [x, y, z], null, [rx, ry, rz]);
+    for (const [ax, ay, az, bx, by, bz, r] of B.segs) limb(s, skin, r, [ax, ay, az], [bx, by, bz]);
+    // The boxers: blue with white polka dots, and a waistband.
+    s.add(P.sphere, '#3a5ab0', [-4, 0.2, 0], null, [12.6, 11.6, 19.2]);
+    for (const sx of [-1, 1]) limb(s, '#3a5ab0', 9.2, [-8, 0, sx * 9], [-19, -0.5, sx * 9.6]);
+    s.add(P.cyl, '#f2f2f2', [5.5, 0.2, 0], [0, 0, Math.PI / 2], [11.4, 1.6, 18.6]);
+    for (let i = 0; i < 26; i++) { const a = i * 2.4, u = (i % 5) / 4; s.add(P.sphereLo, '#f2f2f2', [-14 + u * 16, Math.sin(a) * 11.5, Math.cos(a) * 17.6], null, [1.1, 1.1, 1.1]); }
+    // The face, looking up: closed eyes, brows, a big nose, ears, lips, a double chin.
+    for (const sz of [-1, 1]) {
+      s.add(P.sphere, shade, [72, 10.2, sz * 4.6], null, [2.6, 1.2, 2.2]);         // closed lids
+      s.add(P.box, '#5a3a2a', [74.6, 11, sz * 4.6], [0, 0, 0.15], [0.8, 0.5, 3.4]);  // brows
+      s.add(P.sphere, skin, [67, 0.5, sz * 12.4], null, [3, 4.6, 1.6]);             // ears
+      s.add(P.sphere, '#b88a74', [67, 1, sz * 13.3], null, [1.4, 2.4, 0.6]);        // ear holes
+    }
+    s.add(P.sphere, skin, [67.5, 12.6, 0], null, [4.2, 3.4, 2.8]);                  // nose
+    for (const sz of [-1, 1]) s.add(P.sphereLo, '#7a4a3a', [66.6, 14.6, sz * 1.8], null, [1, 0.9, 0.8]);
+    s.add(P.sphere, '#a86a5e', [59.5, 10.4, 0], null, [1.6, 0.9, 5]);               // lips
+    s.add(P.sphere, skin, [55.5, 4.5, 0], null, [5, 6, 9]);                         // chins
+    // Chest and belly: nipples, a belly button, a little hair.
+    for (const sz of [-1, 1]) s.add(P.sphere, '#b8786a', [37, 11.6, sz * 9], null, [1.8, 0.6, 1.8]);
+    s.add(P.sphere, '#a06a5a', [14, 14.6, 0], null, [1.6, 0.4, 1.6]);
+    for (let i = 0; i < 14; i++) s.add(P.cone, '#6a4a3a', [22 + (i % 7) * 3.2, 12.2 + (i % 3) * 0.2, (i < 7 ? -1 : 1) * (2 + (i % 4))], [0, 0, -0.4], [0.18, 1.4, 0.18]);
+    // Hands (fingers along the sides) and toes.
+    for (const sz of [-1, 1]) {
+      for (let f = 0; f < 4; f++) limb(s, skin, 1.1, [-9, -4 + (f - 1.5) * 1.7, sz * 26], [-14, -4.4 + (f - 1.5) * 1.8, sz * 26.2]);
+      limb(s, skin, 1.3, [-6, -1, sz * 23.6], [-10, 0.5, sz * 22.4]);                // thumb
+      for (let t = 0; t < 5; t++) s.add(P.sphere, skin, [-74.5, 12.4 - t * 0.2, sz * (7.2 + t * 1.5)], null, [1.4, 1.2, 0.9]);
+      s.add(P.cyl, '#f4f4f0', [-2, -4, sz * 26], [0, 0, Math.PI / 2], [4.7, 1.5, 4.7]);  // hospital wristband
+    }
+    return s;
+  }
   function makeBody(P, tags) {
-    const B = MM.BODY, s = new C.Shape({ smooth: false }), skin = '#d8c4b0', g = new T.Group();
-    for (const [x, y, z, r] of B.parts) s.add(C.prim.sphere, skin, [x, y, z], null, [r, r * (Math.abs(z) > 20 || x < -20 ? 1 : 0.95), r]);
-    s.add(C.prim.sphere, '#3a5ab0', [-14, 0, 0], null, [20.5, 19.5, 20.5]);   // the boxers
-    for (let i = 0; i < 18; i++) { const a = i * 1.3, y = Math.sin(a) * 12, z = Math.cos(a) * 16; s.add(C.prim.sphereLo, '#f2f2f2', [-14 + (i % 3 - 1) * 6, y + 7 * Math.sign(y), z * 0.9], null, [1.2, 1.2, 1.2]); }
-    for (const z of [-5, 5]) s.add(C.prim.sphere, '#f0f0f0', [76, 9, z], null, [2.4, 1.2, 2.4]);   // closed eyelids
-    s.add(C.prim.box, '#8a5a5a', [77, 11.5, 0], null, [3, 0.6, 6]);   // lips
-    const m = C.meshOf(s.build(), 0.6);
-    g.add(m);
+    const B = MM.BODY, g = new T.Group(), k = B.scale || 1;
+    const m = C.meshOf(bodyShape().build(), 0.35);
+    m.scale.setScalar(k); g.add(m);
     for (const [id, name, at] of B.holes) {
-      const ring = new T.Mesh(new T.TorusGeometry(4.5, 0.6, 8, 32), new T.MeshBasicMaterial({ color: '#ff8ac8', fog: false }));
-      ring.position.set(at[0], at[1], at[2]);
-      const out = new T.Vector3(at[0] - (at[0] > 60 ? 70 : at[0]), at[1], at[2]).normalize();
+      const ring = new T.Mesh(new T.TorusGeometry(4.5 * k, 0.5 * k, 8, 32), new T.MeshBasicMaterial({ color: '#ff8ac8', fog: false }));
+      ring.position.set(at[0] * k, at[1] * k, at[2] * k);
+      // Facing out of the body: away from the nearest bit of it.
+      const c = id === 'lear' || id === 'rear' ? [at[0], at[1], 0] : id === 'back' ? [at[0], 0, 0] : [at[0], at[1] - 6, at[2]];
+      const out = new T.Vector3(at[0] - c[0], at[1] - c[1], at[2] - c[2]).normalize();
       ring.lookAt(ring.position.clone().add(out));
       g.add(ring);
       const tag = C.makeTag(name, '', '', '#ff8ac8'); tag.draw(-1);
       tag.sprite.scale.set(36, 9, 1); tag.sprite.material.fog = false;
-      const tp = new T.Vector3(at[0], at[1], at[2]).add(out.clone().multiplyScalar(9));
-      tag.sprite.position.copy(tp); g.add(tag.sprite);
+      tag.sprite.position.copy(ring.position).add(out.clone().multiplyScalar(9 * k));
+      g.add(tag.sprite);
       tags.push({ sprite: tag.sprite, near: 6, local: true });
     }
     // A billboard: the park's name, floating over the chest.
     const bill = C.makeTag('ANATOMY PARK', 'Fly in through any hole!', '', '#ffd84d'); bill.draw(-1);
-    bill.sprite.scale.set(120, 30, 1); bill.sprite.position.set(30, 70, 0); bill.sprite.material.fog = false; g.add(bill.sprite);
+    bill.sprite.scale.set(160, 40, 1); bill.sprite.position.set(30 * k, 42 * k, 0); bill.sprite.material.fog = false; g.add(bill.sprite);
     tags.push({ sprite: bill.sprite, near: 40, local: true });
     g.position.set(P.x, P.y, P.z); g.rotation.y = B.yaw;
     return g;
   }
+  // From the ground: Ruben, small and high up in every Earth's sky.
+  C.bodyInSky = function () {
+    const m = C.meshOf(bodyShape().build(), 0);
+    m.traverse(o => { if (o.material) { o.material = o.material.clone(); o.material.fog = false; } });
+    return m;
+  };
 
   // Big things in the sky that make each dimension recognisable.
   function skyDecor(dim, group) {
     const add = (shape, pos) => { const m = C.meshOf(shape.build(), 0); m.position.set(pos[0], pos[1], pos[2]); m.traverse(o => { if (o.material) { o.material = o.material.clone(); o.material.fog = false; } }); group.add(m); return m; };
     if ((dim.shapeOf || dim.id) === 'suburbia') {
+      // Anatomy Park, floating far above (the same Ruben you can fly to from orbit).
+      const ruben = C.bodyInSky(); ruben.scale.setScalar(1.6); ruben.position.set(-260, 520, -420); ruben.rotation.set(0.25, 0.9, 0.12); group.add(ruben);
       for (let i = 0; i < 14; i++) {
         const s = new C.Shape();
         for (let j = 0; j < 4; j++) s.add(P.sphereLo, '#ffffff', [j * 9 - 13, Math.sin(j * 2) * 2, (j % 2) * 4], null, [9, 5, 7], true);

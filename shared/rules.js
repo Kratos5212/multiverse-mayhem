@@ -223,6 +223,32 @@
   MM.SHIP_BOOST = 1.6;   // Shift in a ship: the afterburner
   // Tiny (the Miniaturizer): how small, and how slow it makes you.
   MM.TINY = { scale: 0.15, speed: 0.5, dmg: 0.25 };
+  // ----- Ships: everyone who has one flies their own -----
+  // seats: [x, y, z] from the pilot (the pilot is seat 0, at the ship's middle, facing +z).
+  // A ship holds that many; get out and it stays parked where you left it.
+  MM.SHIPS = {
+    cruiser:   { name: "Rick's Space Cruiser", seats: [[0, 0, 0], [0.9, 0, 0], [-0.45, 0.25, -1.25], [0.45, 0.25, -1.25]] },
+    gunship:   { name: "Space Beth's gunship", seats: [[0, 0, 0], [0, 0.3, -1.4]] },
+    fedship:   { name: 'Federation cruiser', seats: [[0, 0, 0], [-1.0, 0, -0.7], [1.0, 0, -0.7], [0, 0, -1.4]] },
+    blackship: { name: "Evil Morty's ship", seats: [[0, 0, 0], [0.9, 0, 0]] },
+    minivan:   { name: "Jerry's rocket minivan", seats: [[0, 0, 0], [0.95, 0, 0], [0, 0, -1.2], [0.95, 0, -1.2], [0, 0, -2.3], [0.95, 0, -2.3]] },
+    pinkship:  { name: "Summer's hover-coupe", seats: [[0, 0, 0], [0.9, 0, 0]] },
+    mortyship: { name: "Morty's starter pod", seats: [[0, 0, 0], [0, 0.2, -1.15]] },
+    bethship:  { name: "Beth's flying horse ambulance", seats: [[0, 0, 0], [0.95, 0, 0], [0.45, 0.1, -1.8]] },
+    saucer:    { name: 'Flying saucer', seats: [[0, 0, 0], [-1.15, 0, -0.45], [1.15, 0, -0.45]] },
+  };
+  MM.shipKind = arch => ({ genius: 'cruiser', picklerick: 'cruiser', spacebeth: 'gunship', trooper: 'fedship', evilmorty: 'blackship', joe: 'minivan', teen: 'pinkship', sidekick: 'mortyship', surgeon: 'bethship' })[arch] || 'saucer';
+  // Where a seat is, for a ship at (x, y, z) facing r.
+  MM.seatAt = (kind, seat, x, y, z, r) => {
+    const S = (MM.SHIPS[kind] || MM.SHIPS.saucer).seats[seat] || [0, 0, 0], c = Math.cos(r), s = Math.sin(r);
+    return { x: x + S[0] * c + S[2] * s, y: y + S[1], z: z - S[0] * s + S[2] * c };
+  };
+  // "Keep Summer safe": a Rick's ship with a Summer in it, left parked while he goes off.
+  MM.KSS = { leave: 12, reach: 18, every: 0.6, lines: {
+    kill: ['Keep Summer safe.', 'Threat neutralised. Summer is safe.', 'Keeping Summer safe.'],
+    stun: ['Understood. Non-lethal. Summer is safe.', 'Paralysis is not killing. Summer is safe.', 'He will walk again. Eventually.'],
+    peace: ['Psychological warfare engaged. Summer is safe.', 'I have negotiated a lasting peace. Summer is safe.', 'Nobody was hurt. Some were deeply moved.'],
+  } };
   // Tiny Rick: a Rick in a teenage clone body. Smaller, quicker, bouncier. Inside, the old one wants out.
   MM.TINYRICK = { scale: 0.62, speed: 1.2, jump: 1.25 };
   MM.TINYRICK_WHISPERS = ['(a whisper, from somewhere deep inside you) ...let me out...', '(deep inside) ...this is not a party... let me out...', 'TINY RICK! (...let me out...)', '(you hum a song. Inside, someone is screaming LET ME OUT.)'];

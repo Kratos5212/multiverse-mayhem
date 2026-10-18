@@ -102,6 +102,7 @@
       this.portals = new Map();
       this.turrets = new Map();
       this.dpSet = new Set();   // locals carrying a Five-Step Death Punch
+      this.parked = new Map();  // ships left parked here (Host.parkShip)
       this.projs = [];
       this.out = [];
       this.emptySince = host.time;
@@ -182,6 +183,8 @@
         event: this.event ? { name: this.event.E.name, text: this.event.E.text, left: r2(this.event.until - this.host.time) } : null,
         house: this.host.houseRow(this),
         riders: [...this.players.values()].filter(p => p.ride).map(p => [p.id, p.ride.id, r2(p.ride.t0), p.ride.seat]),
+        parked: [...this.parked.values()].map(V => this.host.shipRow(V)),
+        crews: [...this.players.values()].filter(p => p.ship && p.vessel && p.vessel.npcs.length).map(p => [p.id, this.host.npcCrew(p.vessel)]),
         gal: Object.keys(this.gal || {}).map(id => [id, Math.ceil(this.gal[id].until - this.host.time)]),
       };
     }
@@ -193,6 +196,7 @@
       this.tickProjectiles(dt, now);
       this.tickNpcs(dt, now);
       if (this.dpSet.size) this.host.tickPunchedNpcs(this);
+      if (this.parked.size && this.host.tickN % 9 === 0) for (const V of this.parked.values()) this.host.tickParked(V, now);
       this.tickTurrets(dt, now);
       if (this.house) this.host.tickHouse(this, now);
       if (this.gal) this.host.tickGalleries(this, now);
@@ -780,7 +784,7 @@
     // A dimension's first copy opens: its own people, and anyone visiting.
     castHere(inst) {
       for (const arch of MM.castOf(inst.dimId)) this.castRec(arch, inst.dimId);
-      for (const rec of this.cast.values()) if (rec.at === inst.dimId && !rec.player && !this.castNpc(rec) && this.time >= rec.downUntil) inst.spawnCastNpc(rec, null, false);
+      for (const rec of this.cast.values()) if (rec.at === inst.dimId && !rec.player && !rec.riding && !this.castNpc(rec) && this.time >= rec.downUntil) inst.spawnCastNpc(rec, null, false);
     }
     castUnspawn(rec) {
       const n = this.castNpc(rec);
@@ -812,7 +816,7 @@
     castTick() {
       const now = this.time;
       for (const rec of this.cast.values()) {
-        if (rec.player) continue;
+        if (rec.player || rec.riding) continue;   // (or riding in a Rick's ship)
         const n = this.castNpc(rec);
         if (!n) {
           // Back on their feet a while after being knocked out, wherever they were.
@@ -866,6 +870,8 @@
         else { rec.at = rec.origin; const inst = this.instances.get(rec.origin + '#0'); if (inst) { const n = inst.spawnCastNpc(rec, null, false); inst.ev({ k: 'npc+', n: inst.npcRow(n) }); } }
       }
       if (p.trade) this.tradeEnd(p.trade, p.name + ' left.');
+      if (p.aboard) this.disembark(p);
+      if (p.vessel) this.emptyShip(p.vessel, p.name + ' left, and took the ship.');
       if (p.inst) { p.inst.players.delete(p.id); p.inst.ev({ k: 'leave', id: p.id }); p.inst.emptySince = this.time; }
       this.leaveTeam(p);
       this.players.delete(p.id);
@@ -918,11 +924,14 @@
         case 'talk': this.onTalk(p, m.n); break;
         case 'ans': this.onAnswer(p, m.a); break;
         case 'ship': this.onShip(p, m.on); break;
+        case 'sb': this.onBoard(p, m); break;
+        case 'kss': this.onKss(p, m); break;
         case 'car': this.onCar(p, m.on); break;
         case 'tr': this.onTrade(p, m); break;
         case 'gv': this.onGive(p, m); break;
         case 'uo': this.onUseOn(p, m); break;
         case 'dp': this.onDeathPunch(p, m); break;
+        case 'unp': this.onUnpunch(p, m); break;
         case 'pvp': p.pvp = m.on; this.toast(p, m.on ? 'Fights on: players who also turned fights on can hurt you, and you them.' : 'Fights off: no other player can hurt you.'); break;
         case 'drive': this.onDrive(p, m.d); break;
         case 'orbit': this.onOrbit(p); break;
@@ -998,6 +1007,7 @@
         const where = asked || (D && !D.interior && !D.hidden && !D.planets ? rec.at : origin);
         const at = n && where === rec.at ? { x: n.x, z: n.z } : null, inst = at ? rec.npc.inst : null;
         this.castUnspawn(rec);
+        if (rec.riding) this.unrideCast(rec);
         rec.player = p.id; p.cast = rec; rec.at = where;
         this.travel(p, where, at, inst, true);
         return;
@@ -1018,7 +1028,7 @@
 
     info(p) {
       const up = p.prog.up;
-      return { id: p.id, name: p.name, home: p.home, clone: p.clone ? 1 : 0, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '',
+      return { id: p.id, name: p.name, home: p.home, clone: p.clone ? 1 : 0, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '', sk: MM.shipKind(p.arch),
         gear: { ratsuit: !!up.ratsuit, wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs, strongarm: !!p.prog.arm } };
     }
 
@@ -1068,7 +1078,7 @@
 
     // Move a player into a dimension (a portal, the kiosk, a ship, or joining).
     travel(p, dimId, at, preferInst, first) {
-      if (p.ship && MM.DIM_BY_ID[dimId] && MM.DIM_BY_ID[dimId].interior) p.ship = false;   // you park the ship to go indoors
+      if (p.ship && MM.DIM_BY_ID[dimId] && MM.DIM_BY_ID[dimId].interior) { p.ship = false; if (p.inst) this.parkShip(p, p.inst); }   // you park the ship to go indoors
       p.car = false;   // a car stays in its world: you park it
       // Tiny in a tiny world is life-size there; out again, you're tiny again.
       if (MM.DIM_BY_ID[dimId].tinyWorld) { if (p.tiny) { p.tiny = false; p.tinyIn = true; } }
@@ -1086,7 +1096,7 @@
       const spot = at ? { x: at.x, z: at.z, y: MM.heightAt(dimId, at.x, at.z) } : MM.spawnPoint(dimId);
       p.inst = inst;
       p.x = spot.x; p.y = at && at.y !== undefined ? at.y : spot.y + (p.ship ? 3 : 0.1); p.z = spot.z; p.a = 0;
-      if (MM.DIM_BY_ID[dimId].planets && !p.ship) p.ship = !!p.st.ship;   // nobody walks in space
+      if (MM.DIM_BY_ID[dimId].planets && !p.ship && !p.aboard && p.st.ship) { p.ship = true; this.takeShip(p); }   // nobody walks in space
       p.ep++;
       p.lastSt = this.time;
       p.portalCool = this.time + 2;
@@ -1144,7 +1154,7 @@
 
     // ----- Movement validation -----
     onState(c, p, m) {
-      if (m.ep !== p.ep || p.dead || p.ride) return;   // on a ride the ride moves you
+      if (m.ep !== p.ep || p.dead || p.ride || p.aboard) return;   // on a ride (or in someone's ship) it moves you
       const now = this.time;
       // A jump pad throws you up (and along): let the flight happen.
       if (MM.padAt(p.inst.dimId, p.x, p.z) || MM.padAt(p.inst.dimId, m.x, m.z)) { p.flingUntil = now + 3; p.kbUntil = now + 1.5; }
@@ -1272,7 +1282,7 @@
       if (!this.canHurt(src, p)) return;
       if (p.arch === 'sidekick' && Math.random() < 0.2) { inst.ev({ k: 'dodge', id: p.id }); return; }
       if (now < p.fx.shield) amt *= 0.3;
-      if (p.ship) amt *= 0.6;
+      if (p.ship || p.aboard) amt *= 0.6;
       if (p.car) amt *= MM.CAR.armour;
       if (inst.dim.quirk === 'bouncy') amt *= 0.5;   // Froopyland: nothing here can hurt you. Much.
       amt = Math.max(1, Math.round(amt));
@@ -1294,7 +1304,8 @@
       p.hp = 0; p.dead = true; p.deaths++;
       p.dp = null;
       p.respawnAt = this.time + MM.RESPAWN_TIME;
-      if (p.ship) { p.ship = false; inst.ev({ k: 'ship', id: p.id, on: false }); }
+      if (p.ship) { p.ship = false; inst.ev({ k: 'ship', id: p.id, on: false }); if (p.vessel) this.emptyShip(p.vessel, 'The ship went down. You jumped clear.'); }
+      if (p.aboard) this.disembark(p);
       if (p.car) { p.car = false; inst.ev({ k: 'car', id: p.id, on: false }); inst.ev({ k: 'boom', x: r2(p.x), y: r2(p.y + 0.5), z: r2(p.z), r: 4 }); }   // the car goes up with you
       const lost = Math.floor(p.inv.s / 2);
       if (lost > 0) { p.inv.s -= lost; inst.spawnPickup('s', true, { x: p.x, z: p.z }, lost); }
@@ -1427,7 +1438,7 @@
       if (!p.team) return;
       for (const id of p.team.ids) {
         const q = this.players.get(id);
-        if (!q || q === p || q.dead || q.inst !== from || dist2(q.x, q.z, ox, oz) > MM.TEAM_REACH * MM.TEAM_REACH) continue;
+        if (!q || q === p || q.dead || q.inst !== from || q.aboard || dist2(q.x, q.z, ox, oz) > MM.TEAM_REACH * MM.TEAM_REACH) continue;
         if (q.ship) { q.ship = false; from.ev({ k: 'ship', id: q.id, on: false }); }
         from.ev({ k: 'kiosk', id: q.id });
         this.travel(q, p.inst.dimId, { x: p.x + (Math.random() - 0.5) * 4, z: p.z + (Math.random() - 0.5) * 4 }, p.inst);
@@ -1536,16 +1547,236 @@
 
     // ----- Ship -----
     onShip(p, on) {
+      if (!on && p.aboard) { this.disembark(p); return; }   // a passenger hops out
       if (on && MM.helpless(p.arch, p.prog.up)) { this.toast(p, MM.HELPLESS_TEXT); return; }
-      if (p.dead || !p.st.ship || p.ship === on) return;
+      if (p.dead || !p.st.ship || p.ship === on || p.aboard) return;
       if (on && p.car) { this.toast(p, 'Get out of the car first (B).'); return; }
       if (on && p.tiny) { this.toast(p, 'You are far too small to fly the ship. Grow back first.'); return; }
       if (on && p.inst.dim.interior) { this.toast(p, 'No room to fly in here. Take the ship outside.'); return; }
+      if (!on && p.inst.dim.planets) { this.toast(p, 'Nowhere to park out here. Land on a planet first.'); return; }
       p.ship = on;
       p.kbUntil = this.time + 1;     // stepping out mid-air: let the fall happen
-      p.inst.ev({ k: 'ship', id: p.id, on });
+      if (on) this.takeShip(p, true); else this.parkShip(p, p.inst);
+      p.inst.ev({ k: 'ship', id: p.id, on, sk: MM.shipKind(p.arch) });
       this.dirty(p);
     }
+
+    // ----- Ships (MM.SHIPS): yours to fly, park, and fill with passengers -----
+    vesselOf(p) {
+      return p.vessel || (p.vessel = { id: this.ent(), owner: p.id, kind: MM.shipKind(p.arch), crew: new Map(), npcs: [], parked: false, inst: null, x: 0, y: 0, z: 0, r: 0, kss: null });
+    }
+    freeSeat(V) {
+      const n = (MM.SHIPS[V.kind] || MM.SHIPS.saucer).seats.length, used = new Set([...V.crew.values(), ...V.npcs.map(c => c.seat)]);
+      for (let i = 1; i < n; i++) if (!used.has(i)) return i;
+      return 0;
+    }
+    shipRow(V) { const o = this.players.get(V.owner); return [V.id, V.owner, V.kind, r2(V.x), r2(V.y), r2(V.z), r2(V.r), o ? o.name : '', this.npcCrew(V), V.kss ? V.kss.mode : '']; }
+    npcCrew(V) { return V.npcs.map(c => [c.arch, c.origin, c.seat, c.name]); }
+    // Getting in: your parked ship, wherever it is (from far away it flies over to you).
+    takeShip(p, announce) {
+      const V = this.vesselOf(p);
+      if (V.parked) {
+        const far = V.inst !== p.inst || dist2(V.x, V.z, p.x, p.z) > 16 * 16;
+        V.inst.parked.delete(V.id); V.inst.ev({ k: 'sp-', id: V.id });
+        if (V.kss) this.kssEnd(V, 'Rick is back. Summer is safe.');
+        V.parked = false;
+        if (far && announce) this.toast(p, 'Your ' + MM.SHIPS[V.kind].name + ' flew over to you' + (V.crew.size || V.npcs.length ? ', with everyone still in it.' : '.'));
+        for (const id of V.crew.keys()) { const q = this.players.get(id); if (q && q.inst !== p.inst) this.travel(q, p.inst.dimId, { x: p.x, z: p.z }, p.inst); }
+      }
+      V.inst = p.inst;
+      if (V.npcs.length) p.inst.ev({ k: 'crew', id: p.id, l: this.npcCrew(V) });
+      return V;
+    }
+    // Getting out: it stays where it is, with whoever is still in it.
+    parkShip(p, inst) {
+      const V = this.vesselOf(p);
+      if (!inst || inst.dim.planets) { this.emptyShip(V, 'The ship flew off without you.'); return; }
+      Object.assign(V, { parked: true, inst, x: p.x, y: Math.max(p.y, MM.heightAt(inst.dimId, p.x, p.z)), z: p.z, r: p.r, left: this.time });
+      inst.parked.set(V.id, V);
+      inst.ev({ k: 'sp+', v: this.shipRow(V) });
+      // You climb out over the side.
+      const side = MM.seatAt(V.kind, 0, V.x, V.y, V.z, V.r);
+      p.x = side.x - Math.cos(V.r) * 2.2; p.z = side.z + Math.sin(V.r) * 2.2;
+    }
+    // Everybody out (the owner left, the ship crashed...). Locals walk off where they are.
+    emptyShip(V, why) {
+      for (const id of [...V.crew.keys()]) { const q = this.players.get(id); if (q) { this.disembark(q); if (why) this.toast(q, why); } else V.crew.delete(id); }
+      const inst = V.inst || (this.players.get(V.owner) || {}).inst;
+      for (const c of V.npcs.splice(0)) this.dropNpcCrew(V, c, inst);
+      if (V.parked && V.inst) { V.inst.parked.delete(V.id); V.inst.ev({ k: 'sp-', id: V.id }); }
+      V.parked = false; V.kss = null;
+    }
+    dropNpcCrew(V, c, inst) {
+      const rec = c.rec;
+      rec.riding = 0;
+      if (!inst || inst.dim.interior || inst.dim.planets) { rec.at = rec.origin; rec.downUntil = this.time + 1; return; }   // home on her own
+      const at = MM.seatAt(V.kind, c.seat, V.x, V.y, V.z, V.r), o = this.players.get(V.owner);
+      const x = V.parked ? at.x + 2 : o ? o.x + 2 : at.x, z = V.parked ? at.z : o ? o.z : at.z;
+      rec.at = inst.dimId;
+      const n = inst.spawnCastNpc(rec, { x, z }, false);
+      inst.ev({ k: 'npc+', n: inst.npcRow(n) });
+    }
+    // A passenger: in a free seat of someone's ship (flying or parked).
+    board(q, V) {
+      const seat = this.freeSeat(V);
+      if (!seat) { this.toast(q, 'The ' + MM.SHIPS[V.kind].name + ' is full.'); return false; }
+      if (q.ship) { q.ship = false; q.inst.ev({ k: 'ship', id: q.id, on: false }); }
+      if (q.car) this.onCar(q, false);
+      if (q.ride) this.endRide(q, false);
+      q.aboard = V; V.crew.set(q.id, seat);
+      q.inst.ev({ k: 'board', id: q.id, v: V.owner, s: seat, p: V.parked ? V.id : 0 });
+      this.toast(q, 'You got in. Press B (or the ship button) to hop out.');
+      this.dirty(q);
+      return true;
+    }
+    disembark(q) {
+      const V = q.aboard;
+      if (!V) return;
+      V.crew.delete(q.id); q.aboard = null;
+      const o = this.players.get(V.owner), b = V.parked ? V : o || q;
+      const at = MM.seatAt(V.kind, 0, b.x, b.y, b.z, b.r || 0);
+      if (q.inst) {
+        q.inst.ev({ k: 'board', id: q.id, v: 0 });
+        this.teleport(q, at.x + Math.cos(b.r || 0) * 2.4, Math.max(MM.heightAt(q.inst.dimId, at.x, at.z), b.y), at.z - Math.sin(b.r || 0) * 2.4);
+        q.kbUntil = this.time + 1.5;
+      }
+      if (V.kss && !this.summerIn(V)) this.kssEnd(V, 'Summer is out of the ship. Keep Summer safe: standing down.');
+      this.dirty(q);
+    }
+    // Every tick: passengers sit in their seats, and go wherever the ship goes.
+    tickAboard(q) {
+      const V = q.aboard, o = this.players.get(V.owner);
+      if (q.dead || !o || (!V.parked && !o.ship)) { this.disembark(q); return; }
+      if (!V.parked && o.inst !== q.inst) { this.travel(q, o.inst.dimId, { x: o.x, z: o.z, y: o.y }, o.inst); }
+      if (V.parked && V.inst !== q.inst) { this.disembark(q); return; }
+      const b = V.parked ? V : o, at = MM.seatAt(V.kind, V.crew.get(q.id) || 1, b.x, b.y, b.z, b.r);
+      q.x = at.x; q.y = at.y; q.z = at.z; q.r = b.r; q.a = MM.ANIM.sit; q.lastSt = this.time;
+    }
+    // Asking for a ride ('sb'): a teammate just gets in; anyone else asks the owner first.
+    onBoard(p, m) {
+      const o = this.players.get(m.id);
+      if (m.op === 'yes') {   // p (the owner) lets in m.id, who asked
+        const q = o; if (!q || !p.vessel || q.askedShip !== p.id) return;
+        q.askedShip = 0;
+        if (this.shipNear(q, p.vessel)) this.board(q, p.vessel); else this.toast(q, 'Too far from the ship now.');
+        return;
+      }
+      if (m.op === 'drop') {   // the owner lets the locals out
+        const V = p.vessel;
+        if (!V || !V.npcs.length || !this.shipNear(p, V)) return;
+        for (const c of V.npcs.splice(0)) this.dropNpcCrew(V, c, V.parked ? V.inst : p.inst);
+        p.inst.ev(V.parked ? { k: 'sp+', v: this.shipRow(V) } : { k: 'crew', id: p.id, l: [] });
+        if (V.kss && !this.summerIn(V)) this.kssEnd(V, 'Summer is out. Standing down.');
+        return;
+      }
+      if (p.dead || p.aboard || !o || o === p || !o.vessel) return;
+      const V = o.vessel;
+      if (!(o.ship || V.parked)) { this.toast(p, o.name + ' has no ship out.'); return; }
+      if (!this.shipNear(p, V)) { this.toast(p, 'Get closer to the ship.'); return; }
+      if (p.team && p.team === o.team) { this.board(p, V); return; }
+      if (o.bot && o.arch === 'genius' && p.arch === 'teen') { this.board(p, V); return; }   // bot Ricks always take their Summer along
+      p.askedShip = o.id;
+      this.priv(o, { k: 'sbask', id: p.id, name: p.name });
+      this.toast(p, 'You asked ' + o.name + ' for a ride.');
+    }
+    shipNear(p, V, inst) {
+      const o = this.players.get(V.owner), b = V.parked ? V : o, here = inst || p.inst;
+      return !!b && (V.parked ? V.inst === here : o.inst === here) && dist2(b.x, b.z, p.x, p.z) < 9 * 9;
+    }
+    unrideCast(rec) {
+      const o = this.players.get(rec.riding), V = o && o.vessel;
+      rec.riding = 0;
+      if (!V) return;
+      V.npcs = V.npcs.filter(c => c.rec !== rec);
+      const inst = V.parked ? V.inst : o.inst;
+      if (inst) inst.ev(V.parked ? { k: 'sp+', v: this.shipRow(V) } : { k: 'crew', id: o.id, l: this.npcCrew(V) });
+    }
+    // A Rick can take the local Summer along on an adventure (if his ship is right there).
+    takeNpcAlong(p, n, say) {
+      const V = p.vessel;
+      if (!p.st.ship) { say('You don\'t even have a ship, Grandpa.'); return; }
+      if (!V || !(p.ship || V.parked) || !this.shipNear(n, V, p.inst)) { say('Bring the ship round, then we\'ll talk.'); return; }
+      const seat = this.freeSeat(V);
+      if (!seat) { say('It\'s full. Typical.'); return; }
+      const rec = n.cast;
+      p.inst.npcs.delete(n.id); p.inst.ev({ k: 'npc-', id: n.id });
+      rec.npc = null; rec.riding = p.id;
+      V.npcs.push({ arch: rec.arch, origin: rec.origin, seat, name: n.name, rec });
+      say(pick(['Finally! An adventure!', 'Okay, but I\'m not doing anything gross.', 'Shotgun. Wait, it\'s just us. Still shotgun.']));
+      p.inst.ev(V.parked ? { k: 'sp+', v: this.shipRow(V) } : { k: 'crew', id: p.id, l: this.npcCrew(V) });
+    }
+
+    // ----- Keep Summer Safe ("Mortynight Run") -----
+    summerIn(V) { return V.npcs.some(c => c.arch === 'teen') || [...V.crew.keys()].some(id => { const q = this.players.get(id); return q && q.arch === 'teen'; }); }
+    tickParked(V, now) {
+      const inst = V.inst, o = this.players.get(V.owner);
+      if (!o) { this.emptyShip(V, 'The ship\'s owner is gone. It flies itself home.'); return; }
+      const ownerNear = o.inst === inst && !o.dead && dist2(o.x, o.z, V.x, V.z) < MM.KSS.leave * MM.KSS.leave;
+      if (!V.kss) {
+        // Only a Rick's ship, only with a Summer aboard, only once he has gone.
+        if (o.arch === 'genius' && !ownerNear && this.summerIn(V)) this.kssStart(V);
+        return;
+      }
+      if (ownerNear) { this.kssEnd(V, 'Rick is back. Summer is safe.'); return; }
+      if (!this.summerIn(V)) { this.kssEnd(V); return; }
+      if (now < (V.kss.next || 0)) return;
+      V.kss.next = now + MM.KSS.every;
+      // Anything coming at the ship: monsters from further off, anyone else who gets close.
+      let best = null, bd = MM.KSS.reach * MM.KSS.reach, isNpc = true;
+      let threat = false;   // monsters first; a local only if they come right up to it
+      for (const n of inst.npcs.values()) {
+        if ((n.owner === V.owner && n.ownerUntil > now) || (V.kss.spared && V.kss.spared.has(n.id)) || now < n.stun) continue;
+        const d = dist2(n.x, n.z, V.x, V.z), hostile = !!(n.T.hostile || n.angry);
+        if (hostile ? d < MM.KSS.reach * MM.KSS.reach && (!threat || d < bd) : !threat && d < 6 * 6 && d < bd) { bd = d; best = n; threat = threat || hostile; }
+      }
+      for (const q of inst.players.values()) {
+        if (q === o || q.aboard === V || q.dead || !q.pvp || (o.team && q.team === o.team) || now < q.fx.prot) continue;
+        const d = dist2(q.x, q.z, V.x, V.z);
+        if (d < 10 * 10 && d < bd) { bd = d; best = q; isNpc = false; }
+      }
+      if (!best) return;
+      const mode = V.kss.mode;
+      inst.ev({ k: 'kssb', id: V.id, x: r2(best.x), y: r2(best.y + 1), z: r2(best.z), m: mode });
+      if (mode === 'kill') { if (isNpc) inst.hurtNpc(best, 60, null); else this.hurtPlayer(inst, best, 35, null, 'kss'); }
+      else if (mode === 'stun') {
+        if (isNpc) { best.stun = now + 10; (V.kss.spared || (V.kss.spared = new Set())).add(best.id); }
+        else { best.fx.cuff = Math.max(best.fx.cuff, now + 4); this.dirty(best); }
+      } else {
+        // Nobody gets hurt. They just leave, crying, or happy, or both.
+        const dx = best.x - V.x, dz = best.z - V.z, l = Math.hypot(dx, dz) || 1;
+        if (isNpc) { best.x = V.x + dx / l * 24; best.z = V.z + dz / l * 24; best.flee = now + 6; best.angry = 0; (V.kss.spared || (V.kss.spared = new Set())).add(best.id); }
+        else { this.knock(best, dx / l * 16, 6, dz / l * 16); best.fx.daze = Math.max(best.fx.daze, now + 3); this.dirty(best); }
+      }
+      if (now > (V.kss.say || 0)) { V.kss.say = now + 7; this.kssSay(V, pick(MM.KSS.lines[mode])); }
+    }
+    kssSay(V, text) {
+      V.inst.ev({ k: 'kss', id: V.id, text });
+      for (const id of V.crew.keys()) { const q = this.players.get(id); if (q) this.priv(q, { k: 'kssay', text }); }
+    }
+    kssStart(V) {
+      V.kss = { mode: 'kill', next: this.time + 1 };
+      V.inst.ev({ k: 'sp+', v: this.shipRow(V) });
+      this.kssSay(V, 'Keep. Summer. Safe.');
+      for (const [id] of V.crew) { const q = this.players.get(id); if (q && q.arch === 'teen') this.priv(q, { k: 'kssmenu', mode: 'kill' }); }
+      const o = this.players.get(V.owner);
+      if (o) this.toast(o, 'You left Summer in the ship. It is keeping her safe. Very safe.');
+    }
+    kssEnd(V, text) {
+      if (!V.kss) return;
+      V.kss = null;
+      if (text) this.kssSay(V, text);
+      if (V.parked) V.inst.ev({ k: 'sp+', v: this.shipRow(V) });
+      for (const id of V.crew.keys()) { const q = this.players.get(id); if (q) this.priv(q, { k: 'kssmenu', off: 1 }); }
+    }
+    // A Summer in the ship tells it how to keep her safe.
+    onKss(p, m) {
+      const V = p.aboard;
+      if (!V || !V.kss || p.arch !== 'teen') return;
+      V.kss.mode = m.m;
+      this.kssSay(V, { kill: 'Keep Summer safe. By any means.', stun: 'Understood: do not kill anyone. Summer is safe.', peace: 'Understood: do not hurt anyone. Hm. Summer is safe.' }[m.m]);
+      V.inst.ev({ k: 'sp+', v: this.shipRow(V) });
+    }
+
     // Flying somewhere: the Moon is a short hop, other planets in this universe need
     // the Turbo Engine, and other dimensions need the Dimension Drive.
     onDrive(p, d) {
@@ -1588,12 +1819,13 @@
         const P = S.planets.find(q => q.body), H = P && MM.BODY.holes[h];
         if (!H) return;
         const w = MM.bodyPoint(MM.BODY, H[2], [P.x, P.y, P.z]);
-        if (Math.hypot(p.x - w[0], p.y - w[1], p.z - w[2]) > 20) return;
+        if (Math.hypot(p.x - w[0], p.y - w[1], p.z - w[2]) > 14 * (MM.BODY.scale || 1)) return;
         p.cdOrbit = now + 3;
         const g = MM.bodyGate(h), from = p.inst;
         p.anatomyFrom = from.dimId;
         p.inst.ev({ k: 'warp', id: p.id });
-        p.ship = false;
+        p.ship = false; p.inst.ev({ k: 'ship', id: p.id, on: false });
+        this.emptyShip(this.vesselOf(p), 'Everybody out: this is Anatomy Park.');
         this.travel(p, 'anatomy', { x: g.x * 0.93, z: g.z * 0.93 });
         this.toast(p, 'In through ' + H[1].replace(/ \(.*\)/, '').replace(/^The /, 'the ') + '. Welcome to Anatomy Park! Your ship is parked at the gate.');
         return;
@@ -2542,7 +2774,7 @@
       inst.ev({ k: 'dpunch', id: p.id, v: best ? (best.T ? 0 : best.id) : 0, n: best && best.T ? best.id : 0 });
       if (!best) { this.priv(p, { k: 'dpcd', t: 1.5 }); return; }
       this.priv(p, { k: 'dpcd', t: D.cd });
-      best.dp = { steps: D.steps, by: p.id, until: now + D.last, lx: best.x, lz: best.z, acc: 0 };
+      best.dp = { steps: D.steps, by: p.id, until: best.T ? now + D.last : Infinity, lx: best.x, lz: best.z, acc: 0 };
       if (best.T) { inst.dpSet.add(best.id); inst.hurtNpc(best, D.dmg, p); }
       else {
         this.hurtPlayer(inst, best, D.dmg, p, 'deathpunch');
@@ -2551,12 +2783,13 @@
       }
       this.toast(p, 'Five-Step Death Punch! ' + best.name + ' has five steps left.');
     }
-    // Count their steps: every stride is one less. At none, they drop. Stand still long enough
-    // and it wears off.
+    // Count their steps: only steps forward (the way they face) count, one less each stride.
+    // At none, they drop. Walking backwards is safe, all the way to a Rick who can reverse it.
     stepCount(t, now) {
-      const d = Math.hypot(t.x - t.dp.lx, t.z - t.dp.lz);
+      const dx = t.x - t.dp.lx, dz = t.z - t.dp.lz, d = Math.hypot(dx, dz);
       t.dp.lx = t.x; t.dp.lz = t.z;
-      if (d < 3) t.dp.acc += d;   // (a portal or a door is not walking)
+      const fwd = dx * Math.sin(t.r) + dz * Math.cos(t.r);
+      if (d < 3 && fwd > 0) t.dp.acc += fwd;   // (a portal or a door is not walking)
       if (t.dp.acc < MM.DEATHPUNCH.stride) return 0;
       t.dp.acc -= MM.DEATHPUNCH.stride;
       return --t.dp.steps > 0 ? 1 : 2;
@@ -2564,7 +2797,8 @@
     tickPunched(p, now) {
       const inst = p.inst;
       if (p.dead || !inst) { p.dp = null; return; }
-      if (now > p.dp.until) { p.dp = null; this.toast(p, 'You stood still long enough. The death punch wore off.'); this.dirty(p); return; }
+      // A Rick heals it himself, back in his own garage (or the lab under it).
+      if (p.arch === 'genius' && (MM.inGarage(p.x, p.z) && this.rickOwns(p, this.earthOfHere(p)) || inst.dimId === 'ricklab')) { this.unpunch(p, 'You patched yourself up in your garage. The death punch is gone.'); return; }
       const r = this.stepCount(p, now);
       if (!r) return;
       inst.ev({ k: 'dpstep', id: p.id, s: p.dp.steps });
@@ -2575,6 +2809,21 @@
         p.hp = 0; this.kill(inst, p, by && by !== p ? by : null, 'deathpunch');
         this.dirty(p);
       }
+    }
+    // A Rick reverses it (a few taps on the right pressure points, a lot of complaining).
+    unpunch(p, why) {
+      if (!p.dp) return;
+      p.dp = null;
+      p.inst.ev({ k: 'dpstep', id: p.id, s: -1 });
+      this.priv(p, { k: 'dp', s: 0 });
+      this.toast(p, why);
+      this.dirty(p);
+    }
+    onUnpunch(p, m) {
+      const q = this.players.get(m.id);
+      if (p.arch !== 'genius' || p.dead || !q || !q.dp || !this.near(p, q)) return;
+      this.unpunch(q, p.name + ' reversed the death punch. You can walk normally again.');
+      this.toast(p, 'You reversed ' + q.name + '\'s death punch.');
     }
     tickPunchedNpcs(inst) {
       const now = this.time;
@@ -2620,6 +2869,8 @@
       }
       if (n.type === 'coachferatu' && p.tinyRick) { this.feratuReveal(inst, n, p); return; }
       if (n.type === 'liusin') { this.liuSin(p, n, say); return; }
+      if (n.cast && n.cast.arch === 'teen' && p.arch === 'genius' && p.st.ship && p.vessel && (p.ship || p.vessel.parked)) { this.takeNpcAlong(p, n, say); return; }
+      if (p.dp && n.cast && n.cast.arch === 'genius') { say(pick(['Five-step death punch? Hold still. *burp* There. Walk it off. Forwards, even.', 'Ugh, Liu Sin again? Hold still.'])); this.unpunch(p, n.name + ' reversed the death punch.'); return; }
       // A Rick offers a Morty the Muscle Memory Serum (MM.ARM).
       if (n.cast && n.cast.arch === 'genius' && p.arch === 'sidekick' && !p.prog.arm && !p.offer) {
         p.offer = { n: n.id, serum: true, want: {}, get: {}, until: now + 25 };
@@ -2738,7 +2989,8 @@
       return { t: 'y', hp: Math.max(0, Math.round(p.hp)), max: p.maxHp, inv: p.inv,
         ch: p.charges, chMax: p.st.gun ? p.st.gun.charges : 0, bor: p.borrow || 0, chIn: p.chargeAt ? r2(p.chargeAt - now) : 0,
         ab: r2(Math.max(0, p.cdAb - now)), chaos: p.prog.chaos, kills: p.kills, deaths: p.deaths, dead: p.dead,
-        rsIn: p.dead ? r2(Math.max(0, p.respawnAt - now)) : 0, fx: this.fxBits(p, now), ship: p.ship, car: !!p.car };
+        rsIn: p.dead ? r2(Math.max(0, p.respawnAt - now)) : 0, fx: this.fxBits(p, now), ship: p.ship, car: !!p.car,
+        ab: p.aboard ? [p.aboard.owner, p.aboard.crew.get(p.id) || 1, p.aboard.parked ? p.aboard.id : 0, p.aboard.kind] : 0, pk: p.vessel && p.vessel.parked ? [p.vessel.id, p.vessel.inst.dimId] : 0 };
     }
 
     // Your life path, upgrades and errands (sent when they change).
@@ -2766,6 +3018,7 @@
         }
         if (p.hack) this.tickHack(p);
         if (p.ride) this.tickRide(p);
+        if (p.aboard) this.tickAboard(p);
         if (p.bout) this.tickBout(p, dt);
         if (p.trade && p.trade.a === p && this.tickN % 30 === 0 && !this.near(p.trade.a, p.trade.b)) this.tradeEnd(p.trade, 'You moved too far apart.');
         if (p.prog.arm && !p.dead) this.tickArm(p, now);

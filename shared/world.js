@@ -2344,7 +2344,7 @@
       });
     }
     // Anatomy Park's corpse floats above every Earth.
-    if (!tw && MM.BODY && (home === 'suburbia' || MM.DIM_BY_ID[home].variantOf === 'suburbia')) { const [bx, by, bz] = MM.BODY.at; planets.push({ dim: 'anatomy', body: true, x: bx, y: by, z: bz, r: 40 }); }
+    if (!tw && MM.BODY && (home === 'suburbia' || MM.DIM_BY_ID[home].variantOf === 'suburbia')) { const [bx, by, bz] = MM.BODY.at; planets.push({ dim: 'anatomy', body: true, x: bx, y: by, z: bz, r: 90 * (MM.BODY.scale || 1) }); }
     const H = MM.DIM_BY_ID[home];
     const d = {
       id, name: tw ? 'Space (' + (MM.PARALLEL_BY_K[tw] || {}).label + ')' : 'Space around ' + H.name, code: tw ? '?/' + tw : H.code, hidden: true, planets, spaceOf: key,

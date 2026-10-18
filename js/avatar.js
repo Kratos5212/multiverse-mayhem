@@ -776,7 +776,7 @@
     p.head.rotation.y = lerp(p.head.rotation.y, headY - twist * 0.6, f);
     if (av.jet) { av.jet.flame.visible = fly; av.jet.flame.scale.y = 0.8 + Math.random() * 0.4; }
     if (av.car && av.inCar) for (const w of av.car.userData.wheels) w.rotation.x += speed * dt / 0.45;
-    if (av.inShip) { set(p.legL, 'x', 0); set(p.legR, 'x', 0); set(p.shinL, 'x', 0.1); set(p.shinR, 'x', 0.1); tilt = 0; roll = clamp(-av.turn * 0.05, -0.3, 0.3); bob = Math.sin(av.t * 3) * 0.05; if (av.ship) av.ship.rotation.y += 0.02; }
+    if (av.inShip) { tilt = 0; roll = clamp(-av.turn * 0.05, -0.3, 0.3); bob = Math.sin(av.t * 3) * 0.04; }   // seated at the controls (MM.ANIM.sit)
     if (dead) av.deadT = Math.min(1, av.deadT + dt * 3); else { av.deadT = Math.max(0, av.deadT - dt * 4); if (!av.deadT) av.deadRag = null; }
     const D = av.deadT;
     av.body.rotation.x = lerp(av.body.rotation.x, tilt, f);
@@ -961,22 +961,145 @@
     if (av.car) av.car.visible = !!on;
     av.inCar = !!on;
   };
-  // A cartoon flying saucer around the character's legs.
-  C.setShip = function (av, on, gear) {
-    if (on && !av.ship) {
-      const s = new C.Shape();
-      s.add(P.sphere, '#c9cfd6', [0, 0.45, 0], null, [2.2, 0.45, 2.2]);
-      s.add(P.cyl, '#8f97a0', [0, 0.25, 0], null, [1.2, 0.3, 1.2]);
-      s.add(P.torus, '#59606e', [0, 0.85, 0], [Math.PI / 2, 0, 0], [1.0, 1.0, 0.5]);
-      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.sphereLo, i % 2 ? '#ff6fd0' : '#5ff8ff', [Math.cos(a) * 1.85, 0.5, Math.sin(a) * 1.85], null, [0.14, 0.1, 0.14], true); }
-      if (gear && gear.lasers) for (const x of [-1.2, 1.2]) s.add(P.cyl, '#3a3f4a', [x, 0.55, 1.3], [Math.PI / 2, 0, 0], [0.09, 0.9, 0.09]);
-      if (gear && gear.engine) s.add(P.cyl, '#ffb03a', [0, 0.05, 0], null, [0.9, 0.12, 0.9], true);
-      av.ship = C.meshOf(s.build(), 0.05);
-      av.ship.position.y = -0.1;
+  // ---------- Ships (MM.SHIPS): one for each kind of character ----------
+  // Built around the pilot's seat at the origin (seated, facing +z); passengers' seats are
+  // where MM.SHIPS says. Everybody sits at about y 0.5.
+  function seatBox(s, x, y, z, col) { s.add(P.box, col, [x, y + 0.32, z - 0.05], null, [0.62, 0.14, 0.6]); s.add(P.box, col, [x, y + 0.75, z - 0.38], [-0.15, 0, 0], [0.62, 0.8, 0.14]); }
+  C.shipModel = function (kind, gear, look) {
+    const s = new C.Shape(), K = MM.SHIPS[kind] || MM.SHIPS.saucer, glass = '#7ad8ff';
+    const lasers = (x, y, z) => { if (gear && gear.lasers) for (const sx of [-1, 1]) s.add(P.cyl, '#3a3f4a', [x + sx * 0.25, y, z], [Math.PI / 2, 0, 0], [0.08, 0.9, 0.08]); };
+    if (kind === 'cruiser') {
+      // Rick's space cruiser: a battered grey-teal flying car with an open top, a big
+      // windscreen, tail fins, twin thrusters and junk in the back.
+      const hull = '#8fa7ac', dark = '#5a6a70', trim = '#c8d0d2';
+      s.add(P.sphere, hull, [0.45, 0.22, -0.35], null, [1.55, 0.5, 2.5]);
+      s.add(P.box, dark, [0.45, 0.42, -0.45], null, [1.9, 0.12, 2.6]);                  // the open cockpit floor
+      for (const sx of [-1, 1]) s.add(P.box, hull, [0.45 + sx * 1.05, 0.6, -0.4], null, [0.16, 0.42, 2.5]);   // its sides
+      s.add(P.box, trim, [0.45, 0.76, -0.4], null, [2.3, 0.06, 2.7]);
+      s.add(P.box, glass, [0.45, 1.05, 0.95], [-0.5, 0, 0], [1.9, 0.75, 0.05], true);  // windscreen
+      s.add(P.box, '#3a3f4a', [0.45, 0.75, 0.75], null, [1.7, 0.25, 0.35]);             // dashboard
+      s.add(P.cyl, '#2a2a2e', [0, 0.85, 0.55], [1.1, 0, 0], [0.22, 0.04, 0.22]);        // steering wheel
+      for (const sx of [-1, 1]) {
+        s.add(P.box, '#c83a2a', [0.45 + sx * 0.75, 0.75, -2.35], [0.3, 0, 0], [0.12, 0.7, 0.6]);   // tail fins
+        s.add(P.cyl, '#59606e', [0.45 + sx * 0.5, 0.25, -2.75], [Math.PI / 2, 0, 0], [0.26, 0.5, 0.26]);
+        s.add(P.cone, '#5dff8a', [0.45 + sx * 0.5, 0.25, -3.15], [-Math.PI / 2, 0, 0], [0.22, 0.6, 0.22], true);   // green exhaust
+        s.add(P.sphereLo, '#fff4b0', [0.45 + sx * 0.7, 0.3, 2.05], null, [0.16, 0.12, 0.08], true);                // headlights
+      }
+      for (const [x, z, c] of [[0.1, -2.0, '#5dff8a'], [0.45, -2.1, '#ff6fd0'], [0.8, -1.95, '#ffd84d']]) s.add(P.cyl, c, [x, 0.75, z], null, [0.1, 0.3, 0.1], true);   // beakers in the back
+      seatBox(s, 0, 0.1, 0, '#6a4a2a'); seatBox(s, 0.9, 0.1, 0, '#6a4a2a');
+      lasers(0.45, 0.2, 1.9);
+    } else if (kind === 'gunship') {
+      // Space Beth's gunship: a sleek dark-green fighter, swept wings, a tandem canopy.
+      const g = '#3e5a46', d = '#24342a';
+      s.add(P.sphere, g, [0, 0.25, -0.4], null, [0.9, 0.45, 3.0]);
+      s.add(P.cone, g, [0, 0.25, 2.9], [Math.PI / 2, 0, 0], [0.55, 1.2, 0.4]);
+      for (const sx of [-1, 1]) {
+        s.add(P.box, d, [sx * 1.7, 0.2, -1.0], [0, sx * 0.5, 0], [2.6, 0.1, 1.2]);
+        s.add(P.cyl, '#3a3f4a', [sx * 2.6, 0.2, -0.6], [Math.PI / 2, 0, 0], [0.12, 1.4, 0.12]);   // wing guns
+        s.add(P.cone, '#ff9a3a', [sx * 0.45, 0.25, -3.5], [-Math.PI / 2, 0, 0], [0.25, 0.7, 0.25], true);
+      }
+      s.add(P.sphere, glass, [0, 0.75, -0.6], null, [0.55, 0.45, 1.6], true);
+      s.add(P.box, '#ffd84d', [0, 0.5, 1.6], null, [0.05, 0.25, 0.9]);   // a resistance stripe
+      seatBox(s, 0, 0.05, 0, '#2a2a2e'); seatBox(s, 0, 0.35, -1.4, '#2a2a2e');
+    } else if (kind === 'fedship') {
+      // A Federation cruiser: white and blue, an insect-eye canopy, four seats.
+      s.add(P.sphere, '#e8eef4', [0, 0.2, -0.5], null, [2.2, 0.45, 2.4]);
+      s.add(P.torus, '#3c6fb5', [0, 0.35, -0.5], [Math.PI / 2, 0, 0], [2.0, 2.2, 0.6]);
+      s.add(P.hemi, glass, [0, 0.55, -0.5], null, [1.6, 1.2, 1.7], true);
+      for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; s.add(P.sphereLo, '#ffd84d', [Math.cos(a) * 2.05, 0.3, -0.5 + Math.sin(a) * 2.2], null, [0.12, 0.08, 0.12], true); }
+      for (const [x, z] of [[0, 0], [-1.0, -0.7], [1.0, -0.7], [0, -1.4]]) seatBox(s, x, 0.05, z, '#3c6fb5');
+      lasers(0, 0.2, 1.8);
+    } else if (kind === 'blackship') {
+      // Evil Morty's ship: black, angular, gold trim.
+      s.add(P.box, '#18181c', [0.45, 0.25, -0.3], null, [2.0, 0.5, 3.6]);
+      s.add(P.cone, '#18181c', [0.45, 0.25, 2.1], [Math.PI / 2, Math.PI / 4, 0], [1.2, 1.2, 0.35]);
+      for (const sx of [-1, 1]) { s.add(P.box, '#18181c', [0.45 + sx * 1.6, 0.35, -1.1], [0, 0, sx * 0.4], [1.4, 0.1, 1.6]); s.add(P.box, '#ffd84d', [0.45 + sx * 1.02, 0.52, -0.3], null, [0.05, 0.06, 3.5], true); }
+      s.add(P.box, glass, [0.45, 0.9, 0.9], [-0.6, 0, 0], [1.7, 0.6, 0.05], true);
+      s.add(P.cone, '#ffd84d', [0.45, 0.25, -2.4], [-Math.PI / 2, 0, 0], [0.4, 0.8, 0.4], true);
+      seatBox(s, 0, 0.1, 0, '#2a2a2e'); seatBox(s, 0.9, 0.1, 0, '#2a2a2e');
+      lasers(0.45, 0.25, 1.9);
+    } else if (kind === 'minivan') {
+      // Jerry's rocket minivan: a beige family minivan with two big rockets bolted on.
+      const beige = '#d8c8a0';
+      s.add(P.box, beige, [0.47, 0.3, -1.0], null, [2.0, 0.55, 4.6]);
+      s.add(P.box, beige, [0.47, 1.25, -1.25], null, [1.95, 0.9, 3.6]);
+      s.add(P.box, glass, [0.47, 1.25, 0.58], [-0.35, 0, 0], [1.8, 0.75, 0.05], true);
+      for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) s.add(P.box, glass, [0.47 + sx * 0.99, 1.3, 0.1 - i * 1.15], null, [0.04, 0.55, 0.9], true);
+      for (const sx of [-1, 1]) {
+        s.add(P.cyl, '#c8c8c8', [0.47 + sx * 1.35, 0.6, -1.4], [Math.PI / 2, 0, 0], [0.35, 2.8, 0.35]);
+        s.add(P.cone, '#c83a2a', [0.47 + sx * 1.35, 0.6, 0.25], [Math.PI / 2, 0, 0], [0.35, 0.6, 0.35]);
+        s.add(P.cone, '#ffb03a', [0.47 + sx * 1.35, 0.6, -3.1], [-Math.PI / 2, 0, 0], [0.3, 0.9, 0.3], true);
+      }
+      s.add(P.box, '#ffffff', [0.47, 0.75, -3.31], null, [1.0, 0.25, 0.03]);   // a "MY SON IS ON THE HONOR ROLL" sticker
+      for (const [x, z] of MM.SHIPS.minivan.seats.map(q => [q[0], q[2]])) seatBox(s, x, 0.1, z, '#7a6a5a');
+    } else if (kind === 'pinkship') {
+      // Summer's hover-coupe: pink, low, a bubble top, very much not her grandpa's.
+      s.add(P.sphere, '#f68fb8', [0.45, 0.25, -0.2], null, [1.4, 0.45, 2.3]);
+      s.add(P.hemi, glass, [0.45, 0.55, -0.1], null, [1.15, 0.9, 1.3], true);
+      for (const sx of [-1, 1]) { s.add(P.torus, '#ffffff', [0.45 + sx * 1.15, 0.1, -0.2], [0, Math.PI / 2, 0], [0.45, 0.45, 0.4], true); }
+      s.add(P.cone, '#ff6fd0', [0.45, 0.25, -2.4], [-Math.PI / 2, 0, 0], [0.35, 0.7, 0.35], true);
+      seatBox(s, 0, 0.05, 0, '#f4f4f0'); seatBox(s, 0.9, 0.05, 0, '#f4f4f0');
+    } else if (kind === 'mortyship') {
+      // Morty's starter pod: small, yellow, patched up with tape.
+      s.add(P.sphere, '#f8e04a', [0, 0.25, -0.5], null, [0.95, 0.5, 1.8]);
+      s.add(P.hemi, glass, [0, 0.6, -0.4], null, [0.8, 0.75, 1.3], true);
+      for (const [x, z] of [[0.6, 0.6], [-0.5, -1.4]]) s.add(P.box, '#c8c8c8', [x, 0.5, z], [0, 0.5, 0], [0.5, 0.05, 0.15]);   // tape
+      s.add(P.cone, '#ffb03a', [0, 0.25, -2.35], [-Math.PI / 2, 0, 0], [0.3, 0.6, 0.3], true);
+      seatBox(s, 0, 0.05, 0, '#2e5fa8'); seatBox(s, 0, 0.25, -1.15, '#2e5fa8');
+    } else if (kind === 'bethship') {
+      // Beth's flying horse ambulance: white, a red stripe and a red cross, room for a horse.
+      s.add(P.box, '#f4f4f0', [0.47, 0.35, -0.6], null, [2.0, 0.6, 3.8]);
+      s.add(P.box, '#f4f4f0', [0.47, 1.2, -1.5], null, [2.0, 1.1, 2.0]);
+      for (const sx of [-1, 1]) { s.add(P.box, '#c8273a', [0.47 + sx * 1.01, 0.75, -0.6], null, [0.03, 0.2, 3.8]); s.add(P.box, '#c8273a', [0.47 + sx * 1.01, 1.3, -1.5], null, [0.03, 0.6, 0.18]); s.add(P.box, '#c8273a', [0.47 + sx * 1.01, 1.3, -1.5], null, [0.03, 0.18, 0.6]); }
+      s.add(P.box, glass, [0.47, 0.95, 0.9], [-0.5, 0, 0], [1.8, 0.6, 0.05], true);
+      s.add(P.sphereLo, '#ff3a3a', [0.47, 1.85, -0.6], null, [0.2, 0.15, 0.2], true);   // the light
+      s.add(P.cone, '#ffb03a', [0.47, 0.35, -2.8], [-Math.PI / 2, 0, 0], [0.35, 0.7, 0.35], true);
+      for (const q of MM.SHIPS.bethship.seats) seatBox(s, q[0], 0.1 + q[1], q[2], '#c8273a');
+    } else {
+      // The classic flying saucer, in your portal colour.
+      const c = (look && look.portalColor) || '#5ff8ff';
+      s.add(P.sphere, '#c9cfd6', [0, 0.25, -0.2], null, [2.3, 0.42, 2.3]);
+      s.add(P.cyl, '#8f97a0', [0, 0.05, -0.2], null, [1.2, 0.3, 1.2]);
+      s.add(P.hemi, glass, [0, 0.55, -0.2], null, [1.7, 1.2, 1.7], true);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; s.add(P.sphereLo, i % 2 ? '#ff6fd0' : c, [Math.cos(a) * 1.95, 0.3, -0.2 + Math.sin(a) * 1.95], null, [0.14, 0.1, 0.14], true); }
+      for (const q of MM.SHIPS.saucer.seats) seatBox(s, q[0], 0.05, q[2], '#59606e');
+      lasers(0, 0.2, 1.8);
+    }
+    if (gear && gear.engine) s.add(P.cyl, '#ffb03a', [0, -0.12, -0.3], null, [0.9, 0.08, 0.9], true);   // the Turbo Engine glow
+    const m = C.meshOf(s.build(), 0.04);
+    m.userData.kind = kind;
+    return m;
+  };
+  // In your ship: seated at its controls.
+  C.setShip = function (av, on, gear, kind) {
+    kind = kind || MM.shipKind(av.arch);
+    if (on && (!av.ship || av.ship.userData.kind !== kind)) {
+      if (av.ship) av.root.remove(av.ship);
+      av.ship = C.shipModel(kind, gear, av.look);
       av.root.add(av.ship);
     }
     if (av.ship) av.ship.visible = !!on;
+    if (av.crewGroup) av.crewGroup.visible = !!on;
     av.inShip = !!on;
+  };
+  // Locals riding along (the Summer a Rick took on an adventure): seated in their seats.
+  C.setShipCrew = function (av, rows, kind) {
+    if (av.crewGroup) { av.root.remove(av.crewGroup); av.crewGroup = null; }
+    av.crew = [];
+    if (!rows || !rows.length) return;
+    av.crewGroup = C.crewGroup(rows, kind || MM.shipKind(av.arch), av.crew);
+    av.crewGroup.visible = !!av.inShip;
+    av.root.add(av.crewGroup);
+  };
+  C.crewGroup = function (rows, kind, list) {
+    const g = new T.Group();
+    for (const [arch, origin, seat] of rows) {
+      if (!MM.ARCHETYPES[arch]) continue;
+      const a = C.buildAvatar(MM.castLook(arch, origin), arch), q = MM.seatAt(kind, seat, 0, 0, 0, 0);
+      a.root.position.set(q.x, q.y, q.z);
+      g.add(a.root); list.push(a);
+    }
+    return g;
   };
 
   // ---------- Speech bubbles ----------

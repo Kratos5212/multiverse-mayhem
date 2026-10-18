@@ -117,6 +117,30 @@ Your character decides which recipes you know. Breaking out of your life unlocks
 
 Press **B** to board (phone: SHIP). Fly where you look: **W** forward, **Space** up, **Shift** down. You take less damage inside, and with Ship Lasers you fire heavy lasers. With the Dimension Drive, the portal button jumps your ship straight into any world.
 
+**Everyone flies their own ship**, and you sit at its controls:
+
+| Character | Ship | Seats |
+| --- | --- | --- |
+| Rick, Pickle Rick | Rick's Space Cruiser (open-top, tail fins, beakers in the back) | 4 |
+| Space Beth | Her dark-green gunship | 2 |
+| Federation officer | A Federation cruiser | 4 |
+| Evil Morty | A black ship with gold trim | 2 |
+| Jerry | A beige minivan with two rockets bolted on | 6 |
+| Summer | A pink hover-coupe | 2 |
+| Morty | A small yellow pod, patched with tape | 2 |
+| Beth | A flying horse ambulance | 3 |
+| Everyone else | A flying saucer in your portal colour | 3 |
+
+- **Passengers.** Walk up to someone's ship and press **F** to ask for a ride. A teammate just gets in; anyone else, the owner says yes or no. Passengers sit in their seats and go wherever the ship goes, other dimensions included. **B** or **F** hops out.
+- **Parking.** Press **B** in the ship to get out: it stays parked where you left it, with whoever is still in it. **B** next to it gets you back in. From anywhere else, **B** calls it and it flies over to you.
+
+**Keep Summer Safe** ("Mortynight Run"). It only happens when a Summer rides along in a Rick's ship and he parks and walks off. Offline, a Rick can take his Earth's Summer along: talk to her with the ship right there. Online, a Summer player gets in. Once Rick is about 12 m away, the ship guards her: it blasts monsters, and anyone with fights on who gets too close. A Summer player can tell it how:
+- **Keep me safe:** any way it can.
+- **Don't kill anyone:** it paralyses them instead.
+- **Don't hurt anyone:** it gets creative.
+
+It stands down when Rick comes back or Summer gets out.
+
 ## Locals and random events
 
 Every world has locals who walk around with names, faces and opinions: neighbours and students on Earth C-137, flesh monks in Cronenberged Earth, merchants and tourists in the Bazaar, miners on the moon, bird citizens in Bird World. Walk up and press **F** to talk. Anything can happen:
@@ -238,7 +262,7 @@ Tiny, you fit into the **Mega Gargantuans'** land: a whole civilisation on a mos
 - **Tiny Rick** ("Big Trouble in Little Sanchez"). A Rick climbs into the teenage clone vat in the secret lab and comes out Tiny Rick: smaller, faster and bouncier. Now and then the old Rick whispers *let me out* from inside. Talk to the gym coach at Harry Herpson High as Tiny Rick and **Coach Feratu** shows what he is. Use the vat again to go back.
 - **The Immortality Field Resort** ("The Whirly Dirly Conspiracy"). A holiday world under a glassy dome where nothing can die: you just pop back together. Outside the dome, death works normally. The **Whirly Dirly** coaster loops out past the edge for a few seconds. Out there you're mortal, and sometimes a bolt comes loose. The hotel has a spa and a roof to jump off.
 - **Space Beth** is playable ("Star Mort Rickturn of the Jerri"). She's a freedom fighter from the Alien Bazaar with her own ship from the start, a rifle and a war with the Federation: smuggling, sabotage at the Bureau of Forms, and Federation Guards to take down. Her Grapple Strike slams down on everyone around her.
-- **The Five-Step Death Punch** ("Rick Fu Hustle"). Liu Sin, in Downtown, teaches it for 25 Schmeckles. Press **8** (or the fist button) right next to someone. Five steps later they drop. Standing still for a minute makes it wear off. It works on locals too, and on players when you both have fights on.
+- **The Five-Step Death Punch** ("Rick Fu Hustle"). Liu Sin, in Downtown, teaches it for 25 Schmeckles. Press **8** (or the fist button) right next to someone. Five steps **forward** and they drop. Walking backwards (or sideways) is safe: the punched player keeps facing ahead, so **S** walks them backwards. It lasts until a Rick reverses it. Talk to a local Rick, or a Rick player picks "Reverse their death punch" from your player menu. A Rick can also walk back to his own garage and fix himself. It works on locals too (they walk forwards, so they drop), and on players when you both have fights on.
 
 ### Teams
 
@@ -277,7 +301,7 @@ There is no public portal on Earth. To get around you need one of these:
 * **A portal gun.** Ricks own one; Morty has a borrowed one with one charge; Evil Morty's is gold. Anyone else can borrow (steal) Rick's from the workbench in his garage (two jumps, no recharge), grab a charge from a gun owner they knock out, or build their own when their life path allows it. A portal goes to any world, dimension or timeline.
 * **Somebody else's portal.** Portals stay open for a while and anyone can walk through, so a team can follow whoever has the gun.
 * **A portal station.** The Citadel's portal station (free for Ricks and Mortys, 3 Schmeckles for everyone else) and Interdimensional Customs at the Federation (free for troopers).
-* **Your ship.** Fly anywhere on a world (Earth is one big world: the suburb, Downtown, D.C. and Area 51). To leave it, fly **straight up**: at 250 m you leave the atmosphere and are in space, with your planet below and the other worlds of your universe all around it. Above every Earth: the Moon, the **solar system** (the Sun far off, then Mercury, Venus, Mars, Jupiter, Saturn with its rings and its moon Titan, Uranus, Neptune and Pluto) and, further across the galaxy, Bird World, Gazorpazorp, Squanch, the Purge Planet, Unity's planet, Planet Gear, the Bazaar, the Federation, Snake Planet and the rest. Each kind of parallel dimension is a universe of its own (fly up from Bird World in the ice age and you see the ice-age Gazorpazorp and Planet Gear). Floating in Earth's space is **Anatomy Park**: a giant corpse in blue boxers. Fly your ship into any of its holes (mouth, nostrils, ears, nipples, navel, the front door or the back door) to enter the park at that hole's gate. Atlantis is under the sea, not a planet: fly up from it and you are over its Earth. Realms (a dream, the Story Train, beyond the Curve) have no sky to fly out of. Fly into a planet to land on it: the Moon and the solar system need only the ship, the rest of the galaxy the Turbo Engine.
+* **Your ship.** Fly anywhere on a world (Earth is one big world: the suburb, Downtown, D.C. and Area 51). To leave it, fly **straight up**: at 250 m you leave the atmosphere and are in space, with your planet below and the other worlds of your universe all around it. Above every Earth: the Moon, the **solar system** (the Sun far off, then Mercury, Venus, Mars, Jupiter, Saturn with its rings and its moon Titan, Uranus, Neptune and Pluto) and, further across the galaxy, Bird World, Gazorpazorp, Squanch, the Purge Planet, Unity's planet, Planet Gear, the Bazaar, the Federation, Snake Planet and the rest. Each kind of parallel dimension is a universe of its own (fly up from Bird World in the ice age and you see the ice-age Gazorpazorp and Planet Gear). Floating high over Earth (you can see him from the ground) is **Anatomy Park**: Ruben, a huge bald man lying on his back in polka-dot boxers, with hands, feet and toes, his eyes closed. Fly your ship into any of its holes (mouth, nostrils, ears, nipples, navel, the front door or the back door) to enter the park at that hole's gate. Atlantis is under the sea, not a planet: fly up from it and you are over its Earth. Realms (a dream, the Story Train, beyond the Curve) have no sky to fly out of. Fly into a planet to land on it: the Moon and the solar system need only the ship, the rest of the galaxy the Turbo Engine.
 * **Lightspeed.** Out in space, press **L** (or **LIGHT** on a phone) and pick where to go: the stars streak, and you come out in space by that world, dimension or timeline with its planet dead ahead. Another dimension needs the **Dimension Drive**, another timeline the **Quantum Drive**.
 * **Doors.** The Microverse is inside the car battery in Rick's garage; Anatomy Park is inside the corpse floating over Earth (see above), and its gates take you back out to your ship; Froopyland is behind Rick's chalk door. Only the doors go there.
 

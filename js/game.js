@@ -162,7 +162,7 @@
 
   // ---------- Game state ----------
   const SPACE_BLACK = new T.Color('#02030a');
-  const G = { baseFov: 62, pairs: new Map(),
+  const G = { baseFov: 62, pairs: new Map(), parked: new Map(), crewAvs: [],
     mode: 'menu', net: null, myId: 0, ep: 0, dimId: null, inst: 0, world: null, you: null,
     me: { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, grounded: true, fly: 6, kbT: 0, aimT: 0, emoteT: 0, flying: false },
     meAv: null, players: new Map(), npcs: new Map(), pickups: new Map(), portals: new Map(), turrets: new Map(), alive: [],
@@ -410,6 +410,74 @@
       return;
     }
   }
+  // A ship left parked (Host.parkShip): its model, anyone local riding in it, and (Keep
+  // Summer Safe) a shimmering guard dome.
+  function addParked(row) {
+    removeParked(row[0]);
+    const [id, owner, kind, x, y, z, r, oname, npcs, kss] = row;
+    const q = G.players.get(owner), look = owner === G.myId ? profile.look : q && q.info.look;
+    const g = new T.Group(), crew = [];
+    g.add(C.shipModel(kind, owner === G.myId ? myGear() : q && q.info.gear, look));
+    if (npcs && npcs.length) g.add(C.crewGroup(npcs, kind, crew));
+    if (kss) {
+      const dome = new T.Mesh(new T.SphereGeometry(3.4, 24, 12), new T.MeshBasicMaterial({ color: kss === 'kill' ? '#ff3a3a' : kss === 'stun' ? '#ffd84d' : '#7ad8ff', transparent: true, opacity: 0.16, depthWrite: false }));
+      dome.position.set(0.4, 0.8, -0.4); g.add(dome);
+    }
+    const tag = C.makeTag((MM.SHIPS[kind] || MM.SHIPS.saucer).name, '', oname ? 'parked · ' + oname : 'parked', kss ? '#ff6a6a' : '#d6e4ff'); tag.draw(-1);
+    tag.sprite.scale.set(2.6, 0.65, 1); tag.sprite.position.set(0.4, 2.6, 0); g.add(tag.sprite);
+    g.position.set(x, y, z); g.rotation.y = r;
+    scene.add(g);
+    for (const a of crew) G.crewAvs.push(a);
+    G.parked.set(id, { id, owner, kind, x, y, z, r, g, crew, kss, oname, npcs: npcs || [] });
+  }
+  function removeParked(id) {
+    const P = G.parked.get(id);
+    if (!P) return;
+    scene.remove(P.g);
+    G.crewAvs = G.crewAvs.filter(a => !P.crew.includes(a));
+    G.parked.delete(id);
+  }
+  // A local riding along in someone's flying ship.
+  function setCrew(id, rows) {
+    const av = id === G.myId ? G.meAv : G.players.get(id) && G.players.get(id).av;
+    if (!av) return;
+    G.crewAvs = G.crewAvs.filter(a => !(av.crew || []).includes(a));
+    C.setShipCrew(av, rows);
+    for (const a of av.crew || []) G.crewAvs.push(a);
+  }
+  function nearestParked(range) {
+    let best = null, bd = (range || 7) ** 2;
+    for (const P of G.parked.values()) { const d = (P.x - G.me.x) ** 2 + (P.z - G.me.z) ** 2; if (d < bd) { bd = d; best = P; } }
+    return best;
+  }
+  // Someone flying a ship right next to you (bots too): you could ask for a ride.
+  function nearestPilot(range) {
+    let best = null, bd = (range || 6) ** 2;
+    for (const q of G.players.values()) { if (!(q.fx & 512) || !q.av.root.visible) continue; const d = (q.x - G.me.x) ** 2 + (q.z - G.me.z) ** 2; if (d < bd) { bd = d; best = q; } }
+    return best;
+  }
+  function openShipMenu(P) {
+    const K = MM.SHIPS[P.kind] || MM.SHIPS.saucer, mine = P.owner === G.myId;
+    openModal('ship', K.name, box => {
+      box.append(el('p', { class: 'note', text: (mine ? 'Your ship, parked. ' : 'Parked here by ' + (P.oname || 'someone') + '. ') + K.seats.length + ' seats.' + (P.npcs.length ? ' In it: ' + P.npcs.map(c => c[3]).join(', ') + '.' : '') }));
+      const row = el('div', { class: 'chips' });
+      if (mine) {
+        row.append(el('button', { class: 'btn go', onclick: () => { UI.closeModal(); send({ t: 'ship', on: true }); } }, 'Get in and fly (B)'));
+        if (P.npcs.length) row.append(el('button', { class: 'btn', onclick: () => { UI.closeModal(); send({ t: 'sb', id: G.myId, op: 'drop' }); } }, 'Let ' + P.npcs.map(c => c[3].split(' ')[0]).join(' and ') + ' out'));
+      } else row.append(el('button', { class: 'btn go', onclick: () => { UI.closeModal(); send({ t: 'sb', id: P.owner }); } }, 'Get in (ask ' + (P.oname || 'the owner') + ')'));
+      box.append(row);
+    });
+  }
+  function openKss(e) {
+    if (e.off) { if (G.modal === 'kss') UI.closeModal(); return; }
+    openModal('kss', 'Keep Summer Safe', box => {
+      box.append(el('p', { text: 'Grandpa left you in the ship and told it to keep you safe. It will. Very literally. Tell it how:' }),
+        el('div', { class: 'chips' },
+          el('button', { class: 'btn' + (e.mode === 'kill' ? ' go' : ''), onclick: () => { send({ t: 'kss', m: 'kill' }); UI.closeModal(); } }, 'Keep me safe (any way you can)'),
+          el('button', { class: 'btn' + (e.mode === 'stun' ? ' go' : ''), onclick: () => { send({ t: 'kss', m: 'stun' }); UI.closeModal(); } }, 'Don\'t kill anyone'),
+          el('button', { class: 'btn' + (e.mode === 'peace' ? ' go' : ''), onclick: () => { send({ t: 'kss', m: 'peace' }); UI.closeModal(); } }, 'Don\'t hurt anyone')));
+    });
+  }
   function addTurret(row) {
     const [id, owner, x, y, z, big] = row;
     if (G.turrets.has(id)) return;
@@ -428,6 +496,7 @@
     for (const id of [...G.portals.keys()]) removePortal(id);
     for (const id of [...G.turrets.keys()]) removeTurret(id);
     for (const k of [...G.pairs.keys()]) removePair(k);
+    for (const id of [...G.parked.keys()]) removeParked(id);
     fx.clear();
     UI.clearNums();
     if (all) {
@@ -469,6 +538,7 @@
     for (const pk of w.pickups) addPickup(pk);
     for (const po of w.portals) addPortal(po);
     for (const t of w.turrets) addTurret(t);
+    for (const v of w.parked || []) addParked(v);
     setHouse(w.house);
     if (G.offset === null || G.offset === undefined) G.offset = now() - w.tm;
     G.riders = new Map();
@@ -485,6 +555,7 @@
     if (G.prog) C.setGear(G.meAv, myGear());
     C.setShip(G.meAv, !!w.ship, myGear());
     C.setCar(G.meAv, false);   // a car stays in its world
+    for (const [id, rows] of w.crews || []) setCrew(id, rows);
     if (w.event) { UI.banner(w.event.name, w.event.text); }
     else if (changed && MM.QUIRKS[MM.DIM_BY_ID[w.dim].quirk]) UI.banner(MM.DIM_BY_ID[w.dim].name, MM.QUIRKS[MM.DIM_BY_ID[w.dim].quirk]);
     G.offset = null;
@@ -910,6 +981,20 @@
         break;
       }
       case 'car': { const p = posOf(e.id); if (p) sfxAt(e.on ? 'craft' : 'jump', p.x, p.z); break; }
+      case 'sp+': addParked(e.v); break;
+      case 'sp-': removeParked(e.id); break;
+      case 'crew': setCrew(e.id, e.l); break;
+      case 'board': { const p = posOf(e.id); if (p) sfxAt(e.v ? 'craft' : 'jump', p.x, p.z); break; }
+      case 'kss': {
+        const P = G.parked.get(e.id);
+        if (P && Math.hypot(P.x - G.me.x, P.z - G.me.z) < 45) { UI.toast('🚀 The ship: "' + e.text + '"', 3000); if (!P.say) { P.say = C.makeBubble(e.text); P.say.sprite.position.set(0.4, 4, 0); P.g.add(P.say.sprite); setTimeout(() => { if (P.say) { P.g.remove(P.say.sprite); P.say = null; } }, 3500); } }
+        break;
+      }
+      case 'kssb': {
+        const P = G.parked.get(e.id);
+        if (P) { const col = e.m === 'kill' ? '#ff3a3a' : e.m === 'stun' ? '#ffd84d' : '#7ad8ff'; fx.burst(e.x, e.y, e.z, col, 26, 6, 0.5, 0.5, 1); fx.burst(P.x, P.y + 1.4, P.z, col, 10, 3, 0.3, 0.3, 1); sfxAt(e.m === 'kill' ? 'shoot' : 'shrink', P.x, P.z); }
+        break;
+      }
       case 'tiny': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 0.4, p.z, '#7ad8ff', 24, 4, 0.5, 0.5, 1); sfxAt('shrink', p.x, p.z); } break; }
       case 'gift': { const p = posOf(e.id); if (p) fx.burst(p.x, p.y + 1.4, p.z, '#ffd84d', 12, 3, 0.4, 0.4, 1); break; }
       case 'tinyrick': {
@@ -933,8 +1018,9 @@
       }
       case 'dpstep': {
         const p = e.n ? G.npcs.get(e.n) : posOf(e.id);
+        if (e.s < 0) { if (p) fx.burst(p.x, p.y + 1.4, p.z, '#5dff8a', 20, 4, 0.5, 0.5, 1); break; }   // reversed
         if (p) numAt(p.x, p.y + 2.4, p.z, e.s > 0 ? String(e.s) : '☠', '#ff3a3a', e.s <= 1);
-        if (e.id === G.myId) { G.dpSteps = e.s; if (e.s > 0) { UI.toast('☠ ' + e.s + (e.s === 1 ? ' step' : ' steps') + ' left. Stand still!', 1500); C.sfx('bite', 0.6); } else G.dpSteps = 0; }
+        if (e.id === G.myId) { G.dpSteps = e.s; if (e.s > 0) { UI.toast('☠ ' + e.s + (e.s === 1 ? ' step' : ' steps') + ' forward left. Walk backwards!', 1500); C.sfx('bite', 0.6); } else G.dpSteps = 0; }
         break;
       }
       case 'warp': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1, p.z, '#5ff8ff', 40, 10, 0.8, 0.6, 0); sfxAt('warp', p.x, p.z); } break; }
@@ -1039,8 +1125,25 @@
       return;
     }
     if (e.k === 'armsay') { UI.toast('🦾 ' + e.text, 3500); return; }
+    if (e.k === 'sbask') {
+      C.sfx('chat', 0.6);
+      openModal('offer', e.name + ' wants a ride', box => {
+        box.append(el('p', { text: e.name + ' asks to ride in your ship.' }), el('div', { class: 'chips' },
+          el('button', { class: 'btn go', onclick: () => { send({ t: 'sb', id: e.id, op: 'yes' }); UI.closeModal(); } }, 'Hop in'),
+          el('button', { class: 'btn', onclick: () => UI.closeModal() }, 'No room')));
+      });
+      return;
+    }
+    if (e.k === 'kssmenu') { openKss(e); return; }
+    if (e.k === 'kssay') { UI.toast('🚀 The ship: "' + e.text + '"', 3500); return; }
     if (e.k === 'patient') { G.patient = true; UI.banner('You are Patient Zero', 'The love potion got loose, and everyone is in love with you. Run! Their hugs slow you down.'); C.sfx('cheer', 0.6); return; }
-    if (e.k === 'dp') { G.dpSteps = e.s; UI.banner('Five-Step Death Punch!', e.by + ' hit you with it. Five more steps and you drop. Stand still until it wears off (a minute)... or make them count.'); G.shake = 0.5; return; }
+    if (e.k === 'dp') {
+      G.dpSteps = e.s;
+      if (!e.s) { UI.banner('The death punch is gone', 'You can walk forwards again.'); C.sfx('cheer', 0.6); return; }
+      UI.banner('Five-Step Death Punch!', e.by + ' hit you with it. Five steps forward and you drop. Walk backwards (S) to a Rick who can reverse it' + (profile.arch === 'genius' ? ', or back to your own garage.' : '.'));
+      G.shake = 0.5;
+      return;
+    }
     if (e.k === 'dpcd') { G.dpReadyAt = now() + e.t; return; }
     if (e.k === 'bout') {
       if (e.won) { UI.banner('You won in the Ring of Death!', 'The crowd chants your name. ' + Object.keys(e.give).map(k => e.give[k] + ' ' + MM.MATERIALS[k].icon).join(' ') + (e.won > 1 ? ' · ' + e.won + ' wins' : '')); C.sfx('cheer'); }
@@ -1236,6 +1339,9 @@
         el('button', { class: 'btn go', onclick: () => { send({ t: 'tr', op: 'ask', id: q.info.id }); UI.closeModal(); } }, '🤝 Trade'),
         el('button', { class: 'btn go', onclick: () => openGive(q) }, '🎁 Give'),
         el('button', { class: 'btn', onclick: () => { send({ t: 'tm', op: 'inv', id: q.info.id }); UI.closeModal(); } }, 'Invite to team')));
+      if (q.fx & 512) box.append(el('div', { class: 'chips' }, el('button', { class: 'btn go', onclick: () => { send({ t: 'sb', id: q.info.id }); UI.closeModal(); } }, '🚀 Ride in their ship')));
+      // A Rick can reverse a Five-Step Death Punch.
+      if (profile.arch === 'genius' && (q.fx & 65536)) box.append(el('div', { class: 'chips' }, el('button', { class: 'btn go', onclick: () => { send({ t: 'unp', id: q.info.id }); UI.closeModal(); } }, '✚ Reverse their death punch')));
       box.append(el('h3', { text: 'Use something on ' + q.info.name }));
       const list = el('div', { class: 'list' });
       for (const c of usable) {
@@ -1283,7 +1389,7 @@
     if (e.dpunch) {
       const fmt = m => Object.keys(m).map(k => m[k] + ' ' + MM.MATERIALS[k].icon + ' ' + MM.MATERIALS[k].name).join(', ');
       openModal('offer', e.name + ': the Five-Step Death Punch', box => {
-        box.append(el('p', { text: 'One strike, right up close (8, or the fist button). Whoever you hit drops dead after five more steps. If they stand still for a minute, it wears off. Players only if you both have fights on.' }),
+        box.append(el('p', { text: 'One strike, right up close (8, or the fist button). Whoever you hit drops dead after five more steps forward. Backwards is safe, all the way to a Rick who can reverse it. Players only if you both have fights on.' }),
           el('p', { text: 'Price: ' + fmt(e.want) }),
           el('div', { class: 'chips' },
             el('button', { class: 'btn go', onclick: () => { send({ t: 'ans', a: 1 }); UI.closeModal(); } }, 'Teach me'),
@@ -1377,12 +1483,12 @@
     slots.portal.hidden = !travel; $('tPortal').hidden = !travel;
     slots.portal.querySelector('.l').textContent = gun ? 'Portal' : nearKiosk() ? 'Station' : 'Travel';
     tLabel('tPortal', gun ? 'PORTAL' : nearKiosk() ? 'STATION' : 'TRAVEL');
-    slots.ship.hidden = !(st && st.ship) && !y.car;
-    slots.ship.querySelector('.l').textContent = y.car ? 'Get out' : y.ship ? 'Land' : 'Ship';
-    $('tShip').hidden = !(st && st.ship) && !y.car;
+    slots.ship.hidden = !(st && st.ship) && !y.car && !y.ab;
+    slots.ship.querySelector('.l').textContent = y.car || y.ab ? 'Get out' : y.ship ? 'Park' : y.pk ? 'Call ship' : 'Ship';
+    $('tShip').hidden = !(st && st.ship) && !y.car && !y.ab;
     $('tDown').hidden = !y.ship;
     $('tLight').hidden = !(y.ship && MM.DIM_BY_ID[G.dimId].planets);   // out in space: lightspeed
-    tLabel('tShip', y.car ? 'GET OUT' : y.ship ? 'LAND' : 'SHIP');
+    tLabel('tShip', y.car || y.ab ? 'GET OUT' : y.ship ? 'PARK' : 'SHIP');
   }
 
   // ---------- Actions ----------
@@ -1490,6 +1596,7 @@
   function toggleShip() {
     if (!canAct() || pickled()) return;
     if (G.you.car) { send({ t: 'car', on: false }); return; }   // B: out of the car
+    if (G.you.ab) { send({ t: 'ship', on: false }); return; }   // B: out of someone's ship
     if (!G.st || !G.st.ship) { UI.toast('You don\'t have a ship. Build a Ship Hull at the Bazaar Shipyard, if your path allows it (J).', 4000); return; }
     send({ t: 'ship', on: !G.you.ship });
   }
@@ -1535,6 +1642,11 @@
     if (G.riders && G.riders.has(G.myId)) { send({ t: 'fun', a: 'off' }); return; }
     if (G.me.sit) { G.me.sit = null; return; }
     if (G.you.car) { send({ t: 'car', on: false }); return; }   // out of the car
+    if (G.you.ab) { send({ t: 'ship', on: false }); return; }   // out of someone's ship
+    const ps = !G.you.ship && nearestParked();
+    if (ps) { openShipMenu(ps); return; }
+    const pl = !G.you.ship && nearestPilot();
+    if (pl) { send({ t: 'sb', id: pl.info.id }); return; }
     const pq = nearestPlayer();
     if (pq) { openPlayerMenu(pq); return; }
     const lf = nearLandmark();
@@ -2333,6 +2445,22 @@
       tickHouseFx();
       return;
     }
+    // A passenger: you sit in your seat of someone's ship (flying or parked); the server does the same.
+    if (y && y.ab && !y.dead) {
+      const [oid, seat, pid, kind] = y.ab, P = pid ? G.parked.get(pid) : null, o = !pid && G.players.get(oid);
+      const b = P ? { x: P.x, y: P.y, z: P.z, r: P.r } : o ? { x: o.x, y: o.y, z: o.z, r: o.av.root.rotation.y } : null;
+      if (b) {
+        const q = MM.seatAt(kind, seat, b.x, b.y, b.z, b.r);
+        me.x = q.x; me.y = q.y; me.z = q.z; me.vx = me.vy = me.vz = 0; me.yaw = b.r; me.anim = MM.ANIM.sit; me.grounded = true;
+        if (G.meAv) {
+          G.meAv.root.position.set(me.x, me.y, me.z); G.meAv.root.rotation.set(0, me.yaw, 0);
+          G.meAv.animate(dt, { speed: 0, anim: me.anim, fx: y.fx });
+          G.meAv.body.visible = !firstPerson();
+        }
+        tickHouseFx();
+        return;
+      }
+    }
     if (me.sit) {
       const moving = keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD') || keys.has('Space') || Math.hypot(touch.mx, touch.mz) > 0.2;
       if (moving || !y || y.dead) me.sit = null;
@@ -2458,21 +2586,15 @@
         for (const P of dim.planets) {
           if (P.body) {
             // Anatomy Park's corpse: fly into a hole to go in; everywhere else it is solid.
-            const B = MM.BODY, c = Math.cos(B.yaw), sn = Math.sin(B.yaw), wx = nx - P.x, wy = ny + 1 - P.y, wz = nz - P.z;
-            const lx = wx * c - wz * sn, lz = wx * sn + wz * c;
+            const B = MM.BODY, at = [P.x, P.y, P.z], loc = MM.bodyLocal(B, [nx, ny + 1, nz], at), k = B.scale || 1;
             let near = false;
             B.holes.forEach((H, i) => {
-              const d = Math.hypot(lx - H[2][0], wy - H[2][1], lz - H[2][2]);
-              if (d < 12) near = true;
-              if (d < 6 && now() > (G.orbitT || 0)) { G.orbitT = now() + 2.5; send({ t: 'land', d: 'anatomy', h: i }); }
+              const d = Math.hypot(loc[0] - H[2][0], loc[1] - H[2][1], loc[2] - H[2][2]);
+              if (d < 9) near = true;
+              if (d < 4.5 && now() > (G.orbitT || 0)) { G.orbitT = now() + 2.5; send({ t: 'land', d: 'anatomy', h: i }); }
             });
-            if (!near) for (const [px, py, pz, pr] of B.parts) {
-              const ddx = lx - px, ddy = wy - py, ddz = lz - pz, d = Math.hypot(ddx, ddy, ddz), R = pr + 3;
-              if (d < R && d > 0.01) {
-                const k = (R - d) / d, ox = ddx * k, oz = ddz * k;
-                nx += ox * c + oz * sn; nz += -ox * sn + oz * c; ny += ddy * k;
-              }
-            }
+            const out = !near && MM.bodyPush(B, loc, 3 / k);
+            if (out) { const w = MM.bodyPoint(B, out, at); nx = w[0]; ny = w[1] - 1; nz = w[2]; }
             continue;
           }
           const dx = nx - P.x, dy = ny + 1 - P.y, dz = nz - P.z, d = Math.hypot(dx, dy, dz), R = P.r + 4;
@@ -2505,9 +2627,9 @@
     me.emoteT = Math.max(0, me.emoteT - dt);
     const hs = Math.hypot(me.vx, me.vz);
     if (inCar) me.yaw = me.carYaw;   // the car faces its nose; the hood guns aim on their own
-    else if (firstPerson() || me.aimT > 0 || mouseDown || touch.fire) me.yaw = G.camYaw;
+    else if (firstPerson() || me.aimT > 0 || mouseDown || touch.fire || (fxb & 65536)) me.yaw = G.camYaw;   // death-punched: face ahead, so S walks you backwards
     else if (hs > 0.5) me.yaw += wrap(Math.atan2(me.vx, me.vz) - me.yaw) * Math.min(1, dt * 12);
-    me.anim = dead ? MM.ANIM.dead : inCar ? MM.ANIM.sit : inShip ? MM.ANIM.idle : me.flying ? MM.ANIM.fly : !me.grounded ? MM.ANIM.air : me.emoteT > 0 ? MM.ANIM.emote : hs > 0.6 ? MM.ANIM.run : MM.ANIM.idle;
+    me.anim = dead ? MM.ANIM.dead : inCar ? MM.ANIM.sit : inShip ? MM.ANIM.sit : me.flying ? MM.ANIM.fly : !me.grounded ? MM.ANIM.air : me.emoteT > 0 ? MM.ANIM.emote : hs > 0.6 ? MM.ANIM.run : MM.ANIM.idle;
     if (G.meAv) {
       G.meAv.root.position.set(me.x, me.y, me.z);
       G.meAv.root.rotation.y = me.yaw;
@@ -2544,15 +2666,19 @@
     // What F would do right here.
     if ((G.promptT -= dt) <= 0) {
       G.promptT = 0.2;
-      const pq = nearestPlayer(), n = pq ? null : nearestLocal(), l = n || pq ? null : nearLandmark(), nk = !n && !l && !pq && nearKiosk();
-      const key = pq ? 'p' + pq.id : n ? 'n' + n.id : l ? 'l' + l.id : nk ? 'k' : '';
+      const ab = G.you && G.you.ab, ps = !ab && G.you && !G.you.ship && nearestParked(), pl = !ab && !ps && G.you && !G.you.ship && nearestPilot();
+      const pq = ab || ps || pl ? null : nearestPlayer(), n = pq || ab || ps || pl ? null : nearestLocal(), l = n || pq || ab || ps || pl ? null : nearLandmark(), nk = !n && !l && !pq && !ab && !ps && !pl && nearKiosk();
+      const key = ab ? 'ab' : ps ? 's' + ps.id : pl ? 'v' + pl.info.id : pq ? 'p' + pq.id : n ? 'n' + n.id : l ? 'l' + l.id : nk ? 'k' : '';
       if (key !== G.promptKey) {
         G.promptKey = key;
         $('prompt').hidden = !key;
         $('tTalk').hidden = !key;
         $('prompt').textContent = '';
         const b = el('b', { text: isTouch ? 'TALK' : 'F' });
-        if (pq) { $('prompt').append(b, ' ' + pq.info.name + ': trade, give, use something on them'); tLabel('tTalk', 'PLAYER'); }
+        if (ab) { $('prompt').append(b, ' Get out of the ship'); tLabel('tTalk', 'OUT'); }
+        else if (ps) { $('prompt').append(b, ' ' + (MM.SHIPS[ps.kind] || MM.SHIPS.saucer).name + (ps.owner === G.myId ? ' (yours)' : ': ask for a ride')); tLabel('tTalk', 'SHIP'); }
+        else if (pl) { $('prompt').append(b, ' Ask ' + pl.info.name + ' for a ride'); tLabel('tTalk', 'RIDE'); }
+        else if (pq) { $('prompt').append(b, ' ' + pq.info.name + ': trade, give, use something on them'); tLabel('tTalk', 'PLAYER'); }
         else if (n) { $('prompt').append(b, ' Talk to ' + n.name); tLabel('tTalk', 'TALK'); }
         else if (l) {
           const dest = l.door ? MM.DIM_BY_ID[l.door.dim].name : '';
@@ -2622,6 +2748,7 @@
       if (!p.av.root.visible) continue;
       p.av.root.position.set(p.x, p.y, p.z);
       p.av.root.rotation.y = p.r;
+      p.fx = s.fx;
       const inShip = !!(s.fx & 512);
       if (inShip !== !!p.av.inShip) { C.setShip(p.av, inShip, p.info.gear); collectOutlines(p.av); }
       const inCar = !!(s.fx & 8192);
@@ -2640,6 +2767,7 @@
       for (const o of p.av.outlines) o.visible = near || settings.quality === 'high';
       p.tag.sprite.visible = d < 45 && s.a !== MM.ANIM.dead;
     }
+    for (const a of G.crewAvs) if (a.root.parent && a.root.parent.visible !== false) a.animate(dt, { speed: 0, anim: MM.ANIM.sit });
     for (const n of G.npcs.values()) {
       if (sample(n.snaps, rt, tmp)) { n.x = tmp.x; n.y = tmp.y; n.z = tmp.z; n.r = tmp.r; }
       const sp = Math.hypot(n.x - n.px, n.z - n.pz) / Math.max(dt, 1e-3);
@@ -2653,7 +2781,7 @@
       const nd = Math.hypot(n.x - G.me.x, n.z - G.me.z), big = MM.NPCS[n.type].h > 4;
       root.visible = nd < (big ? fogFar : settings.quality === 'low' ? 70 : 110);
       if (!root.visible) continue;
-      if (n.m.av) { n.m.av.animate(dt, { speed: n.speed, anim: n.m.av.inCar ? MM.ANIM.sit : (n.flags & 4) ? MM.ANIM.emote : n.speed > 0.4 ? 1 : 0 }); wantDetail(n.m.av, n.x, n.z); }
+      if (n.m.av) { n.m.av.animate(dt, { speed: n.speed, anim: n.m.av.inCar || n.m.av.inShip ? MM.ANIM.sit : (n.flags & 4) ? MM.ANIM.emote : n.speed > 0.4 ? 1 : 0 }); wantDetail(n.m.av, n.x, n.z); }
       else {
         const md = root.userData.model;
         if (n.type === 'meatblob') { const s = 1 + Math.sin(n.t * (3 + n.speed)) * 0.08; md.scale.set(1 / s, s, 1 / s); }

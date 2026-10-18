@@ -1537,9 +1537,21 @@ test('the Five-Step Death Punch: learn it from Liu Sin, and whoever you hit drop
   host.message(a.c, JSON.stringify({ t: 'dp', r: 0 }));
   assert.ok(b.p.dp && b.p.dp.steps === 5, 'punched');
   assert.ok(host.fxBits(b.p, host.time) & 65536);
-  // Four steps: still standing. The fifth: down.
+  // Walking backwards (facing +z, going -z) is safe, however far.
   let z = 41.5;
-  const step = () => { z += 0.95; host.message(b.c, JSON.stringify({ t: 'st', x: 40, y: MM.heightAt('downtown', 40, z), z, r: 0, a: 1, ep: b.p.ep })); run(host, 0.2); };
+  const step = dir => { z += 0.95 * (dir || 1); host.message(b.c, JSON.stringify({ t: 'st', x: 40, y: MM.heightAt('downtown', 40, z), z, r: 0, a: 1, ep: b.p.ep })); run(host, 0.2); };
+  for (let i = 0; i < 8; i++) step(-1);
+  assert.ok(b.p.dp && b.p.dp.steps === 5, 'backwards does not count');
+  // A Rick reverses it.
+  const r = join(host, 'genius', { dim: 'downtown', home: 'C-139' });
+  host.travel(r.p, 'downtown', { x: 40, z: z + 1 }); run(host, 0.3);
+  host.message(r.c, JSON.stringify({ t: 'unp', id: b.p.id }));
+  assert.ok(!b.p.dp, 'reversed by a Rick');
+  a.p.cdDp = 0;
+  host.teleport(a.p, 40, MM.heightAt('downtown', 40, z - 1.5), z - 1.5); run(host, 0.1);
+  host.message(a.c, JSON.stringify({ t: 'dp', r: 0 }));
+  assert.ok(b.p.dp, 'punched again');
+  // Four steps forward: still standing. The fifth: down.
   for (let i = 0; i < 4; i++) step();
   assert.ok(!b.p.dead && b.p.dp.steps === 1, 'one step left');
   step();
@@ -1550,6 +1562,82 @@ test('the Five-Step Death Punch: learn it from Liu Sin, and whoever you hit drop
   host.teleport(a.p, n.x, n.y, n.z - 1.2); a.p.cdDp = 0; run(host, 0.05);
   host.message(a.c, JSON.stringify({ t: 'dp', r: 0 }));
   assert.ok(n.dp, 'punched a neighbour');
-  for (let i = 0; i < 5; i++) { n.x += 0.95; run(host, 0.05); }
+  for (let i = 0; i < 5; i++) { n.x += 0.95; n.r = Math.PI / 2; n.stun = host.time + 1; run(host, 0.05); }   // walking forwards (+x)
   assert.ok(!a.p.inst.npcs.has(n.id), 'they drop after five steps');
+});
+
+test('ships: everyone flies their own, it holds passengers, and it stays parked where you leave it', () => {
+  const host = new MM.Host();
+  const r = join(host, 'genius', { dim: 'suburbia', home: 'C-137' });
+  const m = join(host, 'sidekick', { dim: 'suburbia', home: 'C-137' });
+  host.travel(r.p, 'suburbia', { x: 0, z: 60 }); host.travel(m.p, 'suburbia', { x: 2, z: 60 }); run(host, 0.3);
+  r.p.prog.up.hull = 1; host.restat(r.p);
+  assert.strictEqual(MM.shipKind('genius'), 'cruiser'); assert.strictEqual(MM.shipKind('joe'), 'minivan');
+  host.message(r.c, '{"t":"ship","on":true}');
+  assert.ok(r.p.ship && r.p.vessel.kind === 'cruiser');
+  // Morty asks for a ride; Rick says yes.
+  host.message(m.c, JSON.stringify({ t: 'sb', id: r.p.id })); run(host, MM.TICK);
+  assert.ok(!m.p.aboard && r.c.sent.some(x => x.t === 'pv' && x.l.some(e => e.k === 'sbask')));
+  host.message(r.c, JSON.stringify({ t: 'sb', id: m.p.id, op: 'yes' }));
+  assert.ok(m.p.aboard === r.p.vessel, 'aboard');
+  // Fly off: Morty comes along, in his seat.
+  r.p.x += 20; run(host, 0.2);
+  const seat = MM.seatAt('cruiser', m.p.aboard.crew.get(m.p.id), r.p.x, r.p.y, r.p.z, r.p.r);
+  assert.ok(Math.hypot(m.p.x - seat.x, m.p.z - seat.z) < 0.01, 'in the passenger seat');
+  host.message(r.c, '{"t":"drive","d":"moon"}'); run(host, 0.2);
+  assert.strictEqual(m.p.inst, r.p.inst, 'went to the Moon together');
+  // Park: the ship stays, Morty still in it.
+  host.message(r.c, '{"t":"ship","on":false}'); run(host, 0.2);
+  const V = r.p.vessel;
+  assert.ok(!r.p.ship && V.parked && r.p.inst.parked.has(V.id) && m.p.aboard === V);
+  assert.ok(r.p.inst.welcomeState().parked.length === 1);
+  // Morty hops out; Rick walks away and calls it from far off: it flies over.
+  host.message(m.c, '{"t":"ship","on":false}');
+  assert.ok(!m.p.aboard && V.crew.size === 0);
+  host.teleport(r.p, V.x + 60, r.p.y, V.z); run(host, 1.2);
+  host.message(r.c, '{"t":"ship","on":true}');
+  assert.ok(r.p.ship && !V.parked && !r.p.inst.parked.has(V.id), 'called back');
+});
+
+test('Keep Summer Safe: only a Rick\'s ship, only with a Summer in it, only once he walks off', () => {
+  const host = new MM.Host();
+  const r = join(host, 'genius', { dim: 'suburbia', home: 'C-137' });
+  host.travel(r.p, 'suburbia', { x: 0, z: 70 }); run(host, 0.3);
+  r.p.prog.up.hull = 1; host.restat(r.p);
+  // The local Summer comes along (Rick talks to her with his ship right there).
+  const sm = [...r.p.inst.npcs.values()].find(n => n.cast && n.cast.arch === 'teen');
+  assert.ok(sm, 'Summer C-137 is around');
+  host.teleport(r.p, sm.x + 1.5, sm.y, sm.z); run(host, 0.1);
+  host.message(r.c, '{"t":"ship","on":true}'); run(host, 1.3);
+  host.message(r.c, JSON.stringify({ t: 'talk', n: sm.id }));
+  const V = r.p.vessel;
+  assert.ok(V.npcs.length === 1 && V.npcs[0].arch === 'teen' && !r.p.inst.npcs.has(sm.id), 'Summer is in the ship');
+  host.message(r.c, '{"t":"ship","on":false}'); run(host, 0.5);
+  assert.ok(V.parked && !V.kss, 'not while Rick is right there');
+  // Rick walks off. A monster comes.
+  host.teleport(r.p, V.x + 40, r.p.y, V.z); run(host, 0.6);
+  assert.ok(V.kss && V.kss.mode === 'kill', 'Keep Summer safe');
+  const mob = r.p.inst.spawnNpc('meatblob', true, { at: { x: V.x + 6, z: V.z } });
+  run(host, 2);
+  assert.ok(!r.p.inst.npcs.has(mob.id), 'the ship took care of it');
+  // A Morty's ship never does this, nor a Rick's ship with nobody in it.
+  host.teleport(r.p, V.x + 2, r.p.y, V.z); run(host, 0.6);
+  assert.ok(!V.kss, 'Rick is back');
+  host.message(r.c, JSON.stringify({ t: 'sb', id: r.p.id, op: 'drop' }));
+  assert.ok(!V.npcs.length && [...r.p.inst.npcs.values()].some(n => n.cast && n.cast.arch === 'teen'), 'Summer got out');
+  host.teleport(r.p, V.x + 40, r.p.y, V.z); run(host, 1);
+  assert.ok(!V.kss, 'empty ship: nothing to keep safe');
+  // A Summer player in it can tell the ship how.
+  const s = join(host, 'teen', { dim: 'suburbia', home: 'C-140' });
+  host.travel(s.p, 'suburbia', { x: V.x + 2, z: V.z }); run(host, 0.3);
+  host.message(s.c, JSON.stringify({ t: 'sb', id: r.p.id }));
+  host.message(r.c, JSON.stringify({ t: 'sb', id: s.p.id, op: 'yes' }));
+  assert.ok(s.p.aboard === V);
+  run(host, 0.6);
+  assert.ok(V.kss, 'with a Summer player too');
+  host.message(s.c, '{"t":"kss","m":"stun"}');
+  assert.strictEqual(V.kss.mode, 'stun');
+  const cop = r.p.inst.spawnNpc('meatblob', true, { at: { x: V.x + 5, z: V.z } });
+  run(host, 1.5);
+  assert.ok(r.p.inst.npcs.has(cop.id) && cop.stun > host.time, 'paralysed, not killed');
 });

@@ -220,20 +220,55 @@
   // Lying on its back above every Earth. Local frame: x along the body (the head at +x), y up
   // (out of the chest), z across. parts: spheres you bump into. holes: the ways in (any of
   // them), each with its own gate inside the park.
+  // Ruben, lying on his back in space, head towards +x, face up (+y), left side towards -z.
+  // Local units; `scale` makes him huge. segs: limbs [ax, ay, az, bx, by, bz, r] (capsules);
+  // blobs: [x, y, z, rx, ry, rz] (ellipsoids: head, chest, belly, boxers). holes: the gates.
   MM.BODY = {
-    at: [-210, 170, 250], yaw: Math.PI / 6,
-    parts: [[70, 0, 0, 14], [80, 11, 0, 3.5], [57, -1, 0, 8], [42, 0, 0, 22], [24, 0, 0, 22], [6, 0, 0, 21], [-10, 0, 0, 19], [42, 0, -30, 7], [26, 0, -34, 6], [10, 0, -36, 6], [42, 0, 30, 7], [26, 0, 34, 6], [10, 0, 36, 6],
-      [-28, 0, -11, 10], [-46, 0, -11, 9], [-64, 0, -11, 8], [-80, 6, -11, 6], [-28, 0, 11, 10], [-46, 0, 11, 9], [-64, 0, 11, 8], [-80, 6, 11, 6]],
+    at: [0, 330, 0], yaw: Math.PI / 6, scale: 2.4,
+    blobs: [
+      [68, 0, 0, 13, 12, 12],      // head
+      [34, 0, 0, 17, 12, 20],      // chest
+      [14, 2, 0, 14, 13, 18],      // belly
+      [-4, 0, 0, 12, 11, 18.5],    // the boxers
+    ],
+    segs: [
+      [56, 0, 0, 45, 0, 0, 7],                                                     // neck
+      [44, -1, -20, 22, -3, -25, 5.6], [22, -3, -25, 2, -4, -26, 4.8], [2, -4, -26, -7, -4, -26, 4.2],   // left arm, hand
+      [44, -1, 20, 22, -3, 25, 5.6], [22, -3, 25, 2, -4, 26, 4.8], [2, -4, 26, -7, -4, 26, 4.2],         // right arm, hand
+      [-10, 0, -9, -40, -1, -10, 8.5], [-40, -1, -10, -68, -1, -10, 6.5], [-71, -1, -10, -73, 8, -10, 4.5],   // left leg, foot (toes up)
+      [-10, 0, 9, -40, -1, 10, 8.5], [-40, -1, 10, -68, -1, 10, 6.5], [-71, -1, 10, -73, 8, 10, 4.5],         // right leg, foot
+    ],
     holes: [
-      ['mouth', 'The Mouth (Main Gate)', [77, 11, 0]], ['lnostril', 'Left Nostril', [83, 14, -1.6]], ['rnostril', 'Right Nostril', [83, 14, 1.6]],
-      ['lear', 'Left Ear', [68, 2, -14.5]], ['rear', 'Right Ear', [68, 2, 14.5]], ['lnipple', 'Left Nipple', [42, 21.5, -10]], ['rnipple', 'Right Nipple', [42, 21.5, 10]],
-      ['navel', 'The Belly Button', [14, 21.5, 0]], ['front', 'The Front Door (through the boxers)', [-12, 19.5, 0]], ['back', 'The Back Door', [-14, -19, 0]],
+      ['mouth', 'The Mouth (Main Gate)', [59, 11, 0]], ['lnostril', 'Left Nostril', [67, 15.5, -1.8]], ['rnostril', 'Right Nostril', [67, 15.5, 1.8]],
+      ['lear', 'Left Ear', [67, 1, -13]], ['rear', 'Right Ear', [67, 1, 13]], ['lnipple', 'Left Nipple', [37, 12, -9]], ['rnipple', 'Right Nipple', [37, 12, 9]],
+      ['navel', 'The Belly Button', [14, 15, 0]], ['front', 'The Front Door (through the boxers)', [-8, 11, 0]], ['back', 'The Back Door', [-10, -11, 0]],
     ],
   };
   // A body point (local) in the space it floats in.
   MM.bodyPoint = (B, p, at) => {
-    const c = Math.cos(B.yaw), s = Math.sin(B.yaw);
-    return [at[0] + p[0] * c + p[2] * s, at[1] + p[1], at[2] - p[0] * s + p[2] * c];
+    const c = Math.cos(B.yaw), s = Math.sin(B.yaw), k = B.scale || 1;
+    return [at[0] + (p[0] * c + p[2] * s) * k, at[1] + p[1] * k, at[2] + (-p[0] * s + p[2] * c) * k];
+  };
+  // ...and back: a point in space, in the body's own units.
+  MM.bodyLocal = (B, w, at) => {
+    const c = Math.cos(B.yaw), s = Math.sin(B.yaw), k = B.scale || 1, x = (w[0] - at[0]) / k, y = (w[1] - at[1]) / k, z = (w[2] - at[2]) / k;
+    return [x * c - z * s, y, x * s + z * c];
+  };
+  // Keep something of radius m (local units) out of the body: the point moved to the
+  // surface if it is inside, or null if it is clear.
+  MM.bodyPush = function (B, p, m) {
+    for (const [x, y, z, rx, ry, rz] of B.blobs) {
+      const dx = p[0] - x, dy = p[1] - y, dz = p[2] - z;
+      const q = Math.hypot(dx / (rx + m), dy / (ry + m), dz / (rz + m));
+      if (q < 1 && q > 1e-4) return [x + dx / q, y + dy / q, z + dz / q];
+    }
+    for (const [ax, ay, az, bx, by, bz, r] of B.segs) {
+      const ux = bx - ax, uy = by - ay, uz = bz - az, L2 = ux * ux + uy * uy + uz * uz;
+      const t = Math.max(0, Math.min(1, ((p[0] - ax) * ux + (p[1] - ay) * uy + (p[2] - az) * uz) / L2));
+      const cx = ax + ux * t, cy = ay + uy * t, cz = az + uz * t, dx = p[0] - cx, dy = p[1] - cy, dz = p[2] - cz, d = Math.hypot(dx, dy, dz);
+      if (d < r + m && d > 1e-4) return [cx + dx / d * (r + m), cy + dy / d * (r + m), cz + dz / d * (r + m)];
+    }
+    return null;
   };
   // Where each hole's gate stands in the park: an arc on the south-west edge, facing in.
   MM.bodyGate = i => { const a = (200 + i * 6) * Math.PI / 180, R = 80; return { x: Math.cos(a) * R, z: Math.sin(a) * R, rot: Math.atan2(-Math.cos(a), -Math.sin(a)) }; };
