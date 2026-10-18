@@ -25,7 +25,7 @@
     eyeholes:   { name: 'Eyeholes cereal', icon: '🥣', color: '#ffb43a', dims: ['suburbia', 'downtown', 'mallin', 'smithhouse'], w: 3, use: 'speed', eat: true, desc: 'The cereal with the holes for eyes.', text: 'Crunchy. Somewhere, a blue man is furious about this.' },
     plumbus:    { name: 'A plumbus', icon: '🔧', color: '#ff8fc8', dims: ['plumbus', 'cableworld', 'smithhouse', 'bazaar'], w: 3, desc: 'Everyone has one. Nobody can explain it.', text: 'You turn it over in your hands. It is a plumbus. That is all it needs to be.' },
     deathcrystal: { name: 'Death Crystal', icon: '💎', color: '#5ff8c8', dims: ['megaseed', 'beyond', 'wasteland'], w: 1, use: 'fate', eat: true, desc: 'Shows you every way you might die.', text: 'You saw yourself dying old and in bed, surrounded by love. For a few seconds nothing can touch you.' },
-    lovepotion: { name: 'Love potion', icon: '🧪', color: '#ff6fd0', dims: ['meatlands', 'suburbia', 'citadel'], w: 1, use: 'love', eat: true, desc: 'Made from vole DNA. What could go wrong.', text: 'Everyone nearby is suddenly very, very into you.' },
+    lovepotion: { name: 'Love potion', icon: '🧪', color: '#ff6fd0', dims: [], w: 0, use: 'love', eat: true, how: 'Built at Rick\'s workbench', desc: 'Made from vole DNA. For a Morty, to use on Jessica. What could go wrong? ("Rick Potion #9")', text: '' },
     kalaxian:   { name: 'Kalaxian Crystals', icon: '🔮', color: '#b48aff', dims: ['gearworld', 'bazaar', 'blips', 'moon'], w: 2, use: 'trip', eat: true, desc: 'They make you see the music.', text: 'Oh wow. The colours have sounds. You feel better and also very confused.' },
     darkmatter: { name: 'Concentrated Dark Matter', icon: '⚫', color: '#4a3a6a', dims: ['federation', 'gearworld', 'moon', 'citadel'], w: 1, use: 'charge', eat: true, desc: 'Rick\'s secret ship fuel. The Federation would kill for the formula.', text: 'One more jump in the portal gun.' },
     fleebjuice: { name: 'Fleeb juice', icon: '🧃', color: '#8fe06a', dims: ['plumbus', 'cableworld'], w: 3, use: 'heal', eat: true, desc: 'Squeezed from a fleeb. Pairs well with a schlami.', text: 'Fleeby. You feel patched up.' },
@@ -111,7 +111,7 @@
 
   // Using one on someone else (Host.onUseOn): 'help' just happens (a snack for a friend),
   // 'hurt' needs both of you to have fights on, 'ask' needs them to say yes.
-  const ON = { feast: 'help', speed: 'help', fate: 'help', heal: 'help', snack: 'help', shield: 'help', rage: 'help', cash: 'help', charge: 'help', love: 'help', trip: 'hurt' };
+  const ON = { feast: 'help', speed: 'help', fate: 'help', heal: 'help', snack: 'help', shield: 'help', rage: 'help', cash: 'help', charge: 'help', trip: 'hurt' };
   for (const k in MM.CURIOS) if (!MM.CURIOS[k].on && ON[MM.CURIOS[k].use]) MM.CURIOS[k].on = ON[MM.CURIOS[k].use];
   // What can change hands between players: materials, gadgets, curios.
   MM.tradeable = k => typeof k === 'string' && (MM.MAT_IDS.includes(k) || (MM.GADGET_IDS || []).includes(k) || (k.startsWith('q:') && !!MM.CURIOS[k.slice(2)]));

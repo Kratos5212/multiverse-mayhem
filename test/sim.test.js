@@ -1429,14 +1429,35 @@ test('the house gets hacked: its turrets shoot everyone until smashed, or a Rick
   assert.ok(!r.p.inst.event, 'cleared');
 });
 
-test('the love potion: everyone wants Patient Zero, then mantis people, then Cronenbergs', () => {
+test('the love potion: only a Morty, only on Jessica; then everyone wants him, then mantis people, then Cronenbergs', () => {
   const host = new MM.Host();
-  const a = join(host, 'surgeon', { dim: 'suburbia', home: 'C-137' });
-  host.travel(a.p, 'suburbia'); run(host, 0.3);
-  const ev = startEvent(host, a.p.inst, 'love');
-  assert.strictEqual(ev.pz, a.p.id, 'Patient Zero');
-  assert.ok(a.c.sent.some(m => m.t === 'pv' && m.l.some(e => e.k === 'patient')));
+  const a = join(host, 'sidekick', { dim: 'suburbia', home: 'C-137' });
+  const b = join(host, 'surgeon', { dim: 'suburbia', home: 'C-137' });
+  host.travel(a.p, 'suburbia'); host.travel(b.p, 'suburbia'); run(host, 0.3);
   const inst = a.p.inst;
+  // It never just happens on its own any more.
+  assert.ok(MM.EVENTS.suburbia.find(E => E.id === 'love').manual);
+  for (let i = 0; i < 40; i++) { inst.event = null; inst.nextEvent = 0; run(host, MM.TICK); assert.ok(!inst.event || inst.event.E.id !== 'love', 'not at random'); }
+  inst.event = null; inst.nextEvent = host.time + 999;
+  for (const n of [...inst.npcs.values()]) if (n.T.hostile) inst.npcs.delete(n.id);   // (what those other events left behind)
+  let jess = [...inst.npcs.values()].find(n => n.type === 'jessica');
+  if (!jess) jess = inst.spawnNpc('jessica', true, { at: { x: 34, z: 8 } });
+  // Not a Morty: nothing. A Morty far from Jessica: nothing.
+  b.p.inv['q:lovepotion'] = 1; host.teleport(b.p, jess.x + 2, jess.y, jess.z);
+  host.message(b.c, '{"t":"uc","id":"lovepotion"}');
+  assert.ok(!inst.event && b.p.inv['q:lovepotion'] === 1, 'only a Morty');
+  assert.ok(!MM.CURIOS.lovepotion.on, 'and never on another player');
+  a.p.inv['q:lovepotion'] = 1; host.teleport(a.p, jess.x + 30, jess.y, jess.z);
+  host.message(a.c, '{"t":"uc","id":"lovepotion"}');
+  assert.ok(!inst.event && a.p.inv['q:lovepotion'] === 1, 'only near Jessica');
+  host.teleport(a.p, jess.x + 2, jess.y, jess.z); a.p.cdCurio = 0; jess.x = a.p.x - 2; jess.z = a.p.z;
+  host.message(a.c, '{"t":"uc","id":"lovepotion"}');
+  const ev = inst.event;
+  assert.ok(ev && ev.E.id === 'love' && !a.p.inv['q:lovepotion'], 'Morty used it on Jessica');
+  assert.ok(jess.owner === a.p.id, 'Jessica is in love with him');
+  assert.strictEqual(ev.pz, a.p.id, 'Patient Zero');
+  run(host, MM.TICK);
+  assert.ok(a.c.sent.some(m => m.t === 'pv' && m.l.some(e => e.k === 'patient')));
   const lovers = () => ev.mine.map(id => inst.npcs.get(id)).filter(Boolean);
   assert.strictEqual(lovers().length, 9);
   // They come for you, and hug (no damage, but it slows you down).
@@ -1453,6 +1474,10 @@ test('the love potion: everyone wants Patient Zero, then mantis people, then Cro
   assert.ok(lovers().every(m => m.type === 'meatblob'), 'Cronenbergs');
   ev.until = host.time; run(host, 0.2);
   assert.ok(!inst.event && ev.mine.every(id => !inst.npcs.has(id)), 'over, and they are gone');
+  // And not again for a long while in this world.
+  a.p.inv['q:lovepotion'] = 1; a.p.cdCurio = 0; jess.x = a.p.x - 2; jess.z = a.p.z;
+  host.message(a.c, '{"t":"uc","id":"lovepotion"}');
+  assert.ok(!inst.event && a.p.inv['q:lovepotion'] === 1, 'the flu season is over');
 });
 
 test('Tiny Rick: a Rick uses the vat, is small and fast, and unmasks Coach Feratu', () => {
@@ -1891,4 +1916,42 @@ test('batch 4: buoyancy ray, portal guillotine, save-point remote, Morphizer', (
   assert.ok(b.p.form.blown, 'disguise blown');
   host.message(b.c, '{"t":"uc","id":"morphizer"}'); run(host, 1.2); host.message(b.c, '{"t":"uc","id":"morphizer"}');
   assert.ok(!b.p.form, 'back to yourself');
+});
+
+test('merging timelines: a Morty who went back keeps it all, and everyone he wronged comes for him until the vat of acid', () => {
+  const host = new MM.Host();
+  const m = join(host, 'sidekick', { dim: 'downtown', home: 'C-137' });
+  const v = join(host, 'joe', { dim: 'downtown', home: 'C-137' });
+  host.travel(m.p, 'downtown', { x: 0, z: 0 }); host.travel(v.p, 'downtown', { x: 3, z: 0 }); run(host, 0.3);
+  const inst = m.p.inst;
+  m.p.inv['q:saveremote'] = 1;
+  host.message(m.c, '{"t":"sv","op":"save"}');
+  // In the "other timeline": he kills two locals and a player (who has fights on).
+  for (let i = 0; i < 2; i++) { const n = inst.spawnNpc('neighbor', true, { at: { x: 5 + i, z: 5 } }); inst.hurtNpc(n, 999, m.p); }
+  m.p.pvp = v.p.pvp = true; v.p.fx.prot = 0; host.kill(inst, v.p, m.p, 'test');
+  assert.strictEqual(m.p.save.sins.people.length, 2);
+  // Back to the save: the timeline splits, and he is asked whether to merge.
+  host.message(m.c, '{"t":"sv","op":"load"}'); run(host, 0.1);
+  assert.ok(m.p.alt && m.c.sent.some(x => x.t === 'pv' && x.l.some(e => e.k === 'merge' && e.n >= 3 && e.people.length === 2)), 'offered the merge');
+  const chaos = m.p.prog.chaos;
+  host.message(m.c, '{"t":"sv","op":"merge"}');
+  assert.ok(m.p.prog.chaos > chaos && m.p.wronged && m.p.wronged.n >= 3, 'merged: keeps it all, and they remember');
+  // The player he killed over there can hit him now, fights or not.
+  m.p.pvp = false; assert.ok(host.canHurt(v.p, m.p), 'revenge allowed');
+  // They come for him...
+  run(host, 25);
+  const hunters = () => [...inst.npcs.values()].filter(n => n.type === 'wronged' && n.hunts === m.p.id);
+  assert.ok(hunters().length >= 1 && hunters().every(n => n.angry === m.p.id), 'they are coming');
+  // ...even in another world.
+  host.travel(m.p, 'suburbia'); run(host, 1);
+  assert.strictEqual(hunters().length, 0, 'left behind there');
+  run(host, 12);
+  assert.ok([...m.p.inst.npcs.values()].some(n => n.type === 'wronged' && n.hunts === m.p.id), 'and they found him here');
+  // The vat of acid ends it.
+  host.travel(m.p, 'downtown'); run(host, 0.3);
+  near(host, m.c, m.p, 'acidvat'); m.p.dead = false;
+  host.message(m.c, JSON.stringify({ t: 'use', l: 'acidvat', task: 'acid' })); run(host, 0.2);
+  assert.ok(!m.p.wronged, 'everyone thinks he is dead');
+  assert.ok(!host.canHurt(v.p, m.p), 'fights off again');
+  assert.ok(![...m.p.inst.npcs.values()].some(n => n.type === 'wronged'), 'nobody is coming');
 });

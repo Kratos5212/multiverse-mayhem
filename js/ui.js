@@ -43,6 +43,7 @@
     buoy: '<circle cx="12" cy="9" r="5"/><path d="M12 14v3M9 21c1-2 5-2 6 0M7 5l-2-2M17 5l2-2"/>',
     guillotine: '<ellipse cx="12" cy="12" rx="9" ry="4"/><path d="M12 3v5M12 16v5M5 12h2M17 12h2"/>',
     save: '<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-6h8v6"/>',
+    merge: '<path d="M6 3v6a6 6 0 0 0 6 6h0a6 6 0 0 1 6 6M18 3v6a6 6 0 0 1-6 6"/>',
     load: '<path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v5h5"/>',
     mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
     vcmd: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M18 4l2-2M20 8h2"/>',

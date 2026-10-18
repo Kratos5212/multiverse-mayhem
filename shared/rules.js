@@ -261,7 +261,12 @@
   // portal around a target and snaps it shut; the save-point remote takes you back.
   MM.BUOY = { dur: 6, rise: 2.6, top: 10 };
   MM.GUILLOTINE = { range: 28, delay: 0.9, ring: 1.7, dmgNpc: 160, dmgBoss: 320, dmgPlayer: 70 };
-  MM.SAVEPOINT = { keep: 900, cd: 20 };   // a save lasts 15 minutes; 20 s between going back
+  MM.SAVEPOINT = { keep: 900, cd: 20 };
+  // The save-point remote doesn't really save: it splits timelines. A Morty who went back can
+  // merge them, and keep it all, consequences included (everyone he killed or wronged over
+  // there comes for him) until he hides in the vat of acid.
+  MM.MERGE = { keep: 600, max: 6, chaosPer: 8, gap: 10 };
+  MM.LOVE = { reach: 6, cd: 1800 };   // the love potion: how close to Jessica; 30 minutes before it can catch again in that world   // a save lasts 15 minutes; 20 s between going back
   MM.FUSE = { dur: 90 };   // Jerricky (the Fusion Device) and Kuato (the pool)
   // Tiny Rick: a Rick in a teenage clone body. Smaller, quicker, bouncier. Inside, the old one wants out.
   MM.TINYRICK = { scale: 0.62, speed: 1.2, jump: 1.25 };
@@ -455,6 +460,7 @@
     buoy:     { cat: 'gadget', name: 'Buoyancy Ray Shot', cost: { s: 2, p: 1 }, max: 4, desc: 'Press 0: whatever it hits floats up into the air for a few seconds, helpless. Then down it comes.' },
     guillotine: { cat: 'gadget', name: 'Portal Guillotine', cost: { c: 3, p: 2, s: 2 }, max: 2, onlyFor: ['genius', 'evilmorty'], desc: 'Press -: a portal opens around whatever you aim at, then snaps shut. Step out of the ring in time, or else.' },
     saveremote: { cat: 'item', name: 'Save-Point Remote', curio: 'saveremote', cost: { c: 4, s: 3, p: 2 }, max: 1, at: 'workbench', desc: 'K saves where you are (and how you are). N takes you back there, from anywhere. If you die, it takes you back once by itself.' },
+    lovepotion: { cat: 'item', name: 'Love Potion', curio: 'lovepotion', cost: { f: 2, g: 2, m: 1 }, max: 1, at: 'workbench', onlyFor: ['genius', 'sidekick'], desc: 'Vole DNA. Only a Morty can use it, and only on Jessica. Then the flu gets it, and it gets everyone.' },
     morphizer: { cat: 'item', name: 'Morphizer-XE', curio: 'morphizer', cost: { g: 3, c: 2, f: 1 }, max: 1, at: 'workbench', desc: 'Turns you into one of the locals for two minutes. Their monsters leave you alone, until you start something.' },
     carrot:   { cat: 'gadget', name: 'Carrot Ray Shot', cost: { s: 3, f: 1 }, max: 3, desc: 'Press 9: one shot that turns whoever it hits into a carrot for a while.' },
     armserum: { cat: 'item', name: 'Muscle Memory Serum', curio: 'armserum', cost: { g: 2, m: 2, c: 1 }, max: 3, at: 'workbench', onlyFor: ['genius'], desc: 'A dead warrior\'s arm, in a syringe. Give it to a Morty, or use it on one (they have to say yes).' },
@@ -489,7 +495,7 @@
   MM.RECIPE_IDS = Object.keys(MM.RECIPES);
   MM.GADGET_IDS = ['grenade', 'turret', 'shrink', 'meeseeks', 'timecrystal', 'freeze', 'chalk', 'carrot', 'buoy', 'guillotine'];
   // Recipes everyone knows, whoever they are.
-  MM.COMMON = ['meeseeks', 'megabrain', 'miniaturizer', 'armserum', 'turkeypill', 'ferrofluid', 'carserum', 'fusiondevice', 'carrot', 'buoy', 'saveremote', 'morphizer'];
+  MM.COMMON = ['meeseeks', 'megabrain', 'miniaturizer', 'armserum', 'turkeypill', 'ferrofluid', 'carserum', 'fusiondevice', 'carrot', 'buoy', 'saveremote', 'morphizer', 'lovepotion'];
   MM.CATS = { gadget: 'Gadgets', item: 'Things to carry, give and use', self: 'You', gun: 'Portal gun', ship: 'Ship' };
 
   // ---------- Who you are ----------

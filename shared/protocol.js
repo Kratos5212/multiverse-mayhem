@@ -42,7 +42,7 @@
     vc: m => typeof m.on === 'boolean' ? { on: m.on } : null,               // voice chat on or off
     rtc: m => (int(m.to, 0, 1e12) && rtcOk(m.d)) ? { to: m.to, d: m.d } : null,   // the WebRTC handshake, to pass on
     fz: m => m.op === 'split' ? { op: 'split' } : null,                     // pull apart from a fusion
-    sv: m => ['save', 'load'].includes(m.op) ? { op: m.op } : null,           // the save-point remote
+    sv: m => ['save', 'load', 'merge'].includes(m.op) ? { op: m.op } : null,           // the save-point remote
     dp: m => num(m.r, -10, 10) ? { r: m.r } : null,               // the Five-Step Death Punch, facing r
     po: m => (str(m.d, 16) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null,   // open a portal
     ki: m => (str(m.d, 16) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null,   // use the public kiosk

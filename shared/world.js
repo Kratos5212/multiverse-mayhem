@@ -1246,6 +1246,12 @@
     tammy: { name: 'Tammy', hp: 70, speed: 2.6, hostile: false, guard: true, dmg: 12, drop: { k: 2 }, r: 0.6, h: 1.75,
       human: { species: ['human'], top: ['tshirt'], acc: ['none'], look: { hair: 'ponytail', brow: 'normal', eyes: 'normal', mouth: 'grin', face: 'round', height: 1.0, width: 0.9, head: 1.0, skin: '#f2d2b6', hairColor: '#c8402a', topColor: '#5ab0e8', shirtColor: '#5ab0e8', pantsColor: '#3a3a5a', shoeColor: '#f2f2f2', accColor: '#c8402a' } },
       names: ['Tammy'], talk: ['Oh my God, I love weddings! Totally normal guest here.', 'I am not a Federation agent. Why would you even ask that?', 'Birdperson is soooo dreamy.'] },
+    // The other timeline, merged into this one: the people a Morty killed or wronged there (and
+    // their families). They come for him, wherever he goes, until the vat of acid.
+    wronged: { name: 'Wronged Local', hp: 60, speed: 6.2, hostile: false, dmg: 9, drop: { k: 1 }, r: 0.6, h: 1.8, leash: 99999, aggro: 99999,
+      human: { species: ['human', 'human', 'alien'], top: ['tshirt', 'polo', 'sweater'], acc: ['none', 'cap'] },
+      names: ['Someone you wronged'],
+      talk: ['You! I remember now. You did that to me!', 'Two timelines, Morty. I remember BOTH.', 'There he is! Get him!', 'You thought you could just load a save?'] },
     jessica: { name: 'Jessica', hp: 50, speed: 2.6, hostile: false, dmg: 0, drop: { f: 1 }, r: 0.6, h: 1.7,
       human: { species: ['human'], top: ['tshirt'], acc: ['none'], look: { hair: 'ponytail', brow: 'normal', eyes: 'normal', mouth: 'grin', face: 'round', height: 0.95, width: 0.9, head: 1.0, skin: '#f8dcc4', hairColor: '#d8502a', topColor: '#f2a03a', shirtColor: '#f2a03a', pantsColor: '#3a4a7a', shoeColor: '#f2f2f2', accColor: '#d8502a' } },
       names: ['Jessica'], talk: ['Oh, hi! Are you a friend of Morty\'s?', 'Morty is sweet. A little weird. Mostly weird.', 'Brad and I are just friends. Like, mostly.'] },
@@ -1692,7 +1698,7 @@
       // The house defences turn on everyone. Smash them all, or a Rick reboots them at the console.
       { id: 'hoghack', name: 'House Hacked!', text: 'Someone hacked the Smith house. Its turrets and drones are shooting at everyone. Smash them, or get a Rick to the console.', house: [['housebot', 4], ['housedrone', 3]], clear: { k: 6, s: 4 }, dur: 120 },
       // Rick Potion #9: one player is Patient Zero. Everyone wants them. Then it gets worse.
-      { id: 'love', name: 'Love Potion Outbreak!', text: 'The love potion got into the flu season. Everyone is in love with Patient Zero.', patient: 1, dur: 180 },
+      { id: 'love', name: 'Love Potion Outbreak!', text: 'Morty\'s love potion got into the flu season. Everyone is in love with him.', patient: 1, dur: 180, manual: true },   // only when a Morty uses the love potion on Jessica
     ],
     meatlands: [
       { id: 'meatrain', name: 'Meat Rain', text: 'It is raining goo. Grab it while it is warm.', loot: ['g', 16], dur: 40 },

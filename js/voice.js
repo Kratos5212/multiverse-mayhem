@@ -151,6 +151,7 @@
     }
     // The save-point remote.
     if (has('save point', 'save game', 'save here', 'save it', 'remote save') || /^(hey |ok |okay )?remote,? save\b/.test(t)) return { save: 'save', label: 'Save point' };
+    if (has('merge timeline', 'merge the timeline', 'merge them')) return { save: 'merge', label: 'Merge timelines' };
     if (has('load', 'go back to my save', 'reload')) return { save: 'load', label: 'Back to the save point' };
     // Car Morty.
     if (has('car transformation', 'transform into a car', 'turn into a car', 'car sequence')) return { carMorty: true, label: 'Car transformation sequence' };
