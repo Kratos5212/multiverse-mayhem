@@ -3898,27 +3898,28 @@
       } else if (type === 'turkeysoldier' || type === 'turkeypres' || type === 'carrotnpc') {
         C.formShape(type, s);   // (js/avatar.js: the turkeys of the coup, a local hit by the carrot ray)
       } else if (type === 'giantbaby') {
-        // A baby the size of a building, on all fours: a huge head, a nappy, chubby everything.
+        // A baby the size of a building, floating in space: sitting up in mid-air, chubby legs
+        // tucked forward, arms reaching out, a huge head, a nappy.
         const sk = '#f4c4a8', pk = '#ec9a8a';
-        s.add(P.sphere, sk, [0, 5.2, -0.6], null, [3.8, 3.4, 5]);                        // body
-        s.add(P.sphere, '#f8f8f4', [0, 4.8, -4.4], null, [4.1, 3.2, 3.2]);               // the nappy
-        s.add(P.box, '#7ad8ff', [0, 7.1, -3.2], null, [1.2, 0.3, 0.9]);                  // its safety pin
-        s.add(P.sphere, sk, [0, 8.4, 4.2], null, [4.4, 4.2, 4.2]);                       // head
+        s.add(P.sphere, '#f8f8f4', [0, 2.9, 0], null, [3.5, 2.7, 3.3]);                  // the nappy
+        s.add(P.box, '#7ad8ff', [0, 3.9, 3.1], [0.3, 0, 0], [1.2, 0.3, 0.5]);             // its safety pin
+        s.add(P.sphere, sk, [0, 5.6, 0.1], null, [3.5, 3.4, 3.1]);                       // tummy
+        s.add(P.sphere, sk, [0, 10.2, 0.5], null, [4.3, 4.1, 4.1]);                      // head
         for (const sx of [-1, 1]) {
-          limb(s, sk, 1.5, [sx * 2.9, 6.6, 2.2], [sx * 3.4, 0.9, 5.2]);                  // arms
-          s.add(P.sphere, sk, [sx * 3.4, 0.9, 5.8], null, [1.5, 1, 1.8]);               // hands
-          limb(s, sk, 1.8, [sx * 2.4, 4.2, -4.6], [sx * 2.8, 1.2, -2.2]);                // thighs
-          limb(s, sk, 1.5, [sx * 2.8, 1.2, -2.2], [sx * 2.8, 1.0, -6.6]);                // shins
-          s.add(P.sphere, sk, [sx * 2.8, 1.4, -7.2], null, [1.3, 1.1, 1.6]);            // feet
-          s.add(P.sphere, '#ffffff', [sx * 1.6, 9.2, 7.8], null, [1.1, 1.3, 0.7]);      // eyes
-          s.add(P.sphere, '#2a3a5a', [sx * 1.6, 9.2, 8.35], null, [0.6, 0.75, 0.3]);
-          s.add(P.sphere, pk, [sx * 2.6, 7.6, 7.2], null, [1, 0.7, 0.6]);               // cheeks
-          s.add(P.sphere, sk, [sx * 4.3, 8.6, 4], null, [0.7, 1.2, 1]);                 // ears
+          limb(s, sk, 1.3, [sx * 3, 7.2, 0.3], [sx * 5.2, 8.4, 3.2]);                    // arms, reaching out
+          s.add(P.sphere, sk, [sx * 5.6, 8.7, 3.8], null, [1.3, 1.3, 1.3]);             // hands
+          limb(s, sk, 1.7, [sx * 1.9, 2.6, 0.8], [sx * 2.7, 3.4, 4.6]);                  // thighs, tucked forward
+          limb(s, sk, 1.4, [sx * 2.7, 3.4, 4.6], [sx * 2.5, 0.9, 3.6]);                  // shins, dangling
+          s.add(P.sphere, sk, [sx * 2.5, 0.7, 4.3], null, [1.2, 1, 1.7]);               // feet
+          s.add(P.sphere, '#ffffff', [sx * 1.55, 10.9, 4.2], null, [1.1, 1.3, 0.7]);    // eyes
+          s.add(P.sphere, '#2a3a5a', [sx * 1.55, 10.9, 4.75], null, [0.6, 0.75, 0.3]);
+          s.add(P.sphere, pk, [sx * 2.6, 9.4, 3.7], null, [1, 0.7, 0.6]);               // cheeks
+          s.add(P.sphere, sk, [sx * 4.2, 10.4, 0.4], null, [0.7, 1.2, 1]);              // ears
         }
-        s.add(P.sphere, '#c85a5a', [0, 6.9, 8.1], null, [1.2, 0.8, 0.5]);                // a big open mouth
-        s.add(P.sphere, sk, [0, 8, 8.5], null, [0.7, 0.55, 0.5]);                       // button nose
-        limb(s, '#f0d070', 0.35, [0, 12.4, 4.4], [0.4, 13.6, 5.4]);                      // one curl of hair
-        limb(s, '#f0d070', 0.3, [0.4, 13.6, 5.4], [-0.3, 14, 6]);
+        s.add(P.sphere, '#c85a5a', [0, 8.8, 4.3], null, [1, 0.8, 0.5]);                  // a little open mouth
+        s.add(P.sphere, sk, [0, 10, 4.7], null, [0.7, 0.55, 0.5]);                      // button nose
+        limb(s, '#f0d070', 0.35, [0, 14.2, 0.6], [0.4, 15.4, 1.6]);                      // one curl of hair
+        limb(s, '#f0d070', 0.3, [0.4, 15.4, 1.6], [-0.3, 15.8, 2.2]);
       } else if (type === 'housebot') {
         // A lawn turret from the Smith house, hacked: red eye, twin barrels, a lot of attitude.
         s.add(P.cyl, '#59606e', [0, 0.4, 0], null, [0.9, 0.8, 0.9]);

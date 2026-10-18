@@ -1385,6 +1385,8 @@
     turkeypres: { name: 'The Turkey President', hp: 600, speed: 3.6, hostile: true, dmg: 18, drop: { k: 15, f: 4, m: 1 }, r: 1.2, h: 2.6, gun: 'rifle', turkey: true, aggro: 30, leash: 60 },
     carrotnpc: { name: 'A carrot', hp: 10, speed: 0.6, hostile: false, dmg: 0, drop: { f: 1 }, r: 0.4, h: 0.9, talk: ['...', '*rustles leaves*', 'I used to be somebody.'], moods: { line: 100 } },
     // ----- Batch 2 -----
+    // It is always out there, asleep, floating in its corner of space (MM.BABY). Come within
+    // `wake` metres (or shoot it) and it wakes up: the Giant Baby event.
     giantbaby: { name: 'Giant Baby', hp: 4000, speed: 12, hostile: true, dmg: 25, drop: { k: 10, g: 6 }, r: 18, h: 42, aggro: 320, leash: 9999, stomp: true, space: true, scale: 3.5 },   // floats in space (T.space), model x3.5
     // "A Ricker Runs Through It": somebody hacked the Smith house. Its lawn turrets and its
     // drones fire on everyone, family included, until they are smashed (or a Rick reboots it).
@@ -1686,11 +1688,12 @@
   // Random world events, one at a time per dimension copy, every few minutes.
   //   spawn: temporary NPCs [type, count]   loot: material pickups rained near players
   //   booms: random explosions near players   talkBoost: locals are extra generous
+  MM.BABY = { at: { x: -650, y: 330, z: 420 }, wake: 170, respawn: 600 };   // where the Giant Baby sleeps; how close wakes it; minutes back after it goes down
   MM.EVENTS = {
     // Out in space, round any world: a baby the size of a skyscraper, floating, and hungry.
     // Take it down from your ships.
     space: [
-      { id: 'giantbaby', name: 'Giant Baby!', text: 'A baby the size of a skyscraper is floating through space, swatting ships out of the sky. Nobody knows where it came from. Rick says: do not ask. Take it down!', boss: [['giantbaby', 1]], clear: { k: 20, m: 2, c: 6 }, dur: 240 },
+      { id: 'giantbaby', name: 'Giant Baby!', text: 'You woke the Giant Baby. It is floating your way, swatting ships out of the sky. Nobody knows where it came from. Rick says: do not ask. Take it down, or get far away!', boss: [['giantbaby', 1]], clear: { k: 20, m: 2, c: 6 }, dur: 240, manual: true },   // starts when someone comes near it (Instance.tickBaby)
     ],
     suburbia: [
       { id: 'party', name: 'Block Party!', text: 'The neighbours are throwing a block party. Free stuff if you chat.', spawn: [['neighbor', 6]], talkBoost: 1, dur: 70 },

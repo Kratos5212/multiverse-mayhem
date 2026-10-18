@@ -202,6 +202,7 @@
       if (this.gal) this.host.tickGalleries(this, now);
       this.tickPortals(now);
       if (this.players.size) this.tickEvents(now);
+      if (this.dim.planets && this.host.tickN % 15 === 0) this.tickBaby(now);
       // Props grow back a minute after they are destroyed.
       this.props.forEach((p, i) => {
         if (p.hp <= 0 && p.deadUntil && now >= p.deadUntil) {
@@ -240,7 +241,11 @@
       const ev = this.event;
       this.ev({ k: 'world', end: 1, name: ev.E.name, text: text || '' });
       // Events that took over the locals (or the house) put everything back at once.
-      if (ev.E.house || ev.E.patient || ev.E.boss || ev.E.squad) for (const id of ev.mine || []) { if (this.npcs.delete(id)) this.ev({ k: 'npc-', id }); }
+      if (ev.E.house || ev.E.patient || ev.E.boss || ev.E.squad) for (const id of ev.mine || []) {
+        const n = this.npcs.get(id);
+        if (n && n.keep) { n.dormant = true; n.angry = 0; continue; }   // the Giant Baby goes back to sleep
+        if (this.npcs.delete(id)) this.ev({ k: 'npc-', id });
+      }
       this.event = null;
       this.nextEvent = now + 150 + Math.random() * 150;
     }
@@ -251,6 +256,31 @@
       const m = this.spawnNpc(type, true, Object.assign({ at: { x: n.x, z: n.z } }, opts || {}));
       m.home = n.home;
       return m;
+    }
+    // The Giant Baby: always somewhere in space, asleep. Anyone who comes near (or shoots it)
+    // wakes it, and that is the Giant Baby event. Put it down and it is back in 10 minutes.
+    tickBaby(now) {
+      let b = this.baby && this.npcs.get(this.baby);
+      if (!b) {
+        if (this.baby) { this.baby = 0; this.babyAt = now + MM.BABY.respawn; }
+        if (now < (this.babyAt || 0)) return;
+        const A = MM.BABY.at;
+        b = this.spawnNpc('giantbaby', false, { at: { x: A.x, z: A.z } });
+        b.y = A.y; b.home = { x: A.x, z: A.z, y: A.y }; b.keep = true; b.dormant = true; b.temp = 0;
+        this.ev({ k: 'npc+', n: this.npcRow(b) });
+        this.baby = b.id;
+      }
+      if (!b.dormant) return;
+      const W = MM.BABY.wake;
+      for (const p of this.players.values()) if (!p.dead && Math.hypot(p.x - b.x, p.y - (b.y + b.T.h / 2), p.z - b.z) < W) { this.wakeBaby(b, p, now); return; }
+    }
+    wakeBaby(b, p, now) {
+      if (!b.dormant) return;
+      b.dormant = false;
+      if (p) { b.angry = p.id; b.angryUntil = now + 8; }
+      const E = (MM.EVENTS.space || []).find(e => e.id === 'giantbaby');
+      if (this.event) this.endEvent(now);
+      if (E) this.beginEvent(E, now, { boss: b });
     }
     tickEvents(now) {
       if (this.event) {
@@ -307,7 +337,8 @@
         ev.mine.push(this.spawnNpc(type, true, { at: { x, z }, until: now + E.dur + 5 }).id);
       } }
       // A boss turns up a way off and comes for you.
-      if (E.boss) for (const [type, n] of E.boss) for (let i = 0; i < n; i++) {
+      if (E.boss && opts && opts.boss) ev.mine.push(opts.boss.id);   // (one already here: the Giant Baby, woken up)
+      else if (E.boss) for (const [type, n] of E.boss) for (let i = 0; i < n; i++) {
         const p = pick(players), a = Math.random() * 6.28, d = 55 + Math.random() * 20;
         const m = this.spawnNpc(type, false, { at: { x: clampXZ(p.x + Math.cos(a) * d * (this.dim.planets ? 3 : 1)), z: clampXZ(p.z + Math.sin(a) * d * (this.dim.planets ? 3 : 1)) }, until: now + E.dur + 5 });
         if (this.dim.planets) { m.y = p.y + 20; m.home = { x: m.x, z: m.z, y: m.y }; }
@@ -493,6 +524,7 @@
         }
       }
       this.ev({ k: 'dmg', n: n.id, d: dmg });
+      if (n.dormant) this.wakeBaby(n, owner, this.host.time);
       if (n.hp > 0) return;
       // Inside an immortality field nothing dies: it just pulls itself back together.
       if (MM.inField(this.dimId, n.x, n.z)) { n.hp = n.T.hp; this.ev({ k: 'reform', n: n.id }); return; }
@@ -513,7 +545,7 @@
       for (const k in n.T.drop) this.spawnPickup(k, true, { x: n.x + (i++ - 0.5) * 1.4, z: n.z }, n.T.drop[k]);
       if (owner) { owner.prog.chaos += 2; this.host.progress(owner, 'kill', n.type); if (!n.T.hostile && n.type !== 'wronged') this.host.sin(owner, 'kill', n.name || n.T.name); }
       if (n.cast) { n.cast.npc = null; n.cast.downUntil = this.host.time + 90; n.cast.at = n.cast.origin; }
-      else if (!n.temp) {
+      else if (!n.temp && !n.keep) {   // (the Giant Baby comes back on its own schedule: tickBaby)
         const type = n.type;
         this.host.later(25, () => { if (this.host.instances.get(this.key) === this) this.spawnNpc(type, true); });
       }
@@ -568,6 +600,14 @@
         let goal = null, speed = T.speed;
         const owner = n.owner && now < n.ownerUntil ? this.host.players.get(n.owner) : null;
         if (n.owner && !owner) { n.owner = 0; this.ev({ k: 'nfree', n: n.id }); }
+        if (n.dormant) {   // the Giant Baby asleep: drifting home, bobbing, turning slowly
+          const H = n.home, dx = H.x - n.x, dz = H.z - n.z, dy = H.y - n.y, l = Math.hypot(dx, dy, dz), step = Math.min(l, T.speed * 0.5 * dt);
+          if (l > 1) { n.x += dx / l * step; n.y += dy / l * step; n.z += dz / l * step; }
+          else n.y = H.y + Math.sin(now * 0.25) * 3;
+          n.hp = Math.min(T.hp, n.hp + 25 * dt);   // and it heals while it sleeps
+          n.r += dt * 0.04;
+          continue;
+        }
         if (n.buoy) {   // the buoyancy ray: up it goes, helpless, then down again
           const g = MM.heightAt(this.dimId, n.x, n.z) + (T.fly || 0);
           if (now < n.buoy) { n.y = Math.min(g + MM.BUOY.top, Math.max(n.y, g) + MM.BUOY.rise * dt); continue; }

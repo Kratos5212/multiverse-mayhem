@@ -3010,6 +3010,7 @@
         if (n.type === 'meatblob') { const s = 1 + Math.sin(n.t * (3 + n.speed)) * 0.08; md.scale.set(1 / s, s, 1 / s); }
         else if (n.type === 'jelly') { const s = 1 + Math.sin(n.t * 2) * 0.1; md.scale.set(s, 1 / s, s); }
         else if (n.type === 'mooncrab') md.position.y = Math.abs(Math.sin(n.t * 12)) * 0.08 * Math.min(1, n.speed);
+        else if (n.type === 'giantbaby') { md.rotation.z = Math.sin(n.t * 0.5) * 0.08; md.rotation.x = Math.sin(n.t * 0.37) * 0.07; md.position.y = Math.sin(n.t * 0.6) * 1.5; }   // floating: a slow bob and sway
         else if (n.type === 'skyserpent') { md.rotation.z = Math.sin(n.t * 4) * 0.25; md.rotation.x = Math.sin(n.t * 2) * 0.15; }
       }
       // Following you: green sparkles. Angry: red. Stunned: yellow. Dancing: pink.

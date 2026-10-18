@@ -1668,25 +1668,38 @@ test('Keep Summer Safe: only a Rick\'s ship, only with a Summer in it, only once
   assert.ok(r.p.inst.npcs.has(cop.id) && cop.stun > host.time, 'paralysed, not killed');
 });
 
-test('the Giant Baby floats in space: it comes after your ship, and pays out when it goes down', () => {
+test('the Giant Baby is always out in space, asleep: come near and it wakes (the event), put it down and it pays', () => {
   const host = new MM.Host();
   const a = join(host, 'genius', { dim: 'suburbia', home: 'C-137' });
   a.p.prog.up.hull = 1; host.restat(a.p);
-  host.travel(a.p, 'sp_c137', { x: 300, z: 300, y: 300 }); run(host, 0.3);
+  host.travel(a.p, 'sp_c137', { x: 300, z: 300, y: 300 }); run(host, 0.6);
   assert.ok(a.p.ship, 'in space, in the ship');
   assert.ok(!MM.EVENTS.suburbia.some(E => E.id === 'giantbaby') && MM.EVENTS.space.some(E => E.id === 'giantbaby'), 'not on Earth: in space');
-  const inst = a.p.inst, list = MM.EVENTS.space, saved = list.slice();
-  inst.event = null; inst.nextEvent = 0; run(host, MM.TICK * 2);
-  list.length = 0; list.push(...saved);
+  const inst = a.p.inst, A = MM.BABY.at;
+  const baby = inst.npcs.get(inst.baby);
+  assert.ok(baby && baby.dormant && Math.hypot(baby.x - A.x, baby.z - A.z) < 1 && Math.abs(baby.y - A.y) < 5, 'there, asleep');
+  run(host, 30);
+  assert.ok(!inst.event && baby.dormant && Math.hypot(baby.x - A.x, baby.z - A.z) < 1, 'it never starts by itself, and it stays put');
+  // Fly close: it wakes up.
+  a.p.x = A.x + 120; a.p.z = A.z; a.p.y = A.y + 20; a.p.fx.prot = 0; run(host, 0.6);
   const ev = inst.event;
-  assert.ok(ev && ev.E.id === 'giantbaby');
-  const baby = inst.npcs.get(ev.mine[0]);
-  assert.ok(baby && baby.T.space && Math.abs(baby.y - a.p.y) < 60, 'floating up here with us');
-  const y0 = baby.y; a.p.y += 80; a.p.fx.prot = 0; run(host, 3);
+  assert.ok(ev && ev.E.id === 'giantbaby' && !baby.dormant && ev.mine[0] === baby.id, 'woken: the event');
+  const y0 = baby.y; a.p.y += 80; run(host, 3);
   assert.ok(baby.y > y0 + 10, 'it floats after you');
+  // Time runs out: back to sleep, back home (it doesn't vanish).
+  ev.until = host.time; run(host, 0.2);
+  assert.ok(!inst.event && inst.npcs.has(baby.id) && baby.dormant, 'asleep again');
+  // Shooting it wakes it too; put it down and it pays.
+  a.p.x = A.x + 600; run(host, 0.5);
+  inst.hurtNpc(baby, 10, a.p);
+  assert.ok(inst.event && !baby.dormant, 'shot awake');
   const k0 = a.p.inv.k || 0;
   inst.hurtNpc(baby, 99999, a.p); run(host, 0.6);
   assert.ok(!inst.event && a.p.inv.k >= k0 + 20, 'over, and paid');
+  assert.ok(![...inst.npcs.values()].some(n => n.type === 'giantbaby'), 'gone for now');
+  inst.babyAt = host.time; run(host, 0.6);
+  const again = inst.npcs.get(inst.baby);
+  assert.ok(again && again.dormant && again.id !== baby.id, 'and back, asleep, later');
 });
 
 test('Anatomy Park: Ruben faces Earth, and the park has its new attractions', () => {
