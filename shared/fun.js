@@ -44,12 +44,15 @@
   ];
   MM.RIDE_BY_ID = {};
   for (const R of MM.RIDES) MM.RIDE_BY_ID[R.id] = R;
-  // Which rides are in a dimension: its own, its parallels' (same land), every Earth's.
+  // Which rides are in a dimension: its own, its parallels' (same land), every Earth's (the
+  // timelines of an Earth too: the cured Cronenberged Earth and the split timeline have the
+  // same beach, so the same wheel; only a timeline that is not a copy of Earth, like 65
+  // million years ago, has none).
   MM.ridesIn = function (dimId) {
     const D = MM.DIM_BY_ID[dimId];
     if (!D) return [];
     const base = D.shapeOf || dimId;
-    return MM.RIDES.filter(R => R.dim === dimId || R.dim === base || (R.dim === 'suburbia' && D.regions && !D.timeline));
+    return MM.RIDES.filter(R => R.dim === dimId || R.dim === base || (R.dim === 'suburbia' && D.regions && (!D.timeline || D.variantOf === 'suburbia')));
   };
   // Seats: a train's cars hold two each, side by side, one car behind another.
   MM.CAR_GAP = 2.7;
