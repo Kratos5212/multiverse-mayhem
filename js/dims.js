@@ -2285,6 +2285,63 @@
       s.add(P.box, '#fff4d8', [-2.6, 2.2, 3.02], null, [2, 1.6, 0.04], true);
       for (let i = 0; i < 4; i++) s.add(P.sphereLo, ['#e8405a', '#8a3a5a', '#f0d870', '#ff8ac8'][i], [-3.3 + i * 0.5, 1.8, 3.08], null, [0.22, 0.25, 0.1]);
     },
+    // The Brain Zone: a giant pink brain on a bone plinth, its folds glowing with thoughts.
+    lm_brain(s) {
+      s.add(P.cyl, '#f0e4d0', [0, 1, 0], null, [8.5, 2, 8.5]);
+      for (const sx of [-1, 1]) {
+        s.add(P.sphere, '#f0a0b0', [sx * 3.2, 7, 0], null, [3.6, 4.4, 6.8]);
+        // The folds: bumps all over the surface of each half.
+        for (let i = 0; i < 26; i++) {
+          const u = i / 26 * Math.PI * 2 * 3.1, v = 0.15 + (i % 7) / 7 * 1.2;
+          const nx = Math.cos(u) * Math.sin(v), ny = Math.cos(v), nz = Math.sin(u) * Math.sin(v);
+          if (nx * sx < -0.6) continue;   // (not between the halves)
+          s.add(P.sphereLo, i % 2 ? '#e890a4' : '#f8b0c0', [sx * 3.2 + nx * 3.4, 7 + ny * 4.1, nz * 6.4], null, [1.3, 0.9, 1.6]);
+        }
+      }
+      s.add(P.sphere, '#c86a80', [0, 3.6, -5.5], null, [2.4, 2, 2.4]);   // the brain stem
+      for (let i = 0; i < 6; i++) s.add(P.sphereLo, '#ffe066', [Math.sin(i * 2.1) * 4, 12 + (i % 2), -4 + i * 1.6], null, [0.3, 0.3, 0.3], true);   // a thought, passing
+    },
+    // Liver Lake: a dark red lake in a liver-shaped bank, with a little jetty.
+    lm_liverlake(s) {
+      s.add(P.cyl, '#8a2a2a', [0, 0.12, 0], null, [15, 0.24, 12]);
+      s.add(P.cyl, '#6a1a22', [0, 0.2, 0], null, [13.6, 0.16, 10.6], true);
+      s.add(P.cyl, '#8a2a2a', [-6, 0.12, 6], null, [6, 0.24, 5]);
+      s.add(P.box, '#c8a878', [-16, 0.35, 0], null, [4, 0.2, 1.6]);   // the jetty
+      for (const z of [-0.6, 0.6]) s.add(P.cylLo, '#8a6a4a', [-14.2, 0.2, z], null, [0.12, 0.8, 0.12]);
+    },
+    // The Lungs: two big pink balloon lungs on a windpipe, the trampolines at their feet.
+    lm_lungs(s) {
+      s.add(P.cyl, '#e8c0c8', [0, 6, -2], null, [0.9, 12, 0.9]);
+      for (const sx of [-1, 1]) {
+        s.add(P.sphere, '#f0a0b0', [sx * 4, 7, -2], null, [3.6, 6, 3]);
+        for (let i = 0; i < 6; i++) s.add(P.capsule, '#d87a90', [sx * (2 + i * 0.5), 9 - i * 1.1, -0.6], [0, 0, sx * (0.6 + i * 0.1)], [0.25, 2, 0.25]);
+      }
+      s.add(P.sphere, '#e8c0c8', [0, 12.4, -2], null, [1.4, 1, 1.4]);
+    },
+    // The Funny Bone: a little club built from bones, a mic on a stage, a neon smile.
+    lm_comedyclub(s) {
+      s.add(P.box, '#3a1a2a', [0, 2.6, 0], null, [9, 5.2, 7]);
+      // Bones at the corners and over the door: a shaft with knobbly ends.
+      const bone = (A, B) => { limb(s, '#f0e4d0', 0.35, A, B); for (const E of [A, B]) for (const k of [-1, 1]) s.add(P.sphere, '#f4ead8', [E[0] + (A[1] === B[1] ? 0 : k * 0.3), E[1], E[2] + (A[1] === B[1] ? k * 0.3 : 0)], null, [0.45, 0.45, 0.45]); };
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) bone([sx * 4.6, 0.2, sz * 3.6], [sx * 4.6, 5.4, sz * 3.6]);
+      bone([-4.6, 5.6, 3.7], [4.6, 5.6, 3.7]);
+      s.add(P.box, '#ff6fd0', [0, 4.4, 3.56], null, [4.4, 0.3, 0.05], true);
+      s.add(P.box, '#1a0a12', [0, 1.4, 3.52], null, [1.8, 2.8, 0.05]);
+    },
+    // The Taste Bud Food Court: a long counter under a tongue-pink awning, and the taste buds.
+    lm_tastebuds(s) {
+      s.add(P.box, '#f2e8d0', [0, 0.7, 0], null, [12, 1.4, 2]);
+      s.add(P.box, '#e86a8a', [0, 3.6, -0.4], [0.15, 0, 0], [13, 0.2, 3.4]);
+      for (let i = -2; i <= 2; i++) { s.add(P.cylLo, '#8a8e94', [i * 2.8, 2.2, 1.1], null, [0.08, 3, 0.08]); s.add(P.sphere, ['#ffd84d', '#ff8ac8', '#7ad8ff', '#5dff8a', '#ff9a3a'][i + 2], [i * 2.6, 1.7, 0], null, [0.6, 0.4, 0.6]); }
+      for (let i = 0; i < 6; i++) s.add(P.cyl, '#d86a7a', [-5 + i * 2, 0.4, 3.4], null, [0.7, 0.8, 0.7]);   // stools (taste buds)
+    },
+    // The Tapeworm Petting Zoo: a fenced pen, and a very long, very friendly worm.
+    lm_tapeworm(s) {
+      for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; s.add(P.box, '#c8a878', [Math.cos(a) * 6.5, 0.5, Math.sin(a) * 6.5], [0, -a, 0], [0.2, 1, 2.6]); }
+      for (let i = 0; i < 14; i++) s.add(P.sphere, i % 2 ? '#f0e8c8' : '#e8dcb0', [Math.cos(i * 0.5) * (1 + i * 0.3), 0.6, Math.sin(i * 0.5) * (1 + i * 0.3)], null, [0.6, 0.5, 0.6]);
+      s.add(P.sphere, '#f0e8c8', [0, 1, 0], null, [0.8, 0.8, 0.8]);
+      for (const sx of [-1, 1]) s.add(P.sphereLo, '#111', [sx * 0.3, 1.2, 0.65], null, [0.12, 0.12, 0.08]);
+    },
     // A food stand: a cart with a striped umbrella.
     lm_foodstand(s) {
       s.add(P.box, '#f2e8d0', [0, 0.6, 0], null, [2.8, 1.2, 1.4]);
@@ -3096,9 +3153,9 @@
     return all;
   }
 
-  // Anatomy Park's corpse, floating in space (shared/fun.js MM.BODY): Ruben on his back, a
-  // big bald man in polka-dot boxers, eyes closed, hands at his sides, toes up. A ring of
-  // light round every hole you can fly in through.
+  // Anatomy Park's corpse, floating in space (shared/fun.js MM.BODY): Ruben, who looks just
+  // like Santa: white beard, red suit, the hat, boots. Face down at Earth, eyes closed. A ring
+  // of light round every hole you can fly in through.
   const UP = new T.Vector3(0, 1, 0), tmpQ = new T.Quaternion(), tmpE = new T.Euler();
   function limb(s, color, r, A, B) {
     const d = new T.Vector3(B[0] - A[0], B[1] - A[1], B[2] - A[2]), len = d.length();
@@ -3106,36 +3163,60 @@
     C.capsuleAt(s, color, r, len + r * 0.6, [A[0] - d.x * r * 0.3, A[1] - d.y * r * 0.3, A[2] - d.z * r * 0.3], [tmpE.x, tmpE.y, tmpE.z]);
   }
   function bodyShape() {
-    const B = MM.BODY, s = new C.Shape({ smooth: true }), skin = '#e0a888', shade = '#c48a6c', P = C.prim;
-    for (const [x, y, z, rx, ry, rz] of B.blobs) s.add(P.sphere, skin, [x, y, z], null, [rx, ry, rz]);
-    for (const [ax, ay, az, bx, by, bz, r] of B.segs) limb(s, skin, r, [ax, ay, az], [bx, by, bz]);
-    // The boxers: blue with white polka dots, and a waistband.
-    s.add(P.sphere, '#3a5ab0', [-4, 0.2, 0], null, [12.6, 11.6, 19.2]);
-    for (const sx of [-1, 1]) limb(s, '#3a5ab0', 9.2, [-8, 0, sx * 9], [-19, -0.5, sx * 9.6]);
-    s.add(P.cyl, '#f2f2f2', [5.5, 0.2, 0], [0, 0, Math.PI / 2], [11.4, 1.6, 18.6]);
-    for (let i = 0; i < 26; i++) { const a = i * 2.4, u = (i % 5) / 4; s.add(P.sphereLo, '#f2f2f2', [-14 + u * 16, Math.sin(a) * 11.5, Math.cos(a) * 17.6], null, [1.1, 1.1, 1.1]); }
-    // The face, looking up: closed eyes, brows, a big nose, ears, lips, a double chin.
+    const B = MM.BODY, s = new C.Shape({ smooth: true }), P = C.prim;
+    const skin = '#f0bfa0', rosy = '#e88a7a', red = '#c8202a', redD = '#a81820', fur = '#f6f4ee', beard = '#f4f2ec', black = '#1e1a1a', gold = '#ffd84d';
+    const [head, bear, chest, belly, hips] = B.blobs;
+    // The suit: red jacket (chest, belly, arms), red trousers, black boots with fur cuffs.
+    s.add(P.sphere, red, chest.slice(0, 3), null, chest.slice(3));
+    s.add(P.sphere, red, belly.slice(0, 3), null, belly.slice(3));
+    s.add(P.sphere, redD, hips.slice(0, 3), null, hips.slice(3));
+    const [neck, la1, la2, lh, ra1, ra2, rh, ll1, ll2, lb, rl1, rl2, rb] = B.segs;
+    const seg = (q, c, r) => limb(s, c, r || q[6], q.slice(0, 3), q.slice(3, 6));
+    seg(neck, skin);
+    for (const q of [la1, la2, ra1, ra2]) seg(q, red);
+    for (const q of [lh, rh]) seg(q, skin);
+    for (const q of [ll1, rl1]) seg(q, redD);
+    for (const q of [ll2, rl2]) { seg([q[0], q[1], q[2], q[0] + (q[3] - q[0]) * 0.45, q[1], q[2] + (q[5] - q[2]) * 0.45], redD, q[6]); seg([q[0] + (q[3] - q[0]) * 0.45, q[1], q[2] + (q[5] - q[2]) * 0.45, q[3], q[4], q[5]], black, q[6] * 1.08); }
+    for (const q of [lb, rb]) { seg(q, black); s.add(P.sphere, black, [q[3] + 1, q[4] + 1, q[5]], null, [5, 4, 4.4]); }
     for (const sz of [-1, 1]) {
-      s.add(P.sphere, shade, [72, 10.2, sz * 4.6], null, [2.6, 1.2, 2.2]);         // closed lids
-      s.add(P.box, '#5a3a2a', [74.6, 11, sz * 4.6], [0, 0, 0.15], [0.8, 0.5, 3.4]);  // brows
-      s.add(P.sphere, skin, [67, 0.5, sz * 12.4], null, [3, 4.6, 1.6]);             // ears
-      s.add(P.sphere, '#b88a74', [67, 1, sz * 13.3], null, [1.4, 2.4, 0.6]);        // ear holes
+      s.add(P.torus, fur, [-50, -1, sz * 10], [0, Math.PI / 2, 0], [7.2, 7.2, 3]);            // boot cuffs
+      s.add(P.torus, fur, [6, 0, sz * 29], [0, Math.PI / 2, 0], [5.2, 5.2, 2.6]);             // sleeve cuffs
+      // Hands: fingers along the sides, a thumb on top.
+      for (let f = 0; f < 4; f++) limb(s, skin, 1.15, [-7, -0.5 + (f - 1.5) * 1.6, sz * 29.5], [-12.5, -0.8 + (f - 1.5) * 1.7, sz * 29.6]);
+      limb(s, skin, 1.35, [-3, 2.2, sz * 27.4], [-7, 3.5, sz * 26.4]);
     }
-    s.add(P.sphere, skin, [67.5, 12.6, 0], null, [4.2, 3.4, 2.8]);                  // nose
-    for (const sz of [-1, 1]) s.add(P.sphereLo, '#7a4a3a', [66.6, 14.6, sz * 1.8], null, [1, 0.9, 0.8]);
-    s.add(P.sphere, '#a86a5e', [59.5, 10.4, 0], null, [1.6, 0.9, 5]);               // lips
-    s.add(P.sphere, skin, [55.5, 4.5, 0], null, [5, 6, 9]);                         // chins
-    // Chest and belly: nipples, a belly button, a little hair.
-    for (const sz of [-1, 1]) s.add(P.sphere, '#b8786a', [37, 11.6, sz * 9], null, [1.8, 0.6, 1.8]);
-    s.add(P.sphere, '#a06a5a', [14, 14.6, 0], null, [1.6, 0.4, 1.6]);
-    for (let i = 0; i < 14; i++) s.add(P.cone, '#6a4a3a', [22 + (i % 7) * 3.2, 12.2 + (i % 3) * 0.2, (i < 7 ? -1 : 1) * (2 + (i % 4))], [0, 0, -0.4], [0.18, 1.4, 0.18]);
-    // Hands (fingers along the sides) and toes.
+    // White fur down the front and round the hem, the black belt with its gold buckle.
+    for (let x = 28; x <= 49; x += 1.5) s.add(P.sphere, fur, [x, 1 + 12 * Math.sqrt(Math.max(0, 1 - ((x - 39) / 13) ** 2)) + 0.2, 0], null, [1.4, 0.9, 2.2]);   // fur down the front
+    s.add(P.cyl, fur, [1.5, 1, 0], [0, 0, Math.PI / 2], [12.2, 3.6, 17.2]);
+    s.add(P.cyl, black, [8, 3.5, 0], [0, 0, Math.PI / 2], [16.8, 3, 17.6]);
+    s.add(P.box, gold, [8, 21, 0], null, [3.6, 0.6, 5.4]);
+    s.add(P.box, black, [8, 21.3, 0], null, [2, 0.5, 3.4]);
+    // His tummy has escaped the jacket: a strip of skin, and the belly button.
+    s.add(P.sphere, skin, [17, 21.6, 0], null, [5, 1.8, 6.4]);
+    s.add(P.sphere, '#b87a64', [17, 23.1, 0], null, [1.3, 0.3, 1.3]);
+    // The head: a round face with rosy cheeks, a red nose, white brows, eyes shut.
+    s.add(P.sphere, skin, head.slice(0, 3), null, head.slice(3));
     for (const sz of [-1, 1]) {
-      for (let f = 0; f < 4; f++) limb(s, skin, 1.1, [-9, -4 + (f - 1.5) * 1.7, sz * 26], [-14, -4.4 + (f - 1.5) * 1.8, sz * 26.2]);
-      limb(s, skin, 1.3, [-6, -1, sz * 23.6], [-10, 0.5, sz * 22.4]);                // thumb
-      for (let t = 0; t < 5; t++) s.add(P.sphere, skin, [-74.5, 12.4 - t * 0.2, sz * (7.2 + t * 1.5)], null, [1.4, 1.2, 0.9]);
-      s.add(P.cyl, '#f4f4f0', [-2, -4, sz * 26], [0, 0, Math.PI / 2], [4.7, 1.5, 4.7]);  // hospital wristband
+      s.add(P.sphere, rosy, [64, 8.6, sz * 5.6], null, [3, 1.6, 2.6]);                        // cheeks
+      s.add(P.sphere, '#d89a84', [71.5, 9.4, sz * 4.2], null, [2, 0.9, 2]);                   // closed lids
+      s.add(P.box, '#7a4a3a', [71, 10.2, sz * 4.2], [0, 0, 0.2], [0.3, 0.3, 3]);              // lashes
+      s.add(P.sphere, beard, [74, 9.6, sz * 4.4], [0, 0, 0.2], [2.6, 1.4, 3.2]);              // bushy brows
+      s.add(P.sphere, skin, [67, 0.5, sz * 10.2], null, [3.2, 4.6, 1.6]);                     // ears
     }
+    s.add(P.sphere, '#e07a6a', [67.5, 12, 0], null, [3.4, 2.8, 2.6]);                          // nose
+    for (const sz of [-1, 1]) s.add(P.sphereLo, '#5a2a22', [66.6, 13.6, sz * 1.6], null, [0.9, 0.6, 0.8]);
+    // The beard and moustache, over the chin and down the chest; his mouth in there.
+    s.add(P.sphere, beard, bear.slice(0, 3), null, bear.slice(3));
+    s.add(P.sphere, beard, [50, 7, 0], null, [8, 6, 8]);
+    for (const sz of [-1, 1]) s.add(P.sphere, beard, [63.5, 11.4, sz * 3.6], [0, sz * 0.4, 0], [2.2, 1.6, 4.6]);   // moustache
+    s.add(P.sphere, '#7a3030', [59.5, 12.6, 0], null, [1.8, 0.6, 3.2]);                          // mouth
+    // Hair round the back of his head, and the hat, flopped over above his head.
+    s.add(P.sphere, beard, [70, -3, 0], null, [10.5, 7, 10.6]);
+    s.add(P.cyl, fur, [77, 1, 0], [0, 0, Math.PI / 2], [10.6, 3.4, 10.6]);
+    limb(s, red, 8.5, [79, 1, 0], [89, 3, 0]);
+    limb(s, red, 5, [89, 3, 0], [96, 7, 3]);
+    limb(s, red, 2.6, [96, 7, 3], [99, 12, 6]);
+    s.add(P.sphere, fur, [99.5, 13, 6.5], null, [3.4, 3.4, 3.4]);
     return s;
   }
   function makeBody(P, tags) {
@@ -3158,9 +3239,9 @@
     }
     // A billboard: the park's name, floating over the chest.
     const bill = C.makeTag('ANATOMY PARK', 'Fly in through any hole!', '', '#ffd84d'); bill.draw(-1);
-    bill.sprite.scale.set(160, 40, 1); bill.sprite.position.set(30 * k, 42 * k, 0); bill.sprite.material.fog = false; g.add(bill.sprite);
+    bill.sprite.scale.set(180, 45, 1); bill.sprite.position.set(30 * k, 44 * k, 0); bill.sprite.material.fog = false; g.add(bill.sprite);
     tags.push({ sprite: bill.sprite, near: 40, local: true });
-    g.position.set(P.x, P.y, P.z); g.rotation.y = B.yaw;
+    g.position.set(P.x, P.y, P.z); g.rotation.order = 'YXZ'; g.rotation.set(B.flip ? Math.PI : 0, B.yaw, 0);   // face down, at Earth
     return g;
   }
   // From the ground: Ruben, small and high up in every Earth's sky.
@@ -3175,7 +3256,9 @@
     const add = (shape, pos) => { const m = C.meshOf(shape.build(), 0); m.position.set(pos[0], pos[1], pos[2]); m.traverse(o => { if (o.material) { o.material = o.material.clone(); o.material.fog = false; } }); group.add(m); return m; };
     if ((dim.shapeOf || dim.id) === 'suburbia') {
       // Anatomy Park, floating far above (the same Ruben you can fly to from orbit).
-      const ruben = C.bodyInSky(); ruben.scale.setScalar(1.6); ruben.position.set(-260, 520, -420); ruben.rotation.set(0.25, 0.9, 0.12); group.add(ruben);
+      // (Inside the 600 m sky dome, face down: looking at you.)
+      const ruben = C.bodyInSky(); ruben.scale.setScalar(1.5); ruben.position.set(-170, 360, -270);
+      ruben.rotation.order = 'YXZ'; ruben.rotation.set(Math.PI - 0.3, 0.9, 0.1); group.add(ruben);
       for (let i = 0; i < 14; i++) {
         const s = new C.Shape();
         for (let j = 0; j < 4; j++) s.add(P.sphereLo, '#ffffff', [j * 9 - 13, Math.sin(j * 2) * 2, (j % 2) * 4], null, [9, 5, 7], true);
@@ -3822,6 +3905,28 @@
         s.add(P.box, '#3a2a1a', [0, 1.85, -0.05], null, [0.95, 0.12, 0.8]);
         s.add(P.cone, '#ff9a2a', [0, 1.3, -1.05], [-2.3, 0, 0], [0.12, 0.7, 0.12], true);
         void d;
+      } else if (type === 'giantbaby') {
+        // A baby the size of a building, on all fours: a huge head, a nappy, chubby everything.
+        const sk = '#f4c4a8', pk = '#ec9a8a';
+        s.add(P.sphere, sk, [0, 5.2, -0.6], null, [3.8, 3.4, 5]);                        // body
+        s.add(P.sphere, '#f8f8f4', [0, 4.8, -4.4], null, [4.1, 3.2, 3.2]);               // the nappy
+        s.add(P.box, '#7ad8ff', [0, 7.1, -3.2], null, [1.2, 0.3, 0.9]);                  // its safety pin
+        s.add(P.sphere, sk, [0, 8.4, 4.2], null, [4.4, 4.2, 4.2]);                       // head
+        for (const sx of [-1, 1]) {
+          limb(s, sk, 1.5, [sx * 2.9, 6.6, 2.2], [sx * 3.4, 0.9, 5.2]);                  // arms
+          s.add(P.sphere, sk, [sx * 3.4, 0.9, 5.8], null, [1.5, 1, 1.8]);               // hands
+          limb(s, sk, 1.8, [sx * 2.4, 4.2, -4.6], [sx * 2.8, 1.2, -2.2]);                // thighs
+          limb(s, sk, 1.5, [sx * 2.8, 1.2, -2.2], [sx * 2.8, 1.0, -6.6]);                // shins
+          s.add(P.sphere, sk, [sx * 2.8, 1.4, -7.2], null, [1.3, 1.1, 1.6]);            // feet
+          s.add(P.sphere, '#ffffff', [sx * 1.6, 9.2, 7.8], null, [1.1, 1.3, 0.7]);      // eyes
+          s.add(P.sphere, '#2a3a5a', [sx * 1.6, 9.2, 8.35], null, [0.6, 0.75, 0.3]);
+          s.add(P.sphere, pk, [sx * 2.6, 7.6, 7.2], null, [1, 0.7, 0.6]);               // cheeks
+          s.add(P.sphere, sk, [sx * 4.3, 8.6, 4], null, [0.7, 1.2, 1]);                 // ears
+        }
+        s.add(P.sphere, '#c85a5a', [0, 6.9, 8.1], null, [1.2, 0.8, 0.5]);                // a big open mouth
+        s.add(P.sphere, sk, [0, 8, 8.5], null, [0.7, 0.55, 0.5]);                       // button nose
+        limb(s, '#f0d070', 0.35, [0, 12.4, 4.4], [0.4, 13.6, 5.4]);                      // one curl of hair
+        limb(s, '#f0d070', 0.3, [0.4, 13.6, 5.4], [-0.3, 14, 6]);
       } else if (type === 'housebot') {
         // A lawn turret from the Smith house, hacked: red eye, twin barrels, a lot of attitude.
         s.add(P.cyl, '#59606e', [0, 0.4, 0], null, [0.9, 0.8, 0.9]);

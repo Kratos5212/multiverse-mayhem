@@ -154,11 +154,11 @@
       props: [['cottontree', 30], ['lollipop', 30], ['rainbow', 6], ['candyrock', 20]], npc: [['froopy', 14]], pickups: { f: 6, p: 6, s: 4 }, mat: 'f',
     },
     {
-      id: 'anatomy', flat: 100, name: 'Anatomy Park', code: 'AP-1', seed: 1441, gravity: 24, amp: 4, scale: 0.02,
-      blurb: 'A theme park inside a giant corpse floating in space, from "Anatomy Park". Fly in through any hole you like. Rides, attractions, food, and a disease problem.',
-      sky: ['#5a0a1a', '#c84a5a'], fog: '#7a2a3a', fogFar: 180, sun: '#ffd0d0', ambient: '#d06070',
+      id: 'anatomy', flat: 190, bound: 260, name: 'Anatomy Park', code: 'AP-1', seed: 1441, gravity: 24, amp: 4, scale: 0.02,
+      blurb: 'A theme park inside Ruben, a giant Santa-looking corpse floating over Earth, from "Anatomy Park". Fly in through any hole you like. Eleven rides, a lake, trampolines, comedy, food, and a disease problem.',
+      sky: ['#5a0a1a', '#c84a5a'], fog: '#7a2a3a', fogFar: 280, sun: '#ffd0d0', ambient: '#d06070',
       ground: ['#c84a5a', '#d85a6a', '#a83a4a'], accent: '#ffe066',
-      props: [['bloodcell', 40], ['bonepillar', 16], ['artery', 14]], npc: [['parkguest', 16], ['parkstaff', 4], ['bacteria', 4], ['drbloom', 1, 8, -12], ['annie', 1, -10, 8], ['hepc', 1, 12, 14], ['poncho', 1, -48, -48]], pickups: { g: 12, s: 4 }, mat: 'g',
+      props: [['bloodcell', 64], ['bonepillar', 24], ['artery', 22]], npc: [['parkguest', 28], ['parkstaff', 8], ['bacteria', 6], ['drbloom', 1, 8, -12], ['annie', 1, -10, 8], ['hepc', 1, 12, 14], ['poncho', 1, -48, -48]], pickups: { g: 12, s: 4 }, mat: 'g',
     },
     {
       id: 'pizzaworld', flat: 135, name: 'Pizza-Phone-Chair Dimension', code: 'PZ-35', seed: 3553, gravity: 24, amp: 3, scale: 0.012, outsideCurve: true,
@@ -1375,6 +1375,7 @@
       moods: { line: 55, gift: 12, trade: 10, errand: 8, buff: 8, dance: 4, angry: 3 } },
     giantant: { name: 'Giant Ant', hp: 70, speed: 4.8, hostile: true, dmg: 10, drop: { s: 2, m: 1 }, r: 1.1, h: 1.2 },
     // ----- Batch 2 -----
+    giantbaby: { name: 'Giant Baby', hp: 3000, speed: 3.4, hostile: true, dmg: 25, drop: { k: 10, g: 6 }, r: 5, h: 12, aggro: 60, leash: 999, stomp: true },
     // "A Ricker Runs Through It": somebody hacked the Smith house. Its lawn turrets and its
     // drones fire on everyone, family included, until they are smashed (or a Rick reboots it).
     housebot: { name: 'Hacked Lawn Turret', hp: 60, speed: 0, hostile: true, dmg: 0, drop: { s: 3 }, r: 0.7, h: 1.6, gun: 'housegun', aggro: 28, leash: 999 },
@@ -1681,6 +1682,8 @@
       { id: 'invasion', name: 'Alien Invasion!', text: 'Invaders are landing in the suburbs. Defend the lawns (or join in).', spawn: [['invader', 7]], dur: 90 },
       // The house defences turn on everyone. Smash them all, or a Rick reboots them at the console.
       { id: 'hoghack', name: 'House Hacked!', text: 'Someone hacked the Smith house. Its turrets and drones are shooting at everyone. Smash them, or get a Rick to the console.', house: [['housebot', 4], ['housedrone', 3]], clear: { k: 6, s: 4 }, dur: 120 },
+      // A baby the size of a building crawls through town. Take it down together.
+      { id: 'giantbaby', name: 'Giant Baby!', text: 'A baby the size of a building is crawling through town, flattening everything. Nobody knows where it came from. Rick says: do not ask. Take it down!', boss: [['giantbaby', 1]], clear: { k: 20, m: 2, c: 6 }, dur: 240 },
       // Rick Potion #9: one player is Patient Zero. Everyone wants them. Then it gets worse.
       { id: 'love', name: 'Love Potion Outbreak!', text: 'The love potion got into the flu season. Everyone is in love with Patient Zero.', patient: 1, dur: 180 },
     ],

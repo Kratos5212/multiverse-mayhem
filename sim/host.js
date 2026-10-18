@@ -239,7 +239,7 @@
       const ev = this.event;
       this.ev({ k: 'world', end: 1, name: ev.E.name, text: text || '' });
       // Events that took over the locals (or the house) put everything back at once.
-      if (ev.E.house || ev.E.patient) for (const id of ev.mine || []) { if (this.npcs.delete(id)) this.ev({ k: 'npc-', id }); }
+      if (ev.E.house || ev.E.patient || ev.E.boss) for (const id of ev.mine || []) { if (this.npcs.delete(id)) this.ev({ k: 'npc-', id }); }
       this.event = null;
       this.nextEvent = now + 150 + Math.random() * 150;
     }
@@ -295,6 +295,11 @@
         ev.mine.push(this.spawnNpc(type, true, { at: { x, z }, until: now + E.dur + 5 }).id);
       }
       if (E.patient) this.startLove(ev, now);
+      // A boss turns up a way off and comes for you.
+      if (E.boss) for (const [type, n] of E.boss) for (let i = 0; i < n; i++) {
+        const p = pick(players), a = Math.random() * 6.28, d = 55 + Math.random() * 20;
+        ev.mine.push(this.spawnNpc(type, true, { at: { x: clampXZ(p.x + Math.cos(a) * d), z: clampXZ(p.z + Math.sin(a) * d) }, until: now + E.dur + 5 }).id);
+      }
       if (E.loot) for (let i = 0; i < E.loot[1]; i++) {
         const p = pick(players), a = Math.random() * 6.28, d = 4 + Math.random() * 26;
         this.spawnPickup(E.loot[0], true, { x: p.x + Math.cos(a) * d, z: p.z + Math.sin(a) * d }, ri(1, 2));
@@ -419,7 +424,7 @@
         this.host.knock(p, kx / kl * power, 6 + power * 0.5, kz / kl * power);
       }
       for (const n of [...this.npcs.values()]) {
-        if (owner && n.owner === owner.id && n.ownerUntil > this.host.time) continue;
+        if ((owner && n.owner === owner.id && n.ownerUntil > this.host.time) || n === opts.skip) continue;
         const d = Math.hypot(n.x - x, n.z - z);
         if (d < rad + n.T.r) this.hurtNpc(n, Math.round(dmg * (1 - d / (rad + n.T.r) * 0.6)), owner);
       }
@@ -593,6 +598,8 @@
           if (best && (dist2(n.x, n.z, n.home.x, n.home.z) > leash * leash * 1.6 || bd > Math.max(30, T.aggro || 0) ** 2)) { best = null; n.angry = 0; }
           if (best) {
             goal = best; speed *= 1.15;
+            // Something huge (the giant baby) flattens what it crawls over.
+            if (T.stomp && now >= (n.stompT || 0)) { n.stompT = now + 1.6; this.explode(n.x, n.y, n.z, T.r + 3, 12, null, n.type, { propDmg: 140, knock: 16, skip: n }); }
             if (bd < (T.r + 1.1) * (T.r + 1.1) && now >= n.cd && Math.abs(best.y - n.y) < 3) {
               n.cd = now + 1.2;
               this.ev({ k: T.hug ? 'hug' : 'bite', n: n.id, id: best.id });

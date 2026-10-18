@@ -366,10 +366,12 @@
       // The Heart in the middle of a fleshy plaza; paths out to each part of the park (the
       // pancreas north, Spleen Mountain east, Bladder Falls south, the Bone Zone west, the
       // food and the bandstand north-west, the gates south-west) and a vein ring around.
-      L.radial({ plaza: 18, plazaStyle: 'flesh', spokes: [0, 45, 90, 135, 180, 225, 270, 315].map(d => d * DEG), spokeTo: 82, ring: 60, w: 7, style: 'vein' });
+      L.radial({ plaza: 18, plazaStyle: 'flesh', spokes: [0, 45, 90, 135, 180, 225, 270, 315].map(d => d * DEG), spokeTo: 165, ring: 60, w: 7, style: 'vein' });
+      L.ringRoad(0, 0, 118, 6, 'vein', 40);   // the outer park: the Brain Zone, Liver Lake, the Lungs, the Intestine...
       for (const a of [135 * DEG, 225 * DEG, 315 * DEG]) for (let d = 28; d < 80; d += 22) L.place('artery', Math.cos(a) * d, Math.sin(a) * d, Math.atan2(Math.cos(a), Math.sin(a)), 1, { onRoad: true });
       L.ring(0, 0, 22, 12, 'bonepillar', { roadside: true, a0: 0.2 });
       L.scatter([['bloodcell', 3], ['bonepillar', 1]], 40, { minR: 30 });
+      L.scatter([['bloodcell', 3], ['artery', 1], ['bonepillar', 1]], 40, { minR: 140 });
     },
 
     // The Pizza-Phone-Chair dimension looks like ordinary Earth streets, except the things

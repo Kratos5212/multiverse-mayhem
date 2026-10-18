@@ -29,6 +29,21 @@
     { id: 'bronchi', dim: 'anatomy', name: 'The Bronchial Tubes', kind: 'slide', seats: 2, every: 3,
       station: [36, -36, Math.PI * 0.75], exit: [52, -52],
       pts: [[38, 14, -38], [44, 13, -34], [48, 11, -40], [44, 9, -46], [40, 8, -42], [44, 6, -36], [50, 5, -40], [52, 3, -46], [54, 1.5, -50], [54, 0.4, -53]] },
+    // ...and the new outer park: the Brain Zone, Liver Lake, the Small Intestine, the
+    // Kidney Stone Drop and the Eyeball Wheel.
+    { id: 'cortex', dim: 'anatomy', name: 'The Cerebral Cortex Coaster', kind: 'coaster', closed: true, seats: 8, every: 12,
+      station: [97, 75, -Math.PI / 2], exit: [93, 72],
+      pts: [[100, 1.5, 78], [110, 2, 74], [124, 10, 72], [138, 22, 80], [146, 26, 96], [142, 14, 112], [130, 8, 124], [114, 20, 130], [100, 24, 120], [94, 12, 104], [96, 4, 90]] },
+    { id: 'liverboats', dim: 'anatomy', name: 'Liver Lake Paddle Boats', kind: 'boat', closed: true, seats: 4, every: 7, speed: 2.6,
+      station: [146, -60, Math.PI / 2], exit: [149, -55],
+      pts: Array.from({ length: 12 }, (_, i) => { const a = i / 12 * Math.PI * 2; return [130 + Math.cos(a) * 11, 0.3, -60 + Math.sin(a) * 11]; }) },
+    { id: 'intestine', dim: 'anatomy', name: 'Small Intestine Rapids', kind: 'flume', closed: true, seats: 4, every: 9,
+      station: [-108, 8, -Math.PI / 2], exit: [-104, 4],
+      pts: [[-112, 0.5, 10], [-118, 0.5, -4], [-132, 3, -10], [-146, 6, -2], [-150, 9, 14], [-140, 12, 26], [-126, 14, 32], [-114, 12, 44], [-120, 8, 58], [-136, 5, 62], [-148, 2, 50], [-138, 0.5, 36], [-122, 0.5, 28], [-112, 0.5, 22]] },
+    { id: 'kidneydrop', dim: 'anatomy', name: 'The Kidney Stone Drop', kind: 'slide', seats: 2, every: 3, station: [-90, 116, Math.PI], exit: [-80, 116],
+      pts: Array.from({ length: 34 }, (_, i) => { const a = i * 0.46; return [-90 + Math.cos(a) * 3.4, 15 - i * 0.42, 110 + Math.sin(a) * 3.4]; }).concat([[-84, 0.4, 114], [-80, 0.3, 116]]) },
+    { id: 'eyewheel', dim: 'anatomy', name: 'The Eyeball Wheel', kind: 'wheel', seats: 16, station: [0, 127, Math.PI], exit: [5, 125],
+      wheel: { x: 0, z: 136, h: 16, r: 13, yaw: 0, n: 8, rev: 50 } },
     // ----- Froopyland: down the big slide -----
     { id: 'froopyslide', dim: 'froopy', name: 'The Big Froopy Slide', kind: 'slide', seats: 2, every: 3, station: [26, -20, Math.PI], exit: [30, -21],
       pts: Array.from({ length: 27 }, (_, i) => { const a = i * 0.42; return [26 + Math.cos(a) * 2.7, 9.35 - i * 0.34, -26 + Math.sin(a) * 2.7]; }).concat([[33, 0.3, -22], [36, 0.3, -18]]) },
@@ -133,6 +148,7 @@
     fedrange: { name: 'Federation Target Range', target: 'tgt_grom', n: 6, secs: 40 },
     blipsblaster: { name: 'Blips and Chitz Blaster', target: 'tgt_jerry', n: 6, secs: 35 },
     purgebooth: { name: 'Purge Night Shooting Booth', target: 'tgt_purge', n: 5, secs: 40 },
+    germgauntlet: { name: 'The Germ Gauntlet', target: 'tgt_hepa', n: 7, secs: 35 },
   };
   // Where a gallery's targets stand: a row across, 9 to 15 m in front of the booth.
   MM.galleryTargetSpot = (l, u, depth) => {
@@ -151,6 +167,7 @@
   MM.FISH = {
     sea: [['Sunfish', 0, 6], ['Mackerel', 1, 5], ['Plumbus fish', 1, 3], ['Nimbus\'s goldfish', 2, 2], ['Sea Beast pup', 3, 1], ['An old boot', 0, 3]],
     ice: [['Frozen trout', 1, 6], ['Ice eel', 2, 3], ['A fish frozen mid-sentence', 2, 2], ['Mammoth tooth', 3, 1]],
+    bile: [['Bile minnow', 0, 6], ['Liver fluke', 1, 4], ['A gallstone', 1, 3], ['Ruben\'s lost wedding ring', 2, 2], ['E. coli (large)', 3, 1]],
     jungle: [['Teeny minnow', 0, 6], ['Teeny catfish', 1, 4], ['Kyle\'s lost wrench', 2, 1], ['Tribal river god (small)', 3, 1]],
   };
   MM.DANCE_JUDGE = {
@@ -164,7 +181,8 @@
   // ---------- Jump pads ----------
   // [x, z, power]: step on one and it throws you up into the air.
   MM.PADS = {
-    anatomy: [[64, -62, 22], [70, -56, 24], [76, -66, 22], [68, -72, 26], [80, -58, 20], [60, -70, 20]],
+    anatomy: [[64, -62, 22], [70, -56, 24], [76, -66, 22], [68, -72, 26], [80, -58, 20], [60, -70, 20],
+      [46, -140, 20], [47, -132, 23], [39, -124, 26], [35, -135, 29], [29, -140, 20], [29, -152, 23], [40, -145, 26], [48, -146, 29], [55, -138, 20], [43, -135, 23]],   // ...and the Lung Trampolines
     froopy: [[-20, 24, 26], [-26, 30, 22], [-14, 32, 24], [-30, 20, 20]],
     moon: [[30, 20, 18], [36, 26, 22], [24, 30, 20]],
     gearworld: [[30, -20, 22], [36, -24, 24]],
@@ -220,39 +238,42 @@
   // Lying on its back above every Earth. Local frame: x along the body (the head at +x), y up
   // (out of the chest), z across. parts: spheres you bump into. holes: the ways in (any of
   // them), each with its own gate inside the park.
-  // Ruben, lying on his back in space, head towards +x, face up (+y), left side towards -z.
-  // Local units; `scale` makes him huge. segs: limbs [ax, ay, az, bx, by, bz, r] (capsules);
-  // blobs: [x, y, z, rx, ry, rz] (ellipsoids: head, chest, belly, boxers). holes: the gates.
+  // Ruben, floating in space over Earth, face down towards it: a big, round, white-bearded
+  // man who looks exactly like Santa (red suit, white fur, black boots, the hat). Modelled
+  // lying on his back (head towards +x, face +y, left towards -z) and then turned over
+  // (`flip`) so his face looks down at the planet. Local units; `scale` makes him huge.
+  // blobs: [x, y, z, rx, ry, rz] (ellipsoids); segs: limbs [ax, ay, az, bx, by, bz, r].
   MM.BODY = {
-    at: [0, 330, 0], yaw: Math.PI / 6, scale: 2.4,
+    at: [0, 380, 0], yaw: Math.PI / 6, scale: 3, flip: true,
     blobs: [
-      [68, 0, 0, 13, 12, 12],      // head
-      [34, 0, 0, 17, 12, 20],      // chest
-      [14, 2, 0, 14, 13, 18],      // belly
-      [-4, 0, 0, 12, 11, 18.5],    // the boxers
+      [68, 0, 0, 12, 10.5, 10],    // head
+      [58, 4, 0, 7, 9, 10],        // the beard
+      [39, 1, 0, 13, 12, 19],      // chest
+      [17, 6, 0, 16, 17, 18],      // the belly
+      [-2, 0, 0, 10, 10, 15.5],    // hips
     ],
     segs: [
-      [56, 0, 0, 45, 0, 0, 7],                                                     // neck
-      [44, -1, -20, 22, -3, -25, 5.6], [22, -3, -25, 2, -4, -26, 4.8], [2, -4, -26, -7, -4, -26, 4.2],   // left arm, hand
-      [44, -1, 20, 22, -3, 25, 5.6], [22, -3, 25, 2, -4, 26, 4.8], [2, -4, 26, -7, -4, 26, 4.2],         // right arm, hand
-      [-10, 0, -9, -40, -1, -10, 8.5], [-40, -1, -10, -68, -1, -10, 6.5], [-71, -1, -10, -73, 8, -10, 4.5],   // left leg, foot (toes up)
-      [-10, 0, 9, -40, -1, 10, 8.5], [-40, -1, 10, -68, -1, 10, 6.5], [-71, -1, 10, -73, 8, 10, 4.5],         // right leg, foot
+      [55, 0, 0, 46, 0, 0, 7],                                                                        // neck
+      [46, -1, -19, 24, -2, -26, 5.6], [24, -2, -26, 4, 0, -29, 4.6], [4, 0, -29, -5, 0, -29.5, 3.8],   // left arm, hand
+      [46, -1, 19, 24, -2, 26, 5.6], [24, -2, 26, 4, 0, 29, 4.6], [4, 0, 29, -5, 0, 29.5, 3.8],         // right arm, hand
+      [-6, 0, -8, -38, -1, -9.5, 8], [-38, -1, -9.5, -68, -1, -10, 6.2], [-71, 0, -10, -73, 9, -10, 4.8],   // left leg, boot
+      [-6, 0, 8, -38, -1, 9.5, 8], [-38, -1, 9.5, -68, -1, 10, 6.2], [-71, 0, 10, -73, 9, 10, 4.8],         // right leg, boot
     ],
     holes: [
-      ['mouth', 'The Mouth (Main Gate)', [59, 11, 0]], ['lnostril', 'Left Nostril', [67, 15.5, -1.8]], ['rnostril', 'Right Nostril', [67, 15.5, 1.8]],
-      ['lear', 'Left Ear', [67, 1, -13]], ['rear', 'Right Ear', [67, 1, 13]], ['lnipple', 'Left Nipple', [37, 12, -9]], ['rnipple', 'Right Nipple', [37, 12, 9]],
-      ['navel', 'The Belly Button', [14, 15, 0]], ['front', 'The Front Door (through the boxers)', [-8, 11, 0]], ['back', 'The Back Door', [-10, -11, 0]],
+      ['mouth', 'The Mouth (Main Gate, through the beard)', [59, 13, 0]], ['lnostril', 'Left Nostril', [67.5, 13.5, -1.6]], ['rnostril', 'Right Nostril', [67.5, 13.5, 1.6]],
+      ['lear', 'Left Ear', [67, 0.5, -11]], ['rear', 'Right Ear', [67, 0.5, 11]],
+      ['navel', 'The Belly Button', [17, 23, 0]], ['back', 'The Back Door', [-6, -10.5, 0]],
     ],
   };
   // A body point (local) in the space it floats in.
   MM.bodyPoint = (B, p, at) => {
-    const c = Math.cos(B.yaw), s = Math.sin(B.yaw), k = B.scale || 1;
-    return [at[0] + (p[0] * c + p[2] * s) * k, at[1] + p[1] * k, at[2] + (-p[0] * s + p[2] * c) * k];
+    const c = Math.cos(B.yaw), s = Math.sin(B.yaw), k = B.scale || 1, f = B.flip ? -1 : 1, y = p[1] * f, z = p[2] * f;
+    return [at[0] + (p[0] * c + z * s) * k, at[1] + y * k, at[2] + (-p[0] * s + z * c) * k];
   };
   // ...and back: a point in space, in the body's own units.
   MM.bodyLocal = (B, w, at) => {
-    const c = Math.cos(B.yaw), s = Math.sin(B.yaw), k = B.scale || 1, x = (w[0] - at[0]) / k, y = (w[1] - at[1]) / k, z = (w[2] - at[2]) / k;
-    return [x * c - z * s, y, x * s + z * c];
+    const c = Math.cos(B.yaw), s = Math.sin(B.yaw), k = B.scale || 1, f = B.flip ? -1 : 1, x = (w[0] - at[0]) / k, y = (w[1] - at[1]) / k, z = (w[2] - at[2]) / k;
+    return [x * c - z * s, y * f, (x * s + z * c) * f];
   };
   // Keep something of radius m (local units) out of the body: the point moved to the
   // surface if it is inside, or null if it is clear.
@@ -277,7 +298,7 @@
   const L = o => { MM.LANDMARKS.push(o); MM.LANDMARK_BY_ID[o.id] = o; };
   for (const R of MM.RIDES) { const [x, z, rot] = R.station; L({ id: 'ride_' + R.id, dim: R.dim, name: R.name, x, z, r: 1.4, h: 3.6, model: 'lm_ridegate', rot, ride: R.id }); }
   for (const [id, dim, x, z, rot] of [['hepablaster', 'anatomy', -62, 8, -Math.PI / 2], ['beachbooth', 'suburbia', -40, 306, 0], ['fedrange', 'federation', 34, -24, Math.PI / 2],
-    ['blipsblaster', 'blips', 24, -20, 0], ['purgebooth', 'purge', 26, -26, Math.PI / 2]]) L({ id, dim, name: MM.GALLERIES[id].name, x, z, r: 2.2, h: 3.4, model: 'lm_gallery', rot, gallery: id });
+    ['blipsblaster', 'blips', 24, -20, 0], ['purgebooth', 'purge', 26, -26, Math.PI / 2], ['germgauntlet', 'anatomy', 100, 22, -Math.PI / 2]]) L({ id, dim, name: MM.GALLERIES[id].name, x, z, r: 2.2, h: 3.4, model: 'lm_gallery', rot, gallery: id });
   // The pier on every Earth's beach, with a fishing spot at the end; a pond in the Teenyverse.
   L({ id: 'pier', dim: 'suburbia', name: 'The pier', x: 30, z: 330, r: 1.5, h: 1.2, model: 'lm_pier', rot: 0, arch: true });
   L({ id: 'pierfish', dim: 'suburbia', name: 'Fishing by the pier', x: 24, z: 341, r: 1.0, h: 1.2, model: 'lm_marker', game: 'fish', fish: 'sea' });
@@ -298,6 +319,14 @@
   L({ id: 'giftshop', dim: 'anatomy', name: 'Anatomy Park Gift Shop', x: -46, z: 30, r: 5, h: 6, model: 'lm_giftshop', sign: { text: 'GIFT SHOP', y: 5, z: 3.6, w: 5 } });
   L({ id: 'marrowburger', dim: 'anatomy', name: 'Bone Marrow Burgers', x: -34, z: 48, r: 3, h: 4, model: 'lm_foodstand', sign: { text: 'BONE MARROW BURGERS', y: 3.8, z: 1.6, w: 4.5 } });
   L({ id: 'plaquecandy', dim: 'anatomy', name: 'Plaque Candy Floss', x: -54, z: 46, r: 3, h: 4, model: 'lm_foodstand', sign: { text: 'PLAQUE CANDY', y: 3.8, z: 1.6, w: 4 } });
+  L({ id: 'brainzone', dim: 'anatomy', name: 'The Brain Zone', x: 122, z: 100, r: 9, h: 12, model: 'lm_brain', sign: { text: 'THE BRAIN ZONE', y: 12.5, z: 6, w: 7 } });
+  L({ id: 'liverlake', dim: 'anatomy', name: 'Liver Lake', x: 130, z: -60, r: 15, h: 0.4, model: 'lm_liverlake' });
+  L({ id: 'liverfish', dim: 'anatomy', name: 'Fishing on Liver Lake', x: 112, z: -60, r: 1.0, h: 1.2, model: 'lm_marker', game: 'fish', fish: 'bile' });
+  L({ id: 'lungs', dim: 'anatomy', name: 'The Lungs (trampolines!)', x: 40, z: -160, r: 10, h: 14, model: 'lm_lungs', sign: { text: 'LUNG TRAMPOLINES', y: 13, z: 4, w: 7 } });
+  L({ id: 'kidneytower', dim: 'anatomy', name: 'The Kidney Stone Drop (tower)', x: -90, z: 110, r: 2.6, h: 15, model: 'lm_slidetower', rot: 0 });
+  L({ id: 'funnybone', dim: 'anatomy', name: 'The Funny Bone Comedy Club', x: -44, z: 122, r: 6, h: 7, model: 'lm_comedyclub', rot: Math.PI, sign: { text: 'THE FUNNY BONE', y: 6.4, z: 4.2, w: 6 } });
+  L({ id: 'tastebuds', dim: 'anatomy', name: 'The Taste Bud Food Court', x: -112, z: -62, r: 7, h: 5, model: 'lm_tastebuds', rot: Math.PI / 2, sign: { text: 'TASTE BUD FOOD COURT', y: 4.8, z: 5, w: 7 } });
+  L({ id: 'tapewormzoo', dim: 'anatomy', name: 'Tapeworm Petting Zoo', x: -30, z: -132, r: 7, h: 3, model: 'lm_tapeworm', sign: { text: 'TAPEWORM PETTING ZOO', y: 3.6, z: 6, w: 7 } });
   L({ id: 'bandstand', dim: 'anatomy', name: 'The Uvula Bandstand (dance!)', x: -22, z: 62, r: 6, h: 7, model: 'lm_bandstand', game: 'dance' });
   MM.DANCE_JUDGE.bandstand = MM.DANCE_JUDGE.bandstand || ['The whole park dances along.', 'Polite applause.', 'Boo.'];
   MM.LANDMARK_BY_ID.roy.game = 'roy';

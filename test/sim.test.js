@@ -1641,3 +1641,31 @@ test('Keep Summer Safe: only a Rick\'s ship, only with a Summer in it, only once
   run(host, 1.5);
   assert.ok(r.p.inst.npcs.has(cop.id) && cop.stun > host.time, 'paralysed, not killed');
 });
+
+test('the Giant Baby: a world event on Earth; it flattens what it crawls over, and paying out when it goes down', () => {
+  const host = new MM.Host();
+  const a = join(host, 'surgeon', { dim: 'suburbia', home: 'C-137' });
+  host.travel(a.p, 'suburbia', { x: 0, z: 60 }); run(host, 0.3);
+  const ev = startEvent(host, a.p.inst, 'giantbaby');
+  const baby = a.p.inst.npcs.get(ev.mine[0]);
+  assert.ok(baby && baby.type === 'giantbaby' && baby.T.stomp);
+  assert.ok(Math.hypot(baby.x - a.p.x, baby.z - a.p.z) > 40, 'it turns up a way off');
+  // It stomps, but never on itself.
+  a.p.fx.prot = 0;
+  host.teleport(a.p, baby.x + 4, a.p.y, baby.z); run(host, 2);
+  assert.ok(a.p.inst.npcs.has(baby.id) && baby.hp === baby.T.hp, 'not hurt by its own stomps');
+  const k0 = a.p.inv.k || 0;
+  a.p.inst.hurtNpc(baby, 99999, a.p); run(host, 0.6);
+  assert.ok(!a.p.inst.event, 'over');
+  assert.ok(a.p.inv.k >= k0 + 20, 'everyone paid');
+});
+
+test('Anatomy Park: Ruben faces Earth, and the park has its new attractions', () => {
+  const B = MM.BODY, at = [0, 380, 0];
+  const mouth = MM.bodyPoint(B, B.holes[0][2], at), back = MM.bodyPoint(B, B.holes.find(h => h[0] === 'back')[2], at);
+  assert.ok(mouth[1] < at[1] && back[1] > at[1], 'face down, towards Earth');
+  for (const h of B.holes) { const l = MM.bodyLocal(B, MM.bodyPoint(B, h[2], at), at); assert.ok(Math.hypot(l[0] - h[2][0], l[1] - h[2][1], l[2] - h[2][2]) < 1e-6); }
+  for (const r of ['cortex', 'liverboats', 'intestine', 'kidneydrop', 'eyewheel']) assert.ok(MM.ridesIn('anatomy').some(R => R.id === r), r);
+  for (const l of ['brainzone', 'liverlake', 'liverfish', 'lungs', 'funnybone', 'tastebuds', 'tapewormzoo', 'germgauntlet']) assert.ok(MM.LANDMARK_BY_ID[l], l);
+  assert.ok(MM.padsIn('anatomy').length >= 16 && MM.boundOf('anatomy') >= 260);
+});
