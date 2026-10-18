@@ -240,7 +240,7 @@
       const ev = this.event;
       this.ev({ k: 'world', end: 1, name: ev.E.name, text: text || '' });
       // Events that took over the locals (or the house) put everything back at once.
-      if (ev.E.house || ev.E.patient || ev.E.boss) for (const id of ev.mine || []) { if (this.npcs.delete(id)) this.ev({ k: 'npc-', id }); }
+      if (ev.E.house || ev.E.patient || ev.E.boss || ev.E.squad) for (const id of ev.mine || []) { if (this.npcs.delete(id)) this.ev({ k: 'npc-', id }); }
       this.event = null;
       this.nextEvent = now + 150 + Math.random() * 150;
     }
@@ -296,6 +296,13 @@
         ev.mine.push(this.spawnNpc(type, true, { at: { x, z }, until: now + E.dur + 5 }).id);
       }
       if (E.patient) this.startLove(ev, now);
+      // A squad holding a landmark (the turkeys in the White House).
+      if (E.squad) { const l = MM.LANDMARK_BY_ID[E.at]; if (l) for (const [type, n] of E.squad) for (let i = 0; i < n; i++) {
+        const a = Math.random() * 6.28, d = n === 1 ? l.r + 3 : l.r + 4 + Math.random() * 10;
+        let x = l.x + Math.cos(a) * d, z = l.z + Math.sin(a) * d;
+        [x, z] = MM.collideProps(this.dimId, x, z, 1, null);
+        ev.mine.push(this.spawnNpc(type, true, { at: { x, z }, until: now + E.dur + 5 }).id);
+      } }
       // A boss turns up a way off and comes for you.
       if (E.boss) for (const [type, n] of E.boss) for (let i = 0; i < n; i++) {
         const p = pick(players), a = Math.random() * 6.28, d = 55 + Math.random() * 20;
@@ -399,9 +406,11 @@
         if (hit.p) {
           if (pr.kind === 'shrink' && this.host.canHurt(owner, hit.p)) { hit.p.fx.shrink = now + 8; this.host.dirty(hit.p); this.ev({ k: 'shrunk', id: hit.p.id }); }
           if (pr.kind === 'freeze' && this.host.canHurt(owner, hit.p)) { hit.p.fx.cuff = now + 3; this.host.dirty(hit.p); this.ev({ k: 'frozen', id: hit.p.id, t: 3 }); }
+          if (pr.kind === 'carrot' && this.host.canHurt(owner, hit.p) && !hit.p.ship && !hit.p.car && !hit.p.fusedTo && !hit.p.fuse) { this.host.setForm(hit.p, 'carrot'); this.host.toast(hit.p, 'ZAP. You are a carrot. You can hop about, slowly. It wears off.'); }
           this.host.hurtPlayer(this, hit.p, pr.dmg, owner, pr.kind);
         } else if (hit.n) {
           if (pr.kind === 'freeze') { hit.n.stun = now + 4; this.ev({ k: 'frozen', n: hit.n.id, t: 4 }); }
+          if (pr.kind === 'carrot') this.host.carrotNpc(this, hit.n);
           this.hurtNpc(hit.n, pr.dmg, owner);
         }
         else if (hit.t) this.hurtTurret(hit.t, pr.dmg);
@@ -594,7 +603,7 @@
           if (decoy) { goal = decoy; if (dist2(decoy.x, decoy.z, n.x, n.z) < (T.r + 1.1) ** 2 && now >= n.cd) { n.cd = now + 1.2; this.ev({ k: 'bite', n: n.id }); } }
           else if (n.angry && now < n.angryUntil) { const p = this.host.players.get(n.angry); if (p && p.inst === this && !p.dead) best = p, bd = dist2(p.x, p.z, n.x, n.z); }
           else if (!T.ring && dist2(n.x, n.z, n.home.x, n.home.z) < leash * leash) for (const p of this.players.values()) {   // Ring fighters only fight the fighter
-            if (!this.visible(p, now)) continue;
+            if (!this.visible(p, now) || (T.turkey && p.form && p.form.id === 'turkey')) continue;   // turkeys leave turkeys alone
             // A Death Stalker car spots another car from far off, someone on foot closer.
             const d = dist2(p.x, p.z, n.x, n.z), reach = T.aggro ? (p.car || T.space ? T.aggro : 16) : MM.AGGRO_RANGE;   // (space things see ships from far off)
             if (d < reach * reach && d < (best ? bd : Infinity)) { bd = d; best = p; }
@@ -888,6 +897,8 @@
       if (p.trade) this.tradeEnd(p.trade, p.name + ' left.');
       if (p.aboard) this.disembark(p);
       if (p.vessel) this.emptyShip(p.vessel, p.name + ' left, and took the ship.');
+      if (p.fuse) this.unfuse(p, p.name + ' left. You are yourself again.');
+      if (p.fusedTo) { const lead = this.players.get(p.fusedTo); if (lead) this.unfuse(lead, p.name + ' left. You are yourself again.'); }
       if (p.inst) { p.inst.players.delete(p.id); p.inst.ev({ k: 'leave', id: p.id }); p.inst.emptySince = this.time; }
       this.leaveTeam(p);
       this.players.delete(p.id);
@@ -942,6 +953,7 @@
         case 'ship': this.onShip(p, m.on); break;
         case 'sb': this.onBoard(p, m); break;
         case 'kss': this.onKss(p, m); break;
+        case 'fz': this.onFuse(p, m); break;
         case 'car': this.onCar(p, m.on); break;
         case 'tr': this.onTrade(p, m); break;
         case 'gv': this.onGive(p, m); break;
@@ -1044,7 +1056,7 @@
 
     info(p) {
       const up = p.prog.up;
-      return { id: p.id, name: p.name, home: p.home, clone: p.clone ? 1 : 0, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '', sk: MM.shipKind(p.arch),
+      return { id: p.id, name: p.name, home: p.home, clone: p.clone ? 1 : 0, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '', sk: MM.shipKind(p.arch), form: p.form ? p.form.id : p.carMorty ? 'carmorty' : '', fz: p.fusedTo || 0, fu: p.fuse ? [p.fuse.partner, p.fuse.kind] : 0,
         gear: { ratsuit: !!up.ratsuit, wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs, strongarm: !!p.prog.arm } };
     }
 
@@ -1095,7 +1107,7 @@
     // Move a player into a dimension (a portal, the kiosk, a ship, or joining).
     travel(p, dimId, at, preferInst, first) {
       if (p.ship && MM.DIM_BY_ID[dimId] && MM.DIM_BY_ID[dimId].interior) { p.ship = false; if (p.inst) this.parkShip(p, p.inst); }   // you park the ship to go indoors
-      p.car = false;   // a car stays in its world: you park it
+      if (!p.carMorty) p.car = false;   // a car stays in its world: you park it (Car Morty IS the car)
       // Tiny in a tiny world is life-size there; out again, you're tiny again.
       if (MM.DIM_BY_ID[dimId].tinyWorld) { if (p.tiny) { p.tiny = false; p.tinyIn = true; } }
       else if (p.tinyIn) { p.tinyIn = false; p.tiny = true; }
@@ -1138,7 +1150,7 @@
     toast(p, text) { this.priv(p, { k: 'toast', text }); }
     knock(p, vx, vy, vz) { p.kbUntil = this.time + 1.5; this.priv(p, { k: 'kb', vx: r2(vx), vy: r2(vy), vz: r2(vz) }); }
 
-    scaleOf(p) { return p.tiny ? MM.TINY.scale : (this.time < p.fx.shrink ? 0.5 : 1) * (p.tinyRick ? MM.TINYRICK.scale : 1); }
+    scaleOf(p) { return p.tiny ? MM.TINY.scale : (this.time < p.fx.shrink ? 0.5 : 1) * (p.tinyRick ? MM.TINYRICK.scale : 1) * (p.form && MM.FORMS[p.form.id].scale || 1); }
 
     fxBits(p, now) {
       let b = 0;
@@ -1165,12 +1177,13 @@
       const now = this.time;
       if (now < p.fx.cuff) return 1;
       const base = p.ship ? p.st.ship.speed * MM.SHIP_BOOST : p.car ? MM.CAR.speed * MM.CAR.boost : p.st.speed * (p.st.fly ? 1.35 : 1) * (p.st.sprint || 1);   // the most you can go: sprinting
-      return base * (p.tiny ? MM.TINY.speed : 1) * (p.tinyRick && !p.ship && !p.car ? MM.TINYRICK.speed : 1) * (now < p.fx.sprint ? 1.8 : 1) * (now < p.fx.shrink ? 0.75 : 1) * (now < p.fx.guilt ? 0.6 : 1) * (now < p.fx.daze ? 0.5 : 1);
+      const F = p.form && MM.FORMS[p.form.id];
+      return base * (p.tiny ? MM.TINY.speed : 1) * (p.tinyRick && !p.ship && !p.car ? MM.TINYRICK.speed : 1) * (F && !p.ship ? F.speed : 1) * (now < p.fx.sprint ? 1.8 : 1) * (now < p.fx.shrink ? 0.75 : 1) * (now < p.fx.guilt ? 0.6 : 1) * (now < p.fx.daze ? 0.5 : 1);
     }
 
     // ----- Movement validation -----
     onState(c, p, m) {
-      if (m.ep !== p.ep || p.dead || p.ride || p.aboard) return;   // on a ride (or in someone's ship) it moves you
+      if (m.ep !== p.ep || p.dead || p.ride || p.aboard || p.fusedTo) return;   // on a ride (or in someone's ship) it moves you
       const now = this.time;
       // A jump pad throws you up (and along): let the flight happen.
       if (MM.padAt(p.inst.dimId, p.x, p.z) || MM.padAt(p.inst.dimId, m.x, m.z)) { p.flingUntil = now + 3; p.kbUntil = now + 1.5; }
@@ -1246,12 +1259,14 @@
       if (p.ship) return p.st.ship.lasers ? 'lasers' : 'blaster';
       if (p.car) return 'carguns';
       if (p.prog.arm) return 'armpunch';   // the arm does the punching
+      if (p.form && MM.FORMS[p.form.id].weapon) return MM.FORMS[p.form.id].weapon;   // a turkey pecks
       return p.A.weapon;
     }
 
     onFire(p, m) {
       const now = this.time;
       if (p.dead || now < p.cdFire || now < p.fx.sob || MM.helpless(p.arch, p.prog.up)) return;
+      if (p.form && MM.FORMS[p.form.id].noWeapon) return;   // a carrot has no hands
       const wid = this.weaponOf(p), w = MM.WEAPONS[wid];
       p.cdFire = now + w.cd * 0.9;
       p.fx.prot = 0;
@@ -1294,6 +1309,8 @@
 
     hurtPlayer(inst, p, amt, src, how) {
       const now = this.time;
+      if (p.fusedTo) { const lead = this.players.get(p.fusedTo); if (lead && lead !== src) this.hurtPlayer(inst, lead, amt, src, how); return; }   // one body
+      if (p.form && MM.FORMS[p.form.id].armour) amt *= MM.FORMS[p.form.id].armour;
       if (p.dead || now < p.fx.prot || now < p.fx.sob || amt <= 0) return;
       if (!this.canHurt(src, p)) return;
       if (p.arch === 'sidekick' && Math.random() < 0.2) { inst.ev({ k: 'dodge', id: p.id }); return; }
@@ -1318,6 +1335,9 @@
         return;
       }
       p.hp = 0; p.dead = true; p.deaths++;
+      if (p.form) this.setForm(p, null);
+      if (p.fuse) this.unfuse(p, 'The body gave out. You are two people again.');
+      if (p.carMorty) { p.carMorty = false; }
       p.dp = null;
       p.respawnAt = this.time + MM.RESPAWN_TIME;
       if (p.ship) { p.ship = false; inst.ev({ k: 'ship', id: p.id, on: false }); if (p.vessel) this.emptyShip(p.vessel, 'The ship went down. You jumped clear.'); }
@@ -2048,6 +2068,26 @@
           break;
         }
         case 'vision': case 'truth': case 'channel': text = pick(MM.CURIO_LINES[Q.use]); break;
+        case 'carmorty':
+          if (p.arch !== 'sidekick') { this.toast(by, 'Nothing happens. It only works on a Morty.'); return null; }
+          if (p.car || p.ship || p.ride || p.aboard || p.tiny || p.fusedTo || p.fuse || inst.dim.interior) { this.toast(by, 'Not here, not like this.'); return null; }
+          p.car = true; p.carMorty = true;
+          inst.ev({ k: 'car', id: p.id, on: true, morty: 1 });
+          text = 'Oh geez, oh man, I-I\'m a CAR! W/S to drive, A/D to steer, Shift for nitro. B turns you back.';
+          break;
+        case 'fuse':
+          if (!other) { this.toast(p, 'You need someone to fuse with: walk up to them and press F.'); return null; }
+          if (!this.fuse(by, p, 'jerricky')) return null;
+          text = 'You and ' + by.name + ' are one body now, with two heads. They walk, you shoot. 90 seconds.';
+          break;
+        default:
+          if (Q.use && Q.use.indexOf('form:') === 0) {
+            const id = Q.use.slice(5);
+            if (p.car || p.ship || p.aboard || p.fusedTo || p.fuse) { this.toast(by, 'Not while driving, flying or fused.'); return null; }
+            if (p.form && p.form.id === id) { this.setForm(p, null); text = 'You turn back into yourself.'; break; }
+            this.setForm(p, id);
+            text = { turkey: 'Gobble. You are a turkey. Small, fast, you peck. Turkey soldiers leave you alone.', ferro: 'Liquid metal floods your body. You are silver, slippery and fast, and hits do half damage.' }[id] || 'You changed.';
+          }
       }
       this.dirty(p);
       return text;
@@ -2162,11 +2202,14 @@
     onGadget(p, m) {
       if (MM.helpless(p.arch, p.prog.up)) { this.toast(p, MM.HELPLESS_TEXT); return; }
       const inst = p.inst, g = m.g;
+      if (p.form && MM.FORMS[p.form.id].noGadgets) { this.toast(p, 'A ' + MM.FORMS[p.form.id].name.toLowerCase() + ' cannot use gadgets.'); return; }
       if (p.dead || p.ship || this.time < p.fx.sob || !(p.inv[g] > 0)) return;
       if (g === 'grenade') {
         this.fireProjectile(inst, { owner: p.id, kind: 'gren', x: p.x + m.dx, y: p.y + 1.5, z: p.z + m.dz, dx: m.dx, dy: m.dy, dz: m.dz, speed: 20, up: 6, gravity: true, life: 1.8, dmg: 0, rad: 0.3 });
       } else if (g === 'shrink') {
         this.fireProjectile(inst, { owner: p.id, kind: 'shrink', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 65, range: 70, dmg: 5, rad: 0.35 });
+      } else if (g === 'carrot') {
+        this.fireProjectile(inst, { owner: p.id, kind: 'carrot', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 60, range: 65, dmg: 2, rad: 0.35 });
       } else if (g === 'freeze') {
         this.fireProjectile(inst, { owner: p.id, kind: 'freeze', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 55, range: 60, dmg: 4, rad: 0.4 });
       } else if (g === 'chalk') {
@@ -2221,6 +2264,7 @@
         if (p.bout) { this.toast(p, 'No cars in the Ring of Death.'); return; }
         if (p.tiny) { this.toast(p, 'You can\'t reach the pedals. Grow back first.'); return; }
       }
+      if (!on && p.carMorty) { p.car = false; p.carMorty = false; p.inst.ev({ k: 'car', id: p.id, on: false, morty: 1 }); this.toast(p, 'You turn back into a boy. Your back hurts from being a car.'); this.dirty(p); return; }
       p.car = on;
       p.inst.ev({ k: 'car', id: p.id, on });
       this.toast(p, on ? 'Keys in. W/S to drive, A/D to steer, Shift for nitro. The hood guns fire where you aim, and ramming hurts. B or F to get out.' : 'You parked the car.');
@@ -2704,6 +2748,16 @@
         return;
       }
       if (l.tinyrick) { this.onTinyRick(p); return; }
+      // The Smith pool ("Wet Kuat Amortican Summer"): two in the pool can fuse, Kuato-style.
+      if (l.id === 'pool' && !p.fuse && !p.fusedTo) {
+        const q = [...p.inst.players.values()].find(o => o !== p && !o.dead && !o.fuse && !o.fusedTo && dist2(o.x, o.z, l.x, l.z) < 25);
+        if (q) {
+          q.offer = { kuato: true, from: p.id, want: {}, get: {}, until: this.time + 25 };
+          this.priv(q, { k: 'offer', kuato: 1, name: p.name, want: {}, get: {} });
+          this.toast(p, 'You asked ' + q.name + ' to fuse with you, Kuato-style. They have to say yes.');
+          return;
+        }
+      }
       if (l.car) { this.onCar(p, true); return; }
       if (l.bout) { this.startBout(p); return; }
       const mine = Object.keys(MM.TASKS).filter(t => MM.isAt(l, MM.TASKS[t].at) && MM.taskFor(t, p.arch));
@@ -2736,6 +2790,65 @@
       this.priv(p, { k: 'task', id, text, give: T.give, mult });
       p.inst.ev({ k: 'em', id: p.id, e: 0 });
       this.progress(p, 'use', id);
+    }
+
+    // ----- Transformations (MM.FORMS): a turkey, a carrot, liquid metal -----
+    setForm(p, id, dur) {
+      const F = id && MM.FORMS[id];
+      p.form = F ? { id, until: this.time + (dur || F.dur) } : null;
+      if (p.inst) p.inst.ev({ k: 'form', id: p.id, f: F ? id : '' });
+      this.dirty(p);
+    }
+    tickForm(p, now) {
+      if (now < p.form.until) return;
+      const was = p.form.id;
+      this.setForm(p, null);
+      this.toast(p, was === 'carrot' ? 'You are not a carrot any more. You will never look at salad the same way.' : 'You turn back into yourself.');
+    }
+    // A carrot ray shot hit a local: it is a carrot for a while, then itself again.
+    carrotNpc(inst, n) {
+      if (n.cast || n.T.target || n.type === 'carrotnpc' || n.T.h > 4) return;
+      const was = n.type, m = inst.morphNpc(n, 'carrotnpc', { until: this.time + 40 });
+      if (!m) return;
+      this.later(25, () => { if (inst.npcs.has(m.id)) { const back = inst.morphNpc(m, was, n.temp ? { until: n.temp } : {}); if (back && !n.temp) back.temp = 0; } });
+    }
+    // ----- Fusion: Jerricky (the Fusion Device) and Kuato (the Smith pool) -----
+    // The lead walks; the partner is in the same body (and shoots from it).
+    fuse(lead, part, kind) {
+      if (!this.near(lead, part)) { this.toast(lead, 'Get closer to them.'); return false; }
+      for (const q of [lead, part]) if (q.fuse || q.fusedTo || q.car || q.ship || q.aboard || q.ride || q.tiny) { this.toast(lead, 'Not right now: one of you is busy (driving, flying, tiny or already fused).'); return false; }
+      if (lead.form) this.setForm(lead, null);
+      if (part.form) this.setForm(part, null);
+      lead.fuse = { partner: part.id, kind, until: this.time + MM.FUSE.dur };
+      part.fusedTo = lead.id;
+      lead.inst.ev({ k: 'fuse', a: lead.id, b: part.id, kind });
+      this.dirty(lead); this.dirty(part);
+      return true;
+    }
+    unfuse(lead, why) {
+      const F = lead.fuse; if (!F) return;
+      lead.fuse = null;
+      const part = this.players.get(F.partner);
+      if (part) {
+        part.fusedTo = 0;
+        if (part.inst === lead.inst && !part.dead) this.teleport(part, lead.x + Math.cos(lead.r) * 1.6, lead.y, lead.z - Math.sin(lead.r) * 1.6);
+        if (why) this.toast(part, why);
+        this.dirty(part);
+      }
+      if (lead.inst) lead.inst.ev({ k: 'fuse', a: lead.id, b: 0 });
+      if (why) this.toast(lead, why);
+      this.dirty(lead);
+    }
+    tickFused(part) {
+      const lead = this.players.get(part.fusedTo);
+      if (!lead || !lead.fuse || lead.fuse.partner !== part.id) { part.fusedTo = 0; this.dirty(part); return; }
+      if (lead.inst !== part.inst) this.travel(part, lead.inst.dimId, { x: lead.x, z: lead.z }, lead.inst);
+      part.x = lead.x; part.y = lead.y; part.z = lead.z; part.lastSt = this.time;
+    }
+    onFuse(p, m) {
+      if (m.op !== 'split') return;
+      const lead = p.fuse ? p : this.players.get(p.fusedTo);
+      if (lead && lead.fuse) this.unfuse(lead, 'You pulled apart. That was weird for everyone.');
     }
 
     // ----- Tiny Rick ("Big Trouble in Little Sanchez") -----
@@ -2975,6 +3088,7 @@
       p.offer = null;
       if (!o || this.time > o.until || !a) return;
       if (o.serum) { if (p.arch === 'sidekick' && !p.prog.arm) this.armUp(p); return; }
+      if (o.kuato) { const by = this.players.get(o.from); if (by && this.fuse(by, p, 'kuato')) { this.toast(p, 'You and ' + by.name + ' are one body. You are the little one, sticking out of their tummy. You shoot, they walk.'); this.toast(by, p.name + ' is part of you now, sticking out of your tummy. You walk, they shoot.'); } return; }
       if (o.dpunch) {
         if (p.prog.dpunch) return;
         for (const k in o.want) if ((p.inv[k] || 0) < o.want[k]) { this.toast(p, 'Liu Sin does not teach for free. You need ' + matText(o.want) + '.'); return; }
@@ -3006,6 +3120,7 @@
         ch: p.charges, chMax: p.st.gun ? p.st.gun.charges : 0, bor: p.borrow || 0, chIn: p.chargeAt ? r2(p.chargeAt - now) : 0,
         ab: r2(Math.max(0, p.cdAb - now)), chaos: p.prog.chaos, kills: p.kills, deaths: p.deaths, dead: p.dead,
         rsIn: p.dead ? r2(Math.max(0, p.respawnAt - now)) : 0, fx: this.fxBits(p, now), ship: p.ship, car: !!p.car,
+        fm: p.form ? p.form.id : p.carMorty ? 'carmorty' : '', fz: p.fusedTo || 0, fu: p.fuse ? [p.fuse.partner, p.fuse.kind] : 0,
         ab: p.aboard ? [p.aboard.owner, p.aboard.crew.get(p.id) || 1, p.aboard.parked ? p.aboard.id : 0, p.aboard.kind] : 0, pk: p.vessel && p.vessel.parked ? [p.vessel.id, p.vessel.inst.dimId] : 0 };
     }
 
@@ -3035,6 +3150,9 @@
         if (p.hack) this.tickHack(p);
         if (p.ride) this.tickRide(p);
         if (p.aboard) this.tickAboard(p);
+        if (p.form) this.tickForm(p, now);
+        if (p.fusedTo) this.tickFused(p);
+        if (p.fuse && now > p.fuse.until) this.unfuse(p, 'The fusion wore off. You are two people again.');
         if (p.bout) this.tickBout(p, dt);
         if (p.trade && p.trade.a === p && this.tickN % 30 === 0 && !this.near(p.trade.a, p.trade.b)) this.tradeEnd(p.trade, 'You moved too far apart.');
         if (p.prog.arm && !p.dead) this.tickArm(p, now);

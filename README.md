@@ -54,6 +54,7 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | L | LIGHT | Lightspeed, out in space: to another world, dimension or timeline |
 | 1 2 3 4 5 6 7 | GADGET | Grenade, turret, shrink ray, Meeseeks Box, Time Crystal, freeze ray, Magic Chalk (the last two kinds: Ricks and Evil Morty) |
 | 8 | Fist button | The Five-Step Death Punch (once Liu Sin in Downtown has taught you) |
+| 9 | Carrot button | Carrot Ray shot (build it at Rick's workbench) |
 | C | Build slot | Workbench |
 | H | Garage console | Rick: "House, ..." (the defences of your own house, from anywhere near it) |
 | Enter | Chat button | Chat with the whole multiverse |
@@ -264,6 +265,18 @@ Tiny, you fit into the **Mega Gargantuans'** land: a whole civilisation on a mos
 - **The Immortality Field Resort** ("The Whirly Dirly Conspiracy"). A holiday world under a glassy dome where nothing can die: you just pop back together. Outside the dome, death works normally. The **Whirly Dirly** coaster loops out past the edge for a few seconds. Out there you're mortal, and sometimes a bolt comes loose. The hotel has a spa and a roof to jump off.
 - **Space Beth** is playable ("Star Mort Rickturn of the Jerri"). She's a freedom fighter from the Alien Bazaar with her own ship from the start, a rifle and a war with the Federation: smuggling, sabotage at the Bureau of Forms, and Federation Guards to take down. Her Grapple Strike slams down on everyone around her.
 - **The Five-Step Death Punch** ("Rick Fu Hustle"). Liu Sin, in Downtown, teaches it for 25 Schmeckles. Press **8** (or the fist button) right next to someone. Five steps **forward** and they drop. Walking backwards (or sideways) is safe: the punched player keeps facing ahead, so **S** walks them backwards. It lasts until a Rick reverses it. Talk to a local Rick, or a Rick player picks "Reverse their death punch" from your player menu. A Rick can also walk back to his own garage and fix himself. It works on locals too (they walk forwards, so they drop), and on players when you both have fights on.
+
+### Transformations (batch 3)
+
+Rick's workbench makes these (anyone can build them), and you can use them on yourself, or on a friend who says yes:
+
+- **Turkey Pill** ("Thanksploitation Spectacular"): three minutes as a turkey, small and fast. You peck, and you can't use gadgets.
+- **The Turkey Coup:** an event in D.C. The turkeys hold the White House, with an army and the Turkey President. Storm it. Turkey soldiers leave fellow turkeys alone.
+- **Carrot Ray** (key **9**, a gadget): one shot turns a player who has fights on into a hopping carrot that can't shoot, for 25 s. Locals become carrots for a while.
+- **Ferrofluid Injection** ("Edge of Tomorty"): you turn liquid-metal silver. You're faster, and hits do half damage.
+- **Car-ification Serum** ("The Ricks Must Be Crazy"): a Morty becomes a car with his face on the front, and drives himself, anywhere. **B** turns him back.
+- **Fusion Device** ("The Jerrick Trap"): use it on someone who agrees and you share one body with two heads for 90 s. You walk, they shoot, and hits land on the body. **B** pulls you apart.
+- **Kuato** ("Wet Kuat Amortican Summer"): two players in the Smith pool. Press **F** at the pool and the other one can fuse into a little head sticking out of your tummy.
 
 ### Teams
 

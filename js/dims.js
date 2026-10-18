@@ -3895,6 +3895,8 @@
         s.add(P.box, '#3a2a1a', [0, 1.85, -0.05], null, [0.95, 0.12, 0.8]);
         s.add(P.cone, '#ff9a2a', [0, 1.3, -1.05], [-2.3, 0, 0], [0.12, 0.7, 0.12], true);
         void d;
+      } else if (type === 'turkeysoldier' || type === 'turkeypres' || type === 'carrotnpc') {
+        C.formShape(type, s);   // (js/avatar.js: the turkeys of the coup, a local hit by the carrot ray)
       } else if (type === 'giantbaby') {
         // A baby the size of a building, on all fours: a huge head, a nappy, chubby everything.
         const sk = '#f4c4a8', pk = '#ec9a8a';

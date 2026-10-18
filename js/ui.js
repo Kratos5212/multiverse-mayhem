@@ -39,6 +39,7 @@
     talk: '<path d="M4 5h16v11H9l-5 4z"/>',
     emote: '<circle cx="12" cy="12" r="9"/><path d="M8 14a5 5 0 0 0 8 0M9 9.5h.01M15 9.5h.01"/>',
     dpunch: '<path d="M7 11V7a2 2 0 0 1 4 0v3M11 10V6a2 2 0 0 1 4 0v4M15 10V8a2 2 0 0 1 4 0v6a7 7 0 0 1-7 7h-1a6 6 0 0 1-6-6v-3a2 2 0 0 1 2-2h3"/>',
+    carrot: '<path d="M7 17L15 9l2 2-8 8-4 1z"/><path d="M15 9l1-5M15 9l5-1M15 9l3-3"/>',
     gadget: '<circle cx="11" cy="14" r="6"/><path d="M11 8V5h4M15 5l3-2"/>',
   };
   const icon = name => {

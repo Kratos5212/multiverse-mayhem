@@ -227,14 +227,35 @@
   function archLabel(info) { return (info.bot ? 'bot · ' : '') + (info.clone ? 'clone · ' : '') + (info.title || MM.ARCHETYPES[info.arch].name); }
   function addPlayer(info) {
     if (info.id === G.myId || G.players.has(info.id)) return;
-    const av = C.buildAvatar(info.look, info.arch, { ratsuit: !!(info.gear && info.gear.ratsuit) });
+    const av = C.buildAvatar(info.form === 'ferro' ? MM.ferroLook(info.look) : info.look, info.arch, { ratsuit: !!(info.gear && info.gear.ratsuit) });
     C.setGear(av, info.gear);
+    applyForm(av, info.form, info.fu);
     const tag = C.makeTag(info.name, info.home, archLabel(info), UI.ARCH_COLORS[info.arch]);
     tag.sprite.position.y = av.headY + 0.55;
     av.root.add(tag.sprite);
     collectOutlines(av);
     scene.add(av.root);
     G.players.set(info.id, { info, av, tag, snaps: [], x: 0, y: -999, z: 0, r: 0, a: 0, hp: 100, fx: 0, speed: 0, emoteT: 0, px: 0, pz: 0, placed: false });
+  }
+  // A transformation (MM.FORMS) or a fusion, on an avatar: a turkey or a carrot model, and the
+  // fused partner's head (theirs, or yours if you are the one inside).
+  function partnerOf(id) { if (id === G.myId) return { look: profile.look, arch: profile.arch }; const q = G.players.get(id); return q ? q.info : null; }
+  function applyForm(av, form, fu) {
+    if (form === 'turkey' || form === 'carrot') C.setForm(av, form);
+    if (fu) { const q = partnerOf(fu[0]); if (q) C.setFusion(av, q.look, q.arch, fu[1]); }
+  }
+  function rebuildPlayer(id) { const p = G.players.get(id); if (!p) return; const info = p.info, keep = { x: p.x, y: p.y, z: p.z, snaps: p.snaps }; removePlayer(id); addPlayer(info); const q = G.players.get(id); if (q) Object.assign(q, keep, { placed: true }); }
+  function rebuildMe() {
+    if (!G.meAv) return;
+    const y = G.you || {};
+    scene.remove(G.meAv.root); G.meAv.dispose();
+    G.meAv = C.buildAvatar(y.fm === 'ferro' ? MM.ferroLook(profile.look) : profile.look, profile.arch, { ratsuit: !!(G.prog && G.prog.up.ratsuit) });
+    scene.add(G.meAv.root);
+    C.setGear(G.meAv, myGear());
+    applyForm(G.meAv, y.fm, y.fu);
+    if (y.ship) C.setShip(G.meAv, true, myGear());
+    if (y.car) C.setCar(G.meAv, true, y.fm === 'carmorty');
+    collectOutlines(G.meAv);
   }
   function collectOutlines(av) { av.outlines = []; av.root.traverse(o => { if (o.isMesh && o.material && o.material.side === T.BackSide) av.outlines.push(o); }); }
   function removePlayer(id) {
@@ -980,7 +1001,7 @@
         if (p) { C.setShip(p.av, e.on, p.info.gear); collectOutlines(p.av); sfxAt('jump', p.x, p.z); }
         break;
       }
-      case 'car': { const p = posOf(e.id); if (p) sfxAt(e.on ? 'craft' : 'jump', p.x, p.z); break; }
+      case 'car': { const p = posOf(e.id); if (p) sfxAt(e.on ? 'craft' : 'jump', p.x, p.z); const q = G.players.get(e.id); if (q && e.morty) { q.info.form = e.on ? 'carmorty' : ''; if (q.av) { C.setCar(q.av, e.on, true); collectOutlines(q.av); } } break; }
       case 'sp+': addParked(e.v); break;
       case 'sp-': removeParked(e.id); break;
       case 'crew': setCrew(e.id, e.l); break;
@@ -993,6 +1014,26 @@
       case 'kssb': {
         const P = G.parked.get(e.id);
         if (P) { const col = e.m === 'kill' ? '#ff3a3a' : e.m === 'stun' ? '#ffd84d' : '#7ad8ff'; fx.burst(e.x, e.y, e.z, col, 26, 6, 0.5, 0.5, 1); fx.burst(P.x, P.y + 1.4, P.z, col, 10, 3, 0.3, 0.3, 1); sfxAt(e.m === 'kill' ? 'shoot' : 'shrink', P.x, P.z); }
+        break;
+      }
+      case 'form': {
+        const p = posOf(e.id);
+        if (p) { fx.burst(p.x, p.y + 0.8, p.z, e.f === 'turkey' ? '#a86a3a' : e.f === 'carrot' ? '#f08a2a' : e.f === 'ferro' ? '#c8d0d6' : '#ffffff', 26, 4, 0.5, 0.6, 1); sfxAt('shrink', p.x, p.z); }
+        const q = G.players.get(e.id);
+        if (q) { q.info.form = e.f; rebuildPlayer(e.id); }
+        break;
+      }
+      case 'fuse': {
+        const a = G.players.get(e.a);
+        if (e.b) {
+          if (a) { a.info.fu = [e.b, e.kind]; rebuildPlayer(e.a); }
+          const b = G.players.get(e.b); if (b) b.info.fz = e.a;
+          const p = posOf(e.a); if (p) { fx.burst(p.x, p.y + 1.2, p.z, '#c49bff', 30, 5, 0.6, 0.6, 1); sfxAt('warp', p.x, p.z); }
+          if (e.a !== G.myId && e.b !== G.myId) UI.feed([{ t: nameOf(e.a), c: '#c49bff' }, e.kind === 'kuato' ? ' and ' : ' + ', { t: nameOf(e.b), c: '#c49bff' }, e.kind === 'kuato' ? ': Kuato!' : ': one body, two heads']);
+        } else {
+          for (const q of G.players.values()) if (q.info.fz === e.a) q.info.fz = 0;
+          if (a) { a.info.fu = 0; rebuildPlayer(e.a); }
+        }
         break;
       }
       case 'tiny': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 0.4, p.z, '#7ad8ff', 24, 4, 0.5, 0.5, 1); sfxAt('shrink', p.x, p.z); } break; }
@@ -1221,7 +1262,13 @@
     $('charges').hidden = !y.chMax && !y.bor;
     $('charges').textContent = y.chMax ? 'Portal ' + '●'.repeat(y.ch) + '○'.repeat(Math.max(0, y.chMax - y.ch)) : y.bor ? 'Borrowed gun ' + '●'.repeat(y.bor) : '';
     if (G.meAv && !!y.ship !== !!G.meAv.inShip) { C.setShip(G.meAv, y.ship, myGear()); if (y.ship) { G.me.vy = 0; G.me.grounded = false; } }
-    if (G.meAv && !!y.car !== !!G.meAv.inCar) { C.setCar(G.meAv, y.car); collectOutlines(G.meAv); G.me.carYaw = G.me.yaw; G.me.carSpeed = 0; C.sfx(y.car ? 'craft' : 'jump', 0.6); }
+    if (G.meAv && ((prev && prev.fm) || '') !== (y.fm || '')) {
+      const was = prev && prev.fm;
+      if (y.fm === 'ferro' || was === 'ferro' || was === 'turkey' || was === 'carrot' || y.fm === 'turkey' || y.fm === 'carrot') rebuildMe();
+      if (y.fm && y.fm !== 'carmorty') UI.toast({ turkey: '🦃 You are a turkey.', carrot: '🥕 You are a carrot.', ferro: '🧲 Liquid metal.' }[y.fm] || '', 2500);
+    }
+    if (G.meAv && JSON.stringify((prev && prev.fu) || 0) !== JSON.stringify(y.fu || 0)) rebuildMe();
+    if (G.meAv && !!y.car !== !!G.meAv.inCar) { C.setCar(G.meAv, y.car, y.fm === 'carmorty'); collectOutlines(G.meAv); G.me.carYaw = G.me.yaw; G.me.carSpeed = 0; C.sfx(y.car ? 'craft' : 'jump', 0.6); }
     $('chaos').textContent = y.chaos;
     $('kos').textContent = y.kills;
     G.abReadyAt = now() + y.ab;
@@ -1386,6 +1433,14 @@
       });
       return;
     }
+    if (e.kuato) {
+      openModal('offer', e.name + ' wants to fuse with you', box => {
+        box.append(el('p', { text: 'Kuato-style ("Wet Kuat Amortican Summer"): you become a little head sticking out of ' + e.name + '\'s tummy for 90 seconds. They walk, you shoot. B pulls you apart.' }),
+          el('div', { class: 'chips' }, el('button', { class: 'btn go', onclick: () => { send({ t: 'ans', a: 1 }); UI.closeModal(); } }, 'Fuse'),
+            el('button', { class: 'btn', onclick: () => { send({ t: 'ans', a: 0 }); UI.closeModal(); } }, 'Absolutely not')));
+      });
+      return;
+    }
     if (e.dpunch) {
       const fmt = m => Object.keys(m).map(k => m[k] + ' ' + MM.MATERIALS[k].icon + ' ' + MM.MATERIALS[k].name).join(', ');
       openModal('offer', e.name + ': the Five-Step Death Punch', box => {
@@ -1443,6 +1498,7 @@
     mk('freeze', '6', 'Freeze', () => useGadget('freeze'));
     mk('chalk', '7', 'Chalk', () => useGadget('chalk'));
     mk('dpunch', '8', 'Death Punch', () => deathPunch());
+    mk('carrot', '9', 'Carrot Ray', () => useGadget('carrot'));
     mk('items', 'I', 'Items', () => openInventory());
     mk('pair', 'R', 'Portals', () => shootPair());
     mk('scan', 'X', 'Scan', () => scan());
@@ -1499,6 +1555,7 @@
   function weaponId() {
     if (G.you && G.you.ship) return G.st && G.st.ship && G.st.ship.lasers ? 'lasers' : 'blaster';
     if (G.you && G.you.car) return 'carguns';
+    if (G.you && G.you.fm && MM.FORMS[G.you.fm] && MM.FORMS[G.you.fm].weapon) return MM.FORMS[G.you.fm].weapon;
     if (G.prog && G.prog.arm) return 'armpunch';   // Strong-arm Morty: the arm punches
     return MM.ARCHETYPES[profile.arch].weapon;
   }
@@ -1527,7 +1584,7 @@
 
   const pickled = () => { if (MM.helpless(profile.arch, G.prog && G.prog.up)) { if (now() > (G.pickleT || 0)) { UI.toast(MM.HELPLESS_TEXT, 3500); G.pickleT = now() + 4; } return true; } return false; };
   function fire() {
-    if (!canAct() || (G.you.fx & 4) || pickled()) return;
+    if (!canAct() || (G.you.fx & 4) || pickled() || G.you.fm === 'carrot') return;
     const t = now();
     const wid = weaponId(), W = MM.WEAPONS[wid];
     if (t < G.fireT) return;
@@ -1597,6 +1654,7 @@
     if (!canAct() || pickled()) return;
     if (G.you.car) { send({ t: 'car', on: false }); return; }   // B: out of the car
     if (G.you.ab) { send({ t: 'ship', on: false }); return; }   // B: out of someone's ship
+    if (G.you.fz || G.you.fu) { send({ t: 'fz', op: 'split' }); return; }   // B: pull apart from a fusion
     if (!G.st || !G.st.ship) { UI.toast('You don\'t have a ship. Build a Ship Hull at the Bazaar Shipyard, if your path allows it (J).', 4000); return; }
     send({ t: 'ship', on: !G.you.ship });
   }
@@ -1654,7 +1712,8 @@
     const n = nearestLocal();
     if (n) { send({ t: 'talk', n: n.id }); return; }
     const l = nearLandmark();
-    if (l && MM.isAt(l, 'housecon')) { send({ t: 'use', l: l.id }); return; }   // the house answers (or another Rick starts hacking)
+    if (l && MM.isAt(l, 'housecon')) { send({ t: 'use', l: l.id }); return; }
+    if (l && l.id === 'pool') { send({ t: 'use', l: l.id }); return; }   // two in the pool: Kuato   // the house answers (or another Rick starts hacking)
     if (l && l.car) { send({ t: 'use', l: l.id }); return; }                    // take a car
     if (l) { if (l.door && !tasksAt(l).length) send({ t: 'door', l: l.id }); else openLandmark(l); return; }
     if (nearKiosk()) openDims('station');
@@ -2291,6 +2350,7 @@
       case 'Digit6': useGadget('freeze'); break;
       case 'Digit7': useGadget('chalk'); break;
       case 'Digit8': deathPunch(); break;
+      case 'Digit9': useGadget('carrot'); break;
       case 'KeyI': openInventory(); break;
       case 'KeyV': toggleView(); break;
       case 'KeyG': emoteBar(); break;
@@ -2445,6 +2505,15 @@
       tickHouseFx();
       return;
     }
+    // Fused into someone else's body (Jerricky, Kuato): you go where they go. You can shoot.
+    if (y && y.fz && !y.dead) {
+      const o = G.players.get(y.fz);
+      if (o) { me.x = o.x; me.y = o.y; me.z = o.z; me.vx = me.vy = me.vz = 0; me.yaw = G.camYaw; me.anim = MM.ANIM.idle; me.grounded = true; }
+      if (G.meAv) { G.meAv.hidden = true; G.meAv.root.visible = false; }
+      tickHouseFx();
+      return;
+    }
+    if (G.meAv && G.meAv.hidden && !(y && y.fz)) { G.meAv.hidden = false; G.meAv.root.visible = true; }
     // A passenger: you sit in your seat of someone's ship (flying or parked); the server does the same.
     if (y && y.ab && !y.dead) {
       const [oid, seat, pid, kind] = y.ab, P = pid ? G.parked.get(pid) : null, o = !pid && G.players.get(oid);
@@ -2490,7 +2559,8 @@
     const st = G.st || MM.statsOf(profile.arch, {});
     const inShip = !!(y && y.ship && st.ship), inCar = !!(y && y.car);
     // Same speed rules as the server (Host.speedOf), so you never get snapped back.
-    const mult = (fxb & 16384 ? MM.TINY.speed : 1) * (fxb & 32768 && !inShip && !inCar ? MM.TINYRICK.speed : 1) * (fxb & 2 ? 1.8 : 1) * (fxb & 8 ? 0.75 : 1) * (fxb & 16 ? 0.6 : 1) * (fxb & 256 ? 0.5 : 1) * (fxb & 1024 ? 0.12 : 1);
+    const FM = y && y.fm && MM.FORMS[y.fm];
+    const mult = (fxb & 16384 ? MM.TINY.speed : 1) * (fxb & 32768 && !inShip && !inCar ? MM.TINYRICK.speed : 1) * (FM && !inShip ? FM.speed : 1) * (fxb & 2 ? 1.8 : 1) * (fxb & 8 ? 0.75 : 1) * (fxb & 16 ? 0.6 : 1) * (fxb & 256 ? 0.5 : 1) * (fxb & 1024 ? 0.12 : 1);
     const shift = !chatOpen() && !UI.modalOpen() && (keys.has('ShiftLeft') || keys.has('ShiftRight'));
     me.sprinting = !inShip && !inCar && !dead && il > 0.3 && (shift || touch.sprint) && iz > -0.2;
     me.boosting = (inShip || inCar) && !dead && (shift || touch.sprint);   // Shift in the ship: afterburner; in a car: nitro
@@ -2541,7 +2611,7 @@
       me.vy += (climb * 12 - me.vy) * Math.min(1, dt * 4);
       me.grounded = false;
     } else if (jumpHeld && me.grounded && !inCar) {
-      me.vy = st.jump * (dim.quirk === 'bouncy' ? 1.6 : 1) * (fxb & 32768 ? MM.TINYRICK.jump : 1);
+      me.vy = st.jump * (dim.quirk === 'bouncy' ? 1.6 : 1) * (fxb & 32768 ? MM.TINYRICK.jump : 1) * (y && y.fm && MM.FORMS[y.fm] && MM.FORMS[y.fm].jump || 1);
       me.grounded = false;
       me.jumpLock = 0.25;
       C.sfx('jump', 0.4);
@@ -2636,7 +2706,7 @@
       G.meAv.root.rotation.x = 0;
       G.meAv.animate(dt, { speed: me.grounded ? hs : 0, anim: me.anim, fx: fxb, ek: me.emoteKind || 0 });
       if (!firstPerson()) ongoingFx(me, fxb, me.grounded ? hs : 0, dt);
-      G.meAv.body.visible = !firstPerson() || dead;
+      G.meAv.body.visible = (!firstPerson() || dead) && !G.meAv.formMesh && !(G.meAv.inCar && G.you && G.you.fm === 'carmorty');   // (a turkey, a carrot or a car instead)
       vm.bob += (me.grounded && !inShip ? hs : 0) * dt * 1.6; vm.speed = me.grounded && !inShip ? Math.min(1, hs / 5) : 0;
     }
     // Sprinting: dust at your heels and a slightly wider view.
@@ -2752,7 +2822,9 @@
       const inShip = !!(s.fx & 512);
       if (inShip !== !!p.av.inShip) { C.setShip(p.av, inShip, p.info.gear); collectOutlines(p.av); }
       const inCar = !!(s.fx & 8192);
-      if (inCar !== !!p.av.inCar) { C.setCar(p.av, inCar); collectOutlines(p.av); }
+      if (inCar !== !!p.av.inCar) { C.setCar(p.av, inCar, p.info.form === 'carmorty'); collectOutlines(p.av); }
+      p.av.hidden = !!p.info.fz;   // inside someone else's body
+      if (p.av.hidden) p.av.root.visible = false;
       const rider = G.riders && G.riders.get(p.id);
       let anim = s.a === MM.ANIM.dead ? s.a : p.emoteT > 0 ? MM.ANIM.emote : s.a, up = false;
       if (rider && rider.R) {

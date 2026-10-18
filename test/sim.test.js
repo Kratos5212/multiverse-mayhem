@@ -1533,6 +1533,7 @@ test('the Five-Step Death Punch: learn it from Liu Sin, and whoever you hit drop
   a.p.pvp = b.p.pvp = true; b.p.fx.prot = 0;
   host.teleport(a.p, 40, MM.heightAt('downtown', 40, 40), 40);
   host.teleport(b.p, 40, MM.heightAt('downtown', 40, 41.5), 41.5);
+  for (const n of [...a.p.inst.npcs.values()]) if (Math.hypot(n.x - 40, n.z - 41) < 8) a.p.inst.npcs.delete(n.id);   // (no passer-by in the way)
   run(host, 0.2);
   host.message(a.c, JSON.stringify({ t: 'dp', r: 0 }));
   assert.ok(b.p.dp && b.p.dp.steps === 5, 'punched');
@@ -1671,4 +1672,82 @@ test('Anatomy Park: Ruben faces Earth, and the park has its new attractions', ()
   for (const r of ['cortex', 'liverboats', 'intestine', 'kidneydrop', 'eyewheel']) assert.ok(MM.ridesIn('anatomy').some(R => R.id === r), r);
   for (const l of ['brainzone', 'liverlake', 'liverfish', 'lungs', 'funnybone', 'tastebuds', 'tapewormzoo', 'germgauntlet']) assert.ok(MM.LANDMARK_BY_ID[l], l);
   assert.ok(MM.padsIn('anatomy').length >= 16 && MM.boundOf('anatomy') >= 260);
+});
+
+test('transformations: a turkey (and the Turkey coup), the carrot ray, ferrofluid, Car Morty', () => {
+  const host = new MM.Host();
+  const a = join(host, 'surgeon', { dim: 'suburbia', home: 'C-137' });
+  const b = join(host, 'joe', { dim: 'suburbia', home: 'C-137' });
+  host.travel(a.p, 'suburbia', { x: 0, z: 60 }); host.travel(b.p, 'suburbia', { x: 2, z: 60 }); run(host, 0.3);
+  // A turkey: small, fast, pecks, no gadgets.
+  a.p.inv['q:turkeypill'] = 1; a.p.inv.grenade = 1;
+  const v0 = host.speedOf(a.p);
+  host.message(a.c, '{"t":"uc","id":"turkeypill"}');
+  assert.ok(a.p.form && a.p.form.id === 'turkey' && host.speedOf(a.p) > v0 && host.scaleOf(a.p) < 1);
+  assert.strictEqual(host.weaponOf(a.p), 'peck');
+  host.message(a.c, '{"t":"g","g":"grenade","dx":0,"dy":0,"dz":1}');
+  assert.strictEqual(a.p.inv.grenade, 1, 'turkeys cannot use gadgets');
+  a.p.form.until = host.time; run(host, 0.1);
+  assert.ok(!a.p.form, 'it wears off');
+  // The carrot ray: a carrot can't shoot and barely moves.
+  a.p.pvp = b.p.pvp = true; b.p.fx.prot = 0; a.p.inv.carrot = 1;
+  host.teleport(a.p, 0, b.p.y, 56); host.teleport(b.p, 0, b.p.y, 62); run(host, 0.1);
+  host.message(a.c, '{"t":"g","g":"carrot","dx":0,"dy":0,"dz":1}'); run(host, 0.5);
+  assert.ok(b.p.form && b.p.form.id === 'carrot', 'a carrot');
+  assert.ok(host.speedOf(b.p) < host.speedOf(a.p) * 0.6);
+  b.p.cdFire = 0; const shots = b.p.inst.projs.length;
+  host.message(b.c, '{"t":"f","dx":0,"dy":0,"dz":-1}');
+  assert.strictEqual(b.p.inst.projs.length, shots, 'carrots have no hands');
+  // Ferrofluid: half damage.
+  a.p.inv['q:ferrofluid'] = 1; run(host, 1.2);
+  host.message(a.c, '{"t":"uc","id":"ferrofluid"}');
+  assert.ok(a.p.form && a.p.form.id === 'ferro');
+  a.p.fx.prot = 0; const hp = a.p.hp; host.hurtPlayer(a.p.inst, a.p, 20, null, 'test');
+  assert.strictEqual(hp - a.p.hp, 10, 'half damage');
+  // Car Morty: only a Morty, and B turns him back.
+  const m = join(host, 'sidekick', { dim: 'suburbia', home: 'C-141' });
+  host.travel(m.p, 'suburbia', { x: 6, z: 60 }); run(host, 0.3);
+  m.p.inv['q:carserum'] = 1;
+  host.message(m.c, '{"t":"uc","id":"carserum"}');
+  assert.ok(m.p.car && m.p.carMorty, 'Car Morty');
+  host.message(m.c, '{"t":"car","on":false}');
+  assert.ok(!m.p.car && !m.p.carMorty, 'a boy again');
+  // The Turkey coup in D.C.: turkey soldiers leave turkeys alone.
+  assert.ok(MM.EVENTS.dc.some(E => E.id === 'turkeycoup'));
+  host.travel(a.p, 'dc'); run(host, 0.3);
+  const list = MM.EVENTS.dc, inst = a.p.inst; inst.event = null; inst.nextEvent = 0; run(host, MM.TICK * 2);
+  assert.ok(inst.event && inst.event.E.id === 'turkeycoup');
+  const pres = [...inst.npcs.values()].find(n => n.type === 'turkeypres');
+  assert.ok(pres && Math.hypot(pres.x - MM.LANDMARK_BY_ID.whitehouse.x, pres.z - MM.LANDMARK_BY_ID.whitehouse.z) < 25, 'the Turkey President holds the White House');
+  void list;
+});
+
+test('fusion: Jerricky (the Fusion Device) and Kuato (two in the pool): one body, they walk, you shoot', () => {
+  const host = new MM.Host();
+  const r = join(host, 'genius', { dim: 'suburbia', home: 'C-137' });
+  const j = join(host, 'joe', { dim: 'suburbia', home: 'C-137' });
+  host.travel(r.p, 'suburbia', { x: 0, z: 60 }); host.travel(j.p, 'suburbia', { x: 2, z: 60 }); run(host, 0.3);
+  r.p.inv['q:fusiondevice'] = 1;
+  host.message(r.c, JSON.stringify({ t: 'uo', id: j.p.id, q: 'fusiondevice' }));
+  host.message(j.c, '{"t":"ans","a":1}');
+  assert.ok(r.p.fuse && j.p.fusedTo === r.p.id, 'Jerricky');
+  r.p.x += 10; run(host, 0.2);
+  assert.ok(Math.hypot(j.p.x - r.p.x, j.p.z - r.p.z) < 0.01, 'one body');
+  r.p.fx.prot = j.p.fx.prot = 0; const hr = r.p.hp, hj = j.p.hp;
+  host.hurtPlayer(j.p.inst, j.p, 10, null, 'test');
+  assert.ok(r.p.hp < hr && j.p.hp === hj, 'hits land on the body');
+  host.message(j.c, '{"t":"fz","op":"split"}');
+  assert.ok(!r.p.fuse && !j.p.fusedTo, 'pulled apart');
+  assert.strictEqual(r.p.inv['q:fusiondevice'], 1, 'the device is kept');
+  // Kuato, in the Smith pool.
+  const pool = MM.LANDMARK_BY_ID.pool;
+  host.teleport(r.p, pool.x, MM.heightAt('suburbia', pool.x, pool.z), pool.z + 1);
+  host.teleport(j.p, pool.x + 1, MM.heightAt('suburbia', pool.x, pool.z), pool.z);
+  run(host, 1.2);
+  host.message(r.c, '{"t":"use","l":"pool"}');
+  assert.ok(j.p.offer && j.p.offer.kuato);
+  host.message(j.c, '{"t":"ans","a":1}');
+  assert.ok(r.p.fuse && r.p.fuse.kind === 'kuato' && j.p.fusedTo === r.p.id, 'Kuato');
+  r.p.fuse.until = host.time; run(host, 0.1);
+  assert.ok(!r.p.fuse && !j.p.fusedTo, 'wears off');
 });

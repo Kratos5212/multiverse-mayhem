@@ -1374,6 +1374,10 @@
       talk: ['Welcome to Mega Gargantua! We are the Mega Gargantuans. The name is aspirational.', 'You are tiny too? Then you are our size. Welcome, giant!', 'Beware the ants. They are the size of houses. They are also the size of ants.', 'Our president will sign any treaty that comes with a selfie.', 'Last week a human stepped on the eastern district. We rebuilt by Tuesday.'],
       moods: { line: 55, gift: 12, trade: 10, errand: 8, buff: 8, dance: 4, angry: 3 } },
     giantant: { name: 'Giant Ant', hp: 70, speed: 4.8, hostile: true, dmg: 10, drop: { s: 2, m: 1 }, r: 1.1, h: 1.2 },
+    // ----- Batch 3: the Turkey coup ("Thanksploitation Spectacular") -----
+    turkeysoldier: { name: 'Turkey Soldier', hp: 50, speed: 5, hostile: true, dmg: 8, drop: { f: 2, k: 1 }, r: 0.6, h: 1.4, gun: 'blaster', turkey: true, aggro: 24, leash: 80 },
+    turkeypres: { name: 'The Turkey President', hp: 600, speed: 3.6, hostile: true, dmg: 18, drop: { k: 15, f: 4, m: 1 }, r: 1.2, h: 2.6, gun: 'rifle', turkey: true, aggro: 30, leash: 60 },
+    carrotnpc: { name: 'A carrot', hp: 10, speed: 0.6, hostile: false, dmg: 0, drop: { f: 1 }, r: 0.4, h: 0.9, talk: ['...', '*rustles leaves*', 'I used to be somebody.'], moods: { line: 100 } },
     // ----- Batch 2 -----
     giantbaby: { name: 'Giant Baby', hp: 4000, speed: 12, hostile: true, dmg: 25, drop: { k: 10, g: 6 }, r: 18, h: 42, aggro: 320, leash: 9999, stomp: true, space: true, scale: 3.5 },   // floats in space (T.space), model x3.5
     // "A Ricker Runs Through It": somebody hacked the Smith house. Its lawn turrets and its
@@ -1743,6 +1747,7 @@
     froopy: [{ id: 'sugar', name: 'Sugar Rush', text: 'It is raining candy. And feathers. Do not ask.', loot: ['f', 12], talkBoost: 1, dur: 50 }],
     anatomy: [{ id: 'outbreak', name: 'Outbreak', text: 'The diseases have escaped containment. Again.', spawn: [['bacteria', 9]], dur: 90 }],
     pizzaworld: [{ id: 'delivery', name: 'Rush Hour', text: 'Everyone is delivering everyone. Grab a slice.', loot: ['s', 12], talkBoost: 1, dur: 50 }],
+    dc: [{ id: 'turkeycoup', name: 'Turkey Coup!', text: 'The turkeys have taken the White House. The Turkey President has an army. Storm it (turkeys they leave alone).', squad: [['turkeysoldier', 8], ['turkeypres', 1]], at: 'whitehouse', clear: { k: 15, f: 4 }, dur: 200 }],
     wasteland: [{ id: 'convoy', name: 'Raider Convoy', text: 'Raiders are coming over the dunes.', spawn: [['raider', 8]], dur: 90 }],
     microverse: [{ id: 'surge', name: 'Power Surge', text: 'The gooble boxes are overflowing with power.', loot: ['c', 12], dur: 45 }],
     unityworld: [{ id: 'parade', name: 'Unity Parade', text: 'All of Unity is celebrating. They are very generous.', talkBoost: 1, loot: ['k', 8], dur: 60 }],
