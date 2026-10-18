@@ -219,6 +219,23 @@
   MM.CAR = { speed: 22, boost: 1.45, rev: 8, ram: 1.5, ramMin: 8, armour: 0.5, dims: ['wasteland'] };
   // The Ring of Death: three rounds, the champion last. A round's fighters, and what winning gives.
   MM.BOUT = { r: 11.5, rounds: [['gladiator', 2], ['gladiator', 3], ['ringchamp', 1]], give: { s: 12, c: 3, k: 4 }, leave: 3 };
+  // The Muscle Memory Serum ("Rickmancing the Stone"). A Rick gives it to a Morty, and Morty's
+  // right arm becomes a dead warrior's: huge, and with a mind of her own. She does the
+  // punching (no gun) and drags Morty after whatever she wants to hit. In Post-Apocalyptic
+  // Earth she takes bounties, and the last one is the man who killed her owner and his family.
+  // Once he's dead she's at peace, and the arm is Morty's own again (Host.armUp/tickArm).
+  MM.ARM = {
+    dim: 'wasteland',
+    bounties: [
+      { name: 'Tetanus Tom', why: 'Wanted for poisoning the camp well. Also, the arm says he looked at her funny.' },
+      { name: 'Lady Lugnut', why: 'Wanted for stealing three cars and a baby. The baby was fine. The cars were not.' },
+      { name: 'Scab Malone', why: 'He knows where the Arm-Taker hides. The arm wants to ask him. With her knuckles.' },
+    ],
+    killer: { name: 'Gorgut the Arm-Taker', why: 'He cut her off the man she belonged to and killed his family. She remembers everything.' },
+    give: { k: 5, s: 5 },          // each bounty
+    done: { k: 15, s: 10, c: 5 },  // her revenge
+    say: ['The arm flexes. She wants someone.', 'The arm cracks her knuckles. Every one of them.', 'The arm drags you a step. She has a feeling.', 'The arm is patient. You are not her first Morty. You might be her last.'],
+  };
   MM.USE_RADIUS = 4;   // how close to a landmark's wall you must be to use it
   // A landmark counts as a recipe's station if it is that station or stands in for it.
   MM.isAt = (l, at) => l.id === at || l.alias === at;
@@ -643,7 +660,8 @@
     rifle:   { dmg: 11, cd: 0.24, speed: 85, range: 85, color: '#ff5a5a' },
     toy:     { dmg: 5,  cd: 0.45, speed: 45, range: 45, color: '#ff8fd0' },
     lasers:  { dmg: 18, cd: 0.2,  speed: 95, range: 90, color: '#5ff8ff' },
-    carguns: { dmg: 9,  cd: 0.13, speed: 95, range: 70, color: '#ffb03a' },   // the twin guns on a Death Stalker car's hood
+    carguns: { dmg: 9,  cd: 0.13, speed: 95, range: 70, color: '#ffb03a' },
+    armpunch: { dmg: 26, cd: 0.55, melee: 3.6, knock: 11 },                   // Strong-arm Morty's arm (MM.ARM): she punches   // the twin guns on a Death Stalker car's hood
     stalkergun: { dmg: 6, cd: 0.7, speed: 70, range: 34, color: '#ff7a3a' },  // a Death Stalker shooting from his car
     talon:   { dmg: 24, cd: 0.55, melee: 3.6 },
     scalpel: { dmg: 15, cd: 0.45, melee: 2.9 },

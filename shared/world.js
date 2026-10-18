@@ -1522,6 +1522,11 @@
       talk: ['BLOOD! BLOOD! BLOOD!', 'Two go in. Sometimes one comes out. Sometimes both. It is not very organised.', 'You want a car? Take one by the garage. Bring it back on fire.',
         'Strong-arm Morty is the best thing that ever happened to the Ring.', 'We don\'t have much out here. But we have cars. And the Ring.', 'Hemorrhage got married. To a girl from another dimension. Weird.'],
       moods: { line: 60, gift: 8, trade: 10, errand: 8, buff: 6, angry: 6, dance: 2 } },
+    // The arm's bounties, and the man she wants dead (MM.ARM). They wear a red BOUNTY tag.
+    bounty: { name: 'Bounty', hp: 150, speed: 4.4, hostile: true, dmg: 12, drop: { s: 4 }, r: 0.6, h: 1.9, armMark: true,
+      human: { species: ['human'], top: ['armor', 'vest'], acc: ['goggles', 'eyepatch', 'headband'], colors: { pantsColor: '#2a2420' } } },
+    armkiller: { name: 'The Arm-Taker', hp: 360, speed: 4.6, hostile: true, dmg: 18, drop: { s: 10, k: 4 }, r: 0.9, h: 2.5, armMark: true,
+      human: { species: ['human'], top: ['armor'], acc: ['eyepatch'], scale: 1.3, colors: { topColor: '#2a1a14', pantsColor: '#1a1410', accColor: '#111111' }, look: { hair: 'bald', brow: 'angry', mouth: 'grin', width: 1.3, skin: '#c89a78' } } },
     // Hemorrhage, the Death Stalkers' leader, and Summer's husband in that dimension.
     hemorrhage: { name: 'Hemorrhage', hp: 220, speed: 2.6, hostile: false, dmg: 0, drop: { s: 6 }, r: 0.8, h: 2.3,
       human: { species: ['human'], top: ['armor'], acc: ['none'], scale: 1.2, look: { hair: 'bald', brow: 'angry', eyes: 'normal', mouth: 'flat', face: 'wide', height: 1.15, width: 1.3, head: 1.0,

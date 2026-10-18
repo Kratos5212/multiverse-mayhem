@@ -1286,3 +1286,46 @@ test('the Ring of Death: three rounds, the champion last; win and get paid, run 
   run(host, MM.BOUT.leave + 0.5);
   assert.ok(!p.bout && ids.every(id => !inst.npcs.has(id)), 'lost');
 });
+
+test('the Muscle Memory Serum: a Rick gives it to a Morty; the arm punches, hunts her bounties, and lets go after her revenge', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'sidekick', { dim: 'suburbia' });
+  host.travel(p, 'suburbia'); run(host, 0.5);
+  const rick = [...p.inst.npcs.values()].find(n => n.cast && n.cast.arch === 'genius');
+  assert.ok(rick, 'Rick is home');
+  host.teleport(p, rick.x + 1, MM.heightAt('suburbia', rick.x + 1, rick.z), rick.z);
+  c.sent.length = 0;
+  host.message(c, JSON.stringify({ t: 'talk', n: rick.id }));
+  run(host, 0.1);
+  assert.ok(p.offer && p.offer.serum, 'Rick offers the serum');
+  host.message(c, '{"t":"ans","a":1}');
+  assert.ok(p.prog.arm, 'the arm');
+  assert.strictEqual(host.weaponOf(p), 'armpunch', 'she punches; no gun');
+  assert.ok(host.info(p).gear.strongarm, 'everyone sees it');
+  // It stays: saved and loaded.
+  assert.deepStrictEqual(MM.cleanProgress('sidekick', JSON.parse(JSON.stringify(p.prog))).arm, { n: 0 });
+  assert.strictEqual(MM.cleanProgress('genius', JSON.parse(JSON.stringify(p.prog))).arm, undefined, 'only a Morty');
+  // Her bounties, in Post-Apocalyptic Earth.
+  host.travel(p, 'wasteland'); run(host, 1.2);
+  const inst = p.inst, total = MM.ARM.bounties.length + 1;
+  const k0 = p.inv.k || 0;
+  for (let i = 0; i < total; i++) {
+    run(host, 1.2);
+    const n = inst.npcs.get(p.armTarget.id);
+    assert.ok(n && n.armFor === p.id, 'bounty ' + i);
+    assert.strictEqual(n.type, i < total - 1 ? 'bounty' : 'armkiller');
+    if (i === 0) {
+      // Someone else gets him: it does not count, and she finds another.
+      const o = join(host, 'surgeon', { dim: 'wasteland', home: 'Q-20' });
+      inst.hurtNpc(n, 9999, o.p);
+      assert.strictEqual(p.prog.arm.n, 0, 'not ours');
+      run(host, 1.2);
+      const n2 = inst.npcs.get(p.armTarget.id);
+      inst.hurtNpc(n2, 9999, p);
+    } else inst.hurtNpc(n, 9999, p);
+  }
+  assert.ok(!p.prog.arm, 'revenge: the arm is his own again');
+  assert.strictEqual(p.prog.armDone, 1);
+  assert.ok(p.inv.k >= k0 + MM.ARM.give.k * MM.ARM.bounties.length + MM.ARM.done.k, 'paid');
+  assert.strictEqual(host.weaponOf(p), MM.ARCHETYPES.sidekick.weapon, 'his gun back');
+});

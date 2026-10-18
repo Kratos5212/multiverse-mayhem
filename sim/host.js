@@ -50,7 +50,7 @@
     if (Array.isArray(raw.grants)) p.grants = raw.grants.filter(g => MM.RECIPES[g]).slice(0, 40);
     if (typeof raw.title === 'string' && raw.title === MM.ARCHETYPES[arch].life.breakout) p.title = raw.title;
     const c = raw.cnt || {};
-    if (c.use && typeof c.use === 'object') for (const k in c.use) if (MM.TASKS[k]) p.cnt.use[k] = num(c.use[k], 1e6);
+    if (c.use && typeof c.use === 'object') for (const k in c.use) if (MM.TASKS[k] || MM.LANDMARK_BY_ID[k]) p.cnt.use[k] = num(c.use[k], 1e6);   // daily tasks, and wins at places (the Ring of Death)
     if (Array.isArray(c.dims)) p.cnt.dims = c.dims.filter(d => MM.DIM_BY_ID[d]).slice(0, 20);
     if (Array.isArray(c.crafted)) p.cnt.crafted = c.crafted.filter(r => MM.RECIPES[r]).slice(0, 40);
     if (Array.isArray(c.at)) p.cnt.at = c.at.filter(l => MM.LANDMARK_BY_ID[l]).slice(0, 20);
@@ -72,6 +72,9 @@
     if (raw.rides && typeof raw.rides === 'object') { p.rides = {}; for (const k in raw.rides) if (MM.RIDE_BY_ID && MM.RIDE_BY_ID[k]) p.rides[k] = num(raw.rides[k], 1e6); }
     if (raw.fish && typeof raw.fish === 'object' && MM.FISH) { const names = new Set([].concat(...Object.values(MM.FISH)).map(f => f[0])); p.fish = {}; for (const k in raw.fish) if (names.has(k)) p.fish[k] = num(raw.fish[k], 1e6); }
     if (Array.isArray(raw.eggs) && MM.EGG_BY_ID) p.eggs = raw.eggs.filter(e => MM.EGG_BY_ID[e]).slice(0, 200);
+    // Strong-arm Morty (MM.ARM): the arm stays until she has her revenge; how many times she has.
+    if (arch === 'sidekick' && raw.arm && typeof raw.arm === 'object') p.arm = { n: num(raw.arm.n, MM.ARM.bounties.length) };
+    if (raw.armDone) p.armDone = num(raw.armDone, 1e6);
     p.chaos = num(raw.chaos, 1e9);
     return p;
   }
@@ -396,6 +399,7 @@
       }
       this.npcs.delete(n.id);
       this.ev({ k: 'npc-', id: n.id, die: 1 });
+      if (n.armFor) this.host.armKill(n, owner);
       let i = 0;
       for (const k in n.T.drop) this.spawnPickup(k, true, { x: n.x + (i++ - 0.5) * 1.4, z: n.z }, n.T.drop[k]);
       if (owner) { owner.prog.chaos += 2; this.host.progress(owner, 'kill', n.type); }
@@ -929,7 +933,7 @@
     info(p) {
       const up = p.prog.up;
       return { id: p.id, name: p.name, home: p.home, clone: p.clone ? 1 : 0, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '',
-        gear: { ratsuit: !!up.ratsuit, wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs } };
+        gear: { ratsuit: !!up.ratsuit, wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs, strongarm: !!p.prog.arm } };
     }
 
     // ----- Life progress -----
@@ -1123,6 +1127,7 @@
     weaponOf(p) {
       if (p.ship) return p.st.ship.lasers ? 'lasers' : 'blaster';
       if (p.car) return 'carguns';
+      if (p.prog.arm) return 'armpunch';   // the arm does the punching
       return p.A.weapon;
     }
 
@@ -1758,6 +1763,60 @@
       }
     }
 
+    // ----- Strong-arm Morty: the Muscle Memory Serum (MM.ARM) -----
+    armUp(p) {
+      p.prog.arm = { n: 0 };
+      p.progDirty = true;
+      p.inst.ev({ k: 'gear', id: p.id, gear: this.info(p).gear });
+      this.priv(p, { k: 'arm', on: 1 });
+      this.dirty(p);
+    }
+    // Her bounties are in Post-Apocalyptic Earth, one at a time, far out in the sand.
+    tickArm(p, now) {
+      if (now < (p.armT || 0)) return;
+      p.armT = now + 1;
+      const A = p.prog.arm, inst = p.inst;
+      if (inst.dimId !== MM.ARM.dim) {
+        if (now > (p.armNag || 0)) { p.armNag = now + 120; this.priv(p, { k: 'armsay', text: 'The arm keeps pointing somewhere. She wants to go back to Post-Apocalyptic Earth.' }); }
+        return;
+      }
+      if (p.armTarget && p.armTarget.inst === inst && inst.npcs.has(p.armTarget.id)) {
+        if (now > (p.armNag || 0)) { p.armNag = now + 50 + Math.random() * 40; this.priv(p, { k: 'armsay', text: pick(MM.ARM.say) }); }
+        return;
+      }
+      const i = A.n, last = i >= MM.ARM.bounties.length, def = last ? MM.ARM.killer : MM.ARM.bounties[i];
+      const at = MM.randomSpot(inst.dimId, Math.random, 70, 150);
+      const n = inst.spawnNpc(last ? 'armkiller' : 'bounty', false, { at, until: now + 1500 });
+      n.name = def.name; n.armFor = p.id; n.armI = i; n.home = { x: n.x, z: n.z, y: n.y };
+      inst.ev({ k: 'npc+', n: inst.npcRow(n) });
+      p.armTarget = { inst, id: n.id };
+      this.priv(p, { k: 'bounty', id: n.id, name: def.name, why: def.why, x: r2(n.x), z: r2(n.z), i, of: MM.ARM.bounties.length + 1, last: last ? 1 : 0 });
+    }
+    armKill(n, owner) {
+      const p = this.players.get(n.armFor);
+      if (!p || !p.prog.arm || n.armI !== p.prog.arm.n) return;
+      p.armTarget = null;
+      if (owner !== p) { this.priv(p, { k: 'armsay', text: 'Someone else got ' + n.name + '. The arm is furious. She will find another.' }); return; }
+      if (n.armI >= MM.ARM.bounties.length) { this.armCure(p, n.name); return; }
+      p.prog.arm.n++;
+      const G = MM.ARM.give;
+      for (const k in G) p.inv[k] = (p.inv[k] || 0) + G[k];
+      p.progDirty = true;
+      this.priv(p, { k: 'bounty', done: n.name, give: G, left: MM.ARM.bounties.length + 1 - p.prog.arm.n });
+      this.dirty(p);
+    }
+    // Revenge: she lets go. The arm is Morty's own again.
+    armCure(p, name) {
+      p.prog.arm = null;
+      p.prog.armDone = (p.prog.armDone || 0) + 1;
+      const G = MM.ARM.done;
+      for (const k in G) p.inv[k] = (p.inv[k] || 0) + G[k];
+      p.progDirty = true;
+      p.inst.ev({ k: 'gear', id: p.id, gear: this.info(p).gear });
+      this.priv(p, { k: 'arm', off: 1, name, give: G });
+      this.dirty(p);
+    }
+
     // ----- The Ring of Death (Post-Apocalyptic Earth) -----
     // Step in and fight three rounds, the champion last. One fighter at a time in each copy of
     // the world; everyone else watches from the stands. Leave the Ring, or go down, and you lose.
@@ -2196,6 +2255,13 @@
           return;
         }
       }
+      // A Rick offers a Morty the Muscle Memory Serum (MM.ARM).
+      if (n.cast && n.cast.arch === 'genius' && p.arch === 'sidekick' && !p.prog.arm && !p.offer) {
+        p.offer = { n: n.id, serum: true, want: {}, get: {}, until: now + 25 };
+        say(pick(['Morty, roll up your sleeve. Muscle memory serum: a dead warrior\'s arm, in a syringe. You\'ll be un-*burp*-stoppable.', 'Here, Morty. It makes your arm a fighter\'s arm. Side effects: the arm has opinions.']));
+        this.priv(p, { k: 'offer', n: n.id, name: n.name, serum: 1, want: {}, get: {} });
+        return;
+      }
       // Otherwise something random happens. Locals are like that.
       const w = Object.assign({}, T.moods);
       if (inst.boosted()) { w.gift = (w.gift || 0) * 2.5; w.trade = (w.trade || 0) * 1.5; }
@@ -2276,6 +2342,7 @@
       const o = p.offer;
       p.offer = null;
       if (!o || this.time > o.until || !a) return;
+      if (o.serum) { if (p.arch === 'sidekick' && !p.prog.arm) this.armUp(p); return; }
       for (const k in o.want) if ((p.inv[k] || 0) < o.want[k]) { this.toast(p, 'You do not have enough ' + MM.MATERIALS[k].name + '.'); return; }
       for (const k in o.want) p.inv[k] -= o.want[k];
       for (const k in o.get) p.inv[k] = (p.inv[k] || 0) + o.get[k];
@@ -2304,7 +2371,7 @@
       const pr = p.prog, wall = this.wall(), tasks = {};
       for (const t of p.A.life.daily) tasks[t] = Math.max(0, Math.ceil(((pr.tasks[t] || 0) - wall) / 1000));
       return { t: 'pg', up: pr.up, step: pr.step, grants: pr.grants, cnt: pr.cnt, errands: pr.errands, tasks, title: pr.title || '', st: p.st, found: pr.found || [],
-        stamps: pr.stamps || [], rides: pr.rides || {}, fish: pr.fish || {}, best: pr.best || {}, eggs: pr.eggs || [] };
+        stamps: pr.stamps || [], rides: pr.rides || {}, fish: pr.fish || {}, best: pr.best || {}, eggs: pr.eggs || [], arm: pr.arm || null, armDone: pr.armDone || 0 };
     }
 
     // ----- The main loop -----
@@ -2325,6 +2392,7 @@
         if (p.hack) this.tickHack(p);
         if (p.ride) this.tickRide(p);
         if (p.bout) this.tickBout(p, dt);
+        if (p.prog.arm && !p.dead) this.tickArm(p, now);
         if (p.arch === 'mutant' && !p.dead && p.hp < p.maxHp && this.tickN % 10 === 0) { p.hp = Math.min(p.maxHp, p.hp + 1); this.dirty(p); }
         // World rules: the living flesh heals you; the toxic air hurts (never below a tenth).
         const q = p.inst && p.inst.dim.quirk;
@@ -2382,6 +2450,7 @@
   }
 
   MM.Host = Host;
+  MM.cleanProgress = cleanProgress;   // (tests)
   MM.cleanProgress = cleanProgress;
   if (typeof module !== 'undefined' && module.exports) module.exports = MM;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

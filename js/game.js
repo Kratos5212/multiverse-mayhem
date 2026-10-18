@@ -268,9 +268,15 @@
     if (C.style === 'real') m.root.traverse(o => { if (o.isMesh && o.material && o.material.side !== T.BackSide) o.castShadow = true; });
     if (type === 'hologram') m.root.traverse(o => { if (o.isMesh && o.material) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.45; if (o.material.color) o.material.color.lerp(new T.Color('#7ad8ff'), 0.5); o.material.depthWrite = false; } });
     const NT = MM.NPCS[type];
-    // Locals you can talk to wear a small name tag; monsters don't.
+    // Locals you can talk to wear a small name tag; monsters don't (but the arm's bounties do).
     let tag = null;
-    if (!NT.hostile && NT.talk) {
+    if (NT.armMark) {
+      tag = C.makeTag(name || NT.name, '', 'BOUNTY', '#ff4d4d');
+      tag.draw(-1);
+      tag.sprite.scale.set(3.4, 0.85, 1);
+      tag.sprite.position.y = (m.av ? m.av.headY * (NT.human && NT.human.scale || 1) : NT.h) + 0.9;
+      m.root.add(tag.sprite);
+    } else if (!NT.hostile && NT.talk) {
       tag = C.makeTag(name || NT.name, '', NT.name, '#d6e4ff');
       tag.draw(-1);
       tag.sprite.scale.set(2.2, 0.55, 1);
@@ -981,6 +987,17 @@
     const me = G.me;
     if (e.k === 'race') { onRace(e); return; }
     if (e.k === 'hmenu') { openDefenses(e.own); return; }
+    if (e.k === 'arm') {
+      if (e.on) { UI.banner('Your arm is not your arm any more', 'She is huge, she punches, and she wants revenge. Take her to Post-Apocalyptic Earth: she has bounties.'); G.shake = 0.5; C.sfx('shrink'); }
+      else { UI.banner('She got what she wanted', e.name + ' is dead. The arm goes quiet, then shrinks back. It is just your arm again. ' + Object.keys(e.give).map(k => e.give[k] + ' ' + MM.MATERIALS[k].icon).join(' ')); G.bounty = null; C.sfx('cheer'); }
+      return;
+    }
+    if (e.k === 'bounty') {
+      if (e.done) { UI.banner('Bounty: ' + e.done + ' is down', 'The arm is pleased. For now. ' + Object.keys(e.give).map(k => e.give[k] + ' ' + MM.MATERIALS[k].icon).join(' ') + ' · ' + e.left + ' to go'); G.bounty = null; C.sfx('cheer', 0.7); }
+      else { G.bounty = { id: e.id, name: e.name, x: e.x, z: e.z, last: !!e.last }; UI.banner((e.last ? 'Her revenge: ' : 'Bounty ' + (e.i + 1) + ' of ' + e.of + ': ') + e.name, e.why); }
+      return;
+    }
+    if (e.k === 'armsay') { UI.toast('🦾 ' + e.text, 3500); return; }
     if (e.k === 'bout') {
       if (e.won) { UI.banner('You won in the Ring of Death!', 'The crowd chants your name. ' + Object.keys(e.give).map(k => e.give[k] + ' ' + MM.MATERIALS[k].icon).join(' ') + (e.won > 1 ? ' · ' + e.won + ' wins' : '')); C.sfx('cheer'); }
       else if (e.lost) { UI.banner('Out of the Ring', e.why || 'You lost.'); }
@@ -1092,7 +1109,7 @@
     if (G.modal === 'journal') openJournal();
     if (first && G.entered) buildHotbar();
   }
-  function myGear() { const up = G.prog ? G.prog.up : {}; return { wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs, ratsuit: !!up.ratsuit }; }
+  function myGear() { const up = G.prog ? G.prog.up : {}; return { wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs, ratsuit: !!up.ratsuit, strongarm: !!(G.prog && G.prog.arm) }; }
   // The next step of your path, always on screen.
   function updateTracker() {
     const A = MM.ARCHETYPES[profile.arch], pg = G.prog;
@@ -1109,6 +1126,32 @@
     const ready = A.life.daily.filter(t => !pg.tasks[t]);
     if (ready.length) box.append(el('small', { text: 'Ready: ' + ready.map(t => MM.TASKS[t].name + ' (' + MM.LANDMARK_BY_ID[MM.TASKS[t].at].name + ')').join(' · ') }));
     if (pg.errands.length) box.append(el('small', { text: pg.errands.length + ' errand' + (pg.errands.length > 1 ? 's' : '') + ' (J)' }));
+    if (pg.arm) { G.bountyEl = el('small', { class: 'bounty', text: '' }); box.append(G.bountyEl); bountyHud(); } else G.bountyEl = null;
+  }
+  // Strong-arm Morty: who the arm is after, how far, and which way (from where you look).
+  function bountyHud() {
+    const E = G.bountyEl;
+    if (!E) return;
+    const B = G.bounty, n = B && G.npcs.get(B.id);
+    if (G.dimId !== MM.ARM.dim) { E.textContent = '🦾 The arm wants to go to Post-Apocalyptic Earth.'; return; }
+    if (!B) { E.textContent = '🦾 The arm is looking for someone...'; return; }
+    const x = n ? n.x : B.x, z = n ? n.z : B.z, dx = x - G.me.x, dz = z - G.me.z, d = Math.hypot(dx, dz);
+    const fx_ = Math.sin(G.camYaw), fz = Math.cos(G.camYaw), a = Math.atan2(dx * -fz + dz * fx_, dx * fx_ + dz * fz);
+    const arrow = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'][((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8];
+    E.textContent = '🦾 ' + (B.last ? 'Revenge: ' : 'Bounty: ') + B.name + ' · ' + Math.round(d) + ' m ' + arrow;
+  }
+  // The thing the arm wants to hit: someone hostile close by, or her bounty.
+  function armGoal() {
+    let best = null, bd = 12;
+    for (const n of G.npcs.values()) {
+      const T = MM.NPCS[n.type];
+      if (!T.hostile || n.cast) continue;
+      const d = Math.hypot(n.x - G.me.x, n.z - G.me.z);
+      if (d < bd) { bd = d; best = n; }
+    }
+    if (best) return { x: best.x, z: best.z, near: true, n: best, d: bd };
+    const B = G.bounty, n = B && G.npcs.get(B.id);
+    return B && G.dimId === MM.ARM.dim ? { x: n ? n.x : B.x, z: n ? n.z : B.z, near: false } : null;
   }
 
   // Speech bubble over a local for a few seconds.
@@ -1121,6 +1164,15 @@
   }
 
   function openOffer(e) {
+    if (e.serum) {
+      openModal('offer', e.name + ' has a syringe for you', box => {
+        box.append(el('p', { text: 'Muscle Memory Serum: a dead warrior\'s arm, in a syringe. Your right arm becomes hers: huge, and with a mind of her own. She does the punching (no gun), drags you after whoever she wants to hit, and hunts bounties in Post-Apocalyptic Earth. She has someone she wants dead. Once she gets him, she lets go.' }),
+          el('div', { class: 'chips' },
+            el('button', { class: 'btn go', onclick: () => { send({ t: 'ans', a: 1 }); UI.closeModal(); } }, 'Take it'),
+            el('button', { class: 'btn', onclick: () => { send({ t: 'ans', a: 0 }); UI.closeModal(); } }, 'Aw geez, no')));
+      });
+      return;
+    }
     const fmt = m => Object.keys(m).map(k => m[k] + ' ' + MM.MATERIALS[k].icon + ' ' + MM.MATERIALS[k].name).join(', ');
     openModal('offer', e.name + ' wants to trade', box => {
       box.append(el('p', { text: 'You give: ' + fmt(e.want) }), el('p', { text: 'You get: ' + fmt(e.get) }),
@@ -1212,6 +1264,7 @@
   function weaponId() {
     if (G.you && G.you.ship) return G.st && G.st.ship && G.st.ship.lasers ? 'lasers' : 'blaster';
     if (G.you && G.you.car) return 'carguns';
+    if (G.prog && G.prog.arm) return 'armpunch';   // Strong-arm Morty: the arm punches
     return MM.ARCHETYPES[profile.arch].weapon;
   }
   function aimDir() {
@@ -2162,7 +2215,26 @@
     me.boosting = (inShip || inCar) && !dead && (shift || touch.sprint);   // Shift in the ship: afterburner; in a car: nitro
     const speed = inShip ? st.ship.speed * mult * (me.boosting ? MM.SHIP_BOOST : 1) : st.speed * mult * (st.fly && !me.grounded ? 1.3 : 1) * (me.sprinting ? st.sprint || 1.3 : 1);
     const sy = Math.sin(G.camYaw), cy = Math.cos(G.camYaw);
-    const wx = (sy * iz - cy * ix) * speed, wz = (cy * iz + sy * ix) * speed;
+    let wx = (sy * iz - cy * ix) * speed, wz = (cy * iz + sy * ix) * speed;
+    // Strong-arm Morty: the arm drags you after whoever she wants to hit (hard when they are
+    // close, a steady pull towards her bounty while you walk), and swings on her own.
+    const armed = !!(G.prog && G.prog.arm) && !inShip && !inCar && !dead && !chatOpen() && !UI.modalOpen();
+    if (armed) {
+      const goal = armGoal();
+      if (goal) {
+        const dx = goal.x - me.x, dz = goal.z - me.z, d = Math.hypot(dx, dz) || 1;
+        const pull = goal.near ? (d > 2.2 ? 3.4 : 0) : il > 0.2 ? 1.4 : 0;
+        wx += dx / d * pull; wz += dz / d * pull;
+        if (goal.near && d < 3.2 && now() >= G.fireT) {
+          const W = MM.WEAPONS.armpunch;
+          G.fireT = now() + W.cd * 1.6;
+          send({ t: 'f', dx: dx / d, dy: 0, dz: dz / d });
+          me.aimT = 0.6; me.yaw = Math.atan2(dx, dz);
+          if (G.meAv) G.meAv.attackT = 0.3;
+          C.sfx('melee', 0.7);
+        }
+      }
+    }
     const accel = me.kbT > 0 ? 2 : inShip ? 5 : me.grounded ? 40 : 10;
     const k = Math.min(1, accel * dt);
     if (inCar) {
@@ -2441,7 +2513,7 @@
         fx.glow.emit(n.x + (Math.random() - 0.5), n.y + 2.2, n.z + (Math.random() - 0.5), 0, 1, 0, c, 0.35, 0.6, 0);
       }
       if (n.bubble && (n.bubbleT -= dt) <= 0) { n.m.root.remove(n.bubble.sprite); n.bubble.sprite.material.map.dispose(); n.bubble = null; }
-      if (n.tag) n.tag.sprite.visible = Math.hypot(n.x - G.me.x, n.z - G.me.z) < 25;
+      if (n.tag) n.tag.sprite.visible = Math.hypot(n.x - G.me.x, n.z - G.me.z) < (MM.NPCS[n.type].armMark ? 200 : 25);
     }
     const t = now();
     for (const q of G.pairs.values()) {
@@ -2602,6 +2674,7 @@
     if (vr.on) vr.update(dt);
     for (let left = raw; left > 1e-4; left -= 0.05) updateMe(Math.min(0.05, left));
     updateOthers(dt);
+    if (G.bountyEl && (G.bountyT = (G.bountyT || 0) - dt) <= 0) { G.bountyT = 0.4; bountyHud(); }
     flushDetail();
     if (!vr.on) updateCamera(dt);
     updateRace();

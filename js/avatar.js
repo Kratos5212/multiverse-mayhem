@@ -707,12 +707,19 @@
       else if (av.inCar) { aL = aR = -1.15; eL = eR = -0.45; aLz = 0.12; aRz = -0.12; }   // hands on the wheel
       else { aL = aR = -0.5; eL = eR = -0.7; aLz = 0.15; aRz = -0.15; }
     }
+    // Strong-arm Morty: the arm leads and Morty is dragged along behind her, leaning after her;
+    // standing still, she hangs heavy and pulls him over to that side.
+    if (av.strongArm && !seated && !dead && !emote) {
+      if (k > 0.1) { aR = -1.5 + Math.sin(av.t * 9) * 0.07; aRz = -0.05; eR = -0.05; tilt += 0.3; twist = -0.32; headX -= 0.15; lL *= 0.7; lR *= 0.7; }
+      else { aR = 0.12; aRz = -0.22; eR = -0.12; roll += 0.1; tilt += 0.08; }
+    }
     // Shooting: the gun arm snaps up to aim and kicks back. Melee: a big swing.
     if (av.attackT > 0) {
       av.attackT -= dt;
       const melee = MM.WEAPONS[MM.ARCHETYPES[av.arch] ? MM.ARCHETYPES[av.arch].weapon : 'blaster'].melee;
       const u = 1 - Math.max(0, av.attackT) / 0.3;
-      if (melee) { aR = lerp(-2.6, 0.7, u); eR = lerp(-1.2, -0.1, u); twist = lerp(0.5, -0.4, u); }
+      if (av.strongArm) { aR = -1.5; aRz = 0; eR = lerp(-1.9, 0, Math.min(1, u * 1.7)); twist = lerp(0.35, -0.5, u); }   // her punch: a straight jab
+      else if (melee) { aR = lerp(-2.6, 0.7, u); eR = lerp(-1.2, -0.1, u); twist = lerp(0.5, -0.4, u); }
       else { aR = -1.45 - Math.sin(u * Math.PI) * 0.25; eR = -0.05 - Math.sin(u * Math.PI) * 0.35; twist = -0.15; }
     }
     // Landing squash and take-off stretch.
@@ -886,8 +893,27 @@
       fa.add(P.capsule, vein, [0.06, -lo * 0.45, 0.1], [0.2, 0, 0.3], [0.02, 0.18, 0.02]);  // a vein
       fa.add(P.sphere, skin, [0, -lo - 0.02, 0.02], null, [0.15, 0.14, 0.16]);              // the fist
       for (let i = 0; i < 4; i++) fa.add(P.sphereLo, vein, [-0.075 + i * 0.05, -lo - 0.06, 0.12], null, [0.03, 0.03, 0.025]);   // knuckles
-      av.parts.armR.add(C.meshOf(a.build(), 0.03));
-      av.parts.foreR.add(C.meshOf(fa.build(), 0.03));
+      const joints = new Set(Object.values(av.parts));
+      // Her fist replaces Morty's hand, and his gun: his own forearm goes (until she lets go).
+      av.armHidden = av.parts.foreR.children.filter(m => !joints.has(m)).map(m => {
+        const near = av.lodNear.indexOf(m), far = av.lodFar.indexOf(m);
+        if (near >= 0) av.lodNear.splice(near, 1);
+        if (far >= 0) av.lodFar.splice(far, 1);
+        m.visible = false;
+        return [m, near >= 0 ? 1 : far >= 0 ? 2 : 0];
+      });
+      const ma = C.meshOf(a.build(), 0.03), mf = C.meshOf(fa.build(), 0.03);
+      av.parts.armR.add(ma); av.parts.foreR.add(mf);
+      av.strongArmMeshes = [ma, mf];
+    }
+    if (!gear.strongarm && av.strongArm && av.strongArmMeshes) {
+      av.strongArm = false;
+      for (const m of av.strongArmMeshes) m.parent.remove(m);
+      for (const [m, list] of av.armHidden) {
+        if (list === 1) av.lodNear.push(m); else if (list === 2) av.lodFar.push(m);
+        m.visible = list === 1 ? av.near !== false : list === 2 ? av.near === false : true;
+      }
+      av.strongArmMeshes = av.armHidden = null;
     }
     if (gear.cyberlegs && !av.cyberLegs) { av.cyberLegs = true; for (const k of ['legL', 'legR']) shell(av.parts[k], 0.84 * h * 0.52, 0.1 * w * 1.15); for (const k of ['shinL', 'shinR']) shell(av.parts[k], 0.84 * h * 0.44, 0.1 * w * 1.1); }
     av.gear = gear;
