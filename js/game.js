@@ -242,7 +242,7 @@
   // fused partner's head (theirs, or yours if you are the one inside).
   function partnerOf(id) { if (id === G.myId) return { look: profile.look, arch: profile.arch }; const q = G.players.get(id); return q ? q.info : null; }
   function applyForm(av, form, fu) {
-    if (form === 'turkey' || form === 'carrot') C.setForm(av, form);
+    if (form === 'turkey' || form === 'carrot' || (form && form.startsWith('morph:'))) C.setForm(av, form);
     if (fu) { const q = partnerOf(fu[0]); if (q) C.setFusion(av, q.look, q.arch, fu[1]); }
   }
   function rebuildPlayer(id) { const p = G.players.get(id); if (!p) return; const info = p.info, keep = { x: p.x, y: p.y, z: p.z, snaps: p.snaps }; removePlayer(id); addPlayer(info); const q = G.players.get(id); if (q) Object.assign(q, keep, { placed: true }); }
@@ -819,7 +819,7 @@
     for (const u of m.u) { const tu = G.turrets.get(u[0]); if (tu) tu.aim = u[1]; }
   }
 
-  const SHOT_COLORS = { plasma: '#5dff8a', blaster: '#ffd84d', toy: '#ff8fd0', turret: '#ff4d4d', shrink: '#b48aff', freeze: '#bfeaff', gren: '#ffd84d', carguns: '#ffb03a', stalkergun: '#ff7a3a' };
+  const SHOT_COLORS = { plasma: '#5dff8a', blaster: '#ffd84d', toy: '#ff8fd0', turret: '#ff4d4d', shrink: '#b48aff', freeze: '#bfeaff', buoy: '#9ae8ff', carrot: '#f08a2a', gren: '#ffd84d', carguns: '#ffb03a', stalkergun: '#ff7a3a' };
   const NPC_NAMES = {};
   for (const k in MM.NPCS) NPC_NAMES[k] = MM.NPCS[k].name;
 
@@ -850,7 +850,7 @@
       }
       case 'shot': {
         if (e.o === G.myId && e.w !== 'turret') {
-          if (e.w === 'gren' || e.w === 'shrink' || e.w === 'freeze') C.sfx(e.w === 'gren' ? 'jump' : 'shrink');
+          if (e.w === 'gren' || e.w === 'shrink' || e.w === 'freeze' || e.w === 'buoy') C.sfx(e.w === 'gren' ? 'jump' : 'shrink');
         } else {
           sfxAt(e.w === 'gren' ? 'jump' : e.w, e.x, e.z, 0.8);
           const p = G.players.get(e.o); if (p) { p.av.attackT = 0.25; p.aimT = 0.8; }
@@ -891,7 +891,8 @@
         const killer = e.by ? nameOf(e.by) : (NPC_NAMES[e.w] || 'the dimension');
         const victim = nameOf(e.v);
         const mine = e.by === G.myId || e.v === G.myId;
-        UI.feed([{ t: killer, c: e.by === G.myId ? '#39ff6a' : '#ffd84d' }, ' wrecked ', { t: victim, c: e.v === G.myId ? '#ff5a5a' : '#ffffff' }], mine);
+        UI.feed([{ t: killer, c: e.by === G.myId ? '#39ff6a' : '#ffd84d' }, ' wrecked ', { t: victim, c: e.v === G.myId ? '#ff5a5a' : '#ffffff' }].concat(e.saved ? [' (💾 reloaded)'] : []), mine);
+        if (e.saved) { const vp = posOf(e.v); if (vp) fx.burst(vp.x, vp.y + 1, vp.z, '#5ad8a8', 24, 6, 0.6, 0.6); break; }
         const vp = posOf(e.v);
         if (vp) { fx.burst(vp.x, vp.y + 1, vp.z, '#ff5a5a', 24, 7, 0.7, 0.7); fx.puff(vp.x, vp.y + 0.5, vp.z, '#555', 6, 1, 1.5, 0.8); }
         if (e.v === G.myId) { G.deadBy = e.by ? killer : (NPC_NAMES[e.w] ? 'a ' + NPC_NAMES[e.w] : 'the dimension'); C.sfx('die'); }
@@ -971,6 +972,19 @@
         break;
       }
       case 'curio': { const p = posOf(e.id); const Q = MM.CURIOS[e.q]; if (p && Q) fx.burst(p.x, p.y + 1.4, p.z, Q.color, 24, 4, 0.5, 0.8, 1); break; }
+      case 'buoy': {
+        const p = e.n ? G.npcs.get(e.n) : posOf(e.id);
+        if (p) { fx.burst(p.x, p.y + 1, p.z, '#9ae8ff', 30, 3, 0.7, 1.2, -2); numAt(p.x, p.y + 2.4, p.z, 'FLOATING', '#9ae8ff', false); sfxAt('shrink', p.x, p.z); }
+        break;
+      }
+      case 'guil': {
+        fx.iris(e.x, e.y + 0.9, e.z, e.c || '#39ff6a', e.r, e.t + 0.12);
+        sfxAt('portal', e.x, e.z);
+        break;
+      }
+      case 'guilsnap': { fx.burst(e.x, e.y + 0.9, e.z, '#ffffff', 26, 9, 0.5, 0.35, 0); fx.shockwave(e.x, e.y + 0.9, e.z, '#39ff6a', e.r * 1.6, 0.35, 0.12); sfxAt('bite', e.x, e.z); break; }
+      case 'save': { const p = posOf(e.id); if (p) { fx.pillar(e.x, e.y, e.z, '#5ad8a8', 3, 0.7, 0.8); } if (e.id === G.myId) C.sfx('craft', 0.6); break; }
+      case 'load': { const p = posOf(e.id); if (p) fx.burst(p.x, p.y + 1, p.z, '#5ad8a8', 40, 6, 0.6, 0.7, 0); if (e.id === G.myId) C.sfx('ability'); break; }
       case 'shrunk': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1, p.z, '#b48aff', 20, 4, 0.5, 0.6, 0); sfxAt('shrink', p.x, p.z); } break; }
       case 'say': {
         const n = G.npcs.get(e.n);
@@ -1270,8 +1284,9 @@
     if (G.meAv && !!y.ship !== !!G.meAv.inShip) { C.setShip(G.meAv, y.ship, myGear()); if (y.ship) { G.me.vy = 0; G.me.grounded = false; } }
     if (G.meAv && ((prev && prev.fm) || '') !== (y.fm || '')) {
       const was = prev && prev.fm;
-      if (y.fm === 'ferro' || was === 'ferro' || was === 'turkey' || was === 'carrot' || y.fm === 'turkey' || y.fm === 'carrot') rebuildMe();
-      if (y.fm && y.fm !== 'carmorty') UI.toast({ turkey: '🦃 You are a turkey.', carrot: '🥕 You are a carrot.', ferro: '🧲 Liquid metal.' }[y.fm] || '', 2500);
+      const shaped = f => f === 'ferro' || f === 'turkey' || f === 'carrot' || (!!f && f.startsWith('morph:'));
+      if (shaped(y.fm) || shaped(was)) rebuildMe();
+      if (y.fm && y.fm !== 'carmorty') UI.toast({ turkey: '🦃 You are a turkey.', carrot: '🥕 You are a carrot.', ferro: '🧲 Liquid metal.' }[y.fm] || (y.fm.startsWith('morph:') ? '🎭 You look like a ' + ((MM.NPCS[y.fm.slice(6)] || {}).name || 'local') + '.' : ''), 2500);
     }
     if (G.meAv && JSON.stringify((prev && prev.fu) || 0) !== JSON.stringify(y.fu || 0)) rebuildMe();
     if (G.meAv && !!y.car !== !!G.meAv.inCar) { C.setCar(G.meAv, y.car, y.fm === 'carmorty'); collectOutlines(G.meAv); G.me.carYaw = G.me.yaw; G.me.carSpeed = 0; C.sfx(y.car ? 'craft' : 'jump', 0.6); }
@@ -1505,6 +1520,10 @@
     mk('chalk', '7', 'Chalk', () => useGadget('chalk'));
     mk('dpunch', '8', 'Death Punch', () => deathPunch());
     mk('carrot', '9', 'Carrot Ray', () => useGadget('carrot'));
+    mk('buoy', '0', 'Buoyancy', () => useGadget('buoy'));
+    mk('guillotine', '-', 'Guillotine', () => useGadget('guillotine'));
+    mk('save', 'K', 'Save', () => savePoint('save'));
+    mk('load', 'N', 'Load', () => savePoint('load'));
     // Voice: hold to talk, hold to give a command.
     mk('mic', 'Z', 'Talk', () => {});
     mk('vcmd', 'Y', 'Command', () => {});
@@ -1534,6 +1553,9 @@
     }
     slots.scan.hidden = !(G.st && G.st.scanner);
     slots.dpunch.hidden = !(G.prog && G.prog.dpunch);
+    slots.guillotine.hidden = !(y.inv.guillotine > 0) && !(G.prog && MM.canKnow(profile.arch, G.prog, 'guillotine'));
+    slots.save.hidden = slots.load.hidden = !(y.inv['q:saveremote'] > 0);
+    slots.load.classList.toggle('off', !y.sv);
     slots.mic.hidden = C.voice.mode() !== 'ptt';
     slots.vcmd.hidden = !settings.vcmd;
     const canPair = !!(G.prog && MM.canPair(profile.arch, G.prog.up));
@@ -1553,12 +1575,12 @@
     slots.portal.hidden = !travel; $('tPortal').hidden = !travel;
     slots.portal.querySelector('.l').textContent = gun ? 'Portal' : nearKiosk() ? 'Station' : 'Travel';
     tLabel('tPortal', gun ? 'PORTAL' : nearKiosk() ? 'STATION' : 'TRAVEL');
-    slots.ship.hidden = !(st && st.ship) && !y.car && !y.ab;
-    slots.ship.querySelector('.l').textContent = y.car || y.ab ? 'Get out' : y.ship ? 'Park' : y.pk ? 'Call ship' : 'Ship';
-    $('tShip').hidden = !(st && st.ship) && !y.car && !y.ab;
+    slots.ship.hidden = !(st && st.ship) && !y.car && !y.abd;
+    slots.ship.querySelector('.l').textContent = y.car || y.abd ? 'Get out' : y.ship ? 'Park' : y.pk ? 'Call ship' : 'Ship';
+    $('tShip').hidden = !(st && st.ship) && !y.car && !y.abd;
     $('tDown').hidden = !y.ship;
     $('tLight').hidden = !(y.ship && MM.DIM_BY_ID[G.dimId].planets);   // out in space: lightspeed
-    tLabel('tShip', y.car || y.ab ? 'GET OUT' : y.ship ? 'PARK' : 'SHIP');
+    tLabel('tShip', y.car || y.abd ? 'GET OUT' : y.ship ? 'PARK' : 'SHIP');
   }
 
   // ---------- Actions ----------
@@ -1619,6 +1641,12 @@
     G.me.yaw = G.camYaw; G.me.aimT = 1;
     send(Object.assign({ t: 'g', g }, a));
   }
+  // The save-point remote: K saves, N goes back.
+  function savePoint(op) {
+    if (!canAct()) return;
+    if (!(G.you.inv['q:saveremote'] > 0)) { UI.toast('You need a Save-Point Remote (Rick\'s workbench).'); return; }
+    send({ t: 'sv', op });
+  }
   // The Five-Step Death Punch (learned from Liu Sin in Downtown): a strike right up close.
   function deathPunch() {
     if (!canAct() || !(G.prog && G.prog.dpunch)) return;
@@ -1667,7 +1695,7 @@
   function toggleShip() {
     if (!canAct() || pickled()) return;
     if (G.you.car) { send({ t: 'car', on: false }); return; }   // B: out of the car
-    if (G.you.ab) { send({ t: 'ship', on: false }); return; }   // B: out of someone's ship
+    if (G.you.abd) { send({ t: 'ship', on: false }); return; }   // B: out of someone's ship
     if (G.you.fz || G.you.fu) { send({ t: 'fz', op: 'split' }); return; }   // B: pull apart from a fusion
     if (!G.st || !G.st.ship) { UI.toast('You don\'t have a ship. Build a Ship Hull at the Bazaar Shipyard, if your path allows it (J).', 4000); return; }
     send({ t: 'ship', on: !G.you.ship });
@@ -1714,7 +1742,7 @@
     if (G.riders && G.riders.has(G.myId)) { send({ t: 'fun', a: 'off' }); return; }
     if (G.me.sit) { G.me.sit = null; return; }
     if (G.you.car) { send({ t: 'car', on: false }); return; }   // out of the car
-    if (G.you.ab) { send({ t: 'ship', on: false }); return; }   // out of someone's ship
+    if (G.you.abd) { send({ t: 'ship', on: false }); return; }   // out of someone's ship
     const ps = !G.you.ship && nearestParked();
     if (ps) { openShipMenu(ps); return; }
     const pl = !G.you.ship && nearestPilot();
@@ -2308,7 +2336,8 @@
     UI.toast('🎙 "' + text.trim() + '" → ' + c.label, 2500);
     if (c.house) send(c.d !== undefined ? { t: 'hd', o: c.house, d: c.d } : { t: 'hd', o: c.house });
     else if (c.kss) send({ t: 'kss', m: c.kss });
-    else if (c.ship !== undefined) { if (G.you.ab && !c.ship) send({ t: 'ship', on: false }); else if (!!G.you.ship !== c.ship) send({ t: 'ship', on: c.ship }); }
+    else if (c.ship !== undefined) { if (G.you.abd && !c.ship) send({ t: 'ship', on: false }); else if (!!G.you.ship !== c.ship) send({ t: 'ship', on: c.ship }); }
+    else if (c.save) savePoint(c.save);
     else if (c.carMorty) {
       if (!(G.you.inv['q:carserum'] > 0)) { UI.toast('You need a Car-ification Serum (Rick\'s workbench).', 3000); return; }
       if (profile.arch === 'sidekick') { send({ t: 'uc', id: 'carserum' }); return; }
@@ -2328,7 +2357,25 @@
     const sp = new T.Sprite(new T.SpriteMaterial({ map: new T.CanvasTexture(cv), depthWrite: false, transparent: true, fog: false }));
     sp.scale.set(0.55, 0.55, 1); sp.renderOrder = 12; return sp;
   }
+  // Where your save point is (if it is in this world): a little floppy disk over a green ring.
+  function tickSaveMarker() {
+    const sv = G.you && G.you.sv, here = sv && sv[0] === G.dimId;
+    if (!here) { if (G.saveMark) { scene.remove(G.saveMark); G.saveMark = null; } return; }
+    if (!G.saveMark) {
+      const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+      const g = cv.getContext('2d'); g.font = '46px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('💾', 32, 34);
+      const sp = new T.Sprite(new T.SpriteMaterial({ map: new T.CanvasTexture(cv), depthWrite: false, transparent: true, fog: false }));
+      sp.scale.set(0.8, 0.8, 1); sp.position.y = 2.2;
+      const ring = new T.Mesh(new T.RingGeometry(0.7, 0.85, 32), new T.MeshBasicMaterial({ color: '#5ad8a8', transparent: true, opacity: 0.7, side: T.DoubleSide, depthWrite: false }));
+      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.06;
+      G.saveMark = new T.Group(); G.saveMark.add(sp, ring); scene.add(G.saveMark);
+    }
+    if (G.saveMark.parent !== scene) scene.add(G.saveMark);
+    G.saveMark.position.set(sv[1], sv[2], sv[3]);
+    G.saveMark.children[0].position.y = 2.2 + Math.sin(performance.now() / 400) * 0.15;
+  }
   function tickVoice() {
+    tickSaveMarker();
     C.voice.tick();
     for (const p of G.players.values()) {
       const on = C.voice.speaking(p.info.id);
@@ -2427,6 +2474,10 @@
       case 'Digit7': useGadget('chalk'); break;
       case 'Digit8': deathPunch(); break;
       case 'Digit9': useGadget('carrot'); break;
+      case 'Digit0': useGadget('buoy'); break;
+      case 'Minus': useGadget('guillotine'); break;
+      case 'KeyK': savePoint('save'); break;
+      case 'KeyN': savePoint('load'); break;
       case 'KeyZ': if (C.voice.mode() === 'ptt') C.voice.pushToTalk(true); break;
       case 'KeyY': if (settings.vcmd) { C.voice.holdCommand(true); UI.toast('🎙 Listening for a command...', 1500); } break;
       case 'KeyI': openInventory(); break;
@@ -2597,8 +2648,8 @@
     }
     if (G.meAv && G.meAv.hidden && !(y && y.fz)) { G.meAv.hidden = false; G.meAv.root.visible = true; }
     // A passenger: you sit in your seat of someone's ship (flying or parked); the server does the same.
-    if (y && y.ab && !y.dead) {
-      const [oid, seat, pid, kind] = y.ab, P = pid ? G.parked.get(pid) : null, o = !pid && G.players.get(oid);
+    if (y && y.abd && !y.dead) {
+      const [oid, seat, pid, kind] = y.abd, P = pid ? G.parked.get(pid) : null, o = !pid && G.players.get(oid);
       const b = P ? { x: P.x, y: P.y, z: P.z, r: P.r } : o ? { x: o.x, y: o.y, z: o.z, r: o.av.root.rotation.y } : null;
       if (b) {
         const q = MM.seatAt(kind, seat, b.x, b.y, b.z, b.r);
@@ -2642,7 +2693,7 @@
     const inShip = !!(y && y.ship && st.ship), inCar = !!(y && y.car);
     // Same speed rules as the server (Host.speedOf), so you never get snapped back.
     const FM = y && y.fm && MM.FORMS[y.fm];
-    const mult = (fxb & 16384 ? MM.TINY.speed : 1) * (fxb & 32768 && !inShip && !inCar ? MM.TINYRICK.speed : 1) * (FM && !inShip ? FM.speed : 1) * (fxb & 2 ? 1.8 : 1) * (fxb & 8 ? 0.75 : 1) * (fxb & 16 ? 0.6 : 1) * (fxb & 256 ? 0.5 : 1) * (fxb & 1024 ? 0.12 : 1);
+    const mult = (fxb & 16384 ? MM.TINY.speed : 1) * (fxb & 32768 && !inShip && !inCar ? MM.TINYRICK.speed : 1) * (FM && !inShip ? FM.speed : 1) * (fxb & 2 ? 1.8 : 1) * (fxb & 8 ? 0.75 : 1) * (fxb & 16 ? 0.6 : 1) * (fxb & 256 ? 0.5 : 1) * (fxb & 1024 ? 0.12 : 1) * (fxb & 131072 ? 0.3 : 1);
     const shift = !chatOpen() && !UI.modalOpen() && (keys.has('ShiftLeft') || keys.has('ShiftRight'));
     me.sprinting = !inShip && !inCar && !dead && il > 0.3 && (shift || touch.sprint) && iz > -0.2;
     me.boosting = (inShip || inCar) && !dead && (shift || touch.sprint);   // Shift in the ship: afterburner; in a car: nitro
@@ -2721,6 +2772,7 @@
       gravityMult = Math.max(0.1, 1.0 - (me.y - 50) * 0.015); // Gradually reduce gravity above 50 units
     }
     if (!inShip) me.vy -= dim.gravity * dt * gravityMult;
+    if ((fxb & 131072) && !inShip && !inCar) { const gh = MM.heightAt(G.dimId, me.x, me.z); me.vy = me.y < gh + MM.BUOY.top ? MM.BUOY.rise : 0; me.grounded = false; }   // the buoyancy ray: up you go
     let nx = me.x + me.vx * dt, nz = me.z + me.vz * dt, ny = me.y + me.vy * dt;
     const wantX = nx, wantZ = nz;
     [nx, nz] = pushOut(nx, nz, ny, inShip ? 1.6 : inCar ? 1.3 : 0.45);
@@ -2818,7 +2870,7 @@
     // What F would do right here.
     if ((G.promptT -= dt) <= 0) {
       G.promptT = 0.2;
-      const ab = G.you && G.you.ab, ps = !ab && G.you && !G.you.ship && nearestParked(), pl = !ab && !ps && G.you && !G.you.ship && nearestPilot();
+      const ab = G.you && G.you.abd, ps = !ab && G.you && !G.you.ship && nearestParked(), pl = !ab && !ps && G.you && !G.you.ship && nearestPilot();
       const pq = ab || ps || pl ? null : nearestPlayer(), n = pq || ab || ps || pl ? null : nearestLocal(), l = n || pq || ab || ps || pl ? null : nearLandmark(), nk = !n && !l && !pq && !ab && !ps && !pl && nearKiosk();
       const key = ab ? 'ab' : ps ? 's' + ps.id : pl ? 'v' + pl.info.id : pq ? 'p' + pq.id : n ? 'n' + n.id : l ? 'l' + l.id : nk ? 'k' : '';
       if (key !== G.promptKey) {

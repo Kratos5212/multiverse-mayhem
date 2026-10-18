@@ -55,6 +55,9 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | 1 2 3 4 5 6 7 | GADGET | Grenade, turret, shrink ray, Meeseeks Box, Time Crystal, freeze ray, Magic Chalk (the last two kinds: Ricks and Evil Morty) |
 | 8 | Fist button | The Five-Step Death Punch (once Liu Sin in Downtown has taught you) |
 | 9 | Carrot button | Carrot Ray shot (build it at Rick's workbench) |
+| 0 | Buoyancy button | Buoyancy Ray shot: whatever it hits floats up for a few seconds |
+| - | Guillotine button | Portal Guillotine (Ricks and Evil Morty) |
+| K / N | Save / Load buttons | Save-Point Remote: save here / go back to the save |
 | Z (hold) | Mic button (hold) | Push to talk, when voice chat is set to "Push to talk" (Esc menu) |
 | Y (hold) | Command button (hold) | Say a voice command, when voice commands are on (Esc menu) |
 | C | Build slot | Workbench |
@@ -267,6 +270,18 @@ Tiny, you fit into the **Mega Gargantuans'** land: a whole civilisation on a mos
 - **The Immortality Field Resort** ("The Whirly Dirly Conspiracy"). A holiday world under a glassy dome where nothing can die: you just pop back together. Outside the dome, death works normally. The **Whirly Dirly** coaster loops out past the edge for a few seconds. Out there you're mortal, and sometimes a bolt comes loose. The hotel has a spa and a roof to jump off.
 - **Space Beth** is playable ("Star Mort Rickturn of the Jerri"). She's a freedom fighter from the Alien Bazaar with her own ship from the start, a rifle and a war with the Federation: smuggling, sabotage at the Bureau of Forms, and Federation Guards to take down. Her Grapple Strike slams down on everyone around her.
 - **The Five-Step Death Punch** ("Rick Fu Hustle"). Liu Sin, in Downtown, teaches it for 25 Schmeckles. Press **8** (or the fist button) right next to someone. Five steps **forward** and they drop. Walking backwards (or sideways) is safe: the punched player keeps facing ahead, so **S** walks them backwards. It lasts until a Rick reverses it. Talk to a local Rick, or a Rick player picks "Reverse their death punch" from your player menu. A Rick can also walk back to his own garage and fix himself. It works on locals too (they walk forwards, so they drop), and on players when you both have fights on.
+
+### Gadgets (batch 4)
+
+- **Buoyancy Ray** (key **0**): one shot, and whatever it hits floats gently up into the air for six seconds, helpless, then drifts back down. On players it only works on those with fights on. A floating player can drift, but slowly.
+- **Portal Guillotine** (key **-**, Ricks and Evil Morty): aim at someone or something. A portal opens around their middle and snaps shut 0.9 s later. If they're still inside, it hurts a lot (160 to a monster, 320 to a boss, 70 to a player with fights on). Step out of the ring in time and it misses.
+- **Save-Point Remote** ("The Vat of Acid Episode"; an item from Rick's workbench): **K** saves where you are, how healthy you are, and which world you're in. **N** takes you back there from anywhere (every 20 s). If you die with a save, the remote takes you back by itself, once. Nobody else goes back with you. A save lasts 15 minutes, and a 💾 marks it in the world.
+- **Morphizer-XE** (an item): for two minutes you look like one of the locals around you, a monster if there is one. Monsters take you for one of their own, until you attack one of them. Use it again to turn back.
+- **Keep Summer Safe** came earlier, with the ships.
+
+Voice commands: "Remote, save" and "Remote, load".
+
+Bots: now and then (rarely), a bot walks up to a player flying their ship and asks for a ride. Say yes and it rides along for a minute or two, then hops out.
 
 ### Transformations (batch 3)
 

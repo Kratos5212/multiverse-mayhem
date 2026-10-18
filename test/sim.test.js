@@ -1801,3 +1801,94 @@ test('Keep Summer Safe on Rick\'s order: "Car, keep Summer safe" starts it even 
   host.message(r.c, '{"t":"kss","m":"off"}');
   assert.ok(!V.kss, 'stand down');
 });
+
+test('bots now and then ask a player flying a ship for a ride, then hop out', () => {
+  const host = new MM.Host();
+  const r = join(host, 'genius', { dim: 'suburbia', home: 'C-137' });
+  let bot;
+  const conn = { send: s => bot && bot.onMessage(s), close() { bot.closed = true; } };
+  host.connect(conn, { bot: true });
+  bot = new MM.Bot(s => host.message(conn, s), { arch: 'sidekick', chatty: 0, dim: 'suburbia' });
+  const step = sec => { for (let i = 0; i < sec / MM.TICK; i++) { host.update(MM.TICK); bot.update(MM.TICK); } };
+  step(0.5);
+  const bp = host.players.get(bot.id);
+  if (bp.inst !== r.p.inst) host.travel(bp, 'suburbia', { x: 0, z: 70 }, r.p.inst);
+  host.travel(r.p, 'suburbia', { x: 0, z: 60 }); run(host, 0.2);
+  assert.strictEqual(bp.inst, r.p.inst, 'same Earth');
+  r.p.prog.up.hull = 1; host.restat(r.p);
+  host.message(r.c, '{"t":"ship","on":true}');
+  host.teleport(bp, 6, MM.heightAt('suburbia', 6, 75), 75); step(0.5);
+  // Rare and random: keep rolling the dice until this bot decides to ask.
+  for (let i = 0; i < 200 && !bot.ride && !r.c.sent.some(x => x.t === 'pv' && x.l.some(e => e.k === 'sbask')); i++) { bot.rideT = 0; step(0.5); }
+  step(8);
+  const ask = r.c.sent.find(x => x.t === 'pv' && x.l.some(e => e.k === 'sbask' && e.id === bot.id));
+  assert.ok(ask, 'the bot asked for a ride');
+  host.message(r.c, JSON.stringify({ t: 'sb', id: bot.id, op: 'yes' })); step(1);
+  assert.ok(bp.aboard === r.p.vessel, 'the bot got in');
+  step(130);
+  assert.ok(!bp.aboard, 'and hopped out after a while');
+  assert.ok(!bot.closed, 'never tripped the cheat checks');
+});
+
+test('batch 4: buoyancy ray, portal guillotine, save-point remote, Morphizer', () => {
+  const host = new MM.Host();
+  const a = join(host, 'genius', { dim: 'suburbia', home: 'C-137' });
+  const b = join(host, 'joe', { dim: 'suburbia', home: 'C-137' });
+  host.travel(a.p, 'suburbia', { x: 0, z: 60 }); host.travel(b.p, 'suburbia', { x: 2, z: 60 }); run(host, 0.3);
+  const inst = a.p.inst;
+  for (const n of [...inst.npcs.values()]) if (Math.hypot(n.x, n.z - 60) < 40) inst.npcs.delete(n.id);
+  // Buoyancy ray on a player: they float (and the movement check lets them).
+  a.p.pvp = b.p.pvp = true; b.p.fx.prot = 0; a.p.inv.buoy = 2;
+  host.teleport(a.p, 0, b.p.y, 56); host.teleport(b.p, 0, b.p.y, 62); run(host, 0.1);
+  host.message(a.c, '{"t":"g","g":"buoy","dx":0,"dy":0,"dz":1}'); run(host, 0.5);
+  assert.ok(host.fxBits(b.p, host.time) & 131072, 'floating');
+  const y0 = b.p.y, g0 = MM.heightAt('suburbia', b.p.x, b.p.z);
+  for (let i = 1; i <= 10; i++) { host.message(b.c, JSON.stringify({ t: 'st', x: b.p.x, y: g0 + i * 0.25, z: b.p.z, r: 0, a: 2, ep: b.p.ep })); run(host, 0.1); }
+  assert.ok(b.p.y > y0 + 2 && b.p.strikes === 0, 'rose without tripping the cheat check');
+  // On a monster: up, helpless, then back down.
+  const n = inst.spawnNpc('meatblob', true, { at: { x: 0, z: 70 } }); n.home = { x: 0, z: 70 };
+  host.teleport(b.p, 30, g0, 30); a.p.cdGadget = 0; run(host, 1.2);
+  host.message(a.c, JSON.stringify({ t: 'g', g: 'buoy', dx: 0, dy: (n.y + n.T.h / 2 - a.p.y - 1.35) / 14, dz: 1 })); run(host, 1.5);
+  const gn = MM.heightAt('suburbia', n.x, n.z);
+  assert.ok(n.y > gn + 2, 'the monster floats');
+  run(host, MM.BUOY.dur + 3);
+  assert.ok(Math.abs(n.y - gn) < 0.05, 'and comes back down');
+  // The portal guillotine: snaps shut on whatever is still in the ring.
+  a.p.inv.guillotine = 2; a.p.cdGadget = 0;
+  for (const m of [...inst.npcs.values()]) if (m !== n && Math.hypot(m.x, m.z - 60) < 40) inst.npcs.delete(m.id);
+  n.stun = host.time + 5; const hp = n.hp;
+  const d = { x: n.x - a.p.x, y: n.y + n.T.h / 2 - a.p.y - 1.35, z: n.z - a.p.z }, l = Math.hypot(d.x, d.y, d.z);
+  host.message(a.c, JSON.stringify({ t: 'g', g: 'guillotine', dx: d.x / l, dy: d.y / l, dz: d.z / l })); run(host, 1.2);
+  assert.ok(!inst.npcs.has(n.id) || n.hp < hp - 100, 'sliced');
+  // ...and misses whoever steps out in time.
+  b.p.fx.prot = 0; host.teleport(b.p, 0, g0, 66); run(host, 0.1); a.p.cdGadget = 0;
+  const bh = b.p.hp; const e = { x: 0, y: b.p.y + 0.9 - a.p.y - 1.35, z: 10 }, el = Math.hypot(e.x, e.y, e.z);
+  host.message(a.c, JSON.stringify({ t: 'g', g: 'guillotine', dx: e.x / el, dy: e.y / el, dz: e.z / el }));
+  run(host, 0.2); host.teleport(b.p, 5, g0, 66); run(host, 1.2);
+  assert.strictEqual(a.p.inv.guillotine || 0, 0, 'both used'); assert.strictEqual(b.p.hp, bh, 'stepped out of the ring');
+  // The save-point remote: save, go somewhere, get hurt, go back.
+  a.p.inv['q:saveremote'] = 1;
+  host.message(a.c, '{"t":"sv","op":"save"}');
+  assert.ok(a.p.save && a.p.save.dim === 'suburbia');
+  const sx = a.p.x, sz = a.p.z;
+  host.travel(a.p, 'moon'); run(host, 0.3); a.p.hp = 10;
+  host.message(a.c, '{"t":"sv","op":"load"}'); run(host, 0.2);
+  assert.strictEqual(a.p.inst.dimId, 'suburbia'); assert.ok(Math.hypot(a.p.x - sx, a.p.z - sz) < 0.01 && a.p.hp > 10, 'back, and as healthy as then');
+  // Dying with a save point: it catches you, once.
+  a.p.fx.prot = 0; host.teleport(a.p, 20, g0, 20); host.kill(a.p.inst, a.p, null, 'test');
+  assert.ok(!a.p.dead && Math.hypot(a.p.x - sx, a.p.z - sz) < 0.01, 'the remote caught the death');
+  assert.ok(!a.p.save, 'used up');
+  host.kill(a.p.inst, a.p, null, 'test'); assert.ok(a.p.dead, 'no save, no second chance');
+  // The Morphizer: the monsters take you for one of their own, until you start something.
+  b.p.inv['q:morphizer'] = 1; b.p.fx.prot = 0;
+  const m = inst.spawnNpc('meatblob', true, { at: { x: 40, z: 40 } }); m.home = { x: 40, z: 40 };
+  host.message(b.c, '{"t":"uc","id":"morphizer"}');
+  assert.ok(b.p.form && b.p.form.id === 'morph' && b.p.form.npc, 'disguised');
+  assert.ok(host.formTag(b.p).startsWith('morph:'));
+  host.teleport(b.p, 41, MM.heightAt('suburbia', 41, 42), 42); const bhp = b.p.hp; run(host, 4);
+  assert.strictEqual(b.p.hp, bhp, 'they leave you alone');
+  inst.hurtNpc(m, 1, b.p);
+  assert.ok(b.p.form.blown, 'disguise blown');
+  host.message(b.c, '{"t":"uc","id":"morphizer"}'); run(host, 1.2); host.message(b.c, '{"t":"uc","id":"morphizer"}');
+  assert.ok(!b.p.form, 'back to yourself');
+});

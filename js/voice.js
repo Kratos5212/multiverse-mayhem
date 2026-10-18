@@ -117,7 +117,7 @@
   // ---------- Voice commands ----------
   // A command starts with who you are talking to (house, garage, ship, car, Morty, portal...),
   // unless you hold the command key, when anything you say counts.
-  const WAKE = /^(hey |ok |okay )?(house|garage|computer|ship|car|cruiser|morty|summer|rick|portal|gun|wubba|pickle|tiny)\b/;
+  const WAKE = /^(hey |ok |okay )?(house|garage|computer|ship|car|cruiser|morty|summer|rick|portal|gun|wubba|pickle|tiny|remote)\b/;
   V.parse = function (raw, held) {
     const t = String(raw || '').toLowerCase().replace(/[^a-z0-9' ]+/g, ' ').replace(/\s+/g, ' ').trim();
     if (!t || (!held && !WAKE.test(t))) return null;
@@ -149,6 +149,9 @@
       if (has('come here', 'come to me', 'pick me up', 'take off', 'lets go', "let's go", 'fly')) return { ship: true, label: 'Ship: come here' };
       if (has('park', 'land', 'stop')) return { ship: false, label: 'Ship: park' };
     }
+    // The save-point remote.
+    if (has('save point', 'save game', 'save here', 'save it', 'remote save') || /^(hey |ok |okay )?remote,? save\b/.test(t)) return { save: 'save', label: 'Save point' };
+    if (has('load', 'go back to my save', 'reload')) return { save: 'load', label: 'Back to the save point' };
     // Car Morty.
     if (has('car transformation', 'transform into a car', 'turn into a car', 'car sequence')) return { carMorty: true, label: 'Car transformation sequence' };
     // Portals: "portal to the Citadel", "take me to Bird World".

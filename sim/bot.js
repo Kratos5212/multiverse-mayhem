@@ -49,7 +49,7 @@
       this.deadProps = new Set();
       this.you = null;
       this.goal = null; this.target = null;
-      this.t = 0; this.stT = 0; this.fireT = 0; this.thinkT = 0; this.chatT = 10 + Math.random() * 60; this.travelT = 40 + Math.random() * 80;
+      this.t = 0; this.stT = 0; this.fireT = 0; this.thinkT = 0; this.chatT = 10 + Math.random() * 60; this.travelT = 40 + Math.random() * 80; this.rideT = 120 + Math.random() * 480; this.ride = null; this.rideOut = 0;
       this.closed = false;
       this.started = false;
     }
@@ -73,7 +73,7 @@
           for (const pk of m.pickups) this.pickups.set(pk[0], { x: pk[2], z: pk[4] });
           for (const n of m.npcs) this.npcs.set(n[0], { x: n[2], y: n[3], z: n[4], type: n[1] });
           for (const po of m.portals) this.portals.set(po.id, po);
-          for (const p of m.players || []) if (p.id !== this.id) this.others.set(p.id, { arch: p.arch, x: 0, z: 0 });
+          for (const p of m.players || []) if (p.id !== this.id) this.others.set(p.id, { arch: p.arch, bot: !!p.bot, x: 0, z: 0 });
           for (const [i, hp] of m.props) if (hp <= 0) this.deadProps.add(i);
           this.goal = null; this.target = null;
           break;
@@ -84,7 +84,7 @@
         case 'ev':
           for (const e of m.l) {
             if (e.k === 'leave') this.others.delete(e.id);
-            else if (e.k === 'join' && e.p && e.p.id !== this.id) { const o = this.others.get(e.p.id) || {}; o.arch = e.p.arch; this.others.set(e.p.id, o); }
+            else if (e.k === 'join' && e.p && e.p.id !== this.id) { const o = this.others.get(e.p.id) || {}; o.arch = e.p.arch; o.bot = !!e.p.bot; this.others.set(e.p.id, o); }
             else if (e.k === 'dmg' && e.p === this.id && e.by && e.by !== this.id) {
               // Somebody hit me. Peaceful characters run; everyone else hits back.
               if (this.temper.fights === 'never') { const o = this.others.get(e.by); if (o) { const dx = this.x - o.x, dz = this.z - o.z, l = Math.hypot(dx, dz) || 1; this.goal = { x: this.x + dx / l * 25, z: this.z + dz / l * 25 }; } }
@@ -118,6 +118,27 @@
       const you = this.you;
       if (!you || !this.dim) return;
       if (you.dead) { if (you.rsIn <= 0) this.send({ t: 'rs' }); return; }
+      // A ride: once in a while (rarely) a bot walks up to a player flying their ship and asks
+      // to come along. It hops out again after a minute or two.
+      if (you.abd) { if (!this.rideOut) this.rideOut = this.t + 40 + Math.random() * 80; else if (this.t > this.rideOut) { this.rideOut = 0; this.send({ t: 'ship', on: false }); } return; }
+      this.rideOut = 0;
+      if (this.t > this.rideT) {
+        this.rideT = this.t + 180 + Math.random() * 420;
+        if (Math.random() < 0.3 && this.temper.fights !== 'often' && !you.ship) {
+          let best = 0, bd = 60 * 60;
+          for (const [id, o] of this.others) { if (o.bot || o.dead || !(o.fx & 512)) continue; const d = (o.x - this.x) ** 2 + (o.z - this.z) ** 2; if (d < bd) { bd = d; best = id; } }
+          if (best) this.ride = { id: best, until: this.t + 45 };
+        }
+      }
+      if (this.ride) {
+        const o = this.others.get(this.ride.id);
+        if (!o || !(o.fx & 512) || this.t > this.ride.until) this.ride = null;
+        else {
+          const d2 = (o.x - this.x) ** 2 + (o.z - this.z) ** 2;
+          if (d2 < 7 * 7 && !this.ride.asked) { this.send({ t: 'sb', id: this.ride.id }); this.ride.asked = true; this.ride.until = this.t + 25; }   // then wait by the ship for an answer
+          this.goal = d2 > 4 * 4 ? { x: o.x, z: o.z } : null; this.target = null; return;
+        }
+      }
       // Craft whenever it can afford something it knows.
       // Craft a gadget now and then (the host refuses what this character can't build).
       if (Math.random() < 0.1) {
@@ -197,7 +218,7 @@
       if ((this.thinkT -= dt) <= 0) { this.thinkT = 0.5 + Math.random() * 0.5; this.think(); }
       const you = this.you;
       const dim = MM.DIM_BY_ID[this.dim];
-      if (you.dead) return;
+      if (you.dead || you.abd) return;   // (in someone's ship, the ship carries us)
       const W = MM.WEAPONS[this.A.weapon];
       const tp = this.targetPos();
       let mx = 0, mz = 0;

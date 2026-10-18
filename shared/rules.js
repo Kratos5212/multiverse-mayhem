@@ -255,7 +255,13 @@
     turkey: { name: 'Turkey', speed: 1.3, scale: 0.6, weapon: 'peck', noGadgets: true, dur: 180 },
     carrot: { name: 'Carrot', speed: 0.4, scale: 0.55, jump: 0.6, noWeapon: true, noGadgets: true, dur: 25 },
     ferro: { name: 'Ferrofluid', speed: 1.35, armour: 0.5, dur: 150 },
+    morph: { name: 'Disguise', dur: 120 },   // the Morphizer-XE: you look like one of the locals (p.form.npc)
   };
+  // Batch 4 gadgets. The buoyancy ray floats whatever it hits; the portal guillotine opens a
+  // portal around a target and snaps it shut; the save-point remote takes you back.
+  MM.BUOY = { dur: 6, rise: 2.6, top: 10 };
+  MM.GUILLOTINE = { range: 28, delay: 0.9, ring: 1.7, dmgNpc: 160, dmgBoss: 320, dmgPlayer: 70 };
+  MM.SAVEPOINT = { keep: 900, cd: 20 };   // a save lasts 15 minutes; 20 s between going back
   MM.FUSE = { dur: 90 };   // Jerricky (the Fusion Device) and Kuato (the pool)
   // Tiny Rick: a Rick in a teenage clone body. Smaller, quicker, bouncier. Inside, the old one wants out.
   MM.TINYRICK = { scale: 0.62, speed: 1.2, jump: 1.25 };
@@ -446,6 +452,10 @@
     ferrofluid: { cat: 'item', name: 'Ferrofluid Injection', curio: 'ferrofluid', cost: { s: 6, c: 2 }, max: 2, at: 'workbench', desc: 'Liquid metal body for a while: silver, fast, hits do half damage.' },
     carserum: { cat: 'item', name: 'Car-ification Serum', curio: 'carserum', cost: { s: 8, p: 2 }, max: 2, at: 'workbench', desc: 'Turns a Morty into a car he drives himself. B turns him back.' },
     fusiondevice: { cat: 'item', name: 'Fusion Device', curio: 'fusiondevice', cost: { g: 4, c: 3, m: 1 }, max: 1, at: 'workbench', desc: 'Fuse with someone who agrees: one body, two heads, 90 seconds. You walk, they shoot.' },
+    buoy:     { cat: 'gadget', name: 'Buoyancy Ray Shot', cost: { s: 2, p: 1 }, max: 4, desc: 'Press 0: whatever it hits floats up into the air for a few seconds, helpless. Then down it comes.' },
+    guillotine: { cat: 'gadget', name: 'Portal Guillotine', cost: { c: 3, p: 2, s: 2 }, max: 2, onlyFor: ['genius', 'evilmorty'], desc: 'Press -: a portal opens around whatever you aim at, then snaps shut. Step out of the ring in time, or else.' },
+    saveremote: { cat: 'item', name: 'Save-Point Remote', curio: 'saveremote', cost: { c: 4, s: 3, p: 2 }, max: 1, at: 'workbench', desc: 'K saves where you are (and how you are). N takes you back there, from anywhere. If you die, it takes you back once by itself.' },
+    morphizer: { cat: 'item', name: 'Morphizer-XE', curio: 'morphizer', cost: { g: 3, c: 2, f: 1 }, max: 1, at: 'workbench', desc: 'Turns you into one of the locals for two minutes. Their monsters leave you alone, until you start something.' },
     carrot:   { cat: 'gadget', name: 'Carrot Ray Shot', cost: { s: 3, f: 1 }, max: 3, desc: 'Press 9: one shot that turns whoever it hits into a carrot for a while.' },
     armserum: { cat: 'item', name: 'Muscle Memory Serum', curio: 'armserum', cost: { g: 2, m: 2, c: 1 }, max: 3, at: 'workbench', onlyFor: ['genius'], desc: 'A dead warrior\'s arm, in a syringe. Give it to a Morty, or use it on one (they have to say yes).' },
     // Rick's own body upgrades (only Ricks know how): robot limbs and a built-in scanner.
@@ -477,9 +487,9 @@
     quantum:  { cat: 'ship', name: 'Quantum Drive', cost: { c: 12, g: 8, p: 12, f: 8 }, at: 'shipyard', needs: 'drive', desc: 'Enable light speed travel for instant interstellar jumps.' },
   };
   MM.RECIPE_IDS = Object.keys(MM.RECIPES);
-  MM.GADGET_IDS = ['grenade', 'turret', 'shrink', 'meeseeks', 'timecrystal', 'freeze', 'chalk', 'carrot'];
+  MM.GADGET_IDS = ['grenade', 'turret', 'shrink', 'meeseeks', 'timecrystal', 'freeze', 'chalk', 'carrot', 'buoy', 'guillotine'];
   // Recipes everyone knows, whoever they are.
-  MM.COMMON = ['meeseeks', 'megabrain', 'miniaturizer', 'armserum', 'turkeypill', 'ferrofluid', 'carserum', 'fusiondevice', 'carrot'];
+  MM.COMMON = ['meeseeks', 'megabrain', 'miniaturizer', 'armserum', 'turkeypill', 'ferrofluid', 'carserum', 'fusiondevice', 'carrot', 'buoy', 'saveremote', 'morphizer'];
   MM.CATS = { gadget: 'Gadgets', item: 'Things to carry, give and use', self: 'You', gun: 'Portal gun', ship: 'Ship' };
 
   // ---------- Who you are ----------

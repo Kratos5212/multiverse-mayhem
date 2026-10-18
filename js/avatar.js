@@ -1025,8 +1025,11 @@
   C.setForm = function (av, kind) {
     if (av.formMesh) { av.root.remove(av.formMesh); av.formMesh = null; }
     av.form = kind || '';
-    const shape = kind === 'turkey' || kind === 'carrot';
-    if (shape) { av.formMesh = C.meshOf(C.formShape(kind).build(), 0.03); av.formMesh.scale.setScalar(kind === 'turkey' ? 0.7 : 0.75); av.root.add(av.formMesh); }
+    const morph = !!kind && kind.startsWith('morph:') && MM.NPCS[kind.slice(6)] && C.npcModel;
+    const shape = kind === 'turkey' || kind === 'carrot' || !!morph;
+    if (morph) { const M = C.npcModel(kind.slice(6), 7); av.formMesh = new T.Group(); av.formMesh.add(M.root); M.root.traverse(o => { o.userData.shared = true; });   // (cached geometry: never disposed with the avatar)
+       av.root.add(av.formMesh); }   // the Morphizer: one of the locals
+    else if (shape) { av.formMesh = C.meshOf(C.formShape(kind).build(), 0.03); av.formMesh.scale.setScalar(kind === 'turkey' ? 0.7 : 0.75); av.root.add(av.formMesh); }
     av.body.visible = !shape;
   };
   // Two in one body: the partner's head next to yours (Jerricky), or small, sticking out of

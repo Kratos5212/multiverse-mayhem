@@ -125,6 +125,16 @@
       this.scene.add(m);
       this.rings.push({ m, t: 0, life: life || 0.6, r: radius / 1.3, dome: true, op: opacity || 0.35 });
     }
+    // A portal guillotine: a portal disc that opens around someone's middle, holds, and then
+    // snaps shut at the end of its life.
+    iris(x, y, z, color, radius, life) {
+      const m = new T.Mesh(new T.CircleGeometry(1, 40), new T.MeshBasicMaterial({ color, transparent: true, opacity: 0.55, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending }));
+      const rim = new T.Mesh(new T.RingGeometry(0.9, 1.06, 40), new T.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.9, depthWrite: false, side: T.DoubleSide }));
+      m.add(rim);
+      m.rotation.x = -Math.PI / 2; m.position.set(x, y, z);
+      this.scene.add(m);
+      this.rings.push({ m, t: 0, life: life || 0.9, r: radius, iris: true });
+    }
     // A column of light (healing, Meeseeks popping in, assimilation).
     pillar(x, y, z, color, height, radius, life) {
       const m = new T.Mesh(new T.CylinderGeometry(radius, radius * 1.3, height, 20, 1, true), new T.MeshBasicMaterial({ color, transparent: true, opacity: 0.5, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending }));
@@ -176,10 +186,11 @@
         const r = this.rings[i];
         r.t += dt;
         const k = r.t / r.life;
-        if (r.pillar) { r.m.scale.set(1 - k * 0.5, 1 + k * 0.3, 1 - k * 0.5); r.m.material.opacity = 0.5 * (1 - k); }
+        if (r.iris) { const open = Math.min(1, r.t / 0.18), shut = k > 0.82 ? 1 - (k - 0.82) / 0.18 : 1; r.m.scale.setScalar(Math.max(0.001, r.r * open * shut * (1 + Math.sin(r.t * 30) * 0.03))); r.m.rotation.z += dt * 4; }
+        else if (r.pillar) { r.m.scale.set(1 - k * 0.5, 1 + k * 0.3, 1 - k * 0.5); r.m.material.opacity = 0.5 * (1 - k); }
         else if (r.dome) { r.m.scale.setScalar(0.3 + Math.sqrt(k) * r.r * 1.3); r.m.material.opacity = r.op * (1 - k); }
         else { r.m.scale.setScalar((r.from || 0.5) + (1 - (1 - k) * (1 - k)) * r.r * 1.3); r.m.material.opacity = 1 - k; }
-        if (k >= 1) { this.scene.remove(r.m); r.m.geometry.dispose(); r.m.material.dispose(); this.rings.splice(i, 1); }
+        if (k >= 1) { this.scene.remove(r.m); r.m.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); this.rings.splice(i, 1); }
       }
     }
 

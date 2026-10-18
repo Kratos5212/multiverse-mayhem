@@ -406,11 +406,13 @@
         if (hit.p) {
           if (pr.kind === 'shrink' && this.host.canHurt(owner, hit.p)) { hit.p.fx.shrink = now + 8; this.host.dirty(hit.p); this.ev({ k: 'shrunk', id: hit.p.id }); }
           if (pr.kind === 'freeze' && this.host.canHurt(owner, hit.p)) { hit.p.fx.cuff = now + 3; this.host.dirty(hit.p); this.ev({ k: 'frozen', id: hit.p.id, t: 3 }); }
+          if (pr.kind === 'buoy' && this.host.canHurt(owner, hit.p) && !hit.p.ship && !hit.p.car && !hit.p.aboard) { hit.p.fx.buoy = now + MM.BUOY.dur; hit.p.kbUntil = now + MM.BUOY.dur + 2; this.host.dirty(hit.p); this.ev({ k: 'buoy', id: hit.p.id }); this.host.toast(hit.p, 'You are floating. Nothing to push against. Wait for it.'); }
           if (pr.kind === 'carrot' && this.host.canHurt(owner, hit.p) && !hit.p.ship && !hit.p.car && !hit.p.fusedTo && !hit.p.fuse) { this.host.setForm(hit.p, 'carrot'); this.host.toast(hit.p, 'ZAP. You are a carrot. You can hop about, slowly. It wears off.'); }
           this.host.hurtPlayer(this, hit.p, pr.dmg, owner, pr.kind);
         } else if (hit.n) {
           if (pr.kind === 'freeze') { hit.n.stun = now + 4; this.ev({ k: 'frozen', n: hit.n.id, t: 4 }); }
           if (pr.kind === 'carrot') this.host.carrotNpc(this, hit.n);
+          if (pr.kind === 'buoy' && !hit.n.T.space && hit.n.T.hp < 1500 && !hit.n.T.car) { hit.n.buoy = now + MM.BUOY.dur; this.ev({ k: 'buoy', n: hit.n.id }); }
           this.hurtNpc(hit.n, pr.dmg, owner);
         }
         else if (hit.t) this.hurtTurret(hit.t, pr.dmg);
@@ -478,7 +480,8 @@
         n.target = owner.id;
         // Locals you hit hit back (if they are the fighting kind).
         if (!n.T.hostile && n.T.human && Math.random() < 0.5) { n.angry = owner.id; n.angryUntil = this.host.time + 15; }
-        if (n.T.hostile && !n.bout) { n.angry = owner.id; n.angryUntil = this.host.time + 12; }   // a Ring fighter keeps to the fighter
+        if (n.T.hostile && !n.bout) { n.angry = owner.id; n.angryUntil = this.host.time + 12; }
+        if (n.T.hostile && owner.form && owner.form.id === 'morph' && !owner.form.blown) { owner.form.blown = true; this.host.toast(owner, '🎭 They saw that. Your disguise is blown: the monsters know you now.'); }   // a Ring fighter keeps to the fighter
         // Police, Secret Service and Marines protect people (and each other).
         if (!n.T.hostile && (n.T.human || n.T.guard)) for (const g of this.npcs.values()) {
           if (g.T.guard && !(g.owner && g.ownerUntil > this.host.time) && dist2(g.x, g.z, n.x, n.z) < 40 * 40) { g.angry = owner.id; g.angryUntil = this.host.time + 25; }
@@ -560,6 +563,13 @@
         let goal = null, speed = T.speed;
         const owner = n.owner && now < n.ownerUntil ? this.host.players.get(n.owner) : null;
         if (n.owner && !owner) { n.owner = 0; this.ev({ k: 'nfree', n: n.id }); }
+        if (n.buoy) {   // the buoyancy ray: up it goes, helpless, then down again
+          const g = MM.heightAt(this.dimId, n.x, n.z) + (T.fly || 0);
+          if (now < n.buoy) { n.y = Math.min(g + MM.BUOY.top, Math.max(n.y, g) + MM.BUOY.rise * dt); continue; }
+          n.y = Math.max(g, n.y - 7 * dt);
+          if (n.y > g + 0.01) continue;
+          n.buoy = 0;
+        }
         if (now < n.stun || now < n.dance) { n.y = MM.heightAt(this.dimId, n.x, n.z) + (T.fly || 0); continue; }
         if (owner && (owner.inst === this || n.guardAt)) {
           // A follower: fight whatever is near its friend, otherwise tag along. A guard (the
@@ -603,7 +613,7 @@
           if (decoy) { goal = decoy; if (dist2(decoy.x, decoy.z, n.x, n.z) < (T.r + 1.1) ** 2 && now >= n.cd) { n.cd = now + 1.2; this.ev({ k: 'bite', n: n.id }); } }
           else if (n.angry && now < n.angryUntil) { const p = this.host.players.get(n.angry); if (p && p.inst === this && !p.dead) best = p, bd = dist2(p.x, p.z, n.x, n.z); }
           else if (!T.ring && dist2(n.x, n.z, n.home.x, n.home.z) < leash * leash) for (const p of this.players.values()) {   // Ring fighters only fight the fighter
-            if (!this.visible(p, now) || (T.turkey && p.form && p.form.id === 'turkey')) continue;   // turkeys leave turkeys alone
+            if (!this.visible(p, now) || (T.turkey && p.form && p.form.id === 'turkey') || (p.form && p.form.id === 'morph' && !p.form.blown)) continue;   // turkeys leave turkeys alone; a Morphizer disguise fools them all
             // A Death Stalker car spots another car from far off, someone on foot closer.
             const d = dist2(p.x, p.z, n.x, n.z), reach = T.aggro ? (p.car || T.space ? T.aggro : 16) : MM.AGGRO_RANGE;   // (space things see ships from far off)
             if (d < reach * reach && d < (best ? bd : Infinity)) { bd = d; best = p; }
@@ -954,6 +964,7 @@
         case 'sb': this.onBoard(p, m); break;
         case 'kss': this.onKss(p, m); break;
         case 'fz': this.onFuse(p, m); break;
+        case 'sv': this.onSave(p, m.op); break;
         case 'vc': if (p.voice !== m.on) { p.voice = m.on; if (p.inst) p.inst.ev({ k: 'vc', id: p.id, on: m.on }); } break;
         case 'rtc': this.onRtc(p, m); break;
         case 'car': this.onCar(p, m.on); break;
@@ -1009,7 +1020,7 @@
         hp: A.hp, maxHp: A.hp, dead: false, respawnAt: 0, ship: false,
         charges: 0, chargeAt: 0,
         cdFire: 0, cdAb: 0, cdKiosk: 0, cdTalk: 0, cdDrive: 0, cdUse: 0, offer: null,
-        fx: { shield: 0, sprint: 0, sob: 0, shrink: 0, guilt: 0, prot: 0, daze: 0, cuff: 0, cloak: 0 },
+        fx: { shield: 0, sprint: 0, sob: 0, shrink: 0, guilt: 0, prot: 0, daze: 0, cuff: 0, cloak: 0, buoy: 0 },
         kbUntil: 0, portalCool: 0, kills: 0, deaths: 0, dirtyFlag: true, progDirty: true, saveDirty: false,
       };
       this.restat(p);
@@ -1058,7 +1069,7 @@
 
     info(p) {
       const up = p.prog.up;
-      return { id: p.id, name: p.name, home: p.home, clone: p.clone ? 1 : 0, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '', sk: MM.shipKind(p.arch), voice: !!p.voice, form: p.form ? p.form.id : p.carMorty ? 'carmorty' : '', fz: p.fusedTo || 0, fu: p.fuse ? [p.fuse.partner, p.fuse.kind] : 0,
+      return { id: p.id, name: p.name, home: p.home, clone: p.clone ? 1 : 0, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '', sk: MM.shipKind(p.arch), voice: !!p.voice, form: this.formTag(p), fz: p.fusedTo || 0, fu: p.fuse ? [p.fuse.partner, p.fuse.kind] : 0,
         gear: { ratsuit: !!up.ratsuit, wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs, strongarm: !!p.prog.arm } };
     }
 
@@ -1169,6 +1180,7 @@
       if (p.pvp) b |= 4096;
       if (p.tinyRick) b |= 32768;
       if (p.dp) b |= 65536;   // a death punch is counting down your steps
+      if (now < p.fx.buoy) b |= 131072;   // floating (the buoyancy ray)
       if (p.car) b |= 8192;
       if (p.tiny) b |= 16384;
       return b;
@@ -1200,11 +1212,12 @@
       const quirk = p.inst.dim.quirk, jv = p.st.jump * (quirk === 'bouncy' ? 1.6 : 1) * (p.tinyRick ? MM.TINYRICK.jump : 1);
       // Vertical: you can only rise as fast as your jump (or wings, jetpack, ship, a blast)
       // allows, and never above your reach. Falling is always fine.
-      const reach = (p.ship ? 1020 : p.st.fly === 'wings' ? 70 : jv * jv / (2 * g) + 14 + (p.st.fly === 'jet' ? 20 : 0)) + (now < (p.flingUntil || 0) ? 150 : 0) + (quirk === 'swim' || quirk === 'dreamy' ? 90 : 0);
+      const buoy = now < p.fx.buoy + 1;
+      const reach = (buoy ? MM.BUOY.top + 16 : 0) + (p.ship ? 1020 : p.st.fly === 'wings' ? 70 : jv * jv / (2 * g) + 14 + (p.st.fly === 'jet' ? 20 : 0)) + (now < (p.flingUntil || 0) ? 150 : 0) + (quirk === 'swim' || quirk === 'dreamy' ? 90 : 0);
       let y = m.y;
       if (y < ground - 1.5) y = ground;
       const rise = y - p.y;
-      const maxRise = (p.ship ? 26 : p.st.fly || quirk === 'swim' || quirk === 'dreamy' ? 14 : jv) * dt * 1.6 + 1.2 + (kb ? 30 * dt + 3 : 0);
+      const maxRise = (buoy ? MM.BUOY.rise * 1.6 * dt + 1 : 0) + (p.ship ? 26 : p.st.fly || quirk === 'swim' || quirk === 'dreamy' ? 14 : jv) * dt * 1.6 + 1.2 + (kb ? 30 * dt + 3 : 0);
       if (moved > allowed || rise > maxRise || (y > ground + reach && rise > 0.3)) {
         p.strikes += 1;
         if (p.strikes > 25) { this.kick(c, 'Movement check failed'); return; }
@@ -1333,6 +1346,15 @@
         p.hp = p.maxHp; p.fx.prot = Math.max(p.fx.prot, this.time + 1);
         inst.ev({ k: 'reform', id: p.id });
         this.toast(p, pick(['The immortality field put you back together. Again.', 'You died! Briefly. The field fixed it.', 'Splat, then un-splat. Gotta love the field.']));
+        this.dirty(p);
+        return;
+      }
+      // The save-point remote: you never died. Back to where you saved (once).
+      if (p.save && this.time < p.save.until && !p.ride && !p.ship && !p.car && !p.aboard && !p.bout) {
+        const S = p.save; p.save = null;
+        inst.ev({ k: 'kill', v: p.id, by: src ? src.id : 0, w: how || '', saved: 1 });
+        this.loadSave(p, S);
+        this.toast(p, '💾 You died. Or did you? The remote took you back to your save point. (Save again: K.)');
         this.dirty(p);
         return;
       }
@@ -2095,6 +2117,22 @@
           inst.ev({ k: 'car', id: p.id, on: true, morty: 1 });
           text = 'Oh geez, oh man, I-I\'m a CAR! W/S to drive, A/D to steer, Shift for nitro. B turns you back.';
           break;
+        case 'savepoint':
+          if (other) return null;
+          if (p.save && now < p.save.until) { if (!this.onSave(p, 'load', true)) return null; return 'Loaded. Same place, same you. (Nobody else went back.)'; }
+          if (!this.onSave(p, 'save', true)) return null;
+          return 'Saved here, in ' + inst.dim.name + '. N (or the remote again) takes you back. For 15 minutes.';
+        case 'morph': {
+          if (other) return null;
+          if (p.form && p.form.id === 'morph') { this.setForm(p, null); text = 'You turn back into yourself.'; break; }
+          if (p.car || p.ship || p.aboard || p.fusedTo || p.fuse) { this.toast(p, 'Not while driving, flying or fused.'); return null; }
+          if (now < (p.cdMorph || 0)) { this.toast(p, 'The Morphizer is still warming up (' + Math.ceil(p.cdMorph - now) + ' s).'); return null; }
+          const type = this.morphTarget(inst);
+          p.cdMorph = now + 30;
+          this.setForm(p, 'morph', 0, type);
+          text = 'ZWOOP. You look like a ' + (MM.NPCS[type].name || type) + '. The monsters here think you are one of them, until you start something.';
+          break;
+        }
         case 'fuse':
           if (!other) { this.toast(p, 'You need someone to fuse with: walk up to them and press F.'); return null; }
           if (!this.fuse(by, p, 'jerricky')) return null;
@@ -2230,6 +2268,10 @@
         this.fireProjectile(inst, { owner: p.id, kind: 'shrink', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 65, range: 70, dmg: 5, rad: 0.35 });
       } else if (g === 'carrot') {
         this.fireProjectile(inst, { owner: p.id, kind: 'carrot', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 60, range: 65, dmg: 2, rad: 0.35 });
+      } else if (g === 'buoy') {
+        this.fireProjectile(inst, { owner: p.id, kind: 'buoy', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 55, range: 60, dmg: 1, rad: 0.4 });
+      } else if (g === 'guillotine') {
+        if (!this.guillotine(p, m)) return;
       } else if (g === 'freeze') {
         this.fireProjectile(inst, { owner: p.id, kind: 'freeze', x: p.x + m.dx * 0.7, y: p.y + 1.35 + m.dy * 0.7, z: p.z + m.dz * 0.7, dx: m.dx, dy: m.dy, dz: m.dz, speed: 55, range: 60, dmg: 4, rad: 0.4 });
       } else if (g === 'chalk') {
@@ -2812,13 +2854,75 @@
       this.progress(p, 'use', id);
     }
 
-    // ----- Transformations (MM.FORMS): a turkey, a carrot, liquid metal -----
-    setForm(p, id, dur) {
-      const F = id && MM.FORMS[id];
-      p.form = F ? { id, until: this.time + (dur || F.dur) } : null;
-      if (p.inst) p.inst.ev({ k: 'form', id: p.id, f: F ? id : '' });
+    // ----- Batch 4: the save-point remote, the portal guillotine, the Morphizer -----
+    onSave(p, op, quiet) {
+      const now = this.time, inst = p.inst;
+      if (!(p.inv['q:saveremote'] > 0) || p.dead || !inst) return false;
+      if (p.ride || p.aboard || p.fusedTo || p.fuse || p.bout || p.race) { this.toast(p, 'Not now: you are busy.'); return false; }
+      if (op === 'save') {
+        if (p.ship || p.car) { this.toast(p, 'Get out first, then save.'); return false; }
+        p.save = { dim: inst.dimId, inst, x: p.x, y: p.y, z: p.z, hp: Math.max(1, p.hp), until: now + MM.SAVEPOINT.keep };
+        inst.ev({ k: 'save', id: p.id, x: r2(p.x), y: r2(p.y), z: r2(p.z) });
+        if (!quiet) this.toast(p, '💾 Saved here, in ' + inst.dim.name + '. N takes you back. (For 15 minutes.)');
+        this.dirty(p);
+        return true;
+      }
+      const S = p.save;
+      if (!S || now > S.until) { p.save = null; this.toast(p, 'No save point. K saves one.'); return false; }
+      if (now < (p.cdLoad || 0)) { this.toast(p, 'The remote is recharging (' + Math.ceil(p.cdLoad - now) + ' s).'); return false; }
+      if (p.ship) { p.ship = false; inst.ev({ k: 'ship', id: p.id, on: false }); this.parkShip(p, inst); }
+      if (p.car && !p.carMorty) { p.car = false; inst.ev({ k: 'car', id: p.id, on: false }); }
+      p.cdLoad = now + MM.SAVEPOINT.cd;
+      this.loadSave(p, S);
+      if (!quiet) this.toast(p, '💾 Loaded. Same place, same you. (Nobody else went back.)');
+      return true;
+    }
+    loadSave(p, S) {
+      p.hp = Math.min(p.maxHp, S.hp); p.dp = null;
+      p.fx.prot = Math.max(p.fx.prot, this.time + 1.5);
+      p.inst.ev({ k: 'load', id: p.id });
+      const live = [...this.instances.values()].includes(S.inst) ? S.inst : null;
+      if (p.inst.dimId !== S.dim || (live && p.inst !== live)) this.travel(p, S.dim, { x: S.x, z: S.z }, live);
+      this.teleport(p, S.x, S.y, S.z);
       this.dirty(p);
     }
+    // The portal guillotine: aim at someone or something; a portal ring opens around it and
+    // snaps shut a moment later. Whatever is still inside takes the hit.
+    guillotine(p, m) {
+      const inst = p.inst, G = MM.GUILLOTINE, ox = p.x, oy = p.y + 1.35, oz = p.z;
+      let best = null, bt = G.range;
+      const look = (x, y, z, r) => { const dx = x - ox, dy = y - oy, dz = z - oz, t = dx * m.dx + dy * m.dy + dz * m.dz; if (t < 0 || t > bt) return false; const ex = dx - m.dx * t, ey = dy - m.dy * t, ez = dz - m.dz * t; return ex * ex + ey * ey + ez * ez < (r + 0.6) ** 2 ? t : false; };
+      for (const n of inst.npcs.values()) { if (n.owner === p.id || n.T.space) continue; const t = look(n.x, n.y + n.T.h / 2, n.z, n.T.r); if (t !== false) { bt = t; best = { n }; } }
+      for (const q of inst.players.values()) { if (q === p || q.dead || !this.canHurt(p, q)) continue; const t = look(q.x, q.y + 0.9, q.z, 0.5); if (t !== false) { bt = t; best = { q }; } }
+      if (!best) { this.toast(p, 'Nothing there to aim the guillotine at.'); return false; }
+      const T = best.n || best.q, cx = T.x, cz = T.z, cy = T.y, big = best.n ? Math.max(G.ring, best.n.T.r + 0.6) : G.ring;
+      inst.ev({ k: 'guil', x: r2(cx), y: r2(cy), z: r2(cz), r: r2(big), t: G.delay, c: (p.look && p.look.portalColor) || '#39ff6a' });
+      this.later(G.delay, () => {
+        if (p.inst !== inst && !this.players.has(p.id)) return;
+        inst.ev({ k: 'guilsnap', x: r2(cx), y: r2(cy), z: r2(cz), r: r2(big) });
+        if (best.n) { const n = best.n; if (inst.npcs.has(n.id) && dist2(n.x, n.z, cx, cz) < big * big) inst.hurtNpc(n, n.T.hp > 1000 ? G.dmgBoss : G.dmgNpc, p); }
+        else { const q = best.q; if (q.inst === inst && !q.dead && dist2(q.x, q.z, cx, cz) < big * big) this.hurtPlayer(inst, q, G.dmgPlayer, p, 'guillotine'); }
+      });
+      return true;
+    }
+    // Who the Morphizer makes you look like: one of the locals here (a monster if there is one).
+    morphTarget(inst) {
+      const ok = t => { const T = MM.NPCS[t]; return T && !T.target && !T.car && !T.space && !T.ring && T.h <= 4 && T.hp < 1000 && t !== 'cast' && !t.startsWith('tgt_'); };
+      const here = [...inst.npcs.values()].filter(n => !n.cast && ok(n.type)).map(n => n.type);
+      const mean = here.filter(t => MM.NPCS[t].hostile);
+      const list = mean.length ? mean : here.length ? here : (inst.dim.npc || []).map(e => e[0]).filter(ok);
+      return list.length ? pick(list) : 'meatblob';
+    }
+
+    // ----- Transformations (MM.FORMS): a turkey, a carrot, liquid metal -----
+    setForm(p, id, dur, npc) {
+      const F = id && MM.FORMS[id];
+      p.form = F ? { id, until: this.time + (dur || F.dur), npc: npc || '' } : null;
+      if (p.inst) p.inst.ev({ k: 'form', id: p.id, f: this.formTag(p) });
+      this.dirty(p);
+    }
+    // What clients are told you look like: 'turkey', 'carmorty', or 'morph:<local>' (the Morphizer).
+    formTag(p) { return p.form ? (p.form.npc ? 'morph:' + p.form.npc : p.form.id) : p.carMorty ? 'carmorty' : ''; }
     tickForm(p, now) {
       if (now < p.form.until) return;
       const was = p.form.id;
@@ -3140,8 +3244,9 @@
         ch: p.charges, chMax: p.st.gun ? p.st.gun.charges : 0, bor: p.borrow || 0, chIn: p.chargeAt ? r2(p.chargeAt - now) : 0,
         ab: r2(Math.max(0, p.cdAb - now)), chaos: p.prog.chaos, kills: p.kills, deaths: p.deaths, dead: p.dead,
         rsIn: p.dead ? r2(Math.max(0, p.respawnAt - now)) : 0, fx: this.fxBits(p, now), ship: p.ship, car: !!p.car,
-        fm: p.form ? p.form.id : p.carMorty ? 'carmorty' : '', fz: p.fusedTo || 0, fu: p.fuse ? [p.fuse.partner, p.fuse.kind] : 0,
-        ab: p.aboard ? [p.aboard.owner, p.aboard.crew.get(p.id) || 1, p.aboard.parked ? p.aboard.id : 0, p.aboard.kind] : 0, pk: p.vessel && p.vessel.parked ? [p.vessel.id, p.vessel.inst.dimId] : 0 };
+        fm: this.formTag(p), fz: p.fusedTo || 0, fu: p.fuse ? [p.fuse.partner, p.fuse.kind] : 0,
+        abd: p.aboard ? [p.aboard.owner, p.aboard.crew.get(p.id) || 1, p.aboard.parked ? p.aboard.id : 0, p.aboard.kind] : 0, pk: p.vessel && p.vessel.parked ? [p.vessel.id, p.vessel.inst.dimId] : 0,
+        sv: p.save && now < p.save.until ? [p.save.dim, r2(p.save.x), r2(p.save.y), r2(p.save.z), Math.round(p.save.until - now)] : 0 };
     }
 
     // Your life path, upgrades and errands (sent when they change).
