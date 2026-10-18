@@ -1751,3 +1751,53 @@ test('fusion: Jerricky (the Fusion Device) and Kuato (two in the pool): one body
   r.p.fuse.until = host.time; run(host, 0.1);
   assert.ok(!r.p.fuse && !j.p.fusedTo, 'wears off');
 });
+
+test('voice: the server passes the WebRTC handshake only between nearby players with voice on; voice commands parse', () => {
+  const host = new MM.Host();
+  const a = join(host, 'genius', { dim: 'suburbia', home: 'C-137' });
+  const b = join(host, 'teen', { dim: 'suburbia', home: 'C-137' });
+  host.travel(a.p, 'suburbia', { x: 0, z: 60 }); host.travel(b.p, 'suburbia', { x: 3, z: 60 }); run(host, 0.3);
+  const offer = { t: 'rtc', to: b.p.id, d: { sdp: { type: 'offer', sdp: 'v=0' } } };
+  b.c.sent.length = 0;
+  host.message(a.c, JSON.stringify(offer));
+  assert.ok(!b.c.sent.some(m => m.t === 'rtc'), 'not until both have voice on');
+  host.message(a.c, '{"t":"vc","on":true}'); host.message(b.c, '{"t":"vc","on":true}');
+  host.message(a.c, JSON.stringify(offer));
+  const got = b.c.sent.find(m => m.t === 'rtc');
+  assert.ok(got && got.from === a.p.id && got.d.sdp.type === 'offer', 'passed along');
+  assert.strictEqual(MM.parseClient(JSON.stringify({ t: 'rtc', to: 2, d: { sdp: { type: 'offer', sdp: 'x' }, extra: 1 } })), null, 'junk is refused');
+  host.teleport(b.p, 300, b.p.y, 60); b.c.sent.length = 0;
+  host.message(a.c, JSON.stringify(offer));
+  assert.ok(!b.c.sent.some(m => m.t === 'rtc'), 'too far apart');
+  assert.strictEqual(host.info(a.p).voice, true);
+  // The voice command parser (js/voice.js).
+  const vm = require('vm'), ctx = { window: { MMC: {} }, navigator: {}, console };
+  vm.runInNewContext(require('fs').readFileSync(require('path').join(__dirname, '../js/voice.js'), 'utf8'), ctx);
+  const P = ctx.window.MMC.voice.parse;
+  assert.strictEqual(P('Garage, lock the doors').house, 'doors');
+  assert.strictEqual(P('House shields up').house, 'shield');
+  assert.ok(P('Morty, initiate car transformation sequence').carMorty);
+  assert.strictEqual(P('Car, keep Summer safe').kss, 'kill');
+  assert.strictEqual(P('ship, come here').ship, true);
+  assert.strictEqual(P('portal to the citadel').portal, 'citadel');
+  assert.strictEqual(P('lock the doors'), null, 'no wake word, no command (unless you hold the key)');
+  assert.strictEqual(P('lock the doors', true).house, 'doors');
+  assert.strictEqual(P('house teleport me to downtown').d, 0);
+});
+
+test('Keep Summer Safe on Rick\'s order: "Car, keep Summer safe" starts it even with him right there', () => {
+  const host = new MM.Host();
+  const r = join(host, 'genius', { dim: 'suburbia', home: 'C-137' });
+  const s = join(host, 'teen', { dim: 'suburbia', home: 'C-142' });
+  host.travel(r.p, 'suburbia', { x: 0, z: 70 }); host.travel(s.p, 'suburbia', { x: 2, z: 70 }); run(host, 0.3);
+  r.p.prog.up.hull = 1; host.restat(r.p);
+  host.message(r.c, '{"t":"ship","on":true}');
+  host.message(s.c, JSON.stringify({ t: 'sb', id: r.p.id })); host.message(r.c, JSON.stringify({ t: 'sb', id: s.p.id, op: 'yes' }));
+  host.message(r.c, '{"t":"ship","on":false}'); run(host, 0.5);
+  const V = r.p.vessel;
+  assert.ok(V.parked && s.p.aboard === V && !V.kss, 'Rick is right there: nothing yet');
+  host.message(r.c, '{"t":"kss","m":"kill"}'); run(host, 1);
+  assert.ok(V.kss && V.kss.ordered, 'ordered');
+  host.message(r.c, '{"t":"kss","m":"off"}');
+  assert.ok(!V.kss, 'stand down');
+});

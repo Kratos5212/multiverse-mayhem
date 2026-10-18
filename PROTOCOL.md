@@ -58,7 +58,9 @@ Every message is a JSON object with a `t` (type) field. Anything that is not on 
 | `dp` | `r` | The Five-Step Death Punch, facing `r` (must have learned it from Liu Sin; hits whoever is right in front; 45 s cooldown) |
 | `unp` | `id` | A Rick reverses player `id`'s death punch (must be close) |
 | `sb` | `id`, `op` | Ships: `ask` (default) to ride in player `id`'s ship (teammates just get in); `yes` lets `id` in (the owner answering); `drop` lets the locals out of your own ship |
-| `kss` | `m` | Keep Summer Safe: a Summer in a guarding ship picks `kill`, `stun` (don't kill anyone) or `peace` (don't hurt anyone) |
+| `kss` | `m` | Keep Summer Safe: a Summer in a guarding ship picks `kill`, `stun` (don't kill anyone) or `peace` (don't hurt anyone); `off` from the ship's Rick stands it down. Rick's orders win over Summer's |
+| `vc` | `on` | Voice chat on or off for you (only players with it on are connected) |
+| `rtc` | `to`, `d` | A WebRTC handshake piece for player `to`: `d` is exactly `{sdp: {type: offer\|answer, sdp}}` (under 12,000 characters) or `{ice: {candidate, ...}}` (under 600). Passed on only if both players have voice on, are in the same dimension copy and within 90 m |
 | `fz` | `op` | `split`: pull apart from a fusion (Jerricky or Kuato), either of you |
 | `drive` | `d` | Fly your ship to `d` (Moon from Earth: any ship; other planets in the universe: Turbo Engine; other dimensions: Dimension Drive; 15 s cooldown) |
 | `tm` | `op`, `id` | Teams: `inv` invites player `id` (same dimension copy), `join` accepts an invite from `id` (valid 60 s), `leave` leaves your team |
@@ -75,7 +77,8 @@ Every message is a JSON object with a `t` (type) field. Anything that is not on 
 | `hi` | Your player id, the server name, and your cleaned-up name |
 | `w` | Welcome to a dimension: everyone there, damaged props, pickups, monsters, portals, turrets, your position and epoch |
 | `s` | Snapshot: `p` players `[id,x,y,z,yaw,anim,hp%,effects]`, `n` monsters, `u` turret aim |
-| `ev` | A batch of events for this dimension copy: `join`, `leave`, `shot`, `hit`, `boom`, `mel`, `dmg`, `kill`, `prop`, `pk+`/`pk-` (pickups), `npc+`/`npc-`, `po+`/`po-` (portals), `tu+`/`tu-` (turrets), `ab`, `em`, `dodge`, `kiosk`, `bite`, `shrunk`, `say` (a local speaks), `world` (an event starts or ends), `title` (someone broke out of their life), `gear`, `ship`, `car`, `warp`, `nfree`, `hug` (a lovestruck local hugs someone), `reform` (an immortality field put someone back together), `tinyrick`, `dpunch`/`dpstep` (a death punch and the victim's steps counting down), `sp+`/`sp-` (a parked ship), `crew` (locals riding in a flying ship), `board` (someone got in or out of a ship), `kss`/`kssb` (Keep Summer Safe: what the ship says, what it shoots), `form` (someone became a turkey, a carrot, liquid metal, or themselves again), `fuse` (two players became one body, or split) |
+| `ev` | A batch of events for this dimension copy: `join`, `leave`, `shot`, `hit`, `boom`, `mel`, `dmg`, `kill`, `prop`, `pk+`/`pk-` (pickups), `npc+`/`npc-`, `po+`/`po-` (portals), `tu+`/`tu-` (turrets), `ab`, `em`, `dodge`, `kiosk`, `bite`, `shrunk`, `say` (a local speaks), `world` (an event starts or ends), `title` (someone broke out of their life), `gear`, `ship`, `car`, `warp`, `nfree`, `hug` (a lovestruck local hugs someone), `reform` (an immortality field put someone back together), `tinyrick`, `dpunch`/`dpstep` (a death punch and the victim's steps counting down), `sp+`/`sp-` (a parked ship), `crew` (locals riding in a flying ship), `board` (someone got in or out of a ship), `kss`/`kssb` (Keep Summer Safe: what the ship says, what it shoots), `form` (someone became a turkey, a carrot, liquid metal, or themselves again), `fuse` (two players became one body, or split), `vc` (someone turned voice chat on or off) |
+| `rtc` | `from`, `d`: a voice handshake piece from a nearby player |
 | `pv` | Private events: `tp` (you were moved), `kb` (knockback), `toast`, `built`, `task` (a daily task paid out), `step` (a path step completed), `offer` (a local's trade, Liu Sin's lesson or the serum), `patient` (you are Patient Zero), `dp` (you were death-punched, or cured with `s` 0), `dpcd` (your death punch cooldown), `sbask` (someone wants a ride in your ship), `kssmenu`/`kssay` (Keep Summer Safe) |
 | `y` | Your private state: health, materials and gadgets, portal charges and borrowed charges (`bor`), cooldowns, score, death timer, ship, car |
 | `pg` | Your life: upgrades, path step, unlocks, counters, errands, daily-task cooldowns, title, and resulting stats |
@@ -117,9 +120,15 @@ Projectiles are sent once as a `shot` (start point, velocity, gravity, lifetime)
 * **No HTML injection.** Everything another player typed is drawn with `textContent` or on a canvas, never as HTML. The automated tests send `<img onerror=…>` through chat and check it shows up as plain text.
 * **Version check:** a client and server on different protocol versions refuse each other cleanly.
 
+### Voice
+* **Peer to peer.** Voice audio goes directly between browsers (WebRTC, encrypted by DTLS-SRTP). The server never receives or stores it; it only relays the handshake.
+* **Opt-in, near only.** Nobody's microphone is used until they turn voice on, and the browser asks first. Handshakes are relayed only between two players who both have voice on, in the same dimension copy, within 90 m; clients connect under 40 m and hang up past 55 m. Handshake messages are checked for shape and size and rate-limited.
+* **What it reveals:** like any WebRTC call, connected players can learn each other's IP address (there is no TURN relay to hide it). The menu says so next to the setting. Muting a player (Tab → Mute) also silences their voice.
+* **Voice commands** use the browser's or the phone's own speech recognition. The game sends only the resulting command (the same message as the button), never the audio or the words.
+
 ### The web server
 * Serves only the game's own folders (`index.html`, `js/`, `shared/`, `sim/`, `vendor/`). There is no directory listing, no dot-files and no path traversal; server code and `node_modules` are never served.
-* Strict headers: a Content-Security-Policy that only allows the game's own scripts (plus Google Fonts), `nosniff`, no referrer, a locked-down Permissions-Policy, no framing by other sites, and HSTS behind HTTPS proxies.
+* Strict headers: a Content-Security-Policy that only allows the game's own scripts (plus Google Fonts), `nosniff`, no referrer, a locked-down Permissions-Policy (only the microphone, for voice chat, on the game's own origin), no framing by other sites, and HSTS behind HTTPS proxies.
 * `/info` reports only counts (players, bots, per dimension), never names or addresses.
 * The Docker image runs as the unprivileged `node` user.
 * Hosted on Render (or any HTTPS host), traffic is encrypted end to end (`wss://`).

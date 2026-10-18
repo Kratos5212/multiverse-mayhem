@@ -15,6 +15,7 @@
   }
   C.audioUnlock = function () { init(); if (ctx && ctx.state === 'suspended') ctx.resume(); };
   C.setVolume = function (v) { volume = v; if (master) master.gain.value = v; };
+  C.audioCtx = function () { init(); return ctx; };   // (voice chat plays through it, positioned in 3D)
 
   function env(g, t, a, peak, d) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
   function tone(type, f0, f1, dur, vol, at) {

@@ -10,7 +10,7 @@
   const pick = a => a[Math.floor(Math.random() * a.length)];
 
   // ---------- Profile and settings ----------
-  const settings = UI.load('settings', { sens: 1, invert: false, volume: 0.6, quality: isTouch ? 'low' : 'high', botChat: true, view: 'third' });
+  const settings = UI.load('settings', { sens: 1, invert: false, volume: 0.6, quality: isTouch ? 'low' : 'high', botChat: true, view: 'third', voice: 'off', vcmd: false, vvol: 1 });
   const profile = UI.load('profile', { name: '', home: '', arch: 'genius', look: null, server: '', startDim: 'suburbia' });
   if (!MM.ARCHETYPES[profile.arch]) profile.arch = 'genius';
   profile.look = profile.look ? MM.sanitizeLook(profile.look) : MM.canonLook(profile.arch);
@@ -213,6 +213,7 @@
   }
 
   function leave(reason) {
+    C.voice.setMode('off'); C.voice.stopCommands();
     if (G.net) { const n = G.net; G.net = null; n.close(); }
     clearWorld(true);
     G.mode = 'menu'; G.entered = false; G.you = null; G.myId = 0;
@@ -530,6 +531,7 @@
   // ---------- Arriving in a dimension ----------
   function enterDimension(w) {
     const changed = w.dim !== G.dimId;
+    C.voice.reset();   // (new people around: new voice connections)
     clearWorld(false);
     if (changed) {
       if (G.world) { scene.remove(G.world.group); G.world.dispose(); }
@@ -597,6 +599,7 @@
       $('hud').hidden = false;
       $('touch').hidden = !isTouch;
       buildHotbar();
+      startVoice();
       UI.chatLine('', '', 'You arrived in ' + dim.name + '. ' + (isTouch ? 'Tap ? in the menu for controls.' : 'Click to look around. WASD to move, Enter to chat, ? for help.'), true);
       G.camYaw = 0; G.camPitch = 0.25;
     }
@@ -780,6 +783,7 @@
     switch (m.t) {
       case 'hi': G.myId = m.id; profile.name = m.you.name; profile.home = m.you.home; $('home').value = profile.home; UI.save('profile', profile); keepToken(m.tok); break;
       case 'pg': onProgress(m); break;
+      case 'rtc': C.voice.onSignal(m); break;
       case 'w': enterDimension(m); break;
       case 's': onSnap(m); break;
       case 'ev': for (const e of m.l) onEvent(e); break;
@@ -835,7 +839,9 @@
         if (p) sfxAt('warp', p.x, p.z, 0.5);
         break;
       }
+      case 'vc': { const q = G.players.get(e.id); if (q) q.info.voice = e.on; if (!e.on) C.voice.forget(e.id); break; }
       case 'leave': {
+        C.voice.forget(e.id);
         removePairsOf(e.id);
         const p = G.players.get(e.id);
         if (p && e.via) { fx.burst(p.x, p.y + 1, p.z, '#39ff6a', 20, 6, 0.7, 0.5, 2); sfxAt('warp', p.x, p.z, 0.6); }
@@ -1499,6 +1505,12 @@
     mk('chalk', '7', 'Chalk', () => useGadget('chalk'));
     mk('dpunch', '8', 'Death Punch', () => deathPunch());
     mk('carrot', '9', 'Carrot Ray', () => useGadget('carrot'));
+    // Voice: hold to talk, hold to give a command.
+    mk('mic', 'Z', 'Talk', () => {});
+    mk('vcmd', 'Y', 'Command', () => {});
+    const hold = (b, on, off) => { b.onpointerdown = e => { e.preventDefault(); on(); }; b.onpointerup = b.onpointerleave = b.onpointercancel = () => off(); };
+    hold(slots.mic, () => C.voice.pushToTalk(true), () => C.voice.pushToTalk(false));
+    hold(slots.vcmd, () => { C.voice.holdCommand(true); UI.toast('🎙 Listening for a command...', 1500); }, () => setTimeout(() => C.voice.holdCommand(false), 1200));
     mk('items', 'I', 'Items', () => openInventory());
     mk('pair', 'R', 'Portals', () => shootPair());
     mk('scan', 'X', 'Scan', () => scan());
@@ -1522,6 +1534,8 @@
     }
     slots.scan.hidden = !(G.st && G.st.scanner);
     slots.dpunch.hidden = !(G.prog && G.prog.dpunch);
+    slots.mic.hidden = C.voice.mode() !== 'ptt';
+    slots.vcmd.hidden = !settings.vcmd;
     const canPair = !!(G.prog && MM.canPair(profile.arch, G.prog.up));
     slots.pair.hidden = !canPair; $('tPair').hidden = !canPair;
     const pcs = MM.pairColors(profile.look);
@@ -2274,6 +2288,56 @@
       box.append(list);
     });
   }
+  // ---------- Voice: proximity chat and voice commands (js/voice.js) ----------
+  C.voice.init({
+    send: m => send(m), myId: () => G.myId,
+    others: () => [...G.players.values()].map(p => ({ id: p.info.id, x: p.x, y: p.y, z: p.z, voice: !!p.info.voice && !p.info.bot && !G.muted.has(p.info.id) })),   // (muting someone hangs up on them too)
+    listener: () => ({ x: G.me.x, y: G.me.y, z: G.me.z, yaw: G.camYaw }),
+    toast: t => UI.toast(t, 4000),
+  });
+  function startVoice() {
+    C.voice.setVolume(settings.vvol);
+    if (settings.voice !== 'off' && G.net && G.net.kind !== 'offline') C.voice.setMode(settings.voice).then(ok => { if (!ok) { settings.voice = 'off'; UI.save('settings', settings); } updateHotbar(); });
+    if (settings.vcmd) C.voice.startCommands(runVoiceCommand);
+  }
+  // Something you said: if it is a command, do it (the same as pressing the button would).
+  function runVoiceCommand(text, held) {
+    const c = C.voice.parse(text, held);
+    if (!c) { if (held) UI.toast('🎙 "' + text + '": not a command I know.', 2500); return; }
+    if (!canAct()) return;
+    UI.toast('🎙 "' + text.trim() + '" → ' + c.label, 2500);
+    if (c.house) send(c.d !== undefined ? { t: 'hd', o: c.house, d: c.d } : { t: 'hd', o: c.house });
+    else if (c.kss) send({ t: 'kss', m: c.kss });
+    else if (c.ship !== undefined) { if (G.you.ab && !c.ship) send({ t: 'ship', on: false }); else if (!!G.you.ship !== c.ship) send({ t: 'ship', on: c.ship }); }
+    else if (c.carMorty) {
+      if (!(G.you.inv['q:carserum'] > 0)) { UI.toast('You need a Car-ification Serum (Rick\'s workbench).', 3000); return; }
+      if (profile.arch === 'sidekick') { send({ t: 'uc', id: 'carserum' }); return; }
+      let best = null, bd = MM.TRADE_RANGE ** 2;
+      for (const q of G.players.values()) { if (q.info.arch !== 'sidekick') continue; const d = (q.x - G.me.x) ** 2 + (q.z - G.me.z) ** 2; if (d < bd) { bd = d; best = q; } }
+      if (best) send({ t: 'uo', id: best.info.id, q: 'carserum' }); else UI.toast('No Morty close enough.', 2500);
+    } else if (c.portal) {
+      const want = c.portal.replace(/^the /, ''), D = MM.DIMS.find(d => !d.hidden && !d.interior && d.name.toLowerCase() === want) || MM.DIMS.find(d => !d.hidden && !d.interior && d.name.toLowerCase().includes(want));
+      if (!D) { UI.toast('No dimension called "' + want + '".', 2500); return; }
+      send({ t: 'po', d: D.id });
+    } else if (c.say) send({ t: 'c', text: c.say.slice(0, 140) });
+  }
+  // A little speaker over whoever is talking.
+  function speakIcon() {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+    const g = cv.getContext('2d'); g.font = '48px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🔊', 32, 34);
+    const sp = new T.Sprite(new T.SpriteMaterial({ map: new T.CanvasTexture(cv), depthWrite: false, transparent: true, fog: false }));
+    sp.scale.set(0.55, 0.55, 1); sp.renderOrder = 12; return sp;
+  }
+  function tickVoice() {
+    C.voice.tick();
+    for (const p of G.players.values()) {
+      const on = C.voice.speaking(p.info.id);
+      if (on && !p.vcIcon) { p.vcIcon = speakIcon(); p.av.root.add(p.vcIcon); }
+      if (p.vcIcon) { p.vcIcon.visible = on; p.vcIcon.position.y = p.av.headY + 1.05; }
+    }
+    if (slots.mic) slots.mic.classList.toggle('on', C.voice.isTalking());
+  }
+
   function openMenu() {
     openModal('menu', 'Paused (the multiverse keeps going)', box => {
       const row = (label, input) => el('div', { class: 'opt' }, el('span', { class: 'lbl', text: label }), input);
@@ -2284,6 +2348,18 @@
         row('View', el('div', { class: 'chips' }, ...[['third', 'Third person'], ['first', 'First person']].map(([v, t]) => el('button', { class: 'chip', 'aria-pressed': String(settings.view === v), onclick: () => { setView(v); openMenu(); } }, t)))),
         row('Look', el('div', { class: 'chips' }, ...[['real', 'Realistic'], ['cartoon', 'Cartoon']].map(([q, label]) => el('button', { class: 'chip', 'aria-pressed': String(settings.style === q), onclick: () => { if (settings.style === q) return; settings.style = q; UI.save('settings', settings); UI.toast('The new look applies when you reload the game.', 3500); openMenu(); } }, label)))),
         row('Graphics', el('div', { class: 'chips' }, ...['high', 'low'].map(q => el('button', { class: 'chip', 'aria-pressed': String(settings.quality === q), onclick: () => { settings.quality = q; applyQuality(); resize(); UI.save('settings', settings); openMenu(); } }, q)))),
+        row('Voice chat', el('div', { class: 'chips' }, ...[['off', 'Off'], ['ptt', 'Push to talk (hold Z)'], ['open', 'Open mic']].map(([v, t]) => el('button', { class: 'chip', 'aria-pressed': String(settings.voice === v), onclick: () => {
+          if (v !== 'off' && G.net && G.net.kind === 'offline') { UI.toast('Voice chat is for playing online, with people.', 3000); return; }
+          C.voice.setMode(v).then(ok => { settings.voice = ok ? v : 'off'; UI.save('settings', settings); updateHotbar(); openMenu(); });
+        } }, t)))),
+        el('p', { class: 'note', text: 'Voice goes straight between players near you, so they can see your internet address, as in any video call. Tab → Mute hangs up on someone.' }),
+        row('Voice volume', el('input', { type: 'range', min: 0, max: 2, step: 0.05, value: settings.vvol, oninput: e => { settings.vvol = Number(e.target.value); C.voice.setVolume(settings.vvol); UI.save('settings', settings); } })),
+        row('Voice commands', el('div', { class: 'chips' }, ...[[false, 'Off'], [true, C.voice.listenAlways() ? 'On ("Garage, lock the doors"; hold Y for any command)' : 'On (hold Y or the mic button and speak)']].map(([v, t]) => el('button', { class: 'chip', 'aria-pressed': String(settings.vcmd === v), onclick: () => {
+          if (v && !C.voice.commandsSupported()) { UI.toast('This browser has no speech recognition. Try Chrome or Edge (or the Windows launcher).', 4000); return; }
+          settings.vcmd = v; UI.save('settings', settings);
+          if (v) C.voice.startCommands(runVoiceCommand); else C.voice.stopCommands();
+          updateHotbar(); openMenu();
+        } }, t)))),
         row('Options', el('div', { class: 'chips' },
           el('button', { class: 'chip', 'aria-pressed': String(settings.invert), onclick: () => { settings.invert = !settings.invert; UI.save('settings', settings); openMenu(); } }, 'Invert look'),
           el('button', { class: 'chip', 'aria-pressed': String(settings.botChat), onclick: () => { settings.botChat = !settings.botChat; UI.save('settings', settings); openMenu(); } }, 'Show bot chat'),
@@ -2351,14 +2427,20 @@
       case 'Digit7': useGadget('chalk'); break;
       case 'Digit8': deathPunch(); break;
       case 'Digit9': useGadget('carrot'); break;
+      case 'KeyZ': if (C.voice.mode() === 'ptt') C.voice.pushToTalk(true); break;
+      case 'KeyY': if (settings.vcmd) { C.voice.holdCommand(true); UI.toast('🎙 Listening for a command...', 1500); } break;
       case 'KeyI': openInventory(); break;
       case 'KeyV': toggleView(); break;
       case 'KeyG': emoteBar(); break;
       case 'Space': e.preventDefault(); if (G.you && G.you.dead && now() >= G.rsAt) send({ t: 'rs' }); break;
     }
   });
-  window.addEventListener('keyup', e => keys.delete(e.code));
-  window.addEventListener('blur', () => { keys.clear(); mouseDown = false; touch.fire = false; touch.jump = false; });
+  window.addEventListener('keyup', e => {
+    keys.delete(e.code);
+    if (e.code === 'KeyZ') C.voice.pushToTalk(false);
+    if (e.code === 'KeyY') setTimeout(() => C.voice.holdCommand(false), 1200);   // (let the last words in)
+  });
+  window.addEventListener('blur', () => { keys.clear(); mouseDown = false; touch.fire = false; touch.jump = false; C.voice.pushToTalk(false); });
 
   // Take the mouse back for looking around (after a menu closes, so you don't have to click
   // the game again). Only works inside a click or key press, which is when menus close.
@@ -2839,6 +2921,7 @@
       for (const o of p.av.outlines) o.visible = near || settings.quality === 'high';
       p.tag.sprite.visible = d < 45 && s.a !== MM.ANIM.dead;
     }
+    tickVoice();
     for (const a of G.crewAvs) if (a.root.parent && a.root.parent.visible !== false) a.animate(dt, { speed: 0, anim: MM.ANIM.sit });
     for (const n of G.npcs.values()) {
       if (sample(n.snaps, rt, tmp)) { n.x = tmp.x; n.y = tmp.y; n.z = tmp.z; n.r = tmp.r; }

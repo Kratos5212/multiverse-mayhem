@@ -55,6 +55,8 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | 1 2 3 4 5 6 7 | GADGET | Grenade, turret, shrink ray, Meeseeks Box, Time Crystal, freeze ray, Magic Chalk (the last two kinds: Ricks and Evil Morty) |
 | 8 | Fist button | The Five-Step Death Punch (once Liu Sin in Downtown has taught you) |
 | 9 | Carrot button | Carrot Ray shot (build it at Rick's workbench) |
+| Z (hold) | Mic button (hold) | Push to talk, when voice chat is set to "Push to talk" (Esc menu) |
+| Y (hold) | Command button (hold) | Say a voice command, when voice commands are on (Esc menu) |
 | C | Build slot | Workbench |
 | H | Garage console | Rick: "House, ..." (the defences of your own house, from anywhere near it) |
 | Enter | Chat button | Chat with the whole multiverse |
@@ -277,6 +279,25 @@ Rick's workbench makes these (anyone can build them), and you can use them on yo
 - **Car-ification Serum** ("The Ricks Must Be Crazy"): a Morty becomes a car with his face on the front, and drives himself, anywhere. **B** turns him back.
 - **Fusion Device** ("The Jerrick Trap"): use it on someone who agrees and you share one body with two heads for 90 s. You walk, they shoot, and hits land on the body. **B** pulls you apart.
 - **Kuato** ("Wet Kuat Amortican Summer"): two players in the Smith pool. Press **F** at the pool and the other one can fuse into a little head sticking out of your tummy.
+
+### Voice chat and voice commands
+
+**Proximity voice chat** (online only): in the Esc menu, set **Voice chat** to *Push to talk* (hold **Z**, or the mic button on a phone) or *Open mic*. The first time, the browser asks for the microphone. You hear players who also have voice on and are within about 40 m, coming from where they stand: louder up close, to your left when they're on your left. A 🔊 over someone's head means they're talking. **Voice volume** in the same menu sets how loud they are. Voice goes straight from player to player (WebRTC); the server only passes the handshake along, and only between two players close together in the same dimension copy. It never hears the audio. Voice stops when you travel, and starts again with whoever is near you in the new place.
+
+**Voice commands:** turn on **Voice commands** in the Esc menu. In Chrome, Edge and the Windows launcher the game listens all the time, and a command starts with who you're talking to: *house*, *garage*, *computer*, *ship*, *car*, *Morty*, *portal*... In the Android app, hold **Y** or the command button and speak; while you hold it, the wake word is optional.
+
+| Say | Does |
+| --- | --- |
+| "Garage, lock the doors" / "House, forcefield" / "House, laser grid" / "turrets", "kill bots", "drones", "hologram", "cannon", "cloning vat", "retract the lab"... | Your house's defences (Rick, at his own house: the same as **H**) |
+| "House, teleport to Downtown / D.C. / Area 51 / the beach" | The garage teleporter |
+| "Car, keep Summer safe" | Keep Summer Safe (your ship, parked with a Summer inside) |
+| "Car, don't kill anyone" / "don't hurt anyone" / "stand down" | Change Keep Summer Safe's rules, or stop it |
+| "Ship, come here" / "Ship, park" | Board or leave your ship |
+| "Morty, initiate car transformation sequence" | A Car-ification Serum on yourself (Morty) or the nearest Morty |
+| "Portal to the Citadel" / "Portal, take me to Bird World" | Open a portal (with a portal gun) |
+| "Wubba lubba dub dub", "Pickle Rick!", "Get schwifty"... | Said out loud in chat |
+
+Where it works: voice chat in any modern browser (Chrome, Edge, Firefox, Safari) and the Android app. Commands need speech recognition: Chrome, Edge, the Windows launcher, and the Android app (hold to speak). Firefox has none, and Safari's is patchy. There is no relay server, so a few strict networks (some offices and phone carriers) can't connect voice at all. Offline play has no voice chat, but voice commands work there too.
 
 ### Teams
 

@@ -9,6 +9,13 @@
 
   const num = (v, lo, hi) => (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi);
   const int = (v, lo, hi) => num(v, lo, hi) && Math.floor(v) === v;
+  // A WebRTC handshake piece: an offer/answer, or an ICE candidate. Nothing else, nothing big.
+  const rtcOk = d => {
+    if (!d || typeof d !== 'object' || Array.isArray(d)) return false;
+    if (d.sdp) return typeof d.sdp === 'object' && (d.sdp.type === 'offer' || d.sdp.type === 'answer') && typeof d.sdp.sdp === 'string' && d.sdp.sdp.length < 12000 && Object.keys(d).length === 1;
+    if (d.ice) return typeof d.ice === 'object' && typeof d.ice.candidate === 'string' && d.ice.candidate.length < 600 && Object.keys(d).length === 1;
+    return false;
+  };
   const str = (v, max) => typeof v === 'string' && v.length <= max;
   const B = 1300; // generous coordinate bound (Earth reaches 600 m, space 1250 m); the server clamps to the real world edge
   const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
@@ -31,7 +38,9 @@
     ab: () => ({}),                                     // archetype ability
     unp: m => int(m.id, 0, 1e12) ? { id: m.id } : null,
     sb: m => int(m.id, 0, 1e12) && (m.op === undefined || ['ask', 'yes', 'drop'].includes(m.op)) ? { id: m.id, op: m.op || 'ask' } : null,   // ride in someone's ship / let them in / let the locals out
-    kss: m => ['kill', 'stun', 'peace'].includes(m.m) ? { m: m.m } : null,
+    kss: m => ['kill', 'stun', 'peace', 'off'].includes(m.m) ? { m: m.m } : null,   // Keep Summer Safe: how (or, from Rick, stand down)
+    vc: m => typeof m.on === 'boolean' ? { on: m.on } : null,               // voice chat on or off
+    rtc: m => (int(m.to, 0, 1e12) && rtcOk(m.d)) ? { to: m.to, d: m.d } : null,   // the WebRTC handshake, to pass on
     fz: m => m.op === 'split' ? { op: 'split' } : null,                     // pull apart from a fusion   // Keep Summer Safe: how           // a Rick reverses a player's death punch
     dp: m => num(m.r, -10, 10) ? { r: m.r } : null,               // the Five-Step Death Punch, facing r
     po: m => (str(m.d, 16) && own(MM.DIM_BY_ID, m.d)) ? { d: m.d } : null,   // open a portal
@@ -97,7 +106,7 @@
   MM.RATE = {
     all: [90, 45], st: [40, 20], f: [12, 6], c: [3, 0.5], cr: [6, 2], g: [6, 2],
     po: [3, 1], ki: [3, 1], ab: [4, 2], em: [4, 1], rs: [3, 1], pi: [5, 1], hello: [1, 0],
-    use: [4, 1], talk: [4, 1], ans: [4, 1], ship: [4, 1], drive: [3, 0.5], ls: [3, 0.5], orbit: [2, 0.5], land: [3, 1], door: [3, 1], pvp: [3, 0.5], tm: [4, 0.5], uc: [3, 1], pp: [8, 3], pt: [8, 4], hd: [4, 1], dp: [2, 0.5], unp: [2, 0.5], sb: [4, 1], kss: [3, 1], fz: [2, 0.5], lk: [2, 0.2], fun: [4, 1], mg: [3, 0.5],
+    use: [4, 1], talk: [4, 1], ans: [4, 1], ship: [4, 1], drive: [3, 0.5], ls: [3, 0.5], orbit: [2, 0.5], land: [3, 1], door: [3, 1], pvp: [3, 0.5], tm: [4, 0.5], uc: [3, 1], pp: [8, 3], pt: [8, 4], hd: [4, 1], dp: [2, 0.5], unp: [2, 0.5], sb: [4, 1], kss: [3, 1], fz: [2, 0.5], vc: [3, 0.5], rtc: [80, 40], lk: [2, 0.2], fun: [4, 1], mg: [3, 0.5],
   };
 
   // Animation states the client reports.

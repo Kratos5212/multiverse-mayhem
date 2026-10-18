@@ -954,6 +954,8 @@
         case 'sb': this.onBoard(p, m); break;
         case 'kss': this.onKss(p, m); break;
         case 'fz': this.onFuse(p, m); break;
+        case 'vc': if (p.voice !== m.on) { p.voice = m.on; if (p.inst) p.inst.ev({ k: 'vc', id: p.id, on: m.on }); } break;
+        case 'rtc': this.onRtc(p, m); break;
         case 'car': this.onCar(p, m.on); break;
         case 'tr': this.onTrade(p, m); break;
         case 'gv': this.onGive(p, m); break;
@@ -1056,7 +1058,7 @@
 
     info(p) {
       const up = p.prog.up;
-      return { id: p.id, name: p.name, home: p.home, clone: p.clone ? 1 : 0, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '', sk: MM.shipKind(p.arch), form: p.form ? p.form.id : p.carMorty ? 'carmorty' : '', fz: p.fusedTo || 0, fu: p.fuse ? [p.fuse.partner, p.fuse.kind] : 0,
+      return { id: p.id, name: p.name, home: p.home, clone: p.clone ? 1 : 0, look: p.look, arch: p.arch, bot: p.bot, title: p.prog.title || '', sk: MM.shipKind(p.arch), voice: !!p.voice, form: p.form ? p.form.id : p.carMorty ? 'carmorty' : '', fz: p.fusedTo || 0, fu: p.fuse ? [p.fuse.partner, p.fuse.kind] : 0,
         gear: { ratsuit: !!up.ratsuit, wings: !!up.wings, jet: !!up.jetpack && !up.wings, engine: !!up.engine, lasers: !!up.lasers, cyberarm: !!up.cyberarm, cyberlegs: !!up.cyberlegs, strongarm: !!p.prog.arm } };
     }
 
@@ -1742,6 +1744,14 @@
       p.inst.ev(V.parked ? { k: 'sp+', v: this.shipRow(V) } : { k: 'crew', id: p.id, l: this.npcCrew(V) });
     }
 
+    // ----- Voice chat: the server only passes the WebRTC handshake between two players who
+    // both have voice on and are near each other; the voices go peer to peer (js/voice.js).
+    onRtc(p, m) {
+      const q = this.players.get(m.to);
+      if (!q || q === p || q.bot || !p.voice || !q.voice || q.inst !== p.inst || dist2(p.x, p.z, q.x, q.z) > 90 * 90) return;
+      this.send(q, { t: 'rtc', from: p.id, d: m.d });
+    }
+
     // ----- Keep Summer Safe ("Mortynight Run") -----
     summerIn(V) { return V.npcs.some(c => c.arch === 'teen') || [...V.crew.keys()].some(id => { const q = this.players.get(id); return q && q.arch === 'teen'; }); }
     tickParked(V, now) {
@@ -1753,7 +1763,7 @@
         if (o.arch === 'genius' && !ownerNear && this.summerIn(V)) this.kssStart(V);
         return;
       }
-      if (ownerNear) { this.kssEnd(V, 'Rick is back. Summer is safe.'); return; }
+      if (ownerNear && !V.kss.ordered) { this.kssEnd(V, 'Rick is back. Summer is safe.'); return; }
       if (!this.summerIn(V)) { this.kssEnd(V); return; }
       if (now < (V.kss.next || 0)) return;
       V.kss.next = now + MM.KSS.every;
@@ -1806,8 +1816,18 @@
     }
     // A Summer in the ship tells it how to keep her safe.
     onKss(p, m) {
+      // Rick tells his parked ship ("Car, keep Summer safe"): it starts now, even with him there.
+      const own = p.vessel && p.vessel.parked && p.vessel.inst === p.inst ? p.vessel : null;
+      if (own && !(p.aboard === own)) {
+        if (m.m === 'off') { this.kssEnd(own, 'Standing down.'); return; }
+        if (!this.summerIn(own)) { this.toast(p, 'There is no Summer in the ship to keep safe.'); return; }
+        if (!own.kss) this.kssStart(own);
+        own.kss.ordered = true; own.kss.mode = m.m;
+        own.inst.ev({ k: 'sp+', v: this.shipRow(own) });
+        return;
+      }
       const V = p.aboard;
-      if (!V || !V.kss || p.arch !== 'teen') return;
+      if (!V || !V.kss || p.arch !== 'teen' || m.m === 'off') return;
       V.kss.mode = m.m;
       this.kssSay(V, { kill: 'Keep Summer safe. By any means.', stun: 'Understood: do not kill anyone. Summer is safe.', peace: 'Understood: do not hurt anyone. Hm. Summer is safe.' }[m.m]);
       V.inst.ev({ k: 'sp+', v: this.shipRow(V) });

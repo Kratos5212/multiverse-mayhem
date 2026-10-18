@@ -142,6 +142,7 @@ input[type=range] { width: 100%; accent-color: var(--portal); }
 .slot .n { position: absolute; top: 2px; right: 4px; color: var(--gold); font-size: 12px; -webkit-text-stroke: .5px #000; }
 .slot .cd, #tbtns .cd { position: absolute; inset: 0; border-radius: inherit; background: conic-gradient(rgba(0,0,0,.68) calc(var(--p, 0) * 1%), transparent 0); pointer-events: none; }
 .slot.off { opacity: .42; }
+.slot.on { box-shadow: 0 0 0 3px #39ff6a, 0 0 16px rgba(57,255,106,.7); }   /* the mic is live */
 .s-grenade svg { color: #ffb43a; } .s-turret svg { color: #c9d1d9; } .s-shrink svg { color: #b48aff; } .s-meeseeks svg { color: #7ec8f0; } .s-timecrystal svg { color: #8fd8ff; } .s-freeze svg { color: #bfeaff; } .s-items svg { color: #ffd84d; }
 .row .emo { font-size: 26px; width: 34px; text-align: center; flex: none; }
 .coll { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
@@ -469,6 +470,7 @@ table.lb th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 <script src="js/audio.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/vr.js"></script>
+<script src="js/voice.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

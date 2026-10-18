@@ -60,7 +60,7 @@ const SECURITY_HEADERS = {
   'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'none'; frame-ancestors 'self'; form-action 'none'",
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
-  'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+  'permissions-policy': 'camera=(), microphone=(self), geolocation=(), payment=(), usb=()',   // (the microphone: voice chat and voice commands, only when you turn them on)
   'cross-origin-opener-policy': 'same-origin',
   'x-frame-options': 'SAMEORIGIN',
 };
