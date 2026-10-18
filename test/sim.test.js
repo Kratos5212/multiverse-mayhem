@@ -1642,22 +1642,25 @@ test('Keep Summer Safe: only a Rick\'s ship, only with a Summer in it, only once
   assert.ok(r.p.inst.npcs.has(cop.id) && cop.stun > host.time, 'paralysed, not killed');
 });
 
-test('the Giant Baby: a world event on Earth; it flattens what it crawls over, and paying out when it goes down', () => {
+test('the Giant Baby floats in space: it comes after your ship, and pays out when it goes down', () => {
   const host = new MM.Host();
-  const a = join(host, 'surgeon', { dim: 'suburbia', home: 'C-137' });
-  host.travel(a.p, 'suburbia', { x: 0, z: 60 }); run(host, 0.3);
-  const ev = startEvent(host, a.p.inst, 'giantbaby');
-  const baby = a.p.inst.npcs.get(ev.mine[0]);
-  assert.ok(baby && baby.type === 'giantbaby' && baby.T.stomp);
-  assert.ok(Math.hypot(baby.x - a.p.x, baby.z - a.p.z) > 40, 'it turns up a way off');
-  // It stomps, but never on itself.
-  a.p.fx.prot = 0;
-  host.teleport(a.p, baby.x + 4, a.p.y, baby.z); run(host, 2);
-  assert.ok(a.p.inst.npcs.has(baby.id) && baby.hp === baby.T.hp, 'not hurt by its own stomps');
+  const a = join(host, 'genius', { dim: 'suburbia', home: 'C-137' });
+  a.p.prog.up.hull = 1; host.restat(a.p);
+  host.travel(a.p, 'sp_c137', { x: 300, z: 300, y: 300 }); run(host, 0.3);
+  assert.ok(a.p.ship, 'in space, in the ship');
+  assert.ok(!MM.EVENTS.suburbia.some(E => E.id === 'giantbaby') && MM.EVENTS.space.some(E => E.id === 'giantbaby'), 'not on Earth: in space');
+  const inst = a.p.inst, list = MM.EVENTS.space, saved = list.slice();
+  inst.event = null; inst.nextEvent = 0; run(host, MM.TICK * 2);
+  list.length = 0; list.push(...saved);
+  const ev = inst.event;
+  assert.ok(ev && ev.E.id === 'giantbaby');
+  const baby = inst.npcs.get(ev.mine[0]);
+  assert.ok(baby && baby.T.space && Math.abs(baby.y - a.p.y) < 60, 'floating up here with us');
+  const y0 = baby.y; a.p.y += 80; a.p.fx.prot = 0; run(host, 3);
+  assert.ok(baby.y > y0 + 10, 'it floats after you');
   const k0 = a.p.inv.k || 0;
-  a.p.inst.hurtNpc(baby, 99999, a.p); run(host, 0.6);
-  assert.ok(!a.p.inst.event, 'over');
-  assert.ok(a.p.inv.k >= k0 + 20, 'everyone paid');
+  inst.hurtNpc(baby, 99999, a.p); run(host, 0.6);
+  assert.ok(!inst.event && a.p.inv.k >= k0 + 20, 'over, and paid');
 });
 
 test('Anatomy Park: Ruben faces Earth, and the park has its new attractions', () => {

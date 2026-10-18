@@ -238,8 +238,8 @@
   // Lying on its back above every Earth. Local frame: x along the body (the head at +x), y up
   // (out of the chest), z across. parts: spheres you bump into. holes: the ways in (any of
   // them), each with its own gate inside the park.
-  // Ruben, floating in space over Earth, face down towards it: a big, round, white-bearded
-  // man who looks exactly like Santa (red suit, white fur, black boots, the hat). Modelled
+  // Ruben, floating in space over Earth, face down towards it: a big, round, naked old man
+  // with a white beard who looks exactly like Santa (he kept the hat). Modelled
   // lying on his back (head towards +x, face +y, left towards -z) and then turned over
   // (`flip`) so his face looks down at the planet. Local units; `scale` makes him huge.
   // blobs: [x, y, z, rx, ry, rz] (ellipsoids); segs: limbs [ax, ay, az, bx, by, bz, r].
@@ -256,12 +256,13 @@
       [55, 0, 0, 46, 0, 0, 7],                                                                        // neck
       [46, -1, -19, 24, -2, -26, 5.6], [24, -2, -26, 4, 0, -29, 4.6], [4, 0, -29, -5, 0, -29.5, 3.8],   // left arm, hand
       [46, -1, 19, 24, -2, 26, 5.6], [24, -2, 26, 4, 0, 29, 4.6], [4, 0, 29, -5, 0, 29.5, 3.8],         // right arm, hand
-      [-6, 0, -8, -38, -1, -9.5, 8], [-38, -1, -9.5, -68, -1, -10, 6.2], [-71, 0, -10, -73, 9, -10, 4.8],   // left leg, boot
-      [-6, 0, 8, -38, -1, 9.5, 8], [-38, -1, 9.5, -68, -1, 10, 6.2], [-71, 0, 10, -73, 9, 10, 4.8],         // right leg, boot
+      [-6, 0, -8, -38, -1, -9.5, 8], [-38, -1, -9.5, -68, -1, -10, 6.2], [-70, 0, -10, -72, 8, -10, 4.2],   // left leg, foot (toes up)
+      [-6, 0, 8, -38, -1, 9.5, 8], [-38, -1, 9.5, -68, -1, 10, 6.2], [-70, 0, 10, -72, 8, 10, 4.2],         // right leg, foot
     ],
     holes: [
       ['mouth', 'The Mouth (Main Gate, through the beard)', [59, 13, 0]], ['lnostril', 'Left Nostril', [67.5, 13.5, -1.6]], ['rnostril', 'Right Nostril', [67.5, 13.5, 1.6]],
       ['lear', 'Left Ear', [67, 0.5, -11]], ['rear', 'Right Ear', [67, 0.5, 11]],
+      ['lnipple', 'Left Nipple', [40, 12.6, -8.5]], ['rnipple', 'Right Nipple', [40, 12.6, 8.5]],
       ['navel', 'The Belly Button', [17, 23, 0]], ['back', 'The Back Door', [-6, -10.5, 0]],
     ],
   };

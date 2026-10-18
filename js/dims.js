@@ -3164,36 +3164,26 @@
   }
   function bodyShape() {
     const B = MM.BODY, s = new C.Shape({ smooth: true }), P = C.prim;
-    const skin = '#f0bfa0', rosy = '#e88a7a', red = '#c8202a', redD = '#a81820', fur = '#f6f4ee', beard = '#f4f2ec', black = '#1e1a1a', gold = '#ffd84d';
-    const [head, bear, chest, belly, hips] = B.blobs;
-    // The suit: red jacket (chest, belly, arms), red trousers, black boots with fur cuffs.
-    s.add(P.sphere, red, chest.slice(0, 3), null, chest.slice(3));
-    s.add(P.sphere, red, belly.slice(0, 3), null, belly.slice(3));
-    s.add(P.sphere, redD, hips.slice(0, 3), null, hips.slice(3));
-    const [neck, la1, la2, lh, ra1, ra2, rh, ll1, ll2, lb, rl1, rl2, rb] = B.segs;
-    const seg = (q, c, r) => limb(s, c, r || q[6], q.slice(0, 3), q.slice(3, 6));
-    seg(neck, skin);
-    for (const q of [la1, la2, ra1, ra2]) seg(q, red);
-    for (const q of [lh, rh]) seg(q, skin);
-    for (const q of [ll1, rl1]) seg(q, redD);
-    for (const q of [ll2, rl2]) { seg([q[0], q[1], q[2], q[0] + (q[3] - q[0]) * 0.45, q[1], q[2] + (q[5] - q[2]) * 0.45], redD, q[6]); seg([q[0] + (q[3] - q[0]) * 0.45, q[1], q[2] + (q[5] - q[2]) * 0.45, q[3], q[4], q[5]], black, q[6] * 1.08); }
-    for (const q of [lb, rb]) { seg(q, black); s.add(P.sphere, black, [q[3] + 1, q[4] + 1, q[5]], null, [5, 4, 4.4]); }
+    const skin = '#f8b28e', rosy = '#e8786a', red = '#c8202a', redD = '#a81820', fur = '#f6f4ee', beard = '#f4f2ec', black = '#1e1a1a', gold = '#ffd84d';
+    const [head, bear, chest, belly, hips] = B.blobs, hair = '#f2ece0';
+    // All of him, no clothes: a big round tummy, hairy chest, bare arms and legs.
+    for (const q of [chest, belly, hips]) s.add(P.sphere, skin, q.slice(0, 3), null, q.slice(3));
+    for (const q of B.segs) limb(s, skin, q[6], q.slice(0, 3), q.slice(3, 6));
     for (const sz of [-1, 1]) {
-      s.add(P.torus, fur, [-50, -1, sz * 10], [0, Math.PI / 2, 0], [7.2, 7.2, 3]);            // boot cuffs
-      s.add(P.torus, fur, [6, 0, sz * 29], [0, Math.PI / 2, 0], [5.2, 5.2, 2.6]);             // sleeve cuffs
-      // Hands: fingers along the sides, a thumb on top.
+      s.add(P.sphere, '#c87a68', [40, 12.4, sz * 8.5], null, [1.9, 0.5, 1.9]);              // nipples
+      s.add(P.sphere, skin, [38, 6, sz * 13], null, [8, 6, 7]);                              // man boobs, a bit
+      // Hands (fingers along the sides, a thumb on top) and bare feet (toes up).
       for (let f = 0; f < 4; f++) limb(s, skin, 1.15, [-7, -0.5 + (f - 1.5) * 1.6, sz * 29.5], [-12.5, -0.8 + (f - 1.5) * 1.7, sz * 29.6]);
       limb(s, skin, 1.35, [-3, 2.2, sz * 27.4], [-7, 3.5, sz * 26.4]);
+      s.add(P.sphere, skin, [-71, 3, sz * 10], null, [4, 5.5, 4.4]);                        // heels and soles
+      for (let t = 0; t < 5; t++) s.add(P.sphere, skin, [-72.6, 12.2 - t * 0.25, sz * (6.6 + t * 1.75)], null, [1.5, 1.3, 1]);   // toes
+      s.add(P.sphere, skin, [-38, 4.5, sz * 9.6], null, [4, 3, 4.6]);                       // knees
     }
-    // White fur down the front and round the hem, the black belt with its gold buckle.
-    for (let x = 28; x <= 49; x += 1.5) s.add(P.sphere, fur, [x, 1 + 12 * Math.sqrt(Math.max(0, 1 - ((x - 39) / 13) ** 2)) + 0.2, 0], null, [1.4, 0.9, 2.2]);   // fur down the front
-    s.add(P.cyl, fur, [1.5, 1, 0], [0, 0, Math.PI / 2], [12.2, 3.6, 17.2]);
-    s.add(P.cyl, black, [8, 3.5, 0], [0, 0, Math.PI / 2], [16.8, 3, 17.6]);
-    s.add(P.box, gold, [8, 21, 0], null, [3.6, 0.6, 5.4]);
-    s.add(P.box, black, [8, 21.3, 0], null, [2, 0.5, 3.4]);
-    // His tummy has escaped the jacket: a strip of skin, and the belly button.
-    s.add(P.sphere, skin, [17, 21.6, 0], null, [5, 1.8, 6.4]);
-    s.add(P.sphere, '#b87a64', [17, 23.1, 0], null, [1.3, 0.3, 1.3]);
+    // White hair on his chest and his tummy, and the belly button.
+    for (let i = 0; i < 18; i++) { const x = 30 + (i % 6) * 2.6, z = ((i * 7) % 9 - 4) * 1.1; s.add(P.sphereLo, hair, [x, 1 + 12 * Math.sqrt(Math.max(0, 1 - ((x - 39) / 13) ** 2)) + 0.05, z], null, [1.3, 0.22, 1.1]); }
+    for (let i = 0; i < 8; i++) { const x = 6 + i * 2.2; s.add(P.sphereLo, hair, [x, 6 + 17 * Math.sqrt(Math.max(0, 1 - ((x - 17) / 16) ** 2)) + 0.05, (i % 2 - 0.5) * 1.2], null, [1, 0.2, 0.8]); }
+    s.add(P.sphere, '#b87a64', [17, 23.1, 0], null, [1.4, 0.3, 1.4]);
+    s.add(P.sphere, skin, [-6, -6, 0], null, [9, 7, 15]);   // his bottom
     // The head: a round face with rosy cheeks, a red nose, white brows, eyes shut.
     s.add(P.sphere, skin, head.slice(0, 3), null, head.slice(3));
     for (const sz of [-1, 1]) {
@@ -4248,7 +4238,9 @@
     const root = new T.Group();
     const m = C.meshOf(npcCache[key], 0.05);
     root.add(m);
-    const sh = C.blobShadow(1.8); sh.position.y = 0.03; root.add(sh);
+    const NT = MM.NPCS[type];
+    if (NT.scale) m.scale.setScalar(NT.scale);   // the space baby: the same baby, much bigger
+    if (!NT.space) { const sh = C.blobShadow(1.8); sh.position.y = 0.03; root.add(sh); }
     root.userData.model = m;
     return { root };
   };

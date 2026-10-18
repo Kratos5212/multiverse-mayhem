@@ -1375,7 +1375,7 @@
       moods: { line: 55, gift: 12, trade: 10, errand: 8, buff: 8, dance: 4, angry: 3 } },
     giantant: { name: 'Giant Ant', hp: 70, speed: 4.8, hostile: true, dmg: 10, drop: { s: 2, m: 1 }, r: 1.1, h: 1.2 },
     // ----- Batch 2 -----
-    giantbaby: { name: 'Giant Baby', hp: 3000, speed: 3.4, hostile: true, dmg: 25, drop: { k: 10, g: 6 }, r: 5, h: 12, aggro: 60, leash: 999, stomp: true },
+    giantbaby: { name: 'Giant Baby', hp: 4000, speed: 12, hostile: true, dmg: 25, drop: { k: 10, g: 6 }, r: 18, h: 42, aggro: 320, leash: 9999, stomp: true, space: true, scale: 3.5 },   // floats in space (T.space), model x3.5
     // "A Ricker Runs Through It": somebody hacked the Smith house. Its lawn turrets and its
     // drones fire on everyone, family included, until they are smashed (or a Rick reboots it).
     housebot: { name: 'Hacked Lawn Turret', hp: 60, speed: 0, hostile: true, dmg: 0, drop: { s: 3 }, r: 0.7, h: 1.6, gun: 'housegun', aggro: 28, leash: 999 },
@@ -1677,13 +1677,16 @@
   //   spawn: temporary NPCs [type, count]   loot: material pickups rained near players
   //   booms: random explosions near players   talkBoost: locals are extra generous
   MM.EVENTS = {
+    // Out in space, round any world: a baby the size of a skyscraper, floating, and hungry.
+    // Take it down from your ships.
+    space: [
+      { id: 'giantbaby', name: 'Giant Baby!', text: 'A baby the size of a skyscraper is floating through space, swatting ships out of the sky. Nobody knows where it came from. Rick says: do not ask. Take it down!', boss: [['giantbaby', 1]], clear: { k: 20, m: 2, c: 6 }, dur: 240 },
+    ],
     suburbia: [
       { id: 'party', name: 'Block Party!', text: 'The neighbours are throwing a block party. Free stuff if you chat.', spawn: [['neighbor', 6]], talkBoost: 1, dur: 70 },
       { id: 'invasion', name: 'Alien Invasion!', text: 'Invaders are landing in the suburbs. Defend the lawns (or join in).', spawn: [['invader', 7]], dur: 90 },
       // The house defences turn on everyone. Smash them all, or a Rick reboots them at the console.
       { id: 'hoghack', name: 'House Hacked!', text: 'Someone hacked the Smith house. Its turrets and drones are shooting at everyone. Smash them, or get a Rick to the console.', house: [['housebot', 4], ['housedrone', 3]], clear: { k: 6, s: 4 }, dur: 120 },
-      // A baby the size of a building crawls through town. Take it down together.
-      { id: 'giantbaby', name: 'Giant Baby!', text: 'A baby the size of a building is crawling through town, flattening everything. Nobody knows where it came from. Rick says: do not ask. Take it down!', boss: [['giantbaby', 1]], clear: { k: 20, m: 2, c: 6 }, dur: 240 },
       // Rick Potion #9: one player is Patient Zero. Everyone wants them. Then it gets worse.
       { id: 'love', name: 'Love Potion Outbreak!', text: 'The love potion got into the flu season. Everyone is in love with Patient Zero.', patient: 1, dur: 180 },
     ],

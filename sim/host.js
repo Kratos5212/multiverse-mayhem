@@ -233,6 +233,7 @@
     // Variants of an Earth get the Earth's events too (unless they have their own).
     eventsHere() {
       const D = this.dim;
+      if (D.planets) return MM.EVENTS.space;   // out in space: the Giant Baby
       return MM.EVENTS[this.dimId] || (D.variantOf === 'suburbia' && !D.cronen && !D.timeline ? MM.EVENTS.suburbia : null);
     }
     endEvent(now, text) {
@@ -298,7 +299,10 @@
       // A boss turns up a way off and comes for you.
       if (E.boss) for (const [type, n] of E.boss) for (let i = 0; i < n; i++) {
         const p = pick(players), a = Math.random() * 6.28, d = 55 + Math.random() * 20;
-        ev.mine.push(this.spawnNpc(type, true, { at: { x: clampXZ(p.x + Math.cos(a) * d), z: clampXZ(p.z + Math.sin(a) * d) }, until: now + E.dur + 5 }).id);
+        const m = this.spawnNpc(type, false, { at: { x: clampXZ(p.x + Math.cos(a) * d * (this.dim.planets ? 3 : 1)), z: clampXZ(p.z + Math.sin(a) * d * (this.dim.planets ? 3 : 1)) }, until: now + E.dur + 5 });
+        if (this.dim.planets) { m.y = p.y + 20; m.home = { x: m.x, z: m.z, y: m.y }; }
+        this.ev({ k: 'npc+', n: this.npcRow(m) });
+        ev.mine.push(m.id);
       }
       if (E.loot) for (let i = 0; i < E.loot[1]; i++) {
         const p = pick(players), a = Math.random() * 6.28, d = 4 + Math.random() * 26;
@@ -592,15 +596,15 @@
           else if (!T.ring && dist2(n.x, n.z, n.home.x, n.home.z) < leash * leash) for (const p of this.players.values()) {   // Ring fighters only fight the fighter
             if (!this.visible(p, now)) continue;
             // A Death Stalker car spots another car from far off, someone on foot closer.
-            const d = dist2(p.x, p.z, n.x, n.z), reach = T.aggro ? (p.car ? T.aggro : 16) : MM.AGGRO_RANGE;
+            const d = dist2(p.x, p.z, n.x, n.z), reach = T.aggro ? (p.car || T.space ? T.aggro : 16) : MM.AGGRO_RANGE;   // (space things see ships from far off)
             if (d < reach * reach && d < (best ? bd : Infinity)) { bd = d; best = p; }
           }
           if (best && (dist2(n.x, n.z, n.home.x, n.home.z) > leash * leash * 1.6 || bd > Math.max(30, T.aggro || 0) ** 2)) { best = null; n.angry = 0; }
           if (best) {
             goal = best; speed *= 1.15;
             // Something huge (the giant baby) flattens what it crawls over.
-            if (T.stomp && now >= (n.stompT || 0)) { n.stompT = now + 1.6; this.explode(n.x, n.y, n.z, T.r + 3, 12, null, n.type, { propDmg: 140, knock: 16, skip: n }); }
-            if (bd < (T.r + 1.1) * (T.r + 1.1) && now >= n.cd && Math.abs(best.y - n.y) < 3) {
+            if (T.stomp && now >= (n.stompT || 0)) { n.stompT = now + 1.6; this.explode(n.x, n.y + (T.space ? T.h / 2 : 0), n.z, T.r + (T.space ? 8 : 3), 12, null, n.type, { propDmg: 140, knock: 16, skip: n }); }
+            if (bd < (T.r + 1.1) * (T.r + 1.1) && now >= n.cd && Math.abs(best.y - (n.y + (T.space ? T.h / 2 : 0))) < (T.space ? T.h / 2 + 3 : 3)) {
               n.cd = now + 1.2;
               this.ev({ k: T.hug ? 'hug' : 'bite', n: n.id, id: best.id });
               // A lovestruck local hugs you (and holds on a moment) instead of biting.
@@ -654,7 +658,12 @@
             if (moved > 1e-3) n.r = Math.atan2(n.x - ox, n.z - oz);
           }
         }
-        n.y = MM.heightAt(this.dimId, n.x, n.z) + (T.fly ? T.fly + Math.sin(now * 1.3 + n.id) * 0.8 : 0);
+        if (T.space) {
+          // Floating in space: drift up or down to whatever it is after.
+          const ty = goal && goal.y !== undefined ? goal.y - T.h * 0.4 : (n.home.y || n.y);
+          n.y += Math.max(-T.speed * dt, Math.min(T.speed * dt, ty - n.y));
+          n.y = Math.max(-600, Math.min(1100, n.y));
+        } else n.y = MM.heightAt(this.dimId, n.x, n.z) + (T.fly ? T.fly + Math.sin(now * 1.3 + n.id) * 0.8 : 0);
       }
     }
 
