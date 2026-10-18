@@ -2648,6 +2648,40 @@
         for (const x of [-3.3, 3.3]) s.add(P.cone, '#ff8a2a', [x, 8.2, gz * 13.8], null, [0.2, 0.5, 0.2], true);   // torches
       }
     },
+    // A mossy rock in the woods with a whole city on it, a few millimetres tall: the Mega
+    // Gargantuans. Towers, domes, a flag and a little road down the side.
+    lm_tinyland(s) {
+      s.add(P.sphere, '#7a7a72', [0, 0.35, 0], null, [1.55, 0.6, 1.4]);
+      s.add(P.sphere, '#5a9a46', [0, 0.62, 0], null, [1.4, 0.32, 1.25]);
+      const tw = ['#e8ecf0', '#c8d8e8', '#f4e8c8'];
+      for (let i = 0; i < 14; i++) { const a = i * 2.4, r = 0.25 + (i % 4) * 0.22; s.add(P.box, tw[i % 3], [Math.cos(a) * r, 0.92 + (i % 3) * 0.04, Math.sin(a) * r * 0.85], [0, a, 0], [0.07, 0.12 + (i % 5) * 0.08, 0.07]); }
+      for (let i = 0; i < 6; i++) { const a = i * 1.1 + 0.4; s.add(P.hemi, '#a8e0ff', [Math.cos(a) * 0.75, 0.88, Math.sin(a) * 0.62], null, [0.07, 0.06, 0.07], true); }
+      s.add(P.cylLo, '#3a3a3a', [0.05, 1.2, 0.05], null, [0.006, 0.35, 0.006]);
+      s.add(P.box, '#ffd84d', [0.09, 1.33, 0.05], null, [0.08, 0.05, 0.004]);
+      s.add(P.box, '#c8b89a', [0.9, 0.5, 0.2], [0, 0, -0.6], [0.5, 0.02, 0.08]);   // the road down
+    },
+    // The Great Hall of the Mega Gargantuans: columns, a dome, banners, very proud.
+    lm_gargantuahall(s) {
+      s.add(P.box, '#e8e4d8', [0, 0.6, 0], null, [15, 1.2, 11]);
+      for (let i = -3; i <= 3; i++) s.add(P.cyl, '#f4f0e4', [i * 2.1, 4.4, 5], null, [0.5, 6.6, 0.5]);
+      s.add(P.box, '#e8e4d8', [0, 4.8, -1], null, [13, 7.2, 8]);
+      s.add(P.box, '#d8d2c2', [0, 8.1, 1.2], null, [15.2, 0.8, 9.6]);
+      s.add(P.hemi, '#ffd84d', [0, 8.5, -1], null, [4.4, 3.4, 4.4]);
+      for (const x of [-5.5, 5.5]) s.add(P.box, '#3a8a5a', [x, 5.2, 5.4], null, [1.4, 3.6, 0.06]);
+      s.add(P.box, '#3a4a6a', [0, 2.6, 3.05], null, [2.6, 3.8, 0.1]);
+    },
+    // The woods floor at the Mega Gargantuans' size.
+    bigleaf(s) {
+      s.add(P.sphere, '#4a8a2a', [0, 0.25, 0], [0, 0.4, 0], [3.2, 0.12, 1.6]);
+      s.add(P.box, '#5a7a2a', [0, 0.36, 0], [0, 0.4, 0], [6.0, 0.08, 0.14]);
+      for (let i = -2; i <= 2; i++) s.add(P.box, '#5a7a2a', [i * 0.9 * Math.cos(0.4), 0.34, -i * 0.9 * Math.sin(0.4)], [0, 0.4 + 0.9, 0], [2.2, 0.06, 0.08]);
+    },
+    bigpebble(s) { s.add(P.sphere, '#8a8a84', [0, 1.4, 0], null, [2.6, 1.7, 2.2]); s.add(P.sphere, '#9a9a92', [0.8, 2.2, 0.4], null, [1.2, 0.9, 1.1]); },
+    bigmushroom(s) {
+      s.add(P.cyl, '#f0e8d8', [0, 2.8, 0], null, [0.7, 5.6, 0.7]);
+      s.add(P.hemi, '#d84a3a', [0, 5.4, 0], null, [2.4, 1.6, 2.4]);
+      for (let i = 0; i < 7; i++) { const a = i * 0.9; s.add(P.sphereLo, '#fff4e8', [Math.cos(a) * 1.4, 6.2 + (i % 2) * 0.3, Math.sin(a) * 1.4], null, [0.28, 0.12, 0.28]); }
+    },
     // Death Stalker cars, parked side by side with the keys in, and a board behind them.
     lm_carlot(s) {
       for (const [x, body] of [[-1.25, '#8a3a1e'], [1.25, '#6a5a2a']]) {
@@ -3708,6 +3742,18 @@
         s.add(P.box, '#3a2a1a', [0, 1.85, -0.05], null, [0.95, 0.12, 0.8]);
         s.add(P.cone, '#ff9a2a', [0, 1.3, -1.05], [-2.3, 0, 0], [0.12, 0.7, 0.12], true);
         void d;
+      } else if (type === 'giantant') {
+        // An ant the size of a car (to someone a few millimetres tall).
+        const c = '#3a1e14';
+        s.add(P.sphere, c, [0, 0.7, -0.9], null, [0.55, 0.45, 0.75]);
+        s.add(P.sphere, c, [0, 0.65, 0], null, [0.32, 0.3, 0.42]);
+        s.add(P.sphere, c, [0, 0.8, 0.65], null, [0.38, 0.34, 0.36]);
+        for (const sx of [-1, 1]) {
+          for (const z of [-0.25, 0, 0.25]) C.capsuleAt(s, c, 0.04, 0.9, [sx * 0.25, 0.65, z], [0, 0, sx * 2.1]);
+          C.capsuleAt(s, c, 0.025, 0.6, [sx * 0.12, 1.05, 0.85], [-0.6, 0, sx * 0.4]);
+          s.add(P.sphereLo, '#111111', [sx * 0.2, 0.9, 0.9], null, [0.08, 0.08, 0.06]);
+          s.add(P.cone, c, [sx * 0.1, 0.62, 1.0], [Math.PI / 2, 0, sx * 0.4], [0.05, 0.22, 0.05]);
+        }
       } else if (type === 'meatblob') {
         s.add(P.sphere, '#d9677a', [0, 0.8, 0], null, [0.95, 0.8, 0.9]);
         for (let i = 0; i < 5; i++) s.add(P.sphereLo, '#c4505f', [Math.sin(i * 1.3) * 0.7, 0.5 + (i % 2) * 0.6, Math.cos(i * 1.3) * 0.6], null, [0.4, 0.35, 0.4]);

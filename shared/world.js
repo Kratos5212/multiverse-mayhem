@@ -178,6 +178,15 @@
       npc: [['raider', 8], ['stalkercar', 3], ['deathfan', 3, -17.5, 0, 2], ['deathfan', 3, 17.5, 0, 2], ['deathfan', 2, 0, -17.5, 2], ['hemorrhage', 1, 8, -25, 1]],
     },
     {
+      // Life-size for the Mega Gargantuans, who are a few millimetres tall: you come in tiny, so
+      // here you're their size. Giant leaves, giant ants, and a very proud little city.
+      id: 'gargantua', flat: 70, name: 'Mega Gargantua (tiny land)', code: 'MG-1', seed: 7117, gravity: 22, amp: 3, scale: 0.02, bound: 120, tinyWorld: true,
+      blurb: 'A whole civilisation on a mossy rock in Earth\'s woods, a few millimetres tall. The name is aspirational.',
+      sky: ['#5aa8e8', '#d8f0ff'], fog: '#b8e0c8', fogFar: 180, sun: '#fff4dc', ambient: '#a8d8b0',
+      ground: ['#4a8a3a', '#5a9a46', '#3e7a30'], accent: '#ffd84d',
+      props: [['bigleaf', 14], ['bigpebble', 10], ['bigmushroom', 8]], npc: [['gargantuan', 14], ['giantant', 5]], pickups: { c: 6, s: 6 }, mat: 's',
+    },
+    {
       id: 'microverse', flat: 125, name: 'The Microverse', code: 'MV-1', seed: 5775, gravity: 22, amp: 3, scale: 0.014,
       blurb: 'A tiny universe inside Rick\'s car battery. The locals stomp on gooble boxes to make power. They think it\'s their idea.',
       sky: ['#3aa0ff', '#c8f0ff'], fog: '#c0e8ff', fogFar: 230, sun: '#ffffff', ambient: '#a8d8ff',
@@ -835,7 +844,7 @@
   const SPACE = { suburbia: 'c137', downtown: 'c137', dc: 'c137', area51: 'c137', moon: 'c137', featherhold: 'c137', gazorp: 'c137', squanch: 'c137', purge: 'c137', gearworld: 'c137', unityworld: 'c137', federation: 'c137', blips: 'c137', bazaar: 'c137', snakeplanet: 'c137', megaseed: 'c137', plumbus: 'c137', giantland: 'c137', hamsterworld: 'c137', sun: 'c137', mercury: 'c137', venus: 'c137', mars: 'c137', jupiter: 'c137', saturn: 'c137', titan: 'c137', uranus: 'c137', neptune: 'c137', pluto: 'c137' };
   // The solar system is a short hop too: Rick flies to Pluto for an awards dinner.
   const NEAR = { suburbia: 1, downtown: 1, dc: 1, area51: 1, moon: 1, sun: 1, mercury: 1, venus: 1, mars: 1, jupiter: 1, saturn: 1, titan: 1, uranus: 1, neptune: 1, pluto: 1 };
-  const POCKET = { microverse: 1, miniverse: 1, teenyverse: 1, froopy: 1 };
+  const POCKET = { microverse: 1, miniverse: 1, teenyverse: 1, froopy: 1, gargantua: 1 };
   for (const d of MM.DIMS) { if (SPACE[d.id]) d.space = SPACE[d.id]; if (NEAR[d.id]) d.near = true; if (POCKET[d.id]) d.pocket = true; }
   // Public interdimensional stations, only where they exist in the lore.
   MM.DIM_BY_ID.citadel.station = { x: 0, z: -14, name: 'Citadel Portal Station', fee: { k: 3 }, free: ['genius', 'sidekick', 'evilmorty'] };
@@ -848,7 +857,7 @@
     o = o || {};
     if (!B || from === to) return 'You are already here.';
     if (B.hidden) return 'You can only get there through its door.';
-    if (B.pocket) return 'Only through its entrance: ' + (to === 'microverse' ? "the car battery in Rick's garage." : to === 'miniverse' ? "Zeep's battery, in the Microverse." : to === 'teenyverse' ? "Kyle's battery, in the Miniverse." : to === 'anatomy' ? 'Anatomy Park, inside Ruben, on Earth.' : 'the chalk door on Earth.');
+    if (B.pocket) return 'Only through its entrance: ' + (to === 'gargantua' ? 'a tiny city on a mossy rock in Earth\'s woods (shrink first).' : to === 'microverse' ? "the car battery in Rick's garage." : to === 'miniverse' ? "Zeep's battery, in the Microverse." : to === 'teenyverse' ? "Kyle's battery, in the Miniverse." : to === 'anatomy' ? 'Anatomy Park, inside Ruben, on Earth.' : 'the chalk door on Earth.');
     if (B.outsideCurve && !(method === 'portal' && o.gold)) return 'Outside the Central Finite Curve. Only a gold portal goes there.';
     if (method === 'portal' || method === 'station') return '';
     // Lightspeed: from space, in your ship. Planets you can see you can just fly into.
@@ -937,6 +946,10 @@
     scraptower:  { r: 2.0, h: 9, hp: 160, drop: { s: 5 } },
     cactus:      { r: 0.6, h: 3.4, hp: 25, drop: { g: 1 } },
     microtower:  { r: 2.0, h: 14, hp: 200, drop: { c: 2, s: 2 } },
+    // Mega Gargantua: the woods floor, at the size of a few-millimetre-tall people.
+    bigleaf:     { r: 3.2, h: 1.2, hp: 1e9, drop: {}, fixed: true },
+    bigpebble:   { r: 2.6, h: 3.2, hp: 1e9, drop: {}, fixed: true },
+    bigmushroom: { r: 2.4, h: 7, hp: 160, drop: { m: 1 } },
     microdome:   { r: 3.0, h: 4, hp: 120, drop: { c: 2 } },
     cityblock:   { r: 4.5, h: 16, hp: 400, drop: { s: 4, c: 1 } },
     unitystatue: { r: 2.0, h: 9, hp: 300, drop: { k: 3 } },
@@ -1341,6 +1354,12 @@
       talk: ['They feed us twice a day. It is not terrible.', 'Do not let them take you to the vet.', 'I used to be an accountant. Now I fetch.', 'Psst. Is there a way out of here?'],
       moods: { line: 45, gift: 10, errand: 18, buff: 6, follow: 15, angry: 2, prank: 2, dance: 2 } },
     dogsoldier: { name: 'Mech Dog', hp: 75, speed: 4.6, hostile: true, dmg: 12, drop: { s: 3, p: 2 }, r: 0.9, h: 1.8 },
+    gargantuan: { name: 'Mega Gargantuan', hp: 35, speed: 2.6, hostile: false, dmg: 0, drop: { s: 1, c: 1 }, r: 0.6, h: 1.8,
+      human: { species: ['human'], top: ['vest', 'tshirt', 'polo'], acc: ['headband', 'none', 'crown'], colors: { topColor: '#3a8a5a', accColor: '#ffd84d' } },
+      names: ['Gargantua the Mighty', 'Colossa', 'Enormo', 'Titanica', 'Big Steve', 'Behemoth Jr.'],
+      talk: ['Welcome to Mega Gargantua! We are the Mega Gargantuans. The name is aspirational.', 'You are tiny too? Then you are our size. Welcome, giant!', 'Beware the ants. They are the size of houses. They are also the size of ants.', 'Our president will sign any treaty that comes with a selfie.', 'Last week a human stepped on the eastern district. We rebuilt by Tuesday.'],
+      moods: { line: 55, gift: 12, trade: 10, errand: 8, buff: 8, dance: 4, angry: 3 } },
+    giantant: { name: 'Giant Ant', hp: 70, speed: 4.8, hostile: true, dmg: 10, drop: { s: 2, m: 1 }, r: 1.1, h: 1.2 },
     seedbeast: { name: 'Seed Beast', hp: 65, speed: 4.4, hostile: true, dmg: 11, drop: { g: 2, m: 1 }, r: 1.0, h: 1.4 },
     butterbot: { name: 'Butter Robot', hp: 20, speed: 1.2, hostile: false, dmg: 0, drop: { s: 1 }, r: 0.4, h: 0.6,
       names: ['Butter Robot'], talk: ['What is my purpose?', 'I pass butter?', 'Oh my god.', 'Yeah, welcome to the club, pal.', 'I am still processing that.'],

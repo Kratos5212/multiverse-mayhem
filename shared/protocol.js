@@ -13,6 +13,8 @@
   const B = 1300; // generous coordinate bound (Earth reaches 600 m, space 1250 m); the server clamps to the real world edge
   const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
+  // A bag of things to hand over: at most 30 kinds, whole numbers (Host checks you have them).
+  const items = o => o && typeof o === 'object' && !Array.isArray(o) && Object.keys(o).length <= 30 && Object.keys(o).every(k => MM.tradeable(k) && int(o[k], 0, 1e6));
   // Client -> server. Each entry returns a clean copy of the message or null.
   MM.CLIENT_MSGS = {
     // First message: who I am.
@@ -36,6 +38,10 @@
     ans: m => int(m.a, 0, 1) ? { a: m.a } : null,      // accept (1) or refuse (0) a local's offer
     ship: m => typeof m.on === 'boolean' ? { on: m.on } : null,                // board or leave your ship
     car: m => typeof m.on === 'boolean' ? { on: m.on } : null,                 // get in (at the car lot) or out of a Death Stalker car
+    // Between players: trade (ask, join, set what you give, ok, cancel), give, use an item on them.
+    tr: m => (['ask', 'join', 'set', 'ok', 'cancel'].includes(m.op) && (m.id === undefined || int(m.id, 0, 1e12)) && (m.op !== 'set' || items(m.items))) ? { op: m.op, id: m.id, items: m.op === 'set' ? m.items : undefined } : null,
+    gv: m => (int(m.id, 0, 1e12) && items(m.items)) ? { id: m.id, items: m.items } : null,
+    uo: m => (int(m.id, 0, 1e12) && str(m.q, 20) && own(MM.CURIOS, m.q)) ? { id: m.id, q: m.q } : null,
     pvp: m => typeof m.on === 'boolean' ? { on: m.on } : null,                 // allow fights with other players who allow them too
     orbit: () => ({}),                                                          // fly out of the atmosphere
     land: m => (str(m.d, 24) && own(MM.DIM_BY_ID, m.d) && (m.h === undefined || int(m.h, 0, 20))) ? { d: m.d, h: m.h } : null,   // fly into a planet from space (h: which hole of Anatomy Park's body)

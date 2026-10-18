@@ -1329,3 +1329,69 @@ test('the Muscle Memory Serum: a Rick gives it to a Morty; the arm punches, hunt
   assert.ok(p.inv.k >= k0 + MM.ARM.give.k * MM.ARM.bounties.length + MM.ARM.done.k, 'paid');
   assert.strictEqual(host.weaponOf(p), MM.ARCHETYPES.sidekick.weapon, 'his gun back');
 });
+
+test('players trade, give and use things on each other; a Rick can give a Morty the serum', () => {
+  const host = new MM.Host();
+  const r = join(host, 'genius', { dim: 'suburbia' });
+  const m = join(host, 'sidekick', { dim: 'suburbia', home: 'C-137' });
+  host.travel(r.p, 'suburbia', { x: 10, z: 10 }); host.travel(m.p, 'suburbia', { x: 12, z: 10 });
+  run(host, 0.3);
+  r.p.inv.s = 20; r.p.inv.k = 5; m.p.inv.c = 4; m.p.inv.k = 0;
+  // A trade: Rick gives 10 scrap, Morty 3 crystals.
+  host.message(r.c, JSON.stringify({ t: 'tr', op: 'ask', id: m.p.id }));
+  host.message(m.c, JSON.stringify({ t: 'tr', op: 'join', id: r.p.id }));
+  assert.ok(r.p.trade && r.p.trade === m.p.trade, 'trading');
+  host.message(r.c, JSON.stringify({ t: 'tr', op: 'set', items: { s: 10 } }));
+  host.message(m.c, JSON.stringify({ t: 'tr', op: 'set', items: { c: 3, k: 50 } }));   // more Schmeckles than he has: ignored
+  host.message(r.c, '{"t":"tr","op":"ok"}');
+  assert.strictEqual(r.p.inv.s, 20, 'nothing moves until both say yes');
+  host.message(m.c, '{"t":"tr","op":"ok"}');
+  assert.ok(!r.p.trade && !m.p.trade, 'done');
+  assert.strictEqual(r.p.inv.s, 10); assert.strictEqual(m.p.inv.s >= 10, true);
+  assert.strictEqual(r.p.inv.c >= 3, true); assert.strictEqual(m.p.inv.c, 1);
+  // A gift: straight away.
+  host.message(r.c, JSON.stringify({ t: 'gv', id: m.p.id, items: { k: 5 } }));
+  assert.strictEqual(m.p.inv.k, 5); assert.strictEqual(r.p.inv.k, 0);
+  // Rick builds the serum at his workbench and offers it to Morty; Morty says yes.
+  Object.assign(r.p.inv, { g: 5, m: 5, c: 5 });
+  near(host, r.c, r.p, 'workbench'); run(host, 0.2);
+  host.message(r.c, '{"t":"cr","g":"armserum"}');
+  assert.strictEqual(r.p.inv['q:armserum'], 1, 'Rick made the serum');
+  host.teleport(m.p, r.p.x + 1.5, MM.heightAt('suburbia', r.p.x + 1.5, r.p.z), r.p.z);
+  host.message(r.c, JSON.stringify({ t: 'uo', id: m.p.id, q: 'armserum' }));
+  assert.ok(m.p.offer && m.p.offer.ask === 'armserum' && !m.p.prog.arm, 'Morty is asked first');
+  host.message(m.c, '{"t":"ans","a":1}');
+  assert.ok(m.p.prog.arm, 'the arm');
+  assert.ok(!r.p.inv['q:armserum'], 'used up');
+  // A snack for a friend just happens.
+  r.p.inv['q:szechuan'] = 1; m.p.hp = 10;
+  run(host, 1.2);
+  host.message(r.c, JSON.stringify({ t: 'uo', id: m.p.id, q: 'szechuan' }));
+  assert.strictEqual(m.p.hp, m.p.maxHp, 'healed');
+});
+
+test('the Miniaturizer: shrink, walk into the tiny land through the rock in the woods, and grow back', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'surgeon', { dim: 'suburbia', home: 'C-137' });
+  p.inv['q:miniaturizer'] = 1;
+  host.travel(p, 'suburbia');
+  near(host, c, p, 'tinyland'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"tinyland"}');
+  assert.strictEqual(p.inst.dimId, 'suburbia', 'too big to go in');
+  host.message(c, '{"t":"uc","id":"miniaturizer"}');
+  assert.ok(p.tiny && host.scaleOf(p) < 0.2 && host.speedOf(p) < p.st.speed * 2, 'tiny');
+  assert.ok(host.fxBits(p, host.time) & 16384);
+  run(host, 1.2);
+  host.message(c, '{"t":"door","l":"tinyland"}');
+  assert.strictEqual(p.inst.dimId, 'gargantua', 'in');
+  assert.ok(!p.tiny, 'life-size among the Mega Gargantuans');
+  assert.ok([...p.inst.npcs.values()].some(n => n.type === 'gargantuan'));
+  near(host, c, p, 'tinyexit'); run(host, 1.2);
+  host.message(c, '{"t":"door","l":"tinyexit"}');
+  assert.strictEqual(p.inst.dimId, 'suburbia');
+  assert.ok(p.tiny, 'tiny again outside');
+  run(host, 1.2);
+  host.message(c, '{"t":"uc","id":"miniaturizer"}');
+  assert.ok(!p.tiny, 'grown back');
+  assert.strictEqual(p.inv['q:miniaturizer'], 1, 'kept');
+});

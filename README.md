@@ -215,6 +215,21 @@ Every prop except the landmarks can be destroyed. Wrecking things and beating ot
 
 The **home dimension** you type on the character screen (Y-231, J-19...) is a real place. Every code is its own alternate Earth with the Smith street plan and its own twist from the show: a fascist one, shrimp or teddy or cat people, robots, aliens keeping humans as pets, candy, jungle, an Earth where the sun went out, the pizza-and-furniture one, a wasteland, or a dog-ruled one. The same code is always the same place, for everyone. Ricks, Mortys, Summers, Beths, Jerrys and Evil Mortys start in their own Earth; **C-137** is the show's Earth.  Home dimensions show up in the travel menu under Earth's dimensions: yours (marked ★), and those of everyone online.
 
+### Between players: trading, gifts, using things on each other
+
+Walk up to another player and press **F**: trade, give, invite them to your team, or use something on them.
+
+- **Trade:** both of you put things in (materials, Schmeckles, gadgets, curios) and both press OK. Nothing changes hands until then, and changing your side takes both OKs back. Walking apart calls it off.
+- **Give:** it's theirs straight away.
+- **Use something on them:**
+  - A snack or a shield for a friend just happens.
+  - Something nasty (Kalaxian crystals) needs both of you to have fights on.
+  - A transformation needs them to say yes. That includes a Rick giving a Morty the **Muscle Memory Serum**, which Ricks now make at their workbench.
+
+**Tiny.** Build a **Miniaturizer** at Rick's workbench (anyone can) and use it to shrink to the size of a bug. Everything is huge, and you are slow and hit softly. Use it again to grow back, or use it on a friend who lets you.
+
+Tiny, you fit into the **Mega Gargantuans'** land: a whole civilisation on a mossy rock in the woods east of the suburb, on every Earth ("The Rickchurian Mortydate"). Inside you're their size. There's a proud little city with domes and towers, giant leaves, pebbles and mushrooms, ants the size of cars, and the Great Hall, where you can sign a peace treaty. Walk out and you're tiny again.
+
 ### Teams
 
 Open the **Multiverse** board and press **Invite** next to anyone in your dimension (up to 8 per team). Teammates show a green ★ in their name tags and can't hurt each other. When one of you takes a door, a portal station or a ship, every teammate standing within about 14 m comes along (ship passengers ride with the pilot). Anyone can follow through an open portal anyway.

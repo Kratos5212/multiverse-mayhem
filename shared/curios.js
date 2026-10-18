@@ -9,6 +9,11 @@
   // eat: it's used up. w: how common (higher = more common). text: what you see when you use
   // or inspect it.
   MM.CURIOS = {
+    // Made, not found (MM.RECIPES): how: where they come from. on: can be used on someone else
+    // ('ask': they must say yes).
+    miniaturizer: { name: 'Miniaturizer', icon: '🔬', color: '#7ad8ff', dims: [], w: 0, use: 'tiny', on: 'ask', how: 'Built at Rick\'s workbench', desc: 'Shrinks you to the size of a bug. Use it again to grow back. Tiny, you can go into the Mega Gargantuans\' land.', text: '' },
+    gargflag: { name: 'Mega Gargantuan flag', icon: '🚩', color: '#3a8a5a', dims: ['gargantua'], w: 2, desc: 'The national flag of Mega Gargantua. Full size: about as big as a grain of rice.', text: 'You wave it. Somewhere, a very small anthem plays.' },
+    armserum: { name: 'Muscle Memory Serum', icon: '💉', color: '#ff7a5a', dims: [], w: 0, use: 'armserum', on: 'ask', eat: true, how: 'A Rick makes it at his workbench', desc: 'A dead warrior\'s arm, in a syringe. Only works on a Morty.', text: '' },
     szechuan:   { name: 'Szechuan Sauce', icon: '🥡', color: '#c8302a', dims: ['suburbia', 'downtown', 'dc', 'smithhouse', 'shoneysin'], w: 2, use: 'feast', eat: true, desc: 'The McNugget sauce from 1998. Rick would go to war for it.', text: "It's real. It's really real. You feel unstoppable." },
     eyeholes:   { name: 'Eyeholes cereal', icon: '🥣', color: '#ffb43a', dims: ['suburbia', 'downtown', 'mallin', 'smithhouse'], w: 3, use: 'speed', eat: true, desc: 'The cereal with the holes for eyes.', text: 'Crunchy. Somewhere, a blue man is furious about this.' },
     plumbus:    { name: 'A plumbus', icon: '🔧', color: '#ff8fc8', dims: ['plumbus', 'cableworld', 'smithhouse', 'bazaar'], w: 3, desc: 'Everyone has one. Nobody can explain it.', text: 'You turn it over in your hands. It is a plumbus. That is all it needs to be.' },
@@ -96,6 +101,14 @@
     truth: ['The tortoise says: nobody exists on purpose. Nobody belongs anywhere. Come watch TV.', 'The tortoise says: the Council of Ricks is not what it seems.', 'The tortoise says: you are standing on a planet that is also a man.', 'The tortoise says: the Smiths are the only family in the Curve that keeps getting the same Rick.'],
     channel: ['Ball Fondlers is on. It is the episode with the balls.', 'Two Brothers. They are in a van. Things are about to get crazy.', 'Ants in my Eyes Johnson! Everything is black!', 'A commercial for Real Fake Doors. You are tempted.', 'Baby Legs, the detective with baby legs, is on the case.'],
   };
+
+  // Using one on someone else (Host.onUseOn): 'help' just happens (a snack for a friend),
+  // 'hurt' needs both of you to have fights on, 'ask' needs them to say yes.
+  const ON = { feast: 'help', speed: 'help', fate: 'help', heal: 'help', snack: 'help', shield: 'help', rage: 'help', cash: 'help', charge: 'help', love: 'help', trip: 'hurt' };
+  for (const k in MM.CURIOS) if (!MM.CURIOS[k].on && ON[MM.CURIOS[k].use]) MM.CURIOS[k].on = ON[MM.CURIOS[k].use];
+  // What can change hands between players: materials, gadgets, curios.
+  MM.tradeable = k => typeof k === 'string' && (MM.MAT_IDS.includes(k) || (MM.GADGET_IDS || []).includes(k) || (k.startsWith('q:') && !!MM.CURIOS[k.slice(2)]));
+  MM.itemName = k => MM.MATERIALS[k] ? MM.MATERIALS[k].icon + ' ' + MM.MATERIALS[k].name : MM.RECIPES[k] ? MM.RECIPES[k].name : k.startsWith('q:') && MM.CURIOS[k.slice(2)] ? MM.CURIOS[k.slice(2)].icon + ' ' + MM.CURIOS[k.slice(2)].name : k;
 
   if (typeof module !== 'undefined' && module.exports) module.exports = MM;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

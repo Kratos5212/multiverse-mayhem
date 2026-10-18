@@ -818,7 +818,7 @@
     av.body.scale.set(1 + sq * 0.6, 1 - sq, 1 + sq * 0.6);
     // Effects
     const fx = st.fx || 0;
-    const sc = ((fx & 8) ? 0.5 : 1) * (av.baseScale || 1);
+    const sc = ((fx & 16384) ? MM.TINY.scale : (fx & 8) ? 0.5 : 1) * (av.baseScale || 1);   // tiny (the Miniaturizer), or shrunk
     av.root.scale.setScalar(lerp(av.root.scale.x, sc, Math.min(1, dt * 6)));
     av.root.visible = !(fx & 32) || Math.floor(av.t * 8) % 2 === 0 || dead;
     if (fx & 1) {

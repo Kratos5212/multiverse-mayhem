@@ -200,6 +200,11 @@
     // ring of spiked scrap walls with a gate on each side and the crowd up on the stands. Step
     // in and fight three rounds, the champion last (Host.startBout). Strong-arm Morty lives here.
     { id: 'deathring', dim: 'wasteland', name: 'The Ring of Death', x: 0, z: 0, r: 12.5, h: 4, model: 'lm_deathring', rot: 0, bout: true, sign: { text: 'RING OF DEATH', y: 6.15, z: 14.15, w: 6.6 } },
+    // The Mega Gargantuans ("The Rickchurian Mortydate"): a tiny civilisation on a mossy rock in
+    // the woods east of the suburb, on every Earth. You only fit in tiny (a Miniaturizer).
+    { id: 'tinyland', dim: 'suburbia', name: 'A tiny city on a mossy rock', x: 241, z: -208, r: 1.6, h: 1.1, model: 'lm_tinyland', rot: -Math.PI / 2, tiny: true, door: { dim: 'gargantua', x: 0, z: 30 } },
+    { id: 'tinyexit', dim: 'gargantua', name: 'The road out (back to full size)', x: 0, z: 40, r: 3, h: 4, model: 'lm_exitportal', door: { dim: 'suburbia', x: 241, z: -205 } },
+    { id: 'gargantuahall', dim: 'gargantua', name: 'The Great Hall of the Mega Gargantuans', x: 0, z: -24, r: 8, h: 12, model: 'lm_gargantuahall', rot: 0, sign: { text: 'MEGA GARGANTUA', y: 9.4, z: 6.2, w: 7 } },
     // Death Stalker cars, parked by the garage with the keys in. Take one (F) and drive.
     { id: 'carlot', dim: 'wasteland', name: 'Death Stalker cars', x: 18, z: -30, r: 3.2, h: 1.8, model: 'lm_carlot', rot: -Math.PI / 2, car: true, sign: { text: 'TAKE A CAR', y: 2.6, z: -2.62, w: 3.2 } },
     { id: 'unitycore', dim: 'unityworld', name: 'The Hive Core', x: 0, z: -34, r: 6, h: 14, model: 'lm_unitycore' },
@@ -213,6 +218,10 @@
   MM.LANDMARK_BY_ID = {};
   for (const l of MM.LANDMARKS) MM.LANDMARK_BY_ID[l.id] = l;
   MM.SHIP_BOOST = 1.6;   // Shift in a ship: the afterburner
+  // Tiny (the Miniaturizer): how small, and how slow it makes you.
+  MM.TINY = { scale: 0.15, speed: 0.5, dmg: 0.25 };
+  // Trading and giving: how close you must be.
+  MM.TRADE_RANGE = 8;
   // A Death Stalker car (Post-Apocalyptic Earth): top speed, Shift for the nitro, reversing,
   // how hard a ram hits (damage per m/s, at 8 m/s and up), and armour (the share of hits that
   // gets through to you). It stays in its world: travel and it is parked.
@@ -266,6 +275,7 @@
     tribute:    { at: 'gazorpthrone', any: true, name: 'Bring a tribute to the throne', cd: 200, give: { g: 3, s: 2 }, text: 'The Gazorpian matriarchs accepted your gift and did not eat you. A good day.' },
     slide:      { at: 'froopyslide', any: true, name: 'Go down the Big Froopy Slide', cd: 100, heal: 1, give: { f: 2 }, text: 'Wheeee! It is so soft at the bottom. You do not ask what it is made of.' },
     exchange:   { at: 'pizzacounter', any: true, name: 'Trade a pizza for a phone for a chair', cd: 150, give: { s: 2, p: 1 }, text: 'You traded a pizza for a phone, the phone for a chair, and sat on the chair. It complained.' },
+    treaty:     { at: 'gargantuahall', any: true, name: 'Sign a peace treaty with the Mega Gargantuans', cd: 300, give: { k: 4, c: 2 }, text: 'They are very small, very proud, and very well armed. You signed. Then you took a selfie with their president, who insisted.' },
     raidercar:  { at: 'raidergarage', any: true, name: 'Soup up a raider car', cd: 200, give: { s: 5 }, text: 'Spikes on the hood, a skull on the grille, flames on the exhaust. The raiders nodded. Respect.' },
     joinhive:   { at: 'unitycore', any: true, name: 'Join Unity for a minute', cd: 200, heal: 1, give: { c: 3 }, text: 'For one minute you were a whole planet. It was very peaceful, and a little bit creepy.' },
     paperwork:  { at: 'formsoffice', any: true, name: 'File interdimensional paperwork', cd: 180, give: { k: 4 }, text: 'Form 27-B/6, stamped in triplicate by a bug-headed clerk. You got a refund. Nobody gets a refund.' },
@@ -375,6 +385,10 @@
     freeze:   { cat: 'gadget', name: 'Freeze Ray Shot', cost: { s: 3, c: 2 }, max: 3, desc: 'Press 6: one shot that freezes whoever it hits solid for a few seconds.' },
     chalk:    { cat: 'gadget', name: 'Magic Chalk', cost: { s: 2, m: 1 }, max: 2, onlyFor: ['genius', 'evilmorty'], desc: 'Press 7: draw a door on the spot. Anywhere: it opens into Froopyland. In Froopyland: back out. Anyone can go through it, even Tommy.' },
     meeseeks: { cat: 'gadget', name: 'Meeseeks Box', cost: { k: 3, s: 1 }, max: 2, desc: 'Press it (4): a Mr. Meeseeks pops out and fights for you for 30 s.' },
+    // Things you carry (they go in your inventory as curios): use them, give them, trade them,
+    // or use them on someone (shared/curios.js, Host.onUseOn).
+    miniaturizer: { cat: 'item', name: 'Miniaturizer', curio: 'miniaturizer', cost: { s: 6, c: 3 }, max: 1, at: 'workbench', desc: 'Shrinks you (or someone who lets you) to the size of a bug, and back. Tiny, you fit into the Mega Gargantuans\' land in Earth\'s woods.' },
+    armserum: { cat: 'item', name: 'Muscle Memory Serum', curio: 'armserum', cost: { g: 2, m: 2, c: 1 }, max: 3, at: 'workbench', onlyFor: ['genius'], desc: 'A dead warrior\'s arm, in a syringe. Give it to a Morty, or use it on one (they have to say yes).' },
     // Rick's own body upgrades (only Ricks know how): robot limbs and a built-in scanner.
     // Pickle Rick's rat suit, built from rat parts and scrap (in a sewer, anywhere really).
     ratsuit:   { cat: 'self', name: 'Rat Suit', cost: { g: 3, s: 4 }, onlyFor: ['picklerick'], desc: 'Rat legs, rat arms, wires and spite. Now you can do more than roll.' },
@@ -406,8 +420,8 @@
   MM.RECIPE_IDS = Object.keys(MM.RECIPES);
   MM.GADGET_IDS = ['grenade', 'turret', 'shrink', 'meeseeks', 'timecrystal', 'freeze', 'chalk'];
   // Recipes everyone knows, whoever they are.
-  MM.COMMON = ['meeseeks', 'megabrain'];
-  MM.CATS = { gadget: 'Gadgets', self: 'You', gun: 'Portal gun', ship: 'Ship' };
+  MM.COMMON = ['meeseeks', 'megabrain', 'miniaturizer', 'armserum'];
+  MM.CATS = { gadget: 'Gadgets', item: 'Things to carry, give and use', self: 'You', gun: 'Portal gun', ship: 'Ship' };
 
   // ---------- Who you are ----------
   // Your archetype is your lore. It decides your stats, your daily life, what you
@@ -694,7 +708,7 @@
     if (R.gun && !MM.hasGun(arch, prog.up)) return 'Needs a portal gun.';
     if (R.nogun && MM.hasGun(arch, prog.up)) return 'You already have a portal gun.';
     if (R.needs && !prog.up[R.needs]) return 'Build ' + MM.RECIPES[R.needs].name + ' first.';
-    if (R.cat !== 'gadget' && prog.up[id]) return 'Already built.';
+    if (R.cat !== 'gadget' && R.cat !== 'item' && prog.up[id]) return 'Already built.';
     return null;
   };
 

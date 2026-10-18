@@ -784,6 +784,7 @@
         if (D && !D.interior && !D.hidden && !D.planets && !p.dead) { rec.at = p.inst.dimId; rec.npc = null; const n = p.inst.spawnCastNpc(rec, { x: p.x, z: p.z }, false); p.inst.ev({ k: 'npc+', n: p.inst.npcRow(n) }); }
         else { rec.at = rec.origin; const inst = this.instances.get(rec.origin + '#0'); if (inst) { const n = inst.spawnCastNpc(rec, null, false); inst.ev({ k: 'npc+', n: inst.npcRow(n) }); } }
       }
+      if (p.trade) this.tradeEnd(p.trade, p.name + ' left.');
       if (p.inst) { p.inst.players.delete(p.id); p.inst.ev({ k: 'leave', id: p.id }); p.inst.emptySince = this.time; }
       this.leaveTeam(p);
       this.players.delete(p.id);
@@ -837,6 +838,9 @@
         case 'ans': this.onAnswer(p, m.a); break;
         case 'ship': this.onShip(p, m.on); break;
         case 'car': this.onCar(p, m.on); break;
+        case 'tr': this.onTrade(p, m); break;
+        case 'gv': this.onGive(p, m); break;
+        case 'uo': this.onUseOn(p, m); break;
         case 'pvp': p.pvp = m.on; this.toast(p, m.on ? 'Fights on: players who also turned fights on can hurt you, and you them.' : 'Fights off: no other player can hurt you.'); break;
         case 'drive': this.onDrive(p, m.d); break;
         case 'orbit': this.onOrbit(p); break;
@@ -984,6 +988,9 @@
     travel(p, dimId, at, preferInst, first) {
       if (p.ship && MM.DIM_BY_ID[dimId] && MM.DIM_BY_ID[dimId].interior) p.ship = false;   // you park the ship to go indoors
       p.car = false;   // a car stays in its world: you park it
+      // Tiny in a tiny world is life-size there; out again, you're tiny again.
+      if (MM.DIM_BY_ID[dimId].tinyWorld) { if (p.tiny) { p.tiny = false; p.tinyIn = true; } }
+      else if (p.tinyIn) { p.tinyIn = false; p.tiny = true; }
       if (p.bout) this.endBout(p, false, 'You left the Ring of Death.');
       const from = p.inst;
       p.pp = [null, null];   // your portal pair stays behind (and closes)
@@ -1023,7 +1030,7 @@
     toast(p, text) { this.priv(p, { k: 'toast', text }); }
     knock(p, vx, vy, vz) { p.kbUntil = this.time + 1.5; this.priv(p, { k: 'kb', vx: r2(vx), vy: r2(vy), vz: r2(vz) }); }
 
-    scaleOf(p) { return this.time < p.fx.shrink ? 0.5 : 1; }
+    scaleOf(p) { return p.tiny ? MM.TINY.scale : this.time < p.fx.shrink ? 0.5 : 1; }
 
     fxBits(p, now) {
       let b = 0;
@@ -1039,6 +1046,7 @@
       if (now < p.fx.cloak) b |= 2048;
       if (p.pvp) b |= 4096;
       if (p.car) b |= 8192;
+      if (p.tiny) b |= 16384;
       return b;
     }
 
@@ -1047,7 +1055,7 @@
       const now = this.time;
       if (now < p.fx.cuff) return 1;
       const base = p.ship ? p.st.ship.speed * MM.SHIP_BOOST : p.car ? MM.CAR.speed * MM.CAR.boost : p.st.speed * (p.st.fly ? 1.35 : 1) * (p.st.sprint || 1);   // the most you can go: sprinting
-      return base * (now < p.fx.sprint ? 1.8 : 1) * (now < p.fx.shrink ? 0.75 : 1) * (now < p.fx.guilt ? 0.6 : 1) * (now < p.fx.daze ? 0.5 : 1);
+      return base * (p.tiny ? MM.TINY.speed : 1) * (now < p.fx.sprint ? 1.8 : 1) * (now < p.fx.shrink ? 0.75 : 1) * (now < p.fx.guilt ? 0.6 : 1) * (now < p.fx.daze ? 0.5 : 1);
     }
 
     // ----- Movement validation -----
@@ -1121,7 +1129,7 @@
       return pr;
     }
 
-    dmgMult(p) { return p.st.dmg * (this.time < p.fx.shrink ? 0.5 : 1); }
+    dmgMult(p) { return p.st.dmg * (this.time < p.fx.shrink ? 0.5 : 1) * (p.tiny ? MM.TINY.dmg : 1); }
 
     // The weapon in use: ship lasers in a ship that has them, a pea shooter in one that doesn't.
     weaponOf(p) {
@@ -1343,6 +1351,7 @@
       if (p.ship && MM.DIM_BY_ID[l.door.dim].interior) { this.toast(p, 'Park your ship first (B).'); return; }
       // Rick's things answer to their own Rick only (any other Rick has to hack them first).
       if (this.labClosed(p, l)) return;
+      if (l.tiny && !p.tiny) { this.toast(p, 'A whole tiny city, a few millimetres tall. You would need to be tiny to go in (a Miniaturizer, from Rick\'s workbench).'); return; }
       if (l.rick && !this.rickMay(p, this.earthOfHere(p))) { this.rickRefuse(p, l); return; }
       // Anatomy Park's gates: back out through that hole, into your ship (or, with no ship,
       // the park staff fling you home to Earth).
@@ -1437,6 +1446,7 @@
       if (on && MM.helpless(p.arch, p.prog.up)) { this.toast(p, MM.HELPLESS_TEXT); return; }
       if (p.dead || !p.st.ship || p.ship === on) return;
       if (on && p.car) { this.toast(p, 'Get out of the car first (B).'); return; }
+      if (on && p.tiny) { this.toast(p, 'You are far too small to fly the ship. Grow back first.'); return; }
       if (on && p.inst.dim.interior) { this.toast(p, 'No room to fly in here. Take the ship outside.'); return; }
       p.ship = on;
       p.kbUntil = this.time + 1;     // stepping out mid-air: let the fall happen
@@ -1593,7 +1603,15 @@
       }
       const cost = MM.recipeCost(p.arch, id);
       for (const k in cost) if ((p.inv[k] || 0) < cost[k]) { this.toast(p, 'Not enough ' + MM.MATERIALS[k].name + '.'); return; }
-      if (R.cat === 'gadget') {
+      if (R.cat === 'item') {
+        const key = 'q:' + R.curio;
+        if ((p.inv[key] || 0) >= R.max) { this.toast(p, 'You already have ' + (R.max > 1 ? R.max + ' of those.' : 'one.')); return; }
+        p.inv[key] = (p.inv[key] || 0) + 1;
+        const found = p.prog.found || (p.prog.found = []);
+        if (!found.includes(R.curio)) found.push(R.curio);
+        p.progDirty = true;
+        this.dirty(p);
+      } else if (R.cat === 'gadget') {
         if (id === 'fluid') { if (!p.st.gun || p.charges >= p.st.gun.charges) return; p.charges++; if (p.charges >= p.st.gun.charges) p.chargeAt = 0; }
         else { if ((p.inv[id] || 0) >= R.max) return; p.inv[id] = (p.inv[id] || 0) + 1; }
       } else {
@@ -1639,8 +1657,33 @@
       const Q = MM.CURIOS[id], key = 'q:' + id, now = this.time, inst = p.inst;
       if (p.dead || !(p.inv[key] > 0) || now < (p.cdCurio || 0)) return;
       p.cdCurio = now + 1;
+      const text = this.curioEffect(p, Q, p);
+      if (text === null) return;
+      if (Q.eat) p.inv[key]--;
+      if (!p.inv[key]) delete p.inv[key];
+      inst.ev({ k: 'curio', id: p.id, q: id });
+      this.toast(p, Q.icon + ' ' + text);
+      this.dirty(p);
+    }
+    // What a curio does to someone (p), used by them or by someone else (by). Returns the text
+    // they see, or null if it did nothing (and is not used up).
+    curioEffect(p, Q, by) {
+      const now = this.time, inst = p.inst, other = by !== p;
       let text = Q.text;
       switch (Q.use) {
+        case 'armserum':
+          if (p.arch !== 'sidekick') { this.toast(by, 'Nothing happens. It only works on a Morty.'); return null; }
+          if (p.prog.arm) { this.toast(by, 'That arm already has somebody in it.'); return null; }
+          this.armUp(p);
+          text = other ? by.name + ' gave you the Muscle Memory Serum. Your arm is hers now.' : 'You injected the serum. Your arm is hers now.';
+          break;
+        case 'tiny':
+          if (inst.dim.tinyWorld || p.tinyIn) { this.toast(by, 'Everything here is already tiny-sized. Walk out first.'); return null; }
+          if (!p.tiny && (p.car || p.ship || p.ride)) { this.toast(by, 'Not while driving, flying or riding.'); return null; }
+          p.tiny = !p.tiny;
+          inst.ev({ k: 'tiny', id: p.id, on: p.tiny });
+          text = p.tiny ? 'ZZZT. You are the size of a bug. Everything is enormous. (Use it again to grow back.)' : 'You grow back to your normal size.';
+          break;
         case 'feast': p.hp = p.maxHp; p.fx.sprint = now + 15; break;
         case 'speed': p.fx.sprint = now + 15; break;
         case 'fate': p.fx.prot = now + 8; break;
@@ -1665,10 +1708,113 @@
         }
         case 'vision': case 'truth': case 'channel': text = pick(MM.CURIO_LINES[Q.use]); break;
       }
-      if (Q.eat) p.inv[key]--;
-      if (!p.inv[key]) delete p.inv[key];
-      inst.ev({ k: 'curio', id: p.id, q: id });
-      this.toast(p, Q.icon + ' ' + text);
+      this.dirty(p);
+      return text;
+    }
+
+    // ----- Between players: trading, giving, using things on each other -----
+    near(p, q) { return !!q && q !== p && !q.dead && !p.dead && q.inst === p.inst && dist2(p.x, p.z, q.x, q.z) < MM.TRADE_RANGE ** 2; }
+    // Only what you really have, in whole numbers.
+    haveItems(p, raw) {
+      const out = {};
+      for (const k in raw || {}) { const n = Math.min(Math.floor(raw[k]) || 0, p.inv[k] || 0); if (n > 0 && MM.tradeable(k)) out[k] = n; }
+      return out;
+    }
+    handOver(from, to, g) {
+      for (const k in g) {
+        from.inv[k] -= g[k];
+        if (!from.inv[k] && k.startsWith('q:')) delete from.inv[k];
+        to.inv[k] = (to.inv[k] || 0) + g[k];
+        if (k.startsWith('q:')) { const found = to.prog.found || (to.prog.found = []); if (!found.includes(k.slice(2))) found.push(k.slice(2)); to.progDirty = true; }
+      }
+      this.dirty(from); this.dirty(to);
+    }
+    // A trade: both put things in, both say OK, and only then does anything change hands.
+    // Changing your side un-OKs both; moving apart or leaving cancels it.
+    onTrade(p, m) {
+      const now = this.time;
+      if (m.op === 'ask') {
+        const q = this.players.get(m.id);
+        if (!this.near(p, q) || q.bot) { this.toast(p, 'Get closer to them first.'); return; }
+        if (p.trade || q.trade) { this.toast(p, (p.trade ? 'You are' : q.name + ' is') + ' already trading.'); return; }
+        if (now < (p.cdAsk || 0)) return;
+        p.cdAsk = now + 3;
+        q.tradeAsk = { from: p.id, until: now + 20 };
+        this.priv(q, { k: 'trask', id: p.id, name: p.name });
+        this.toast(p, 'You asked ' + q.name + ' to trade.');
+        return;
+      }
+      if (m.op === 'join') {
+        const q = this.players.get(m.id), A = p.tradeAsk;
+        p.tradeAsk = null;
+        if (!A || A.from !== m.id || now > A.until || !this.near(p, q) || p.trade || q.trade) return;
+        const T = { a: q, b: p, give: new Map([[q.id, {}], [p.id, {}]]), ok: new Set() };
+        p.trade = q.trade = T;
+        this.tradeState(T);
+        return;
+      }
+      const T = p.trade;
+      if (!T) return;
+      if (m.op === 'cancel') { this.tradeEnd(T, p.name + ' called off the trade.'); return; }
+      if (m.op === 'set') { T.give.set(p.id, this.haveItems(p, m.items)); T.ok.clear(); this.tradeState(T); return; }
+      if (m.op === 'ok') {
+        T.ok.add(p.id);
+        if (T.ok.size < 2) { this.tradeState(T); return; }
+        const { a, b } = T;
+        if (!this.near(a, b)) { this.tradeEnd(T, 'You moved too far apart.'); return; }
+        // Check both sides again (someone may have used something since).
+        const ga = this.haveItems(a, T.give.get(a.id)), gb = this.haveItems(b, T.give.get(b.id));
+        if (JSON.stringify(ga) !== JSON.stringify(T.give.get(a.id)) || JSON.stringify(gb) !== JSON.stringify(T.give.get(b.id))) { T.give.set(a.id, ga); T.give.set(b.id, gb); T.ok.clear(); this.tradeState(T); return; }
+        this.handOver(a, b, ga);
+        this.handOver(b, a, gb);
+        this.tradeEnd(T, '', true);
+      }
+    }
+    tradeState(T) {
+      const row = { k: 'trade', a: T.a.id, b: T.b.id, an: T.a.name, bn: T.b.name, ga: T.give.get(T.a.id), gb: T.give.get(T.b.id), ok: [...T.ok] };
+      this.priv(T.a, row); this.priv(T.b, row);
+    }
+    tradeEnd(T, why, done) {
+      T.a.trade = T.b.trade = null;
+      for (const x of [T.a, T.b]) this.priv(x, { k: 'trade', end: 1, why: why || '', done: done ? 1 : 0 });
+    }
+    // A gift: it's theirs straight away.
+    onGive(p, m) {
+      const q = this.players.get(m.id), now = this.time;
+      if (!this.near(p, q) || now < (p.cdGive || 0)) { if (!this.near(p, q)) this.toast(p, 'Get closer to them first.'); return; }
+      const g = this.haveItems(p, m.items);
+      const what = Object.keys(g).map(k => g[k] + ' ' + MM.itemName(k)).join(', ');
+      if (!what) return;
+      p.cdGive = now + 0.8;
+      this.handOver(p, q, g);
+      this.toast(p, 'You gave ' + q.name + ' ' + what + '.');
+      this.toast(q, p.name + ' gave you ' + what + '.');
+      p.inst.ev({ k: 'gift', id: p.id, to: q.id });
+    }
+    // Use one of your curios on someone: a snack for a friend straight away; something nasty
+    // only if you both fight; a transformation only if they say yes.
+    onUseOn(p, m) {
+      const q = this.players.get(m.id), Q = MM.CURIOS[m.q], key = 'q:' + m.q, now = this.time;
+      if (!Q || !Q.on || !(p.inv[key] > 0) || now < (p.cdCurio || 0)) return;
+      if (!this.near(p, q)) { this.toast(p, 'Get closer to them first.'); return; }
+      p.cdCurio = now + 1;
+      if (Q.on === 'ask') {
+        q.offer = { ask: m.q, from: p.id, want: {}, get: {}, until: now + 25 };
+        this.priv(q, { k: 'offer', ask: m.q, name: p.name, want: {}, get: {} });
+        this.toast(p, 'You offered ' + q.name + ' the ' + Q.name + '. They have to say yes.');
+        return;
+      }
+      if (Q.on === 'hurt' && !this.canHurt(p, q)) { this.toast(p, q.name + ' has fights off.'); return; }
+      this.useOnNow(p, q, m.q);
+    }
+    useOnNow(p, q, id) {
+      const Q = MM.CURIOS[id], key = 'q:' + id;
+      const text = this.curioEffect(q, Q, p);
+      if (text === null) return;
+      if (Q.eat) { p.inv[key]--; if (!p.inv[key]) delete p.inv[key]; }
+      p.inst.ev({ k: 'curio', id: q.id, q: id });
+      this.toast(q, Q.icon + ' ' + (Q.on === 'ask' ? text : p.name + ' used the ' + Q.name + ' on you. ' + text));
+      this.toast(p, 'You used the ' + Q.name + ' on ' + q.name + '.');
       this.dirty(p);
     }
 
@@ -1732,6 +1878,7 @@
         const l = MM.LANDMARKS.find(q => q.dim === p.inst.dimId && q.car);
         if (!l || p.ship || p.ride || MM.helpless(p.arch, p.prog.up) || dist2(l.x, l.z, p.x, p.z) > (l.r + MM.USE_RADIUS + 2) ** 2) return;
         if (p.bout) { this.toast(p, 'No cars in the Ring of Death.'); return; }
+        if (p.tiny) { this.toast(p, 'You can\'t reach the pedals. Grow back first.'); return; }
       }
       p.car = on;
       p.inst.ev({ k: 'car', id: p.id, on });
@@ -2343,6 +2490,7 @@
       p.offer = null;
       if (!o || this.time > o.until || !a) return;
       if (o.serum) { if (p.arch === 'sidekick' && !p.prog.arm) this.armUp(p); return; }
+      if (o.ask) { const by = this.players.get(o.from); if (!this.near(by, p) || !(by.inv['q:' + o.ask] > 0)) { this.toast(p, 'Too late: they are gone, or it is gone.'); return; } this.useOnNow(by, p, o.ask); return; }
       for (const k in o.want) if ((p.inv[k] || 0) < o.want[k]) { this.toast(p, 'You do not have enough ' + MM.MATERIALS[k].name + '.'); return; }
       for (const k in o.want) p.inv[k] -= o.want[k];
       for (const k in o.get) p.inv[k] = (p.inv[k] || 0) + o.get[k];
@@ -2392,6 +2540,7 @@
         if (p.hack) this.tickHack(p);
         if (p.ride) this.tickRide(p);
         if (p.bout) this.tickBout(p, dt);
+        if (p.trade && p.trade.a === p && this.tickN % 30 === 0 && !this.near(p.trade.a, p.trade.b)) this.tradeEnd(p.trade, 'You moved too far apart.');
         if (p.prog.arm && !p.dead) this.tickArm(p, now);
         if (p.arch === 'mutant' && !p.dead && p.hp < p.maxHp && this.tickN % 10 === 0) { p.hp = Math.min(p.maxHp, p.hp + 1); this.dirty(p); }
         // World rules: the living flesh heals you; the toxic air hurts (never below a tenth).
