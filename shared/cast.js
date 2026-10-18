@@ -20,7 +20,7 @@
     if (dimId === 'wasteland') return ['sidekick', 'teen'];   // Strong-arm Morty of the Ring of Death, and Summer of the Death Stalkers
     const W = MM.worldOf(dimId);
     if (W === 'earth') return dimId === 'suburbia' ? SMITHS.concat(['beanling']) : SMITHS.slice();
-    return { birdworld: ['birdfolk'], squanch: ['squanchy'], federation: ['trooper'], unity: ['hive'], citadel: ['evilmorty'] }[W] || [];
+    return { birdworld: ['birdfolk'], squanch: ['squanchy'], federation: ['trooper'], unity: ['hive'], citadel: ['evilmorty'], bazaar: ['spacebeth'] }[W] || [];
   };
   // Which dimension's character a player is, from what they picked: Earth folk by their home
   // code (C-137 is the show's Earth), everyone else from their home world.
@@ -72,7 +72,7 @@
   };
   // How each can travel on their own: by portal (in their portal colour), by ship, on wings, or
   // tagging along with their Rick.
-  MM.CAST_TRAVEL = { genius: 'portal', evilmorty: 'portal', sidekick: 'tag', trooper: 'ship', birdfolk: 'fly' };
+  MM.CAST_TRAVEL = { genius: 'portal', evilmorty: 'portal', sidekick: 'tag', trooper: 'ship', spacebeth: 'ship', birdfolk: 'fly' };
   // What they say when you talk to them.
   MM.CAST_TALK = {
     genius: ['Wubba lubba dub dub!', 'I\'m busy. Science busy.', 'Don\'t touch my garage.', 'Nobody exists on purpose. Want to watch TV?', 'I turned myself into a... no. Not today.'],
@@ -87,6 +87,7 @@
     trooper: ['Papers, please.', 'The Federation thanks you for your compliance.', 'Move along.'],
     hive: ['We are glad you came.', 'Join us. It is nice in here.', 'One of us is watching. All of us are.'],
     evilmorty: ['...', 'You\'d be surprised what you can do when you stop listening to Ricks.', 'Out of the Curve. That\'s the plan.'],
+    spacebeth: ['Don\'t ask me if I\'m the clone. I don\'t know, and I stopped caring.', 'The Federation is back. So am I.', 'Need a ride? My ship, my rules.', 'Tell Dad I said hi. Actually, don\'t.'],
     tommy: ['I survived. It took... choices.', 'Beth? Is that you?', 'You can\'t leave without the chalk. Nobody can.'],
   };
   // ...and what they say there, if it is not what they say at home.

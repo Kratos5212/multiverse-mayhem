@@ -407,6 +407,16 @@
       L.scatter([['bigleaf', 3], ['bigpebble', 2], ['bigmushroom', 2]], 30, { minR: 50 });
     },
 
+    // The Immortality Field Resort: a hotel plaza under the dome, palms along a ring road,
+    // loungers everywhere, and the Whirly Dirly off to the east.
+    resort(L) {
+      L.plaza(0, 0, 18, 'white');
+      L.ringRoad(0, 0, 34, 6, 'white', 18);
+      L.road(0, 18, 0, 70, 6, 'white');
+      L.ringStreet(34, { setback: 6, spacing: 8, gap: 0.12, types: [['palm', 2], ['sunlounger', 2], ['flowerbed', 1]] }, 18);
+      L.scatter([['palm', 3], ['sunlounger', 2]], 20, { minR: 50 });
+    },
+
     microverse(L) {
       L.plaza(0, 0, 18, 'white');
       L.road(0, 18, 0, 30, 9, 'white');

@@ -38,6 +38,7 @@
     light: '<path d="M3 12h7M5 7l6 3M5 17l6-3M14 12h7M13 9l3-3M13 15l3 3"/><circle cx="12" cy="12" r="1.6"/>',
     talk: '<path d="M4 5h16v11H9l-5 4z"/>',
     emote: '<circle cx="12" cy="12" r="9"/><path d="M8 14a5 5 0 0 0 8 0M9 9.5h.01M15 9.5h.01"/>',
+    dpunch: '<path d="M7 11V7a2 2 0 0 1 4 0v3M11 10V6a2 2 0 0 1 4 0v4M15 10V8a2 2 0 0 1 4 0v6a7 7 0 0 1-7 7h-1a6 6 0 0 1-6-6v-3a2 2 0 0 1 2-2h3"/>',
     gadget: '<circle cx="11" cy="14" r="6"/><path d="M11 8V5h4M15 5l3-2"/>',
   };
   const icon = name => {
@@ -55,9 +56,9 @@
   };
   UI.save = function (key, v) { try { localStorage.setItem('mm.' + key, JSON.stringify(v)); } catch (_) {} };
 
-  const ARCH_COLORS = { genius: '#a9cbd6', sidekick: '#f6d34b', teen: '#ff7fb0', surgeon: '#e06a7a', joe: '#7fc76a', birdfolk: '#d98a4a', beanling: '#ffd447', mutant: '#ff7a8a', trooper: '#e4e8ee', hive: '#c49bff', meeseeks: '#7ec8f0', squanchy: '#c98a4a', evilmorty: '#ff5a3a', picklerick: '#7cbf3a', tommy: '#ffb46a' };
+  const ARCH_COLORS = { genius: '#a9cbd6', sidekick: '#f6d34b', teen: '#ff7fb0', surgeon: '#e06a7a', joe: '#7fc76a', birdfolk: '#d98a4a', beanling: '#ffd447', mutant: '#ff7a8a', trooper: '#e4e8ee', hive: '#c49bff', meeseeks: '#7ec8f0', squanchy: '#c98a4a', evilmorty: '#ff5a3a', picklerick: '#7cbf3a', tommy: '#ffb46a', spacebeth: '#8aa07a' };
   UI.ARCH_COLORS = ARCH_COLORS;
-  const ARCH_ICONS = { genius: 'R', sidekick: 'M', teen: 'S', surgeon: 'B', joe: 'J', birdfolk: 'BP', beanling: 'P', mutant: 'C', trooper: 'F', hive: 'U', meeseeks: 'Me', squanchy: 'Sq', evilmorty: 'EM', picklerick: 'PR', tommy: 'T' };
+  const ARCH_ICONS = { genius: 'R', sidekick: 'M', teen: 'S', surgeon: 'B', joe: 'J', birdfolk: 'BP', beanling: 'P', mutant: 'C', trooper: 'F', hive: 'U', meeseeks: 'Me', squanchy: 'Sq', evilmorty: 'EM', picklerick: 'PR', tommy: 'T', spacebeth: 'SB' };
 
   const SKINS = ['#ffe0c8', '#f2d2b6', '#e0b08c', '#c68a62', '#a8724f', '#6b4630', '#9ad66b', '#7ec8e3', '#c49bff', '#ffd447', '#e07a85', '#b4b4c0'];
   const COLORS = ['#ffffff', '#f4f6f8', '#b9d4e0', '#9a9a9a', '#2a2a2a', '#7fb2d6', '#3c6fb5', '#2a3f8f', '#ffd447', '#f5a623', '#e2483d', '#a0303b', '#5fb848', '#2e7d32', '#b48aff', '#ff6fd0', '#6b4f2c', '#c9a77a'];

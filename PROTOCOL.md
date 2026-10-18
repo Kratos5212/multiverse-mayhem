@@ -55,6 +55,7 @@ Every message is a JSON object with a `t` (type) field. Anything that is not on 
 | `ans` | `a` | Accept (1) or refuse (0) a local's trade offer |
 | `ship` | `on` | Board or leave your ship (must own one) |
 | `car` | `on` | Get into a Death Stalker car (at the car lot in Post-Apocalyptic Earth) or out of it |
+| `dp` | `r` | The Five-Step Death Punch, facing `r` (must have learned it from Liu Sin; hits whoever is right in front; 45 s cooldown) |
 | `drive` | `d` | Fly your ship to `d` (Moon from Earth: any ship; other planets in the universe: Turbo Engine; other dimensions: Dimension Drive; 15 s cooldown) |
 | `tm` | `op`, `id` | Teams: `inv` invites player `id` (same dimension copy), `join` accepts an invite from `id` (valid 60 s), `leave` leaves your team |
 | `pvp` | `on` | Turn fights with other players on or off (on by default; both players must have them on; `hello` carries the starting value) |
@@ -70,8 +71,8 @@ Every message is a JSON object with a `t` (type) field. Anything that is not on 
 | `hi` | Your player id, the server name, and your cleaned-up name |
 | `w` | Welcome to a dimension: everyone there, damaged props, pickups, monsters, portals, turrets, your position and epoch |
 | `s` | Snapshot: `p` players `[id,x,y,z,yaw,anim,hp%,effects]`, `n` monsters, `u` turret aim |
-| `ev` | A batch of events for this dimension copy: `join`, `leave`, `shot`, `hit`, `boom`, `mel`, `dmg`, `kill`, `prop`, `pk+`/`pk-` (pickups), `npc+`/`npc-`, `po+`/`po-` (portals), `tu+`/`tu-` (turrets), `ab`, `em`, `dodge`, `kiosk`, `bite`, `shrunk`, `say` (a local speaks), `world` (an event starts or ends), `title` (someone broke out of their life), `gear`, `ship`, `car`, `warp`, `nfree` |
-| `pv` | Private events: `tp` (you were moved), `kb` (knockback), `toast`, `built`, `task` (a daily task paid out), `step` (a path step completed), `offer` (a local's trade) |
+| `ev` | A batch of events for this dimension copy: `join`, `leave`, `shot`, `hit`, `boom`, `mel`, `dmg`, `kill`, `prop`, `pk+`/`pk-` (pickups), `npc+`/`npc-`, `po+`/`po-` (portals), `tu+`/`tu-` (turrets), `ab`, `em`, `dodge`, `kiosk`, `bite`, `shrunk`, `say` (a local speaks), `world` (an event starts or ends), `title` (someone broke out of their life), `gear`, `ship`, `car`, `warp`, `nfree`, `hug` (a lovestruck local hugs someone), `reform` (an immortality field put someone back together), `tinyrick`, `dpunch`/`dpstep` (a death punch and the victim's steps counting down) |
+| `pv` | Private events: `tp` (you were moved), `kb` (knockback), `toast`, `built`, `task` (a daily task paid out), `step` (a path step completed), `offer` (a local's trade, Liu Sin's lesson or the serum), `patient` (you are Patient Zero), `dp` (you were death-punched), `dpcd` (your death punch cooldown) |
 | `y` | Your private state: health, materials and gadgets, portal charges and borrowed charges (`bor`), cooldowns, score, death timer, ship, car |
 | `pg` | Your life: upgrades, path step, unlocks, counters, errands, daily-task cooldowns, title, and resulting stats |
 | `c` | A chat line: id, name, home code, dimension, text |

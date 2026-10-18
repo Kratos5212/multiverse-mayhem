@@ -2650,6 +2650,30 @@
     },
     // A mossy rock in the woods with a whole city on it, a few millimetres tall: the Mega
     // Gargantuans. Towers, domes, a flag and a little road down the side.
+    // A Tiny Rick vat: a teenage Rick clone floating in green, under a hood of pipes.
+    lm_tinyvat(s) {
+      s.add(P.cyl, '#59606e', [0, 0.2, 0], null, [1.2, 0.4, 1.2]);
+      s.add(P.cyl, '#5dff8a', [0, 1.4, 0], null, [1.05, 2.0, 1.05], true);
+      s.add(P.capsule, '#ddd7c9', [0, 1.15, 0], null, [0.2, 0.7, 0.16]);
+      s.add(P.sphere, '#ddd7c9', [0, 1.9, 0], null, [0.24, 0.28, 0.24]);
+      for (let i = 0; i < 7; i++) { const a = i * 0.9; s.add(P.cone, '#6fd2df', [Math.cos(a) * 0.17, 2.12, Math.sin(a) * 0.17], [Math.sin(a) * 0.7, 0, -Math.cos(a) * 0.7], [0.07, 0.22, 0.07]); }
+      s.add(P.cyl, '#59606e', [0, 2.5, 0], null, [1.2, 0.3, 1.2]);
+      for (const sx of [-1, 1]) s.add(P.cyl, '#3a3f4a', [sx * 0.4, 2.9, 0], null, [0.12, 0.6, 0.12]);
+      s.add(P.box, '#3a3f4a', [0.75, 1.1, 0.5], null, [0.3, 0.6, 0.2]);
+      s.add(P.box, '#ff5a5a', [0.75, 1.25, 0.61], null, [0.12, 0.12, 0.02], true);
+    },
+    // The Immortality Hotel: a tall pink-and-white tower with a pool deck and a rooftop diving board.
+    lm_resorthotel(s) {
+      s.add(P.box, '#f4f0e8', [0, 0.4, 0], null, [15, 0.8, 13]);
+      s.add(P.box, '#f8e8f0', [0, 6, -1.5], null, [10, 11, 7]);
+      for (let f = 0; f < 5; f++) for (let i = -2; i <= 2; i++) s.add(P.box, '#7ad8ff', [i * 1.9, 2.4 + f * 2, 2.02], null, [1.2, 1.0, 0.05], true);
+      for (let f = 0; f < 5; f++) s.add(P.box, '#ff7ad0', [0, 1.6 + f * 2, 2.3], null, [10.2, 0.15, 0.7]);
+      s.add(P.box, '#ff7ad0', [0, 11.8, -1.5], null, [10.6, 0.6, 7.6]);
+      s.add(P.box, '#e8e4d8', [3.5, 11.9, 2.6], null, [0.8, 0.12, 3]);   // the diving board off the roof
+      s.add(P.box, '#4ab8ff', [0, 0.85, 5], null, [8, 0.1, 3.6], true);  // the pool
+      s.add(P.box, '#3a3f4a', [0, 1.6, 2.3], null, [2.4, 2.4, 0.2]);
+      for (const sx of [-1, 1]) s.add(P.cyl, '#f4f0e8', [sx * 6.2, 2.5, 5.6], null, [0.25, 5, 0.25]);
+    },
     lm_tinyland(s) {
       s.add(P.sphere, '#7a7a72', [0, 0.35, 0], null, [1.55, 0.6, 1.4]);
       s.add(P.sphere, '#5a9a46', [0, 0.62, 0], null, [1.4, 0.32, 1.25]);
@@ -2677,6 +2701,17 @@
       for (let i = -2; i <= 2; i++) s.add(P.box, '#5a7a2a', [i * 0.9 * Math.cos(0.4), 0.34, -i * 0.9 * Math.sin(0.4)], [0, 0.4 + 0.9, 0], [2.2, 0.06, 0.08]);
     },
     bigpebble(s) { s.add(P.sphere, '#8a8a84', [0, 1.4, 0], null, [2.6, 1.7, 2.2]); s.add(P.sphere, '#9a9a92', [0.8, 2.2, 0.4], null, [1.2, 0.9, 1.1]); },
+    palm(s) {
+      for (let i = 0; i < 6; i++) s.add(P.cyl, i % 2 ? '#a07a4a' : '#8a6a3e', [Math.sin(i * 0.25) * 0.3, 0.6 + i * 1.05, 0], [0, 0, -0.08], [0.32 - i * 0.02, 1.1, 0.32 - i * 0.02]);
+      for (let i = 0; i < 7; i++) { const a = i * 0.9; s.add(P.box, '#3aa04a', [0.4 + Math.cos(a) * 1.3, 6.6, Math.sin(a) * 1.3], [0, -a, -0.35], [2.6, 0.08, 0.6]); }
+      for (let i = 0; i < 3; i++) s.add(P.sphereLo, '#6a4a2a', [0.4 + Math.cos(i * 2) * 0.3, 6.3, Math.sin(i * 2) * 0.3], null, [0.22, 0.22, 0.22]);
+    },
+    sunlounger(s) {
+      s.add(P.box, '#f4f4f0', [0, 0.35, 0.2], null, [0.7, 0.1, 1.4]);
+      s.add(P.box, '#f4f4f0', [0, 0.6, -0.65], [-0.9, 0, 0], [0.7, 0.1, 0.7]);
+      s.add(P.box, '#ff7ad0', [0, 0.42, 0.2], null, [0.62, 0.05, 1.3]);
+      for (const sx of [-1, 1]) for (const z of [-0.4, 0.8]) s.add(P.cyl, '#c8c8c0', [sx * 0.3, 0.16, z], null, [0.05, 0.32, 0.05]);
+    },
     bigmushroom(s) {
       s.add(P.cyl, '#f0e8d8', [0, 2.8, 0], null, [0.7, 5.6, 0.7]);
       s.add(P.hemi, '#d84a3a', [0, 5.4, 0], null, [2.4, 1.6, 2.4]);
@@ -3723,7 +3758,7 @@
     if (MM.NPCS[type].human) {
       const look = C.npcLook(type, seed || 1);
       const H = MM.NPCS[type].human;
-      const av = C.buildAvatar(look, type === 'invader' ? 'trooper' : type === 'birdcitizen' ? 'birdfolk' : type === 'meeseeks' ? 'meeseeks' : H.variant || 'joe');
+      const av = C.buildAvatar(look, type === 'invader' ? 'trooper' : type === 'birdcitizen' ? 'birdfolk' : type === 'meeseeks' ? 'meeseeks' : H.unarmed ? 'hive' : H.variant || 'joe');   // (Unity's build: bare hands)
       if (H.scale) { av.baseScale = H.scale; av.root.scale.setScalar(H.scale); }   // giants
       return { root: av.root, av };
     }
@@ -3742,6 +3777,18 @@
         s.add(P.box, '#3a2a1a', [0, 1.85, -0.05], null, [0.95, 0.12, 0.8]);
         s.add(P.cone, '#ff9a2a', [0, 1.3, -1.05], [-2.3, 0, 0], [0.12, 0.7, 0.12], true);
         void d;
+      } else if (type === 'housebot') {
+        // A lawn turret from the Smith house, hacked: red eye, twin barrels, a lot of attitude.
+        s.add(P.cyl, '#59606e', [0, 0.4, 0], null, [0.9, 0.8, 0.9]);
+        s.add(P.cyl, '#7a8290', [0, 1.0, 0], null, [0.25, 0.6, 0.25]);
+        s.add(P.sphere, '#9aa3ab', [0, 1.35, 0], null, [0.55, 0.42, 0.55]);
+        s.add(P.sphereLo, '#ff2a2a', [0, 1.42, 0.45], null, [0.16, 0.16, 0.1], true);
+        for (const sx of [-1, 1]) s.add(P.cyl, '#3a3f4a', [sx * 0.18, 1.32, 0.75], [Math.PI / 2, 0, 0], [0.08, 0.6, 0.08]);
+      } else if (type === 'housedrone') {
+        s.add(P.sphere, '#9aa3ab', [0, 0.3, 0], null, [0.45, 0.25, 0.45]);
+        s.add(P.sphereLo, '#ff2a2a', [0, 0.28, 0.38], null, [0.12, 0.12, 0.08], true);
+        for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4; s.add(P.box, '#59606e', [Math.cos(a) * 0.45, 0.42, Math.sin(a) * 0.45], [0, -a, 0], [0.5, 0.05, 0.08]); s.add(P.cyl, '#3a3f4a', [Math.cos(a) * 0.7, 0.48, Math.sin(a) * 0.7], null, [0.3, 0.03, 0.3]); }
+        s.add(P.cyl, '#3a3f4a', [0, 0.1, 0.3], [Math.PI / 2, 0, 0], [0.06, 0.4, 0.06]);
       } else if (type === 'giantant') {
         // An ant the size of a car (to someone a few millimetres tall).
         const c = '#3a1e14';
@@ -4141,6 +4188,18 @@
   };
 
   // ---------- A whole dimension ----------
+  // An immortality field: a faint glassy dome with a glowing ring where it meets the ground.
+  function makeField(dim) {
+    const F = dim.field, g = new T.Group(), y = MM.heightAt(dim.id, F.x, F.z) - 1;
+    const dome = new T.Mesh(new T.SphereGeometry(F.r, 48, 20, 0, Math.PI * 2, 0, Math.PI / 2),
+      new T.MeshBasicMaterial({ color: '#bfe4ff', transparent: true, opacity: 0.1, side: T.DoubleSide, depthWrite: false }));
+    dome.position.set(F.x, y, F.z);
+    const ring = new T.Mesh(new T.TorusGeometry(F.r, 0.35, 6, 96), new T.MeshBasicMaterial({ color: '#7ad8ff', transparent: true, opacity: 0.8 }));
+    ring.rotation.x = Math.PI / 2; ring.position.set(F.x, y + 1.2, F.z);
+    g.add(dome, ring);
+    g.userData.type = 'field';
+    return g;
+  }
   C.buildDimension = function (dimId, quality) {
     const dim = MM.DIM_BY_ID[dimId];
     const group = new T.Group();
@@ -4150,6 +4209,7 @@
     if (dim.planets) group.add(makeSpace(dim, group));
     else if (!dim.interior) {
       skyDecor(dim, group); terrain = makeTerrain(dim); group.add(terrain);
+      if (dim.field) group.add(makeField(dim));
       if (dim.regions) group.add(makeSea(dim));
       if (dim.regions) group.add(makeWires(dimId));
     }

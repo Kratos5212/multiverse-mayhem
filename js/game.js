@@ -882,7 +882,7 @@
         break;
       }
       case 'world':
-        if (e.end) { UI.toast(e.name + ' is over'); break; }
+        if (e.end) { if (e.text) UI.banner(e.name + ' is over', e.text); else UI.toast(e.name + ' is over'); if (G.patient) G.patient = false; break; }
         UI.banner(e.name, e.text);
         UI.chatLine('', '', e.name + ' ' + e.text, true);
         C.sfx('portal', 0.6);
@@ -912,6 +912,31 @@
       case 'car': { const p = posOf(e.id); if (p) sfxAt(e.on ? 'craft' : 'jump', p.x, p.z); break; }
       case 'tiny': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 0.4, p.z, '#7ad8ff', 24, 4, 0.5, 0.5, 1); sfxAt('shrink', p.x, p.z); } break; }
       case 'gift': { const p = posOf(e.id); if (p) fx.burst(p.x, p.y + 1.4, p.z, '#ffd84d', 12, 3, 0.4, 0.4, 1); break; }
+      case 'tinyrick': {
+        const p = posOf(e.id);
+        if (p) { fx.burst(p.x, p.y + 1, p.z, '#5dff8a', 30, 5, 0.6, 0.6, 1); sfxAt(e.on ? 'shrink' : 'jump', p.x, p.z); }
+        if (e.on && e.id !== G.myId) UI.feed([{ t: nameOf(e.id), c: '#a9cbd6' }, ' is ', { t: 'TINY RICK!', c: '#5dff8a' }]);
+        break;
+      }
+      // A lovestruck local hugs someone (hearts), a field puts someone back together.
+      case 'hug': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1.6, p.z, '#ff6fb0', 10, 2.5, 0.5, 0.3, 1); sfxAt('chat', p.x, p.z); } break; }
+      case 'reform': {
+        const p = e.n ? G.npcs.get(e.n) : posOf(e.id);
+        if (p) { fx.burst(p.x, p.y + 1, p.z, '#bfe4ff', 36, 6, 0.7, 0.6, 1); sfxAt('warp', p.x, p.z); }
+        break;
+      }
+      case 'dpunch': {
+        const p = posOf(e.id);
+        if (p) { fx.burst(p.x + Math.sin(p.r || 0) * 1.2, p.y + 1.3, p.z + Math.cos(p.r || 0) * 1.2, '#ff3a3a', 20, 5, 0.4, 0.4, 1); sfxAt('bite', p.x, p.z); }
+        if (e.id === G.myId || e.v === G.myId) G.shake = 0.35;
+        break;
+      }
+      case 'dpstep': {
+        const p = e.n ? G.npcs.get(e.n) : posOf(e.id);
+        if (p) numAt(p.x, p.y + 2.4, p.z, e.s > 0 ? String(e.s) : '☠', '#ff3a3a', e.s <= 1);
+        if (e.id === G.myId) { G.dpSteps = e.s; if (e.s > 0) { UI.toast('☠ ' + e.s + (e.s === 1 ? ' step' : ' steps') + ' left. Stand still!', 1500); C.sfx('bite', 0.6); } else G.dpSteps = 0; }
+        break;
+      }
       case 'warp': { const p = posOf(e.id); if (p) { fx.burst(p.x, p.y + 1, p.z, '#5ff8ff', 40, 10, 0.8, 0.6, 0); sfxAt('warp', p.x, p.z); } break; }
     }
   }
@@ -1014,6 +1039,9 @@
       return;
     }
     if (e.k === 'armsay') { UI.toast('🦾 ' + e.text, 3500); return; }
+    if (e.k === 'patient') { G.patient = true; UI.banner('You are Patient Zero', 'The love potion got loose, and everyone is in love with you. Run! Their hugs slow you down.'); C.sfx('cheer', 0.6); return; }
+    if (e.k === 'dp') { G.dpSteps = e.s; UI.banner('Five-Step Death Punch!', e.by + ' hit you with it. Five more steps and you drop. Stand still until it wears off (a minute)... or make them count.'); G.shake = 0.5; return; }
+    if (e.k === 'dpcd') { G.dpReadyAt = now() + e.t; return; }
     if (e.k === 'bout') {
       if (e.won) { UI.banner('You won in the Ring of Death!', 'The crowd chants your name. ' + Object.keys(e.give).map(k => e.give[k] + ' ' + MM.MATERIALS[k].icon).join(' ') + (e.won > 1 ? ' · ' + e.won + ' wins' : '')); C.sfx('cheer'); }
       else if (e.lost) { UI.banner('Out of the Ring', e.why || 'You lost.'); }
@@ -1252,6 +1280,17 @@
       });
       return;
     }
+    if (e.dpunch) {
+      const fmt = m => Object.keys(m).map(k => m[k] + ' ' + MM.MATERIALS[k].icon + ' ' + MM.MATERIALS[k].name).join(', ');
+      openModal('offer', e.name + ': the Five-Step Death Punch', box => {
+        box.append(el('p', { text: 'One strike, right up close (8, or the fist button). Whoever you hit drops dead after five more steps. If they stand still for a minute, it wears off. Players only if you both have fights on.' }),
+          el('p', { text: 'Price: ' + fmt(e.want) }),
+          el('div', { class: 'chips' },
+            el('button', { class: 'btn go', onclick: () => { send({ t: 'ans', a: 1 }); UI.closeModal(); } }, 'Teach me'),
+            el('button', { class: 'btn', onclick: () => { send({ t: 'ans', a: 0 }); UI.closeModal(); } }, 'Maybe later')));
+      });
+      return;
+    }
     if (e.serum) {
       openModal('offer', e.name + ' has a syringe for you', box => {
         box.append(el('p', { text: 'Muscle Memory Serum: a dead warrior\'s arm, in a syringe. Your right arm becomes hers: huge, and with a mind of her own. She does the punching (no gun), drags you after whoever she wants to hit, and hunts bounties in Post-Apocalyptic Earth. She has someone she wants dead. Once she gets him, she lets go.' }),
@@ -1297,6 +1336,7 @@
     mk('timecrystal', '5', 'Time', () => useGadget('timecrystal'));
     mk('freeze', '6', 'Freeze', () => useGadget('freeze'));
     mk('chalk', '7', 'Chalk', () => useGadget('chalk'));
+    mk('dpunch', '8', 'Death Punch', () => deathPunch());
     mk('items', 'I', 'Items', () => openInventory());
     mk('pair', 'R', 'Portals', () => shootPair());
     mk('scan', 'X', 'Scan', () => scan());
@@ -1319,6 +1359,7 @@
       slots[g].classList.toggle('empty', !(y.inv[g] > 0));
     }
     slots.scan.hidden = !(G.st && G.st.scanner);
+    slots.dpunch.hidden = !(G.prog && G.prog.dpunch);
     const canPair = !!(G.prog && MM.canPair(profile.arch, G.prog.up));
     slots.pair.hidden = !canPair; $('tPair').hidden = !canPair;
     const pcs = MM.pairColors(profile.look);
@@ -1372,7 +1413,7 @@
     for (const p of G.players.values()) test(p.x, p.y + 1, p.z, 1.0);
     for (const n of G.npcs.values()) test(n.x, n.y + 0.8, n.z, 1.1);
     for (let t = 3; t < best; t += 1.5) { if (o.y + d.y * t < MM.heightAt(G.dimId, o.x + d.x * t, o.z + d.z * t)) { best = t; break; } }
-    const sc = (G.you && (G.you.fx & 16384)) ? MM.TINY.scale : (G.you && (G.you.fx & 8)) ? 0.5 : 1;
+    const sc = (G.you && (G.you.fx & 16384)) ? MM.TINY.scale : ((G.you && (G.you.fx & 8)) ? 0.5 : 1) * ((G.you && (G.you.fx & 32768)) ? MM.TINYRICK.scale : 1);
     const tx = o.x + d.x * best - G.me.x, ty = o.y + d.y * best - (G.me.y + 1.35 * sc), tz = o.z + d.z * best - G.me.z;
     const l = Math.hypot(tx, ty, tz) || 1;
     return { dx: tx / l, dy: ty / l, dz: tz / l };
@@ -1400,6 +1441,16 @@
     if (g === 'grenade') { const l = Math.hypot(a.dx, a.dz) || 1; a.dx /= l; a.dz /= l; a.dy = 0; }
     G.me.yaw = G.camYaw; G.me.aimT = 1;
     send(Object.assign({ t: 'g', g }, a));
+  }
+  // The Five-Step Death Punch (learned from Liu Sin in Downtown): a strike right up close.
+  function deathPunch() {
+    if (!canAct() || !(G.prog && G.prog.dpunch)) return;
+    if (G.you.ship || G.you.car) { UI.toast('Get out first.'); return; }
+    if (now() < (G.dpReadyAt || 0)) { UI.toast('Breathe. The punch is ready in ' + Math.ceil(G.dpReadyAt - now()) + ' s.'); return; }
+    G.me.yaw = G.camYaw; G.me.aimT = 1;
+    send({ t: 'dp', r: Math.atan2(Math.sin(G.camYaw), Math.cos(G.camYaw)) });
+    G.dpReadyAt = now() + 1.5;
+    C.sfx('ability');
   }
   function ability() {
     if (!canAct()) return;
@@ -2127,6 +2178,7 @@
       case 'Digit5': useGadget('timecrystal'); break;
       case 'Digit6': useGadget('freeze'); break;
       case 'Digit7': useGadget('chalk'); break;
+      case 'Digit8': deathPunch(); break;
       case 'KeyI': openInventory(); break;
       case 'KeyV': toggleView(); break;
       case 'KeyG': emoteBar(); break;
@@ -2310,7 +2362,7 @@
     const st = G.st || MM.statsOf(profile.arch, {});
     const inShip = !!(y && y.ship && st.ship), inCar = !!(y && y.car);
     // Same speed rules as the server (Host.speedOf), so you never get snapped back.
-    const mult = (fxb & 16384 ? MM.TINY.speed : 1) * (fxb & 2 ? 1.8 : 1) * (fxb & 8 ? 0.75 : 1) * (fxb & 16 ? 0.6 : 1) * (fxb & 256 ? 0.5 : 1) * (fxb & 1024 ? 0.12 : 1);
+    const mult = (fxb & 16384 ? MM.TINY.speed : 1) * (fxb & 32768 && !inShip && !inCar ? MM.TINYRICK.speed : 1) * (fxb & 2 ? 1.8 : 1) * (fxb & 8 ? 0.75 : 1) * (fxb & 16 ? 0.6 : 1) * (fxb & 256 ? 0.5 : 1) * (fxb & 1024 ? 0.12 : 1);
     const shift = !chatOpen() && !UI.modalOpen() && (keys.has('ShiftLeft') || keys.has('ShiftRight'));
     me.sprinting = !inShip && !inCar && !dead && il > 0.3 && (shift || touch.sprint) && iz > -0.2;
     me.boosting = (inShip || inCar) && !dead && (shift || touch.sprint);   // Shift in the ship: afterburner; in a car: nitro
@@ -2361,7 +2413,7 @@
       me.vy += (climb * 12 - me.vy) * Math.min(1, dt * 4);
       me.grounded = false;
     } else if (jumpHeld && me.grounded && !inCar) {
-      me.vy = st.jump * (dim.quirk === 'bouncy' ? 1.6 : 1);
+      me.vy = st.jump * (dim.quirk === 'bouncy' ? 1.6 : 1) * (fxb & 32768 ? MM.TINYRICK.jump : 1);
       me.grounded = false;
       me.jumpLock = 0.25;
       C.sfx('jump', 0.4);

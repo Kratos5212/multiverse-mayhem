@@ -75,6 +75,7 @@
     // Strong-arm Morty (MM.ARM): the arm stays until she has her revenge; how many times she has.
     if (arch === 'sidekick' && raw.arm && typeof raw.arm === 'object') p.arm = { n: num(raw.arm.n, MM.ARM.bounties.length) };
     if (raw.armDone) p.armDone = num(raw.armDone, 1e6);
+    if (raw.dpunch) p.dpunch = 1;   // Liu Sin taught you the Five-Step Death Punch
     p.chaos = num(raw.chaos, 1e9);
     return p;
   }
@@ -100,6 +101,7 @@
       this.pickups = new Map();
       this.portals = new Map();
       this.turrets = new Map();
+      this.dpSet = new Set();   // locals carrying a Five-Step Death Punch
       this.projs = [];
       this.out = [];
       this.emptySince = host.time;
@@ -190,6 +192,7 @@
       const now = this.host.time;
       this.tickProjectiles(dt, now);
       this.tickNpcs(dt, now);
+      if (this.dpSet.size) this.host.tickPunchedNpcs(this);
       this.tickTurrets(dt, now);
       if (this.house) this.host.tickHouse(this, now);
       if (this.gal) this.host.tickGalleries(this, now);
@@ -223,14 +226,32 @@
     }
 
     // ----- World events -----
-    tickEvents(now) {
+    // Variants of an Earth get the Earth's events too (unless they have their own).
+    eventsHere() {
+      const D = this.dim;
+      return MM.EVENTS[this.dimId] || (D.variantOf === 'suburbia' && !D.cronen && !D.timeline ? MM.EVENTS.suburbia : null);
+    }
+    endEvent(now, text) {
       const ev = this.event;
-      if (ev) {
-        if (now >= ev.until) {
-          this.ev({ k: 'world', end: 1, name: ev.E.name });
-          this.event = null;
-          this.nextEvent = now + 150 + Math.random() * 150;
-        } else if (ev.booms > 0 && now >= ev.nextBoom) {
+      this.ev({ k: 'world', end: 1, name: ev.E.name, text: text || '' });
+      // Events that took over the locals (or the house) put everything back at once.
+      if (ev.E.house || ev.E.patient) for (const id of ev.mine || []) { if (this.npcs.delete(id)) this.ev({ k: 'npc-', id }); }
+      this.event = null;
+      this.nextEvent = now + 150 + Math.random() * 150;
+    }
+    // Swap a local for something else where it stands (a lover becomes a mantis person...).
+    morphNpc(n, type, opts) {
+      if (!this.npcs.has(n.id)) return null;
+      this.npcs.delete(n.id); this.ev({ k: 'npc-', id: n.id });
+      const m = this.spawnNpc(type, true, Object.assign({ at: { x: n.x, z: n.z } }, opts || {}));
+      m.home = n.home;
+      return m;
+    }
+    tickEvents(now) {
+      if (this.event) {
+        const ev = this.event;
+        if (now >= ev.until) { this.endEvent(now); return; }
+        if (ev.booms > 0 && now >= ev.nextBoom) {
           ev.booms--; ev.nextBoom = now + ev.E.dur / (ev.E.booms + 1);
           const p = pick([...this.players.values()]);
           if (p) {
@@ -240,24 +261,79 @@
             this.spawnPickup(this.dim.mat, true, { x: x + 1, z }, 2);
           }
         }
+        // Smash everything it sent and it is over, with a reward for everyone here.
+        if (ev.E.clear && this.host.tickN % 15 === 0 && ev.mine.every(id => !this.npcs.has(id))) {
+          for (const p of this.players.values()) { for (const k in ev.E.clear) p.inv[k] = (p.inv[k] || 0) + ev.E.clear[k]; this.host.dirty(p); }
+          this.endEvent(now, 'All clear! Everyone here gets ' + matText(ev.E.clear) + '.');
+          return;
+        }
+        if (ev.E.patient) this.tickLove(ev, now);
         return;
       }
       if (now < this.nextEvent) return;
-      const list = MM.EVENTS[this.dimId];
+      const list = this.eventsHere();
       if (!list) return;
       const E = pick(list);
-      this.event = { E, until: now + E.dur, booms: E.booms || 0, nextBoom: now + 2 };
-      this.ev({ k: 'world', name: E.name, text: E.text, left: E.dur });
       const players = [...this.players.values()];
+      if (!players.length) return;
+      const ev = this.event = { E, until: now + E.dur, booms: E.booms || 0, nextBoom: now + 2, start: now, mine: [] };
+      this.ev({ k: 'world', name: E.name, text: E.text, left: E.dur });
+      const lim = MM.boundOf(this.dimId) - 25, clampXZ = v => Math.max(-lim, Math.min(lim, v));
       if (E.spawn) for (const [type, n] of E.spawn) for (let i = 0; i < n; i++) {
         const p = pick(players), a = Math.random() * 6.28, d = 14 + Math.random() * 16;
-        const x = Math.max(-MM.boundOf(this.dimId) + 25, Math.min(MM.boundOf(this.dimId) - 25, p.x + Math.cos(a) * d)), z = Math.max(-MM.boundOf(this.dimId) + 25, Math.min(MM.boundOf(this.dimId) - 25, p.z + Math.sin(a) * d));
-        this.spawnNpc(type, true, { at: { x, z }, until: now + E.dur + 20 });
+        this.spawnNpc(type, true, { at: { x: clampXZ(p.x + Math.cos(a) * d), z: clampXZ(p.z + Math.sin(a) * d) }, until: now + E.dur + 20 });
       }
+      // Around the Smith house: the lawn turrets pop up, the drones take off.
+      if (E.house) for (const [type, n] of E.house) for (let i = 0; i < n; i++) {
+        const a = (i / n) * 6.28 + Math.random() * 0.5, d = MM.NPCS[type].fly ? 8 + Math.random() * 8 : MM.HOUSE.r - 2 + Math.random() * 3;
+        let x = MM.HOUSE.x + Math.cos(a) * d, z = MM.HOUSE.z + Math.sin(a) * d;
+        [x, z] = MM.collideProps(this.dimId, x, z, 1, null);
+        ev.mine.push(this.spawnNpc(type, true, { at: { x, z }, until: now + E.dur + 5 }).id);
+      }
+      if (E.patient) this.startLove(ev, now);
       if (E.loot) for (let i = 0; i < E.loot[1]; i++) {
         const p = pick(players), a = Math.random() * 6.28, d = 4 + Math.random() * 26;
         this.spawnPickup(E.loot[0], true, { x: p.x + Math.cos(a) * d, z: p.z + Math.sin(a) * d }, ri(1, 2));
       }
+    }
+    // "Rick Potion #9": the love potion catches. Everyone wants Patient Zero; a minute later
+    // they are mantis people (who want everyone); a minute after that, Cronenbergs.
+    pickPatient(ev) {
+      const all = [...this.players.values()].filter(p => !p.dead);
+      const humans = all.filter(p => !p.bot);
+      const p = pick(humans.length ? humans : all);
+      ev.pz = p ? p.id : 0;
+      if (p) {
+        this.ev({ k: 'world', name: 'Patient Zero', text: p.name + ' is Patient Zero. Everyone is in love with them. RUN.', left: Math.max(1, Math.round(ev.until - this.host.time)) });
+        this.host.priv(p, { k: 'patient' });
+      }
+      return p;
+    }
+    startLove(ev, now) {
+      ev.stage = 0;
+      const pz = this.pickPatient(ev);
+      if (!pz) return;
+      for (let i = 0; i < 9; i++) {
+        const a = Math.random() * 6.28, d = 16 + Math.random() * 18;
+        const lim = MM.boundOf(this.dimId) - 25;
+        const x = Math.max(-lim, Math.min(lim, pz.x + Math.cos(a) * d)), z = Math.max(-lim, Math.min(lim, pz.z + Math.sin(a) * d));
+        ev.mine.push(this.spawnNpc('lover', true, { at: { x, z }, until: ev.until + 5 }).id);
+      }
+    }
+    tickLove(ev, now) {
+      const t = now - ev.start;
+      const stage = t >= 120 ? 2 : t >= 60 ? 1 : 0;
+      if (stage !== ev.stage) {
+        ev.stage = stage;
+        const to = stage === 1 ? 'mantisman' : 'meatblob';
+        ev.mine = ev.mine.map(id => { const n = this.npcs.get(id); const m = n && this.morphNpc(n, to, { until: ev.until + 5 }); return m ? m.id : 0; }).filter(Boolean);
+        this.ev({ k: 'world', name: stage === 1 ? 'Mantis People!' : 'Cronenbergs!', text: stage === 1 ? 'The cure made it worse. Everyone is a praying mantis now, and they want everybody.' : 'The cure for the cure made it MUCH worse. Cronenbergs, everywhere.', left: Math.round(ev.until - now) });
+      }
+      if (stage > 0) return;
+      let pz = this.host.players.get(ev.pz);
+      if (!pz || pz.inst !== this || pz.dead) pz = this.pickPatient(ev);
+      if (!pz) return;
+      for (const id of ev.mine) { const n = this.npcs.get(id); if (n) { n.angry = pz.id; n.angryUntil = now + 3; } }
     }
     boosted() { return this.event && this.event.E.talkBoost; }
 
@@ -388,6 +464,8 @@
       }
       this.ev({ k: 'dmg', n: n.id, d: dmg });
       if (n.hp > 0) return;
+      // Inside an immortality field nothing dies: it just pulls itself back together.
+      if (MM.inField(this.dimId, n.x, n.z)) { n.hp = n.T.hp; this.ev({ k: 'reform', n: n.id }); return; }
       if (n.gal && this.gal && this.gal[n.gal]) {
         // A shooting gallery target: a point for whoever hit it.
         const S = this.gal[n.gal];
@@ -400,6 +478,7 @@
       this.npcs.delete(n.id);
       this.ev({ k: 'npc-', id: n.id, die: 1 });
       if (n.armFor) this.host.armKill(n, owner);
+      if (n.type === 'feratu') this.host.feratuDown(this, owner);
       let i = 0;
       for (const k in n.T.drop) this.spawnPickup(k, true, { x: n.x + (i++ - 0.5) * 1.4, z: n.z }, n.T.drop[k]);
       if (owner) { owner.prog.chaos += 2; this.host.progress(owner, 'kill', n.type); }
@@ -512,8 +591,10 @@
             goal = best; speed *= 1.15;
             if (bd < (T.r + 1.1) * (T.r + 1.1) && now >= n.cd && Math.abs(best.y - n.y) < 3) {
               n.cd = now + 1.2;
-              this.ev({ k: 'bite', n: n.id });
-              this.host.hurtPlayer(this, best, T.dmg || 6, null, n.type);
+              this.ev({ k: T.hug ? 'hug' : 'bite', n: n.id, id: best.id });
+              // A lovestruck local hugs you (and holds on a moment) instead of biting.
+              if (T.hug) { if (now >= best.fx.prot) { best.fx.daze = Math.max(best.fx.daze, now + 1.4); this.host.dirty(best); } }
+              else this.host.hurtPlayer(this, best, T.dmg || 6, null, n.type);
             }
             // Some shoot too (a Death Stalker from his car).
             const W = T.gun && MM.WEAPONS[T.gun];
@@ -841,6 +922,7 @@
         case 'tr': this.onTrade(p, m); break;
         case 'gv': this.onGive(p, m); break;
         case 'uo': this.onUseOn(p, m); break;
+        case 'dp': this.onDeathPunch(p, m); break;
         case 'pvp': p.pvp = m.on; this.toast(p, m.on ? 'Fights on: players who also turned fights on can hurt you, and you them.' : 'Fights off: no other player can hurt you.'); break;
         case 'drive': this.onDrive(p, m.d); break;
         case 'orbit': this.onOrbit(p); break;
@@ -1030,7 +1112,7 @@
     toast(p, text) { this.priv(p, { k: 'toast', text }); }
     knock(p, vx, vy, vz) { p.kbUntil = this.time + 1.5; this.priv(p, { k: 'kb', vx: r2(vx), vy: r2(vy), vz: r2(vz) }); }
 
-    scaleOf(p) { return p.tiny ? MM.TINY.scale : this.time < p.fx.shrink ? 0.5 : 1; }
+    scaleOf(p) { return p.tiny ? MM.TINY.scale : (this.time < p.fx.shrink ? 0.5 : 1) * (p.tinyRick ? MM.TINYRICK.scale : 1); }
 
     fxBits(p, now) {
       let b = 0;
@@ -1045,6 +1127,8 @@
       if (now < p.fx.cuff) b |= 1024;
       if (now < p.fx.cloak) b |= 2048;
       if (p.pvp) b |= 4096;
+      if (p.tinyRick) b |= 32768;
+      if (p.dp) b |= 65536;   // a death punch is counting down your steps
       if (p.car) b |= 8192;
       if (p.tiny) b |= 16384;
       return b;
@@ -1055,7 +1139,7 @@
       const now = this.time;
       if (now < p.fx.cuff) return 1;
       const base = p.ship ? p.st.ship.speed * MM.SHIP_BOOST : p.car ? MM.CAR.speed * MM.CAR.boost : p.st.speed * (p.st.fly ? 1.35 : 1) * (p.st.sprint || 1);   // the most you can go: sprinting
-      return base * (p.tiny ? MM.TINY.speed : 1) * (now < p.fx.sprint ? 1.8 : 1) * (now < p.fx.shrink ? 0.75 : 1) * (now < p.fx.guilt ? 0.6 : 1) * (now < p.fx.daze ? 0.5 : 1);
+      return base * (p.tiny ? MM.TINY.speed : 1) * (p.tinyRick && !p.ship && !p.car ? MM.TINYRICK.speed : 1) * (now < p.fx.sprint ? 1.8 : 1) * (now < p.fx.shrink ? 0.75 : 1) * (now < p.fx.guilt ? 0.6 : 1) * (now < p.fx.daze ? 0.5 : 1);
     }
 
     // ----- Movement validation -----
@@ -1072,7 +1156,7 @@
       const moved = Math.hypot(x - p.x, z - p.z);
       const ground = MM.heightAt(p.inst.dimId, x, z);
       const g = p.inst.dim.gravity;
-      const quirk = p.inst.dim.quirk, jv = p.st.jump * (quirk === 'bouncy' ? 1.6 : 1);
+      const quirk = p.inst.dim.quirk, jv = p.st.jump * (quirk === 'bouncy' ? 1.6 : 1) * (p.tinyRick ? MM.TINYRICK.jump : 1);
       // Vertical: you can only rise as fast as your jump (or wings, jetpack, ship, a blast)
       // allows, and never above your reach. Falling is always fine.
       const reach = (p.ship ? 1020 : p.st.fly === 'wings' ? 70 : jv * jv / (2 * g) + 14 + (p.st.fly === 'jet' ? 20 : 0)) + (now < (p.flingUntil || 0) ? 150 : 0) + (quirk === 'swim' || quirk === 'dreamy' ? 90 : 0);
@@ -1199,7 +1283,16 @@
     }
 
     kill(inst, p, src, how) {
+      // Inside an immortality field you pop straight back together.
+      if (MM.inField(inst.dimId, p.x, p.z)) {
+        p.hp = p.maxHp; p.fx.prot = Math.max(p.fx.prot, this.time + 1);
+        inst.ev({ k: 'reform', id: p.id });
+        this.toast(p, pick(['The immortality field put you back together. Again.', 'You died! Briefly. The field fixed it.', 'Splat, then un-splat. Gotta love the field.']));
+        this.dirty(p);
+        return;
+      }
       p.hp = 0; p.dead = true; p.deaths++;
+      p.dp = null;
       p.respawnAt = this.time + MM.RESPAWN_TIME;
       if (p.ship) { p.ship = false; inst.ev({ k: 'ship', id: p.id, on: false }); }
       if (p.car) { p.car = false; inst.ev({ k: 'car', id: p.id, on: false }); inst.ev({ k: 'boom', x: r2(p.x), y: r2(p.y + 0.5), z: r2(p.z), r: 4 }); }   // the car goes up with you
@@ -2201,6 +2294,16 @@
       if (u >= MM.rideDur(R)) { this.endRide(p, true); return; }
       const q = MM.rideAt(R, Math.max(0, u), p.ride.seat);
       p.x = q.x; p.y = q.y; p.z = q.z; p.r = q.yaw; p.a = MM.ANIM.ride; p.lastSt = this.time;
+      // The Whirly Dirly leaves the immortality field for a few seconds. Out there, it counts.
+      if (R.mortal) {
+        const out = !MM.inField(p.inst.dimId, p.x, p.z);
+        if (out !== !!p.ride.out) {
+          p.ride.out = out;
+          this.toast(p, out ? 'You just left the immortality field. You can die out here!' : 'Back inside the field. Immortal again. Phew.');
+          // ...and sometimes a bolt comes loose right then.
+          if (out && Math.random() < 0.2) { const inst = p.inst; this.later(0.8, () => { if (p.ride && p.ride.out && p.inst === inst) { inst.ev({ k: 'boom', x: r2(p.x), y: r2(p.y + 0.5), z: r2(p.z), r: 1.5 }); this.hurtPlayer(inst, p, 30, null, 'whirlydirly'); } }); }
+        }
+      }
     }
     endRide(p, done) {
       const R = MM.RIDE_BY_ID[p.ride.id], inst = p.ride.inst;
@@ -2341,7 +2444,18 @@
       p.cdUse = this.time + 1;
       if (this.labClosed(p, l)) return;
       if (l.rick && !this.rickMay(p, this.earthOfHere(p))) { this.rickRefuse(p, l); return; }
-      if (MM.isAt(l, 'housecon')) { this.priv(p, { k: 'hmenu', own: this.rickOwns(p, this.earthOfHere(p)) }); return; }
+      if (MM.isAt(l, 'housecon')) {
+        // A hacked house: a Rick who may use this console reboots it.
+        const ev = p.inst.event;
+        if (ev && ev.E.house && this.rickMay(p, this.earthOfHere(p))) {
+          for (const o of p.inst.players.values()) { for (const k in ev.E.clear) o.inv[k] = (o.inv[k] || 0) + ev.E.clear[k]; this.dirty(o); }
+          p.inst.endEvent(this.time, p.name + ' rebooted the house. Everyone here gets ' + matText(ev.E.clear) + '.');
+          return;
+        }
+        this.priv(p, { k: 'hmenu', own: this.rickOwns(p, this.earthOfHere(p)) });
+        return;
+      }
+      if (l.tinyrick) { this.onTinyRick(p); return; }
       if (l.car) { this.onCar(p, true); return; }
       if (l.bout) { this.startBout(p); return; }
       const mine = Object.keys(MM.TASKS).filter(t => MM.isAt(l, MM.TASKS[t].at) && MM.taskFor(t, p.arch));
@@ -2376,6 +2490,108 @@
       this.progress(p, 'use', id);
     }
 
+    // ----- Tiny Rick ("Big Trouble in Little Sanchez") -----
+    onTinyRick(p) {
+      if (p.arch !== 'genius') { this.toast(p, 'A teenage Rick clone body. Only a Rick can go in there.'); return; }
+      if (p.tiny || p.ship || p.car) { this.toast(p, 'Not like this.'); return; }
+      p.tinyRick = !p.tinyRick; p.tinyWhisper = 0;
+      p.inst.ev({ k: 'tinyrick', id: p.id, on: p.tinyRick ? 1 : 0 });
+      this.toast(p, p.tinyRick ? 'TINY RICK! A teenage body: smaller, faster, bouncier. Go to Harry Herpson High and talk to the gym coach. Use the vat again to go back.' : 'Back in your old body. Your back hurts again.');
+      this.dirty(p);
+    }
+    // Only Tiny Rick notices: the gym coach is a vampire.
+    feratuReveal(inst, n, p) {
+      inst.ev({ k: 'say', n: n.id, by: p.id, text: 'You figured it out, Tiny Rick. Pity. Nobody will believe a teenager.' });
+      const m = inst.morphNpc(n, 'feratu', { until: this.time + 240 });
+      if (!m) return;
+      m.angry = p.id; m.angryUntil = this.time + 200;
+      inst.ev({ k: 'say', n: m.id, by: p.id, text: 'HSSSSS!' });
+      this.toast(p, 'Coach Feratu is a vampire! Take him down.');
+      // He is back in his gym, looking normal, a few minutes later.
+      this.later(240, () => { if (this.instances.get(inst.key) === inst && ![...inst.npcs.values()].some(x => x.type === 'coachferatu' || x.type === 'feratu')) inst.spawnNpc('coachferatu', true, { at: n.home }); });
+    }
+    feratuDown(inst, by) {
+      for (const o of inst.players.values()) this.toast(o, (by ? by.name : 'Someone') + ' took down Coach Feratu! Gym is cancelled.');
+      this.later(120, () => { if (this.instances.get(inst.key) === inst && ![...inst.npcs.values()].some(x => x.type === 'coachferatu')) inst.spawnNpc('coachferatu', true); });
+    }
+
+    // ----- The Five-Step Death Punch ("Rick Fu Hustle") -----
+    liuSin(p, n, say) {
+      if (p.prog.dpunch) { say(pick(['You know the punch. Use it wisely. Or at least sparingly.', 'Five steps. Never six.', 'Punchy says hello.'])); return; }
+      const want = MM.DEATHPUNCH.cost;
+      p.offer = { n: n.id, dpunch: true, want, get: {}, until: this.time + 25 };
+      say('I can teach you the Five-Step Death Punch. Strike, and your enemy drops dead after five steps. ' + matText(want) + '.');
+      this.priv(p, { k: 'offer', n: n.id, name: n.name, dpunch: 1, want, get: {} });
+    }
+    onDeathPunch(p, m) {
+      const D = MM.DEATHPUNCH, now = this.time, inst = p.inst;
+      if (!p.prog.dpunch || p.dead || p.ship || p.car || p.ride || MM.helpless(p.arch, p.prog.up) || now < (p.cdDp || 0)) return;
+      p.r = m.r;
+      const fx = Math.sin(p.r), fz = Math.cos(p.r), reach = D.reach * this.scaleOf(p) + 0.6;
+      const inFront = (x, z, r) => { const dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz); return d < reach + r && (d < 0.8 || (dx * fx + dz * fz) / d > 0.35) ? d : Infinity; };
+      let best = null, bd = Infinity;
+      for (const o of inst.players.values()) {
+        if (o === p || o.dead || o.dp || !this.canHurt(p, o) || now < o.fx.prot) continue;
+        const d = inFront(o.x, o.z, 0.5); if (d < bd) { bd = d; best = o; }
+      }
+      for (const n of inst.npcs.values()) {
+        if (n.dp || n.cast || (n.owner === p.id && n.ownerUntil > now) || n.T.speed <= 0) continue;
+        const d = inFront(n.x, n.z, n.T.r); if (d < bd) { bd = d; best = n; }
+      }
+      p.cdDp = now + (best ? D.cd : 1.5);
+      inst.ev({ k: 'dpunch', id: p.id, v: best ? (best.T ? 0 : best.id) : 0, n: best && best.T ? best.id : 0 });
+      if (!best) { this.priv(p, { k: 'dpcd', t: 1.5 }); return; }
+      this.priv(p, { k: 'dpcd', t: D.cd });
+      best.dp = { steps: D.steps, by: p.id, until: now + D.last, lx: best.x, lz: best.z, acc: 0 };
+      if (best.T) { inst.dpSet.add(best.id); inst.hurtNpc(best, D.dmg, p); }
+      else {
+        this.hurtPlayer(inst, best, D.dmg, p, 'deathpunch');
+        this.priv(best, { k: 'dp', s: D.steps, by: p.name });
+        this.dirty(best);
+      }
+      this.toast(p, 'Five-Step Death Punch! ' + best.name + ' has five steps left.');
+    }
+    // Count their steps: every stride is one less. At none, they drop. Stand still long enough
+    // and it wears off.
+    stepCount(t, now) {
+      const d = Math.hypot(t.x - t.dp.lx, t.z - t.dp.lz);
+      t.dp.lx = t.x; t.dp.lz = t.z;
+      if (d < 3) t.dp.acc += d;   // (a portal or a door is not walking)
+      if (t.dp.acc < MM.DEATHPUNCH.stride) return 0;
+      t.dp.acc -= MM.DEATHPUNCH.stride;
+      return --t.dp.steps > 0 ? 1 : 2;
+    }
+    tickPunched(p, now) {
+      const inst = p.inst;
+      if (p.dead || !inst) { p.dp = null; return; }
+      if (now > p.dp.until) { p.dp = null; this.toast(p, 'You stood still long enough. The death punch wore off.'); this.dirty(p); return; }
+      const r = this.stepCount(p, now);
+      if (!r) return;
+      inst.ev({ k: 'dpstep', id: p.id, s: p.dp.steps });
+      if (r === 2) {
+        const by = this.players.get(p.dp.by);
+        p.dp = null;
+        inst.ev({ k: 'boom', x: r2(p.x), y: r2(p.y + 1), z: r2(p.z), r: 1.2 });
+        p.hp = 0; this.kill(inst, p, by && by !== p ? by : null, 'deathpunch');
+        this.dirty(p);
+      }
+    }
+    tickPunchedNpcs(inst) {
+      const now = this.time;
+      for (const id of inst.dpSet) {
+        const n = inst.npcs.get(id);
+        if (!n || !n.dp || now > n.dp.until) { inst.dpSet.delete(id); if (n) n.dp = null; continue; }
+        const r = this.stepCount(n, now);
+        if (!r) continue;
+        inst.ev({ k: 'dpstep', n: n.id, s: n.dp.steps });
+        if (r === 2) {
+          const by = this.players.get(n.dp.by);
+          inst.dpSet.delete(id); n.dp = null;
+          inst.hurtNpc(n, n.hp + 1, by && by.inst === inst ? by : null);
+        }
+      }
+    }
+
     // ----- Talking to locals -----
     onTalk(p, nid) {
       const inst = p.inst, now = this.time;
@@ -2402,6 +2618,8 @@
           return;
         }
       }
+      if (n.type === 'coachferatu' && p.tinyRick) { this.feratuReveal(inst, n, p); return; }
+      if (n.type === 'liusin') { this.liuSin(p, n, say); return; }
       // A Rick offers a Morty the Muscle Memory Serum (MM.ARM).
       if (n.cast && n.cast.arch === 'genius' && p.arch === 'sidekick' && !p.prog.arm && !p.offer) {
         p.offer = { n: n.id, serum: true, want: {}, get: {}, until: now + 25 };
@@ -2490,6 +2708,15 @@
       p.offer = null;
       if (!o || this.time > o.until || !a) return;
       if (o.serum) { if (p.arch === 'sidekick' && !p.prog.arm) this.armUp(p); return; }
+      if (o.dpunch) {
+        if (p.prog.dpunch) return;
+        for (const k in o.want) if ((p.inv[k] || 0) < o.want[k]) { this.toast(p, 'Liu Sin does not teach for free. You need ' + matText(o.want) + '.'); return; }
+        for (const k in o.want) p.inv[k] -= o.want[k];
+        p.prog.dpunch = 1; p.progDirty = true; p.saveDirty = true;
+        this.toast(p, 'You learned the Five-Step Death Punch! Press 8 (or the fist button) right next to someone. Five steps later, they drop.');
+        this.dirty(p);
+        return;
+      }
       if (o.ask) { const by = this.players.get(o.from); if (!this.near(by, p) || !(by.inv['q:' + o.ask] > 0)) { this.toast(p, 'Too late: they are gone, or it is gone.'); return; } this.useOnNow(by, p, o.ask); return; }
       for (const k in o.want) if ((p.inv[k] || 0) < o.want[k]) { this.toast(p, 'You do not have enough ' + MM.MATERIALS[k].name + '.'); return; }
       for (const k in o.want) p.inv[k] -= o.want[k];
@@ -2519,7 +2746,7 @@
       const pr = p.prog, wall = this.wall(), tasks = {};
       for (const t of p.A.life.daily) tasks[t] = Math.max(0, Math.ceil(((pr.tasks[t] || 0) - wall) / 1000));
       return { t: 'pg', up: pr.up, step: pr.step, grants: pr.grants, cnt: pr.cnt, errands: pr.errands, tasks, title: pr.title || '', st: p.st, found: pr.found || [],
-        stamps: pr.stamps || [], rides: pr.rides || {}, fish: pr.fish || {}, best: pr.best || {}, eggs: pr.eggs || [], arm: pr.arm || null, armDone: pr.armDone || 0 };
+        stamps: pr.stamps || [], rides: pr.rides || {}, fish: pr.fish || {}, best: pr.best || {}, eggs: pr.eggs || [], arm: pr.arm || null, armDone: pr.armDone || 0, dpunch: pr.dpunch ? 1 : 0 };
     }
 
     // ----- The main loop -----
@@ -2542,6 +2769,8 @@
         if (p.bout) this.tickBout(p, dt);
         if (p.trade && p.trade.a === p && this.tickN % 30 === 0 && !this.near(p.trade.a, p.trade.b)) this.tradeEnd(p.trade, 'You moved too far apart.');
         if (p.prog.arm && !p.dead) this.tickArm(p, now);
+        if (p.dp) this.tickPunched(p, now);
+        if (p.tinyRick && !p.dead && now >= (p.tinyWhisper || 0)) { if (p.tinyWhisper) this.toast(p, pick(MM.TINYRICK_WHISPERS)); p.tinyWhisper = now + 35 + Math.random() * 25; }
         if (p.arch === 'mutant' && !p.dead && p.hp < p.maxHp && this.tickN % 10 === 0) { p.hp = Math.min(p.maxHp, p.hp + 1); this.dirty(p); }
         // World rules: the living flesh heals you; the toxic air hurts (never below a tenth).
         const q = p.inst && p.inst.dim.quirk;

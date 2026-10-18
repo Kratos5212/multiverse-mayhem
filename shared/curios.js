@@ -12,6 +12,7 @@
     // Made, not found (MM.RECIPES): how: where they come from. on: can be used on someone else
     // ('ask': they must say yes).
     miniaturizer: { name: 'Miniaturizer', icon: '🔬', color: '#7ad8ff', dims: [], w: 0, use: 'tiny', on: 'ask', how: 'Built at Rick\'s workbench', desc: 'Shrinks you to the size of a bug. Use it again to grow back. Tiny, you can go into the Mega Gargantuans\' land.', text: '' },
+    fieldvial: { name: 'Bottled immortality field', icon: '🫙', color: '#bfe4ff', dims: ['resort'], w: 2, use: 'heal', eat: true, desc: 'A little of the resort\'s immortality field, in a jar. It does not make you immortal. It does fix you right up.' },
     gargflag: { name: 'Mega Gargantuan flag', icon: '🚩', color: '#3a8a5a', dims: ['gargantua'], w: 2, desc: 'The national flag of Mega Gargantua. Full size: about as big as a grain of rice.', text: 'You wave it. Somewhere, a very small anthem plays.' },
     armserum: { name: 'Muscle Memory Serum', icon: '💉', color: '#ff7a5a', dims: [], w: 0, use: 'armserum', on: 'ask', eat: true, how: 'A Rick makes it at his workbench', desc: 'A dead warrior\'s arm, in a syringe. Only works on a Morty.', text: '' },
     szechuan:   { name: 'Szechuan Sauce', icon: '🥡', color: '#c8302a', dims: ['suburbia', 'downtown', 'dc', 'smithhouse', 'shoneysin'], w: 2, use: 'feast', eat: true, desc: 'The McNugget sauce from 1998. Rick would go to war for it.', text: "It's real. It's really real. You feel unstoppable." },

@@ -53,6 +53,7 @@ The repository's `render.yaml` has a `multiverse-mayhem` service. On [render.com
 | B | SHIP | Board or leave your ship (Space up, Ctrl down, Shift boost; keep climbing for space) |
 | L | LIGHT | Lightspeed, out in space: to another world, dimension or timeline |
 | 1 2 3 4 5 6 7 | GADGET | Grenade, turret, shrink ray, Meeseeks Box, Time Crystal, freeze ray, Magic Chalk (the last two kinds: Ricks and Evil Morty) |
+| 8 | Fist button | The Five-Step Death Punch (once Liu Sin in Downtown has taught you) |
 | C | Build slot | Workbench |
 | H | Garage console | Rick: "House, ..." (the defences of your own house, from anywhere near it) |
 | Enter | Chat button | Chat with the whole multiverse |
@@ -229,6 +230,15 @@ Walk up to another player and press **F**: trade, give, invite them to your team
 **Tiny.** Build a **Miniaturizer** at Rick's workbench (anyone can) and use it to shrink to the size of a bug. Everything is huge, and you are slow and hit softly. Use it again to grow back, or use it on a friend who lets you.
 
 Tiny, you fit into the **Mega Gargantuans'** land: a whole civilisation on a mossy rock in the woods east of the suburb, on every Earth ("The Rickchurian Mortydate"). Inside you're their size. There's a proud little city with domes and towers, giant leaves, pebbles and mushrooms, ants the size of cars, and the Great Hall, where you can sign a peace treaty. Walk out and you're tiny again.
+
+### From the episodes (batch 2)
+
+- **The house gets hacked** ("A Ricker Runs Through It"). A world event on every Earth: the Smith house's lawn turrets and drones turn on everyone, family included. Smash them all and everyone there gets paid. Or a Rick who may use the house console reboots it.
+- **Love Potion Outbreak** ("Rick Potion #9"). One player is Patient Zero and every lovestruck local comes for them. Their hugs don't hurt, but they hold on. A minute later the cure turns them into mantis people, who go for everyone. A minute after that, Cronenbergs.
+- **Tiny Rick** ("Big Trouble in Little Sanchez"). A Rick climbs into the teenage clone vat in the secret lab and comes out Tiny Rick: smaller, faster and bouncier. Now and then the old Rick whispers *let me out* from inside. Talk to the gym coach at Harry Herpson High as Tiny Rick and **Coach Feratu** shows what he is. Use the vat again to go back.
+- **The Immortality Field Resort** ("The Whirly Dirly Conspiracy"). A holiday world under a glassy dome where nothing can die: you just pop back together. Outside the dome, death works normally. The **Whirly Dirly** coaster loops out past the edge for a few seconds. Out there you're mortal, and sometimes a bolt comes loose. The hotel has a spa and a roof to jump off.
+- **Space Beth** is playable ("Star Mort Rickturn of the Jerri"). She's a freedom fighter from the Alien Bazaar with her own ship from the start, a rifle and a war with the Federation: smuggling, sabotage at the Bureau of Forms, and Federation Guards to take down. Her Grapple Strike slams down on everyone around her.
+- **The Five-Step Death Punch** ("Rick Fu Hustle"). Liu Sin, in Downtown, teaches it for 25 Schmeckles. Press **8** (or the fist button) right next to someone. Five steps later they drop. Standing still for a minute makes it wear off. It works on locals too, and on players when you both have fights on.
 
 ### Teams
 

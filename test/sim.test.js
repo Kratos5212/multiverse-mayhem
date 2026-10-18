@@ -1395,3 +1395,161 @@ test('the Miniaturizer: shrink, walk into the tiny land through the rock in the 
   assert.ok(!p.tiny, 'grown back');
   assert.strictEqual(p.inv['q:miniaturizer'], 1, 'kept');
 });
+
+// Force one world event to start now, here.
+function startEvent(host, inst, id) {
+  const list = MM.EVENTS.suburbia, saved = list.slice();
+  list.length = 0; list.push(saved.find(E => E.id === id));
+  inst.event = null; inst.nextEvent = 0;
+  run(host, MM.TICK * 2);
+  list.length = 0; list.push(...saved);
+  assert.strictEqual(inst.event && inst.event.E.id, id, id + ' started');
+  return inst.event;
+}
+
+test('the house gets hacked: its turrets shoot everyone until smashed, or a Rick reboots it', () => {
+  const host = new MM.Host();
+  const r = join(host, 'genius', { dim: 'suburbia', home: 'C-137' });
+  host.travel(r.p, 'suburbia'); run(host, 0.3);
+  let ev = startEvent(host, r.p.inst, 'hoghack');
+  const bots = ev.mine.map(id => r.p.inst.npcs.get(id));
+  assert.ok(bots.length === 7 && bots.every(n => n && n.T.hostile && n.T.gun === 'housegun'));
+  assert.ok(bots.filter(n => n.type === 'housebot').every(n => MM.inHouse(n.x, n.z) || Math.hypot(n.x - MM.HOUSE.x, n.z - MM.HOUSE.z) < MM.HOUSE.r + 2), 'on the lawn');
+  // Rick C-137 reboots his own house: over, and everyone is paid.
+  const k0 = r.p.inv.k || 0;
+  near(host, r.c, r.p, 'housecon'); run(host, 1.2);
+  host.message(r.c, '{"t":"use","l":"housecon"}'); run(host, 0.1);
+  assert.ok(!r.p.inst.event, 'rebooted');
+  assert.ok(bots.every(n => !r.p.inst.npcs.has(n.id)), 'the turrets are gone');
+  assert.strictEqual(r.p.inv.k, k0 + 6);
+  // Or smash them all.
+  ev = startEvent(host, r.p.inst, 'hoghack');
+  for (const id of ev.mine) { const n = r.p.inst.npcs.get(id); r.p.inst.hurtNpc(n, 999, r.p); }
+  run(host, 0.6);
+  assert.ok(!r.p.inst.event, 'cleared');
+});
+
+test('the love potion: everyone wants Patient Zero, then mantis people, then Cronenbergs', () => {
+  const host = new MM.Host();
+  const a = join(host, 'surgeon', { dim: 'suburbia', home: 'C-137' });
+  host.travel(a.p, 'suburbia'); run(host, 0.3);
+  const ev = startEvent(host, a.p.inst, 'love');
+  assert.strictEqual(ev.pz, a.p.id, 'Patient Zero');
+  assert.ok(a.c.sent.some(m => m.t === 'pv' && m.l.some(e => e.k === 'patient')));
+  const inst = a.p.inst;
+  const lovers = () => ev.mine.map(id => inst.npcs.get(id)).filter(Boolean);
+  assert.strictEqual(lovers().length, 9);
+  // They come for you, and hug (no damage, but it slows you down).
+  const n = lovers()[0];
+  n.x = a.p.x + 1; n.z = a.p.z; a.p.fx.prot = 0;
+  const hp = a.p.hp;
+  run(host, 1.5);
+  assert.ok(lovers().every(m => m.angry === a.p.id), 'all after Patient Zero');
+  assert.strictEqual(a.p.hp, hp, 'hugs do not hurt');
+  assert.ok(a.p.fx.daze > host.time, 'but they hold on');
+  ev.start -= 60; run(host, 0.2);
+  assert.ok(lovers().length === 9 && lovers().every(m => m.type === 'mantisman'), 'mantis people');
+  ev.start -= 60; run(host, 0.2);
+  assert.ok(lovers().every(m => m.type === 'meatblob'), 'Cronenbergs');
+  ev.until = host.time; run(host, 0.2);
+  assert.ok(!inst.event && ev.mine.every(id => !inst.npcs.has(id)), 'over, and they are gone');
+});
+
+test('Tiny Rick: a Rick uses the vat, is small and fast, and unmasks Coach Feratu', () => {
+  const host = new MM.Host();
+  const r = join(host, 'genius', { dim: 'suburbia', home: 'C-137' });
+  const m = join(host, 'sidekick', { dim: 'suburbia', home: 'C-138' });
+  near(host, m.c, m.p, 'tinyvat'); run(host, 1.2);
+  host.message(m.c, '{"t":"use","l":"tinyvat"}');
+  assert.ok(!m.p.tinyRick, 'only a Rick');
+  near(host, r.c, r.p, 'tinyvat'); run(host, 1.2);
+  const speed = host.speedOf(r.p);
+  host.message(r.c, '{"t":"use","l":"tinyvat"}');
+  assert.ok(r.p.tinyRick && host.scaleOf(r.p) < 0.7 && host.speedOf(r.p) > speed, 'TINY RICK!');
+  assert.ok(host.fxBits(r.p, host.time) & 32768);
+  // To school.
+  host.travel(r.p, 'schoolin'); run(host, 0.3);
+  const coach = [...r.p.inst.npcs.values()].find(n => n.type === 'coachferatu');
+  assert.ok(coach, 'the coach is at school');
+  host.teleport(r.p, coach.x + 1, coach.y, coach.z); run(host, 1.3);
+  host.message(r.c, JSON.stringify({ t: 'talk', n: coach.id }));
+  const vamp = [...r.p.inst.npcs.values()].find(n => n.type === 'feratu');
+  assert.ok(vamp && vamp.T.hostile && vamp.angry === r.p.id, 'a vampire!');
+  r.p.inst.hurtNpc(vamp, 9999, r.p);
+  assert.ok(!r.p.inst.npcs.has(vamp.id));
+  // Back in the old body.
+  near(host, r.c, r.p, 'tinyvat'); run(host, 1.2);
+  host.message(r.c, '{"t":"use","l":"tinyvat"}');
+  assert.ok(!r.p.tinyRick && host.scaleOf(r.p) === 1);
+});
+
+test('the immortality field: nothing dies inside the dome; outside, and on the Whirly Dirly, it can', () => {
+  const host = new MM.Host();
+  const { c, p } = join(host, 'surgeon', { dim: 'resort' });
+  host.travel(p, 'resort'); run(host, 0.3);
+  host.teleport(p, 5, MM.heightAt('resort', 5, 5), 5); p.fx.prot = 0;
+  host.hurtPlayer(p.inst, p, 9999, null, 'test');
+  assert.ok(!p.dead && p.hp === p.maxHp, 'popped back together');
+  assert.ok(p.inst.out.some(e => e.k === 'reform'));
+  const n = [...p.inst.npcs.values()].find(x => MM.inField('resort', x.x, x.z));
+  p.inst.hurtNpc(n, 9999, p);
+  assert.ok(p.inst.npcs.has(n.id) && n.hp === n.T.hp, 'so do the guests');
+  host.teleport(p, 110, MM.heightAt('resort', 110, 0), 0); p.fx.prot = 0;
+  host.hurtPlayer(p.inst, p, 9999, null, 'test');
+  assert.ok(p.dead, 'outside the field you die');
+  // The Whirly Dirly goes out past the edge.
+  const R = MM.RIDE_BY_ID.whirlydirly;
+  const pts = Array.from({ length: 60 }, (_, i) => MM.rideAt(R, MM.rideDur(R) * i / 60, 0));
+  assert.ok(pts.some(q => !MM.inField('resort', q.x, q.z)) && pts.some(q => MM.inField('resort', q.x, q.z)));
+  assert.ok(MM.TASKS.spa && MM.CURIOS.fieldvial);
+});
+
+test('Space Beth is playable: her own ship, a rifle, and a war with the Federation', () => {
+  const host = new MM.Host();
+  const { p } = join(host, 'spacebeth', {});
+  assert.strictEqual(p.inst.dimId, 'bazaar');
+  assert.ok(p.st.ship, 'starts with her ship');
+  assert.strictEqual(p.A.weapon, 'rifle');
+  assert.deepStrictEqual(MM.castOf('bazaar'), ['spacebeth']);
+  assert.ok(MM.taskFor('sabotage', 'spacebeth') && !MM.taskFor('sabotage', 'joe'));
+  assert.ok(MM.CANON.spacebeth && MM.ARCH_IDS.includes('spacebeth'));
+});
+
+test('the Five-Step Death Punch: learn it from Liu Sin, and whoever you hit drops after five steps', () => {
+  const host = new MM.Host();
+  const a = join(host, 'surgeon', { dim: 'downtown', home: 'C-137' });
+  const b = join(host, 'joe', { dim: 'downtown', home: 'C-137' });
+  host.travel(a.p, 'downtown'); host.travel(b.p, 'downtown'); run(host, 0.3);
+  const liu = [...a.p.inst.npcs.values()].find(n => n.type === 'liusin');
+  assert.ok(liu, 'Liu Sin is in Downtown');
+  host.teleport(a.p, liu.x + 1, liu.y, liu.z); run(host, 1.3);
+  a.p.inv.k = 30;
+  host.message(a.c, JSON.stringify({ t: 'talk', n: liu.id }));
+  assert.ok(a.p.offer && a.p.offer.dpunch);
+  host.message(a.c, '{"t":"ans","a":1}');
+  assert.ok(a.p.prog.dpunch && a.p.inv.k === 5, 'learned');
+  assert.strictEqual(MM.cleanProgress('surgeon', { dpunch: 1 }).dpunch, 1, 'and saved');
+  // Punch Jerry (both fighting).
+  a.p.pvp = b.p.pvp = true; b.p.fx.prot = 0;
+  host.teleport(a.p, 40, MM.heightAt('downtown', 40, 40), 40);
+  host.teleport(b.p, 40, MM.heightAt('downtown', 40, 41.5), 41.5);
+  run(host, 0.2);
+  host.message(a.c, JSON.stringify({ t: 'dp', r: 0 }));
+  assert.ok(b.p.dp && b.p.dp.steps === 5, 'punched');
+  assert.ok(host.fxBits(b.p, host.time) & 65536);
+  // Four steps: still standing. The fifth: down.
+  let z = 41.5;
+  const step = () => { z += 0.95; host.message(b.c, JSON.stringify({ t: 'st', x: 40, y: MM.heightAt('downtown', 40, z), z, r: 0, a: 1, ep: b.p.ep })); run(host, 0.2); };
+  for (let i = 0; i < 4; i++) step();
+  assert.ok(!b.p.dead && b.p.dp.steps === 1, 'one step left');
+  step();
+  assert.ok(b.p.dead, 'dead');
+  assert.ok(a.p.kills >= 1);
+  // NPCs too.
+  const n = [...a.p.inst.npcs.values()].find(x => x.type === 'neighbor');
+  host.teleport(a.p, n.x, n.y, n.z - 1.2); a.p.cdDp = 0; run(host, 0.05);
+  host.message(a.c, JSON.stringify({ t: 'dp', r: 0 }));
+  assert.ok(n.dp, 'punched a neighbour');
+  for (let i = 0; i < 5; i++) { n.x += 0.95; run(host, 0.05); }
+  assert.ok(!a.p.inst.npcs.has(n.id), 'they drop after five steps');
+});

@@ -27,8 +27,9 @@
         { id: 'class', name: "Mr. Goldenfold's classroom", x: 10, y: 7, alias: 'school' },
         { id: 'principal', name: "Principal Vagina's office", x: 50, y: 7 },
         { id: 'cafeteria', name: 'Cafeteria', x: 15, y: 28 },
+        { id: 'gym', name: 'The gym (Coach Feratu, night classes only)', x: 45, y: 28 },
       ],
-      npc: [['schoolkid', 6], ['neighbor', 2]],
+      npc: [['schoolkid', 6], ['neighbor', 2], ['coachferatu', 1]],
     },
     {
       id: 'hospitalin', outside: 'hospital', name: 'Horse Hospital (inside)', style: 'modern', scale: 1.35,

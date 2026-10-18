@@ -38,6 +38,10 @@
     // ----- Planet Gear: the Great Gear Wheel -----
     { id: 'gearwheel', dim: 'gearworld', name: 'The Great Gear Wheel', kind: 'wheel', seats: 16, station: [-44, 26, Math.PI / 2], exit: [-41, 24],
       wheel: { x: -50, z: 30, h: 15, r: 12, yaw: Math.PI / 2, n: 8, rev: 44 } },
+    // ----- The Immortality Field Resort: the Whirly Dirly loops out past the field -----
+    { id: 'whirlydirly', dim: 'resort', name: 'The Whirly Dirly', kind: 'coaster', closed: true, seats: 8, every: 12, mortal: true,
+      station: [41, 2, -Math.PI / 2], exit: [37, -4],
+      pts: [[44, 1.5, 8], [44, 2, -6], [50, 10, -20], [62, 22, -28], [76, 26, -24], [88, 14, -12], [94, 8, 4], [90, 18, 18], [78, 24, 24], [66, 10, 22], [56, 4, 18], [48, 1.5, 16]] },
     // ----- Every Earth: the Ferris wheel on the beach -----
     { id: 'pierwheel', dim: 'suburbia', name: 'The Beach Wheel', kind: 'wheel', seats: 16, station: [60, 311, 0], exit: [64, 309],
       wheel: { x: 60, z: 318, h: 15, r: 12, yaw: 0, n: 8, rev: 46 } },

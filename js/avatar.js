@@ -623,6 +623,7 @@
     meeseeks:   { slouch: -0.06, bounce: 1.6, swing: 1.0, stride: 1.0, jitter: 0, carry: 0.4 },
     evilmorty:  { slouch: 0.02, bounce: 0.7, swing: 0.35, stride: 0.9, jitter: 0, carry: 0.8 },
     picklerick: { slouch: 0, bounce: 1.4, swing: 1.0, stride: 1.2, jitter: 0, carry: 0.5 },
+    spacebeth:  { slouch: -0.04, bounce: 0.8, swing: 0.5, stride: 1.05, jitter: 0, carry: 0.9 },
     squanchy:   { slouch: 0.08, bounce: 1.1, swing: 0.7, stride: 1.0, jitter: 0.2, carry: 0.5 },
   };
   function mkRag(dx, dz, power, av) {
@@ -818,7 +819,7 @@
     av.body.scale.set(1 + sq * 0.6, 1 - sq, 1 + sq * 0.6);
     // Effects
     const fx = st.fx || 0;
-    const sc = ((fx & 16384) ? MM.TINY.scale : (fx & 8) ? 0.5 : 1) * (av.baseScale || 1);   // tiny (the Miniaturizer), or shrunk
+    const sc = ((fx & 16384) ? MM.TINY.scale : ((fx & 8) ? 0.5 : 1) * ((fx & 32768) ? MM.TINYRICK.scale : 1)) * (av.baseScale || 1);   // tiny (the Miniaturizer), shrunk, or Tiny Rick   // tiny (the Miniaturizer), or shrunk
     av.root.scale.setScalar(lerp(av.root.scale.x, sc, Math.min(1, dt * 6)));
     av.root.visible = !(fx & 32) || Math.floor(av.t * 8) % 2 === 0 || dead;
     if (fx & 1) {

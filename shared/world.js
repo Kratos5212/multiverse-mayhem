@@ -187,6 +187,17 @@
       props: [['bigleaf', 14], ['bigpebble', 10], ['bigmushroom', 8]], npc: [['gargantuan', 14], ['giantant', 5]], pickups: { c: 6, s: 6 }, mat: 's',
     },
     {
+      // "The Whirly Dirly Conspiracy": a resort inside an immortality field. Nothing can die
+      // inside the dome (you just pop back together); outside it, everything still can. The
+      // Whirly Dirly's track loops out past the edge for a few seconds.
+      id: 'resort', flat: 90, name: 'Immortality Field Resort', code: 'IF-5', seed: 3535, gravity: 24, amp: 2, scale: 0.012, bound: 150,
+      field: { x: 0, z: 0, r: 72 },
+      blurb: 'A luxury resort inside an immortality field. Nobody can die here, so the guests do whatever they want. Just stay inside the dome.',
+      sky: ['#48b4ff', '#e4f6ff'], fog: '#cdeeff', fogFar: 260, sun: '#fffbe8', ambient: '#bfe4ff',
+      ground: ['#e6d6a0', '#7ccc6c', '#d8c88e'], accent: '#ff7ad0',
+      props: [['palm', 30], ['sunlounger', 18], ['partylight', 10], ['flowerbed', 12]], npc: [['resortguest', 14], ['resortstaff', 4]], pickups: { k: 8, p: 6 }, mat: 'k',
+    },
+    {
       id: 'microverse', flat: 125, name: 'The Microverse', code: 'MV-1', seed: 5775, gravity: 22, amp: 3, scale: 0.014,
       blurb: 'A tiny universe inside Rick\'s car battery. The locals stomp on gooble boxes to make power. They think it\'s their idea.',
       sky: ['#3aa0ff', '#c8f0ff'], fog: '#c0e8ff', fogFar: 230, sun: '#ffffff', ambient: '#a8d8ff',
@@ -333,7 +344,7 @@
       sky: ['#6fb8f0', '#e2f2ff'], fog: '#d4e6f4', fogFar: 240, sun: '#fff4dc', ambient: '#a8c4e0',
       ground: ['#8a9a7a', '#96a684', '#7e8e70'], accent: '#ffffff',
       props: [], spawn: { x: 0, z: 8, spread: 6 },
-      npc: [['neighbor', 12], ['schoolkid', 3], ['cop', 4], ['crimelord', 1, 62, 52], ['crimelord', 1, 78, 50], ['crimelord', 1, 64, 68]], pickups: { s: 20, k: 3 }, mat: 's',
+      npc: [['neighbor', 12], ['schoolkid', 3], ['cop', 4], ['crimelord', 1, 62, 52], ['crimelord', 1, 78, 50], ['crimelord', 1, 64, 68], ['liusin', 1, 36, -4]], pickups: { s: 20, k: 3 }, mat: 's',
     },
     {
       id: 'dc', region: 'earth', flat: 172, name: 'Earth: Washington, D.C.', code: 'C-137', seed: 1776, gravity: 24, amp: 1, scale: 0.01,
@@ -730,6 +741,7 @@
     { id: 'uranus', name: 'Uranus', icon: '🧊', prime: 'uranus', solar: true, blurb: 'Nobody lives here.' },
     { id: 'neptune', name: 'Neptune', icon: '🔱', prime: 'neptune', solar: true, blurb: 'An ocean planet, and the god it is named after.' },
     { id: 'pluto', name: 'Pluto', icon: '🍄', prime: 'pluto', solar: true, blurb: 'Is it a planet? Do NOT ask a Plutonian that.' },
+    { id: 'resort', name: 'Immortality Field Resort', icon: '🏝️', prime: 'resort', unique: true, blurb: 'A holiday planet where nobody can die. Inside the dome.' },
     { id: 'beyond', name: 'Beyond the Curve', icon: 'Ω', prime: 'beyond', realm: true, unique: true, blurb: 'Outside the Central Finite Curve. There is only one of it, by definition.' },
   ];
   // Other timelines, as [id, of (the dimension), name, code, blurb, look].
@@ -950,6 +962,8 @@
     bigleaf:     { r: 3.2, h: 1.2, hp: 1e9, drop: {}, fixed: true },
     bigpebble:   { r: 2.6, h: 3.2, hp: 1e9, drop: {}, fixed: true },
     bigmushroom: { r: 2.4, h: 7, hp: 160, drop: { m: 1 } },
+    palm:        { r: 0.4, h: 7, hp: 50, drop: { s: 1 } },
+    sunlounger:  { r: 0.9, h: 0.8, hp: 20, drop: { s: 1 } },
     microdome:   { r: 3.0, h: 4, hp: 120, drop: { c: 2 } },
     cityblock:   { r: 4.5, h: 16, hp: 400, drop: { s: 4, c: 1 } },
     unitystatue: { r: 2.0, h: 9, hp: 300, drop: { k: 3 } },
@@ -1360,6 +1374,45 @@
       talk: ['Welcome to Mega Gargantua! We are the Mega Gargantuans. The name is aspirational.', 'You are tiny too? Then you are our size. Welcome, giant!', 'Beware the ants. They are the size of houses. They are also the size of ants.', 'Our president will sign any treaty that comes with a selfie.', 'Last week a human stepped on the eastern district. We rebuilt by Tuesday.'],
       moods: { line: 55, gift: 12, trade: 10, errand: 8, buff: 8, dance: 4, angry: 3 } },
     giantant: { name: 'Giant Ant', hp: 70, speed: 4.8, hostile: true, dmg: 10, drop: { s: 2, m: 1 }, r: 1.1, h: 1.2 },
+    // ----- Batch 2 -----
+    // "A Ricker Runs Through It": somebody hacked the Smith house. Its lawn turrets and its
+    // drones fire on everyone, family included, until they are smashed (or a Rick reboots it).
+    housebot: { name: 'Hacked Lawn Turret', hp: 60, speed: 0, hostile: true, dmg: 0, drop: { s: 3 }, r: 0.7, h: 1.6, gun: 'housegun', aggro: 28, leash: 999 },
+    housedrone: { name: 'Hacked House Drone', hp: 35, speed: 6, hostile: true, dmg: 0, drop: { s: 2, c: 1 }, r: 0.6, h: 0.6, fly: 4, gun: 'housegun', aggro: 28, leash: 60 },
+    // "Rick Potion #9": everyone falls in love with Patient Zero, then turns into a mantis
+    // person, then into a Cronenberg. They only want the one person.
+    lover: { name: 'Lovestruck Local', hp: 40, speed: 5.2, hostile: true, dmg: 0, hug: true, ring: true, leash: 999, aggro: 999, drop: { p: 1 }, r: 0.6, h: 1.8,
+      human: { unarmed: true, species: ['human'], top: ['polo', 'sweater', 'tshirt'], acc: ['none'], eyes: ['wide'], colors: { topColor: '#ff7ab8' } },
+      names: ['Lovestruck Gary', 'Lovestruck Brenda', 'Lovestruck Doug', 'Lovestruck Pam', 'Lovestruck Todd', 'Lovestruck Marcy'] },
+    mantisman: { name: 'Mantis Person', hp: 60, speed: 5.6, hostile: true, dmg: 9, drop: { g: 2 }, r: 0.6, h: 2.0, aggro: 22,
+      human: { unarmed: true, species: ['insect'], top: ['none'], acc: ['none'], eyes: ['wide'], skin: '#7ac84a', colors: { pantsColor: '#4a8a2a', shoeColor: '#3a6a1a' } } },
+    // "Big Trouble in Little Sanchez": the school's gym coach is a vampire. Only Tiny Rick
+    // notices (talk to him as Tiny Rick).
+    coachferatu: { name: 'Coach Feratu', hp: 80, speed: 2.4, hostile: false, dmg: 0, drop: { s: 2 }, r: 0.6, h: 1.9,
+      human: { unarmed: true, species: ['human'], top: ['tshirt'], acc: ['none'], eyes: ['sleepy'], skin: '#d6d4e4', look: { hair: 'slick', hairColor: '#1a1a22', topColor: '#7a1a2a', shirtColor: '#7a1a2a', pantsColor: '#2a2a3a', mouth: 'grin', height: 1.25 } },
+      names: ['Coach Feratu'],
+      talk: ['Drop and give me twenty. I will watch from the shade.', 'Gym class is at night this semester. For your health.', 'I do not need a mirror to look this good.', 'Garlic is not allowed in my gym. School policy.'],
+      moods: { line: 80, buff: 10, angry: 10 } },
+    feratu: { name: 'Coach Feratu (vampire)', hp: 220, speed: 6.4, hostile: true, dmg: 14, drop: { k: 12, m: 1 }, r: 0.6, h: 2.0, leash: 999, aggro: 40,
+      human: { unarmed: true, species: ['human'], top: ['tshirt'], acc: ['none'], eyes: ['wide'], skin: '#c8c4dc', look: { hair: 'slick', hairColor: '#1a1a22', topColor: '#7a1a2a', shirtColor: '#7a1a2a', pantsColor: '#2a2a3a', mouth: 'open', brow: 'angry', height: 1.3 } } },
+    // "Rick Fu Hustle": a kung fu master in Downtown who teaches the Five-Step Death Punch.
+    liusin: { name: 'Liu Sin', hp: 400, speed: 0.8, hostile: false, dmg: 0, drop: {}, r: 0.6, h: 1.8,
+      human: { unarmed: true, species: ['human'], top: ['sweater'], acc: ['none'], eyes: ['sleepy'], look: { hair: 'bald', brow: 'normal', mouth: 'flat', topColor: '#c8302a', shirtColor: '#c8302a', pantsColor: '#1a1a1a', shoeColor: '#1a1a1a', skin: '#e8c8a0', height: 1.05 } },
+      names: ['Liu Sin'],
+      talk: ['Five steps. Never six.', 'The punch is easy. Knowing when to walk away is the lesson.', 'Punchy? Punchy is a good boy.'],
+      moods: { line: 100 } },
+    // The Immortality Field Resort: the guests, and the staff who are very relaxed about safety.
+    resortguest: { name: 'Resort Guest', hp: 30, speed: 2.4, hostile: false, dmg: 0, drop: { k: 1 }, r: 0.6, h: 1.8,
+      human: { unarmed: true, species: ['human', 'alien', 'alien'], top: ['tank', 'tshirt', 'polo'], acc: ['none', 'none', 'cap'] },
+      names: ['Guest', 'Mr. Splashy', 'Lounge Larry', 'Tanya', 'Gorpo', 'Zylix', 'Brad (immortal)'],
+      talk: ['I jumped off the hotel roof nine times today. Nine!', 'Nothing can hurt you in here. That is the whole point. Do not ask about the Whirly Dirly.', 'Stay inside the dome, honey. Outside, you can still die.',
+        'I lost a leg in a juggling accident this morning. It grew back before lunch.', 'The Whirly Dirly? Best ride in the galaxy. Mostly safe.'],
+      moods: { line: 55, gift: 12, trade: 8, errand: 8, buff: 10, follow: 3, prank: 2, dance: 2 } },
+    resortstaff: { name: 'Resort Staff', hp: 30, speed: 2.2, hostile: false, dmg: 0, drop: { k: 2 }, r: 0.6, h: 1.8,
+      human: { unarmed: true, species: ['alien'], top: ['polo'], acc: ['none'], colors: { topColor: '#ff7ad0', shirtColor: '#ff7ad0', pantsColor: '#f4f4f0' } },
+      names: ['Concierge Blorp', 'Lifeguard Zed', 'Manager Plinth'],
+      talk: ['Welcome to the Immortality Field Resort! Please do not leave the dome.', 'The Whirly Dirly leaves the field for only a few seconds. Our lawyers say that is fine.', 'Towels are free. Death is extra.'],
+      moods: { line: 60, gift: 15, buff: 15, trade: 10 } },
     seedbeast: { name: 'Seed Beast', hp: 65, speed: 4.4, hostile: true, dmg: 11, drop: { g: 2, m: 1 }, r: 1.0, h: 1.4 },
     butterbot: { name: 'Butter Robot', hp: 20, speed: 1.2, hostile: false, dmg: 0, drop: { s: 1 }, r: 0.4, h: 0.6,
       names: ['Butter Robot'], talk: ['What is my purpose?', 'I pass butter?', 'Oh my god.', 'Yeah, welcome to the club, pal.', 'I am still processing that.'],
@@ -1626,6 +1679,10 @@
     suburbia: [
       { id: 'party', name: 'Block Party!', text: 'The neighbours are throwing a block party. Free stuff if you chat.', spawn: [['neighbor', 6]], talkBoost: 1, dur: 70 },
       { id: 'invasion', name: 'Alien Invasion!', text: 'Invaders are landing in the suburbs. Defend the lawns (or join in).', spawn: [['invader', 7]], dur: 90 },
+      // The house defences turn on everyone. Smash them all, or a Rick reboots them at the console.
+      { id: 'hoghack', name: 'House Hacked!', text: 'Someone hacked the Smith house. Its turrets and drones are shooting at everyone. Smash them, or get a Rick to the console.', house: [['housebot', 4], ['housedrone', 3]], clear: { k: 6, s: 4 }, dur: 120 },
+      // Rick Potion #9: one player is Patient Zero. Everyone wants them. Then it gets worse.
+      { id: 'love', name: 'Love Potion Outbreak!', text: 'The love potion got into the flu season. Everyone is in love with Patient Zero.', patient: 1, dur: 180 },
     ],
     meatlands: [
       { id: 'meatrain', name: 'Meat Rain', text: 'It is raining goo. Grab it while it is warm.', loot: ['g', 16], dur: 40 },

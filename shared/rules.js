@@ -115,6 +115,8 @@
     // Inside Rick's garage (its own little dimension). door: walking through takes you there.
     { id: 'ladder', dim: 'ricklab', name: 'Ladder up to the garage', x: 0, z: 9.5, r: 1.2, h: 5, model: 'lm_ladder', door: { dim: 'suburbia', x: -14.6, z: 25.85 } },
     { id: 'mindblowers', dim: 'ricklab', name: 'Mind Blowers', x: -8.5, z: -6, r: 1.4, h: 2.4, model: 'lm_mindblowers' },
+    // "Big Trouble in Little Sanchez": a teenage clone body in a vat. A Rick climbs in and is Tiny Rick.
+    { id: 'tinyvat', dim: 'ricklab', name: 'Tiny Rick vat (a teenage clone body)', x: -3.5, z: -2, r: 1.1, h: 2.4, model: 'lm_tinyvat', tinyrick: true },
     { id: 'cellarexit', dim: 'cellar', name: 'Back to the garage', x: 0, z: 9.5, r: 1.4, h: 3.4, model: 'lm_cellardoor', door: { dim: 'suburbia', x: -16.4, z: 31.45 } },
     { id: 'elevator', dim: 'ricklab', name: 'Elevator down to the sublevels', x: -10.7, z: 2, r: 1.3, h: 3.2, model: 'lm_elevator', rot: Math.PI / 2, rick: true, door: { dim: 'sublevels', x: 0, z: 5 } },
     { id: 'sl_up', dim: 'sublevels', name: 'Elevator up to the lab', x: 0, z: 7.0, r: 1.3, h: 3.2, model: 'lm_elevator', rot: Math.PI, door: { dim: 'ricklab', x: -9, z: 2 } },
@@ -203,6 +205,7 @@
     // The Mega Gargantuans ("The Rickchurian Mortydate"): a tiny civilisation on a mossy rock in
     // the woods east of the suburb, on every Earth. You only fit in tiny (a Miniaturizer).
     { id: 'tinyland', dim: 'suburbia', name: 'A tiny city on a mossy rock', x: 241, z: -208, r: 1.6, h: 1.1, model: 'lm_tinyland', rot: -Math.PI / 2, tiny: true, door: { dim: 'gargantua', x: 0, z: 30 } },
+    { id: 'resorthotel', dim: 'resort', name: 'The Immortality Hotel', x: 0, z: -10, r: 8, h: 14, model: 'lm_resorthotel', sign: { text: 'IMMORTALITY HOTEL', y: 11.5, z: 6.2, w: 10 } },
     { id: 'tinyexit', dim: 'gargantua', name: 'The road out (back to full size)', x: 0, z: 40, r: 3, h: 4, model: 'lm_exitportal', door: { dim: 'suburbia', x: 241, z: -205 } },
     { id: 'gargantuahall', dim: 'gargantua', name: 'The Great Hall of the Mega Gargantuans', x: 0, z: -24, r: 8, h: 12, model: 'lm_gargantuahall', rot: 0, sign: { text: 'MEGA GARGANTUA', y: 9.4, z: 6.2, w: 7 } },
     // Death Stalker cars, parked by the garage with the keys in. Take one (F) and drive.
@@ -220,6 +223,14 @@
   MM.SHIP_BOOST = 1.6;   // Shift in a ship: the afterburner
   // Tiny (the Miniaturizer): how small, and how slow it makes you.
   MM.TINY = { scale: 0.15, speed: 0.5, dmg: 0.25 };
+  // Tiny Rick: a Rick in a teenage clone body. Smaller, quicker, bouncier. Inside, the old one wants out.
+  MM.TINYRICK = { scale: 0.62, speed: 1.2, jump: 1.25 };
+  MM.TINYRICK_WHISPERS = ['(a whisper, from somewhere deep inside you) ...let me out...', '(deep inside) ...this is not a party... let me out...', 'TINY RICK! (...let me out...)', '(you hum a song. Inside, someone is screaming LET ME OUT.)'];
+  // The Five-Step Death Punch (Liu Sin teaches it in Downtown): whoever you hit drops dead
+  // after five more steps. Stand still and it wears off in the end.
+  MM.DEATHPUNCH = { cost: { k: 25 }, steps: 5, stride: 0.9, last: 60, cd: 45, reach: 2.6, dmg: 4 };
+  // Inside an immortality field nothing can die: you just pop back together.
+  MM.inField = (dimId, x, z) => { const D = MM.DIM_BY_ID && MM.DIM_BY_ID[dimId], F = D && D.field; return !!F && (x - F.x) ** 2 + (z - F.z) ** 2 < F.r * F.r; };
   // Trading and giving: how close you must be.
   MM.TRADE_RANGE = 8;
   // A Death Stalker car (Post-Apocalyptic Earth): top speed, Shift for the nitro, reversing,
@@ -319,6 +330,10 @@
     garden:  { at: 'backyard', any: true, name: 'Do some gardening', cd: 150, heal: 1, give: { s: 1, f: 1 }, text: 'You weeded, you watered, and you did not dig too deep. Some things in this yard should stay buried.' },
     hug:     { at: 'home', name: 'Visit an old friend', cd: 120, heal: 1, give: { s: 2 }, text: 'They swear they have known you for years. It was lovely.' },
     forge:   { at: 'forge', name: 'Feed the forge', cd: 120, give: { g: 3 }, text: 'You fed it. It fed you back. Do not think about it.' },
+    spa:     { at: 'resorthotel', any: true, name: 'Relax at the immortal spa', cd: 150, heal: true, give: { k: 2 }, text: 'They massaged you so hard your spine came out. It grew back. Best massage of your life.' },
+    cliffdive: { at: 'resorthotel', any: true, name: 'Jump off the hotel roof', cd: 120, give: { p: 2 }, text: 'Splat. Un-splat. The guests gave you a 9.5.' },
+    smuggle: { at: 'market', name: 'Run a smuggling job', cd: 150, give: { p: 2, k: 3 }, text: 'Six crates of "medical supplies" through a Federation checkpoint. Nobody checked. Nobody ever checks.' },
+    sabotage: { at: 'formsoffice', name: 'Sabotage the Federation', cd: 180, give: { k: 4, s: 2 }, text: 'You swapped every form in the Bureau for a slightly different form. That will take them a year.' },
     haggle:  { at: 'market', name: 'Haggle at the black market', cd: 120, give: { p: 2 }, text: 'You sold a "genuine" moon rock. It was a regular rock.' },
     dock:    { at: 'shipyard', name: 'Fix ships at the docks', cd: 120, give: { s: 2, p: 1 }, text: 'You hit an engine with a wrench until it worked.' },
     report:  { at: 'shipyard', name: 'File a patrol report', cd: 150, give: { p: 2, c: 1 }, text: 'Form 27-B, in triplicate. Your commander nodded once.' },
@@ -650,6 +665,21 @@
         { name: 'President Morty', desc: 'Build the Dimension Drive.', goal: { type: 'craft', r: 'drive' }, title: true },
       ],
     },
+    // "Star Mort Rickturn of the Jerri": the Beth who left. Or the one who stayed. Nobody knows.
+    spacebeth: {
+      name: 'Space Beth', hp: 120, speed: 7.6, jump: 9, weapon: 'rifle', home: 'bazaar',
+      temper: { fights: 'often', hunts: ['trooper'] }, homes: ['bazaar'],
+      portal: null, start: ['hull', 'engine'], knows: ['grenade', 'turret', 'armor1', 'armor2', 'legs1', 'blaster1', 'hull', 'engine', 'lasers', 'jetpack'],
+      ability: { id: 'dive', name: 'Grapple Strike', cd: 9 },
+      blurb: 'A freedom fighter with a ship, a rifle and a grudge against the Galactic Federation. She might be the clone. She might not.',
+      perk: 'Starts with her own ship (B). Tough, and a crack shot. Grapple Strike slams down on everyone around her.',
+      life: { normal: 'Space Beth', breakout: 'Leader of the Resistance', daily: ['smuggle', 'sabotage'] },
+      steps: [
+        { name: 'Back in the fight', desc: 'Defeat 5 Federation Guards.', goal: { type: 'kill', npc: 'fedguard', n: 5 }, grants: ['armor2', 'jetpack'] },
+        { name: 'Paper cuts', desc: 'Sabotage the Federation at the Bureau of Forms.', goal: { type: 'use', task: 'sabotage', n: 1 }, grants: ['lasers', 'drive'] },
+        { name: 'Leader of the Resistance', desc: 'Visit 5 different dimensions.', goal: { type: 'dims', n: 5 }, grants: ['blaster2', 'legs2', 'armor3'], title: true },
+      ],
+    },
     picklerick: {
       name: 'Pickle Rick', hp: 60, speed: 6, jump: 11, weapon: 'slap', home: 'suburbia',
       temper: { fights: 'often', chaos: 0.3 }, homes: ['suburbia'],
@@ -676,6 +706,7 @@
     lasers:  { dmg: 18, cd: 0.2,  speed: 95, range: 90, color: '#5ff8ff' },
     carguns: { dmg: 9,  cd: 0.13, speed: 95, range: 70, color: '#ffb03a' },
     armpunch: { dmg: 26, cd: 0.55, melee: 3.6, knock: 11 },                   // Strong-arm Morty's arm (MM.ARM): she punches   // the twin guns on a Death Stalker car's hood
+    housegun:   { dmg: 5, cd: 0.6, speed: 60, range: 30, color: '#ff3a3a' },  // the Smith house's defences, hacked
     stalkergun: { dmg: 6, cd: 0.7, speed: 70, range: 34, color: '#ff7a3a' },  // a Death Stalker shooting from his car
     talon:   { dmg: 24, cd: 0.55, melee: 3.6 },
     scalpel: { dmg: 15, cd: 0.45, melee: 2.9 },
@@ -829,6 +860,7 @@
     squanchy: { species: 'cat', hair: 'bald', brow: 'none', eyes: 'wide', mouth: 'grin', face: 'round', top: 'none', acc: 'none', height: 1.0, width: 1.05, head: 1.2, skin: '#c98a4a', hairColor: '#8a5a2a', topColor: '#c98a4a', shirtColor: '#c98a4a', pantsColor: '#c98a4a', shoeColor: '#8a5a2a', accColor: '#444444', portalColor: '#ffd84d' },
     evilmorty: { species: 'human', hair: 'morty', brow: 'angry', eyes: 'normal', mouth: 'flat', face: 'round', top: 'tshirt', acc: 'eyepatch', height: 0.92, width: 0.95, head: 1.3, skin: '#fcd9bd', hairColor: '#6b3f1f', topColor: '#f8e04a', shirtColor: '#f8e04a', pantsColor: '#2e5fa8', shoeColor: '#f4f6f8', accColor: '#111111', portalColor: '#ffd84d' },
     tommy: { species: 'human', hair: 'afro', brow: 'normal', eyes: 'wide', mouth: 'grin', face: 'wide', top: 'vest', acc: 'crown', height: 1.25, width: 1.3, head: 1.05, skin: '#f2c8a8', hairColor: '#6a4424', topColor: '#7a5a3a', shirtColor: '#ff8fc8', pantsColor: '#5a4a6a', shoeColor: '#3a2a1a', accColor: '#ffd84d', portalColor: '#f4f4f0' },
+    spacebeth: { species: 'human', hair: 'bob', brow: 'angry', eyes: 'normal', mouth: 'flat', face: 'round', top: 'armor', acc: 'none', height: 1.15, width: 0.84, head: 0.96, skin: '#fcd9bd', hairColor: '#f8dd8a', topColor: '#4a5a4a', shirtColor: '#2e3a30', pantsColor: '#2a2a30', shoeColor: '#1a1a1a', accColor: '#444444', portalColor: '#5ff8ff' },
     picklerick: { species: 'pickle', hair: 'bald', brow: 'uni', eyes: 'tired', mouth: 'grin', face: 'long', top: 'none', acc: 'none', height: 0.9, width: 0.9, head: 1.0, skin: '#7cbf3a', hairColor: '#4a7a22', topColor: '#7cbf3a', shirtColor: '#7cbf3a', pantsColor: '#7cbf3a', shoeColor: '#4a7a22', accColor: '#444444', portalColor: '#39ff6a' },
   };
   MM.canonLook = arch => Object.assign(MM.defaultLook(), MM.CANON[arch] || {});
